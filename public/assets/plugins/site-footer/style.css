@@ -1,0 +1,145 @@
+/* 사이트 푸터 — 약관·연락처·SNS */
+[data-cb-type="site-footer"] {
+    font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    background: #F9FAFB;
+    container-type: inline-size;
+}
+
+[data-cb-type="site-footer"] .sf-inner {
+    padding: 16px 16px 20px;
+}
+
+/* ── 링크 목록 ── */
+[data-cb-type="site-footer"] .sf-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 10px;
+    line-height: 1.8;
+}
+
+[data-cb-type="site-footer"] .sf-link {
+    font-size: 11px;
+    color: #374151;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+[data-cb-type="site-footer"] .sf-link:hover {
+    color: #0046A4;
+}
+
+[data-cb-type="site-footer"] .sf-link.sf-link-bold {
+    font-weight: 700;
+    color: #111827;
+}
+
+[data-cb-type="site-footer"] .sf-sep {
+    font-size: 11px;
+    color: #D1D5DB;
+    padding: 0 5px;
+}
+
+/* ── 연락처 ── */
+[data-cb-type="site-footer"] .sf-contact {
+    font-size: 11px;
+    color: #374151;
+    margin-bottom: 6px;
+    line-height: 1.6;
+}
+
+/* ── 저작권 ── */
+[data-cb-type="site-footer"] .sf-copyright {
+    font-size: 11px;
+    color: #6B7280;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+/* ── 하단 바 ── */
+[data-cb-type="site-footer"] .sf-bottom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+[data-cb-type="site-footer"] .sf-selects {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+}
+
+[data-cb-type="site-footer"] .sf-select {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid #E5E7EB;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #374151;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* ── TOP 버튼 ── */
+[data-cb-type="site-footer"] .sf-top-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #6B7280;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+[data-cb-type="site-footer"] .sf-top-btn:hover {
+    background: #0046A4;
+    color: #fff;
+    border-color: #0046A4;
+}
+
+/* ── SNS 아이콘 ── */
+[data-cb-type="site-footer"] .sf-social {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 2px;
+}
+
+[data-cb-type="site-footer"] .sf-social-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+
+[data-cb-type="site-footer"] .sf-social-icon:hover { opacity: 0.8; }
+[data-cb-type="site-footer"] .sf-social-icon.sf-yt  { background: #FF0000; }
+[data-cb-type="site-footer"] .sf-social-icon.sf-fb  { background: #1877F2; }
+[data-cb-type="site-footer"] .sf-social-icon.sf-ig  { background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF); }
+[data-cb-type="site-footer"] .sf-social-icon.sf-blog { background: #03C75A; }
+[data-cb-type="site-footer"] .sf-social-icon svg { width: 14px; height: 14px; fill: #fff; }
+
+/* 다크 모드 */
+[data-cb-skin="dark"] [data-cb-type="site-footer"] { background: #111827; }
+[data-cb-skin="dark"] [data-cb-type="site-footer"] .sf-link { color: #9CA3AF; }
+[data-cb-skin="dark"] [data-cb-type="site-footer"] .sf-link.sf-link-bold { color: #D1D5DB; }
+[data-cb-skin="dark"] [data-cb-type="site-footer"] .sf-contact { color: #9CA3AF; }
+[data-cb-skin="dark"] [data-cb-type="site-footer"] .sf-copyright { color: #6B7280; }
+[data-cb-skin="dark"] [data-cb-type="site-footer"] .sf-select { background-color: #1F2937; border-color: #374151; color: #D1D5DB; }
+[data-cb-skin="dark"] [data-cb-type="site-footer"] .sf-top-btn { background: #1F2937; border-color: #374151; color: #9CA3AF; }

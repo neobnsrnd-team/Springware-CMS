@@ -1,0 +1,285 @@
+/* IBK Branch/ATM Locator - Mobile First with Bottom Sheet */
+[data-cb-type="branch-locator"] {
+    container-type: inline-size;
+    --bl-accent: #0046A4;
+    position: relative;
+    background: #F5F7FA;
+    border-radius: 20px;
+    /* overflow: hidden 제거 — ContentBuilder 툴바 클리핑 방지 */
+    font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 420px;
+}
+
+/* Map area */
+[data-cb-type="branch-locator"] .bl-map-area {
+    position: relative;
+    height: 240px;
+    background: #E8EFF8;
+    flex-shrink: 0;
+}
+
+[data-cb-type="branch-locator"] .bl-map-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(160deg, #E8F0FC 0%, #D1E3F8 100%);
+}
+
+[data-cb-type="branch-locator"] .bl-map-icon {
+    font-size: 40px;
+}
+
+[data-cb-type="branch-locator"] .bl-map-text {
+    font-size: 13px;
+    color: #6B7280;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Search bar */
+[data-cb-type="branch-locator"] .bl-search-bar {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+[data-cb-type="branch-locator"] .bl-search-input {
+    flex: 1;
+    height: 44px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    color: #1A1A2E;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+[data-cb-type="branch-locator"] .bl-search-input::placeholder {
+    color: #9CA3AF;
+}
+
+[data-cb-type="branch-locator"] .bl-search-btn {
+    width: 44px;
+    height: 44px;
+    background: var(--bl-accent);
+    border: none;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0, 70, 164, 0.3);
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s;
+}
+
+[data-cb-type="branch-locator"] .bl-search-btn:active {
+    opacity: 0.8;
+}
+
+/* Filter buttons */
+[data-cb-type="branch-locator"] .bl-filter-bar {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+[data-cb-type="branch-locator"] .bl-filter-btn {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 20px;
+    background: #fff;
+    color: #6B7280;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 32px;
+}
+
+[data-cb-type="branch-locator"] .bl-filter-btn.active {
+    background: var(--bl-accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 70, 164, 0.3);
+}
+
+/* Bottom Sheet */
+[data-cb-type="branch-locator"] .bl-sheet {
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    transition: height 0.3s ease;
+    overflow: hidden;
+}
+
+[data-cb-type="branch-locator"] .bl-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: #D1D5DB;
+    border-radius: 2px;
+    margin: 12px auto 0;
+    cursor: grab;
+    flex-shrink: 0;
+}
+
+[data-cb-type="branch-locator"] .bl-sheet-handle:active {
+    cursor: grabbing;
+}
+
+[data-cb-type="branch-locator"] .bl-sheet-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A1A2E;
+    padding: 12px 20px 8px;
+    flex-shrink: 0;
+}
+
+/* Branch list */
+[data-cb-type="branch-locator"] .bl-sheet-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #F3F4F6;
+    min-height: 64px;
+    transition: background 0.15s;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-item:last-child {
+    border-bottom: none;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-item:active {
+    background: #F8FAFF;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    flex-shrink: 0;
+    color: #fff;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-icon.branch {
+    background: var(--bl-accent);
+    font-size: 14px;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-icon.atm {
+    background: #FF6600;
+    font-size: 10px;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1A1A2E;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-addr {
+    font-size: 12px;
+    color: #6B7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+[data-cb-type="branch-locator"] .bl-branch-hours {
+    font-size: 11px;
+    color: #9CA3AF;
+}
+
+[data-cb-type="branch-locator"] .bl-call-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #E8F0FC;
+    color: var(--bl-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+[data-cb-type="branch-locator"] .bl-call-btn:active {
+    background: #C7D9F5;
+}
+
+/* Dark mode */
+[data-cb-skin="dark"] [data-cb-type="branch-locator"] {
+    background: #111827;
+}
+
+[data-cb-skin="dark"] [data-cb-type="branch-locator"] .bl-sheet {
+    background: #1F2937;
+}
+
+[data-cb-skin="dark"] [data-cb-type="branch-locator"] .bl-sheet-title {
+    color: #F9FAFB;
+}
+
+[data-cb-skin="dark"] [data-cb-type="branch-locator"] .bl-branch-item {
+    border-bottom-color: #374151;
+}
+
+[data-cb-skin="dark"] [data-cb-type="branch-locator"] .bl-branch-name {
+    color: #F9FAFB;
+}
+
+[data-cb-skin="dark"] [data-cb-type="branch-locator"] .bl-search-input {
+    background: #374151;
+    color: #F9FAFB;
+}

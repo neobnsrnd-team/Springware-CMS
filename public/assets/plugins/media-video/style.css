@@ -1,0 +1,43 @@
+/* IBK 미디어 - 유튜브 영상 홍보 컴포넌트 */
+[data-cb-type="media-video"] {
+    font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    position: relative;
+    background: #fff;
+    container-type: inline-size;
+    padding: 16px 20px 20px;
+}
+
+[data-cb-type="media-video"] .mv-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A1A2E;
+    margin-bottom: 10px;
+}
+
+/* 16:9 비율 래퍼 */
+[data-cb-type="media-video"] .mv-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #000;
+}
+
+[data-cb-type="media-video"] .mv-wrap iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* 다크 모드 */
+[data-cb-skin="dark"] [data-cb-type="media-video"] {
+    background: #1F2937;
+}
+
+[data-cb-skin="dark"] [data-cb-type="media-video"] .mv-label {
+    color: #F9FAFB;
+}

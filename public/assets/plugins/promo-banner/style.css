@@ -1,0 +1,166 @@
+/* IBK 홍보 배너 - 스와이프 슬라이더 */
+[data-cb-type="promo-banner"] {
+    --pb-accent: #0046A4;
+    font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    position: relative;
+    background: #fff;
+    border-radius: 20px;
+    container-type: inline-size;
+    /* overflow: hidden 제거 — ContentBuilder 툴바 클리핑 방지 */
+}
+
+[data-cb-type="promo-banner"] .pb-banner-section {
+    position: relative;
+}
+
+[data-cb-type="promo-banner"] .pb-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    height: 200px;
+}
+
+[data-cb-type="promo-banner"] .pb-track::-webkit-scrollbar {
+    display: none;
+}
+
+[data-cb-type="promo-banner"] .pb-slide {
+    scroll-snap-align: start;
+    flex: 0 0 100%;
+    min-width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-cb-type="promo-banner"] .pb-slide-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0046A4 0%, #0066CC 100%);
+}
+
+[data-cb-type="promo-banner"] .pb-slide-content {
+    position: relative;
+    z-index: 1;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+[data-cb-type="promo-banner"] .pb-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    width: fit-content;
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+[data-cb-type="promo-banner"] .pb-slide-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+}
+
+[data-cb-type="promo-banner"] .pb-slide-desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    margin: 0;
+    line-height: 1.4;
+}
+
+[data-cb-type="promo-banner"] .pb-slide-cta {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.5);
+    width: fit-content;
+    margin-top: 4px;
+    min-height: 36px;
+    transition: background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+[data-cb-type="promo-banner"] .pb-slide-cta::after {
+    content: ' →';
+}
+
+[data-cb-type="promo-banner"] .pb-slide-cta:active {
+    background: rgba(255,255,255,0.35);
+}
+
+/* 점 내비게이션 */
+[data-cb-type="promo-banner"] .pb-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 0 4px;
+}
+
+[data-cb-type="promo-banner"] .pb-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #D1D5DB;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+    min-height: unset;
+}
+
+[data-cb-type="promo-banner"] .pb-dot.active {
+    width: 20px;
+    border-radius: 3px;
+    background: var(--pb-accent);
+}
+
+/* 슬라이드 번호 */
+[data-cb-type="promo-banner"] .pb-counter {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* 다크 모드 */
+[data-cb-skin="dark"] [data-cb-type="promo-banner"] {
+    background: #1F2937;
+}
+
+/* Container Query 반응형 */
+@container (max-width: 360px) {
+    .pb-slide-title {
+        font-size: 19px;
+    }
+
+    .pb-slide-content {
+        padding: 20px 16px;
+    }
+}
