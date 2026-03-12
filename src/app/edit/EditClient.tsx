@@ -89,7 +89,21 @@ const btnStyle: React.CSSProperties = {
     whiteSpace: 'nowrap',
 };
 
-const BANKS = [
+// CMS 전체에서 공유하는 색상 팔레트 — 플러그인 에디터에서 window.__cmsColors로 접근
+const CMS_COLORS = [
+    // ── 은행 대표 색상 ──
+    '#004B9C', '#0064C8', '#5B9BD5', '#BDD7EE',
+    '#008C6A', '#00A887', '#5EC4A8', '#B7E3D8',
+    '#FFBC00', '#FFD966', '#594A2E', '#C9B07A',
+    '#003DA5', '#0046FF', '#5B78D5', '#B4C2F0',
+    // ── 기본 팔레트 ──
+    '#000000', '#404040', '#808080', '#BFBFBF', '#FFFFFF',
+    '#FF0000', '#FF6600', '#FFFF00', '#00FF00', '#00FFFF',
+    '#0000FF', '#8000FF', '#FF00FF', '#FF0080',
+];
+if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>).__cmsColors = CMS_COLORS;
+
+const DEFAULT_TABS = [
     { id: 'ibk',     label: 'IBK demo' },
     { id: 'hana',    label: '하나 demo' },
     { id: 'kb',      label: 'KB demo' },
@@ -126,6 +140,15 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
     // content-plugins.js 기본 블록 (우측 패널 "기본 블록" 탭에서 사용)
     const [basicBlocks, setBasicBlocks] = useState<BasicBlock[]>([]);
+
+    // 기본 탭 목록 (localStorage 영속화 — 삭제 가능)
+    const [defaultTabs, setDefaultTabs] = useState<{ id: string; label: string }[]>(DEFAULT_TABS);
+    // 사용자가 추가한 커스텀 탭 목록 (localStorage 영속화)
+    const [customTabs, setCustomTabs] = useState<{ id: string; label: string }[]>([]);
+    // 탭 추가 인라인 입력 표시 여부
+    const [showAddTab, setShowAddTab] = useState(false);
+    // 탭 이름 입력값
+    const [newTabName, setNewTabName] = useState('');
 
     useEffect(() => {
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
@@ -256,6 +279,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             getResultUrl_Fal: '/api/assets/result-fal',
             filePicker: '/files',
             filePickerSize: 'large',
+
+            // 컬러 피커 색상 팔레트
+            colors: CMS_COLORS,
 
             // 블록 추가/변경 시 플러그인 CSS·JS 재적용 (디바운스)
             onChange: debouncedReinit,
@@ -483,6 +509,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const blockCanvasLinkNavigation = (e: MouseEvent) => {
             const anchor = (e.target as HTMLElement).closest('a[href]');
             if (!anchor) return;
+            // 캔버스(.container) 내부 링크만 차단 — 네비바 탭 등 외부 링크는 정상 동작
+            const container = document.querySelector('.container');
+            if (!container?.contains(anchor)) return;
             const href = anchor.getAttribute('href');
             // '#'이나 'javascript:'는 이미 이동 없으므로 제외
             if (href && href !== '#' && !href.startsWith('javascript')) {
@@ -602,6 +631,26 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             window.removeEventListener("message", handleMessage);
         };
     }, []);
+
+    // ── 탭 localStorage 영속화 ───────────────────────────────────────────
+    useEffect(() => {
+        const savedDefault = localStorage.getItem('cms-default-tabs');
+        if (savedDefault) {
+            try { setDefaultTabs(JSON.parse(savedDefault)); } catch { /* 손상된 데이터 무시 */ }
+        }
+        const savedCustom = localStorage.getItem('cms-custom-tabs');
+        if (savedCustom) {
+            try { setCustomTabs(JSON.parse(savedCustom)); } catch { /* 손상된 데이터 무시 */ }
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('cms-default-tabs', JSON.stringify(defaultTabs));
+    }, [defaultTabs]);
+
+    useEffect(() => {
+        localStorage.setItem('cms-custom-tabs', JSON.stringify(customTabs));
+    }, [customTabs]);
 
     // ── content-plugins.js 로드 → data_basic 읽기 ───────────────────────
     // ContentBuilder 기본 피커 대신 우측 패널 "기본 블록" 탭에 표시합니다.
@@ -804,6 +853,66 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         }
     }
 
+    // ── 탭 추가 ──────────────────────────────────────────────────────────
+    function handleAddTab() {
+        const label = newTabName.trim();
+        if (!label) return;
+        const id = `custom-${Date.now()}`;
+
+        // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트
+        const headerComp = FINANCE_COMPONENTS.find(c => c.id === 'app-header');
+        const defaultHtml = headerComp
+            ? `<div class="row"><div class="column">\n${headerComp.html}\n</div></div>`
+            : '';
+
+        // 탭 목록 저장 후 기본 콘텐츠를 서버에 먼저 저장 → 이동
+        setCustomTabs(prev => [...prev, { id, label }]);
+        setShowAddTab(false);
+        setNewTabName('');
+
+        fetch('/api/builder/save', {
+            method: 'POST',
+            body: JSON.stringify({ html: defaultHtml, bank: id }),
+            headers: { 'Content-Type': 'application/json' },
+        }).finally(() => {
+            window.location.href = `/edit?bank=${id}`;
+        });
+    }
+
+    // ── 캔버스(탭) 삭제 ──────────────────────────────────────────────────
+    // 기본 탭 / 커스텀 탭 모두 삭제 가능 (최소 1개 탭은 유지)
+    // 삭제 시 탭 목록에서 제거 후 남은 첫 번째 탭으로 이동
+    async function handleDeleteCanvas() {
+        const allTabs = [...defaultTabs, ...customTabs];
+        const currentLabel = allTabs.find(t => t.id === bank)?.label ?? bank;
+        if (!confirm(`'${currentLabel}' 탭을 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
+
+        builderRef.current?.loadHtml('');
+        setCanvasBlocks([]);
+        await fetch('/api/builder/save', {
+            method: 'POST',
+            body: JSON.stringify({ html: '', bank }),
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        const isDefault = defaultTabs.some(t => t.id === bank);
+        const nextTabs = isDefault
+            ? defaultTabs.filter(t => t.id !== bank)
+            : defaultTabs;
+        if (isDefault) {
+            setDefaultTabs(nextTabs);
+        } else {
+            setCustomTabs(prev => prev.filter(t => t.id !== bank));
+        }
+
+        // 남은 탭 중 첫 번째로 이동
+        const remaining = isDefault
+            ? [...nextTabs, ...customTabs]
+            : [...defaultTabs, ...customTabs.filter(t => t.id !== bank)];
+        const nextId = remaining[0]?.id ?? '';
+        window.location.href = `/edit?bank=${nextId}`;
+    }
+
     // ── 저장 / 미리보기 / HTML 보기 ──────────────────────────────────────
     const save = async () => {
         if (!builderRef.current) return;
@@ -857,8 +966,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             </span>
 
             {/* 은행별 탭 */}
-            <div style={{ display: 'flex', gap: '2px', flex: 1, overflowX: 'auto' }}>
-                {BANKS.map(b => (
+            <div style={{ display: 'flex', gap: '2px', flex: 1, overflowX: 'auto', alignItems: 'center' }}>
+                {[...defaultTabs, ...customTabs].map(b => (
                     <a
                         key={b.id}
                         href={`/edit?bank=${b.id}`}
@@ -877,12 +986,63 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                         {b.label}
                     </a>
                 ))}
+
+                {/* 탭 추가 인라인 입력 */}
+                {showAddTab ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }}>
+                        <input
+                            autoFocus
+                            value={newTabName}
+                            onChange={e => setNewTabName(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') handleAddTab();
+                                if (e.key === 'Escape') { setShowAddTab(false); setNewTabName(''); }
+                            }}
+                            placeholder="탭 이름"
+                            style={{
+                                height: '28px', padding: '0 8px', borderRadius: '6px',
+                                border: '1px solid #d1d5db', fontSize: '13px', width: '120px',
+                                outline: 'none',
+                            }}
+                        />
+                        <button
+                            onClick={handleAddTab}
+                            style={{ ...btnStyle, padding: '4px 10px', background: '#0046A4', color: '#fff', borderColor: '#0046A4' }}
+                        >확인</button>
+                        <button
+                            onClick={() => { setShowAddTab(false); setNewTabName(''); }}
+                            style={{ ...btnStyle, padding: '4px 10px' }}
+                        >취소</button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setShowAddTab(true)}
+                        title="탭 추가"
+                        style={{
+                            width: '28px', height: '28px', borderRadius: '6px',
+                            border: '1px solid #e5e7eb', background: 'transparent',
+                            color: '#6b7280', fontSize: '18px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            marginLeft: '4px', lineHeight: 1, flexShrink: 0,
+                        }}
+                    >+</button>
+                )}
             </div>
 
             {/* 액션 버튼 */}
             <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
                 <button onClick={handleViewHtml} style={btnStyle}>HTML</button>
                 <button onClick={handlePreview} style={btnStyle}>미리보기</button>
+                <button
+                    onClick={handleDeleteCanvas}
+                    disabled={defaultTabs.length + customTabs.length <= 1}
+                    style={{
+                        ...btnStyle,
+                        color: defaultTabs.length + customTabs.length <= 1 ? '#d1d5db' : '#dc2626',
+                        borderColor: defaultTabs.length + customTabs.length <= 1 ? '#e5e7eb' : '#fca5a5',
+                        cursor: defaultTabs.length + customTabs.length <= 1 ? 'not-allowed' : 'pointer',
+                    }}
+                >삭제</button>
                 <button onClick={handleSave} style={{ ...btnStyle, background: '#0046A4', color: '#fff', borderColor: '#0046A4' }}>저장</button>
             </div>
         </nav>
