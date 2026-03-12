@@ -1,3 +1,5 @@
+import { createColorSection } from '../_shared/color-picker.js';
+
 // 기본 로고 — IBK 파란 사각형 + 'IBK' 텍스트 (데이터 URI SVG)
 const DEFAULT_LOGO_SRC =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 34 34'%3E" +
@@ -163,12 +165,26 @@ export default {
 
             wrap.appendChild(nameSection);
 
+            // ── 강조 색상 ──
+            const accentColor = element.style.getPropertyValue('--ah-accent').trim() || '#0046A4';
+            wrap.appendChild(createColorSection([
+                {
+                    label: '강조 색상',
+                    value: accentColor,
+                    onChange: (v) => {
+                        element.style.setProperty('--ah-accent', v);
+                        element.style.borderBottomColor = v;
+                        onChange?.();
+                    },
+                },
+            ]));
+
             return wrap;
         }
     },
 
     mount: function(element, options) {
-        const accent = options.accentColor || '#0046A4';
+        const accent = element.style.getPropertyValue('--ah-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--ah-accent', accent);
         element.style.borderBottomColor = accent;
 

@@ -1,3 +1,5 @@
+import { createColorSection } from '../_shared/color-picker.js';
+
 /*
 환율 게시판 플러그인 — IBK 기업은행 스타일
 
@@ -161,6 +163,16 @@ export default {
             const container = document.createElement('div');
             container.style.marginBottom = '23px';
 
+            // ── 강조 색상 ──
+            const accentColor = element.style.getPropertyValue('--eb-accent').trim() || '#0046A4';
+            container.appendChild(createColorSection([
+                {
+                    label: '강조 색상',
+                    value: accentColor,
+                    onChange: (v) => { element.style.setProperty('--eb-accent', v); onChange?.(); },
+                },
+            ]));
+
             // 제목 편집
             const titleWrap = document.createElement('div');
             titleWrap.style.marginBottom = '16px';
@@ -301,7 +313,7 @@ export default {
 
     // mount: 뷰 페이지에서 실시간 환율로 업데이트 (인라인 데이터는 유지, 숫자만 갱신)
     mount: function(element, options) {
-        const accent = options.accentColor || '#0046A4';
+        const accent = element.style.getPropertyValue('--eb-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--eb-accent', accent);
 
         const updateRates = (data) => {

@@ -1,3 +1,5 @@
+import { createColorSection } from '../_shared/color-picker.js';
+
 /*
 Usage:
 <div data-cb-type="loan-calculator">
@@ -156,6 +158,16 @@ export default {
             const container = document.createElement('div');
             container.style.marginBottom = '23px';
 
+            // ── 강조 색상 ──
+            const accentColor = element.style.getPropertyValue('--lc-accent').trim() || '#0046A4';
+            container.appendChild(createColorSection([
+                {
+                    label: '강조 색상',
+                    value: accentColor,
+                    onChange: (v) => { element.style.setProperty('--lc-accent', v); onChange?.(); },
+                },
+            ]));
+
             const note = document.createElement('div');
             note.style.cssText = 'background:#FFF3EC;border-radius:8px;padding:12px;font-size:13px;color:#FF6600;line-height:1.5;';
             note.innerHTML = '<strong>계산기 안내</strong><br>슬라이더와 숫자 입력으로 실시간 계산됩니다.<br>상담 신청 버튼 URL은 설정 패널에서 변경하세요.';
@@ -166,7 +178,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = options.accentColor || '#0046A4';
+        const accent = element.style.getPropertyValue('--lc-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--lc-accent', accent);
 
         // Tab switching

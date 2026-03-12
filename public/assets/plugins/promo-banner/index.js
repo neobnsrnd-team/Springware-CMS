@@ -1,3 +1,5 @@
+import { createColorField, toHex } from '../_shared/color-picker.js';
+
 /*
 Usage:
 <div data-cb-type="promo-banner">
@@ -61,13 +63,9 @@ export default {
             const track = element.querySelector('.pb-track');
             const items = track ? track.querySelectorAll('.pb-slide') : [];
 
-            const GRADIENTS = [
-                'linear-gradient(135deg,#0046A4 0%,#0066CC 100%)',
-                'linear-gradient(135deg,#FF6600 0%,#FF8C42 100%)',
-                'linear-gradient(135deg,#059669 0%,#10B981 100%)',
-                'linear-gradient(135deg,#7C3AED 0%,#A78BFA 100%)',
-                'linear-gradient(135deg,#DC2626 0%,#F87171 100%)',
-            ];
+            // 그라디언트 또는 단색 배경에서 hex 색상 추출
+            // toHex()가 rgb() 형식도 처리하므로 hex/rgb 모두 대응
+            const extractHex = (bg) => toHex(bg) || (bg || '').match(/#[0-9a-fA-F]{6}/)?.[0] || '#0046A4';
 
             const createItemEditor = (item, index) => {
                 const section = document.createElement('div');
@@ -105,30 +103,17 @@ export default {
                     return wrap;
                 };
 
-                // 배경 그라디언트 선택
-                const bgWrap = document.createElement('div');
-                bgWrap.style.marginBottom = '10px';
-                const bgLbl = document.createElement('label');
-                bgLbl.textContent = '배경 색상';
-                bgLbl.style.cssText = 'display:block;font-size:11px;color:#555;margin-bottom:5px;';
-                const bgPicker = document.createElement('div');
-                bgPicker.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
-                GRADIENTS.forEach(g => {
-                    const swatch = document.createElement('button');
-                    swatch.style.cssText = `width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:${g};cursor:pointer;min-height:unset;`;
-                    swatch.onclick = (e) => {
-                        e.preventDefault();
-                        const bg = item.querySelector('.pb-slide-bg');
-                        if (bg) bg.style.background = g;
-                        bgPicker.querySelectorAll('button').forEach(b => b.style.borderColor = 'transparent');
-                        swatch.style.borderColor = '#0046A4';
+                // 배경 색상 선택
+                const slideBg = item.querySelector('.pb-slide-bg');
+                const currentBgColor = extractHex(slideBg?.style.background || '');
+                body.appendChild(createColorField({
+                    label: '배경색',
+                    value: currentBgColor,
+                    onChange: (v) => {
+                        if (slideBg) slideBg.style.background = v;
                         onChange?.();
-                    };
-                    bgPicker.appendChild(swatch);
-                });
-                bgWrap.appendChild(bgLbl);
-                bgWrap.appendChild(bgPicker);
-                body.appendChild(bgWrap);
+                    },
+                }));
 
                 const badgeInput = document.createElement('input');
                 badgeInput.type = 'text';
@@ -213,7 +198,8 @@ export default {
             addBtn.onclick = (e) => {
                 e.preventDefault();
                 const count = itemsContainer.children.length;
-                const bg = GRADIENTS[count % GRADIENTS.length];
+                const DEFAULT_BG_COLORS = ['#0046A4', '#FF6600', '#059669', '#7C3AED', '#DC2626'];
+                const bg = DEFAULT_BG_COLORS[count % DEFAULT_BG_COLORS.length];
                 const newItem = document.createElement('div');
                 newItem.className = 'pb-slide';
                 newItem.dataset.itemId = `pb-${Date.now()}`;

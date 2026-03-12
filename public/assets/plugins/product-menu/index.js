@@ -1,3 +1,5 @@
+import { createColorSection } from '../_shared/color-picker.js';
+
 // 기본 아이콘 SVG 모음
 const PRODUCT_ICONS = {
     deposit:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><path d="M14 15h.01"/><path d="M18 15h.01"/></svg>`,
@@ -229,6 +231,56 @@ export default {
             titleRow.appendChild(titleInput);
             container.appendChild(titleRow);
 
+            // ── 색상 설정 ──
+            // 현재 인라인 스타일에서 색상 읽기 (없으면 기본값)
+            const currentColors = {
+                title:  titleEl?.style.color || '#0046A4',
+                label:  element.querySelector('.pm-label')?.style.color || '#0046A4',
+                icon:   element.querySelector('.pm-icon-wrap svg')?.style.stroke || '#374151',
+                iconBg: element.querySelector('.pm-icon-wrap')?.style.background || '#F3F4F6',
+            };
+
+            // 색상을 DOM에 일괄 적용 (새 항목 추가 시에도 사용)
+            const applyColorToScope = (scope) => {
+                if (!scope) return;
+                const t = scope.querySelector?.('.pm-title') || (scope === element ? titleEl : null);
+                if (t) t.style.color = currentColors.title;
+                scope.querySelectorAll?.('.pm-label').forEach(el => el.style.color = currentColors.label);
+                scope.querySelectorAll?.('.pm-icon-wrap').forEach(el => el.style.background = currentColors.iconBg);
+                scope.querySelectorAll?.('.pm-icon-wrap svg').forEach(svg => {
+                    svg.style.stroke = currentColors.icon;
+                    svg.style.color  = currentColors.icon;
+                });
+            };
+            applyColorToScope(element); // 에디터 열릴 때 초기 적용
+
+            container.appendChild(createColorSection([
+                {
+                    label: '제목색',
+                    value: currentColors.title,
+                    onChange: (v) => { currentColors.title = v; if (titleEl) titleEl.style.color = v; onChange?.(); },
+                },
+                {
+                    label: '라벨색',
+                    value: currentColors.label,
+                    onChange: (v) => { currentColors.label = v; element.querySelectorAll('.pm-label').forEach(el => el.style.color = v); onChange?.(); },
+                },
+                {
+                    label: '아이콘색',
+                    value: currentColors.icon,
+                    onChange: (v) => {
+                        currentColors.icon = v;
+                        element.querySelectorAll('.pm-icon-wrap svg').forEach(svg => { svg.style.stroke = v; svg.style.color = v; });
+                        onChange?.();
+                    },
+                },
+                {
+                    label: '아이콘 배경',
+                    value: currentColors.iconBg,
+                    onChange: (v) => { currentColors.iconBg = v; element.querySelectorAll('.pm-icon-wrap').forEach(el => el.style.background = v); onChange?.(); },
+                },
+            ]));
+
             // ── 항목 목록 ──
             const secTitle = document.createElement('div');
             secTitle.textContent = '상품 항목';
@@ -391,6 +443,8 @@ export default {
                 newItem.className = 'pm-item';
                 newItem.innerHTML = `<div class="pm-icon-wrap">${svgHtml}</div><span class="pm-label edit">새 항목</span>`;
                 grid.appendChild(newItem);
+                // 현재 색상을 새 항목에도 적용
+                applyColorToScope(newItem);
                 itemsWrap.appendChild(buildItemCard(newItem));
                 onChange?.();
             };

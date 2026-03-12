@@ -1,3 +1,5 @@
+import { createColorSection } from '../_shared/color-picker.js';
+
 /*
 Usage:
 <div data-cb-type="branch-locator">
@@ -94,6 +96,16 @@ export default {
         openContentEditor: function(element, builder, onChange) {
             const container = document.createElement('div');
             container.style.marginBottom = '23px';
+
+            // ── 강조 색상 ──
+            const accentColor = element.style.getPropertyValue('--bl-accent').trim() || '#0046A4';
+            container.appendChild(createColorSection([
+                {
+                    label: '강조 색상',
+                    value: accentColor,
+                    onChange: (v) => { element.style.setProperty('--bl-accent', v); onChange?.(); },
+                },
+            ]));
 
             const infoDiv = document.createElement('div');
             infoDiv.style.cssText = 'background:#E8F0FC;border-radius:8px;padding:12px;font-size:13px;color:#0046A4;line-height:1.5;margin-bottom:12px;';
@@ -255,7 +267,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = options.accentColor || '#0046A4';
+        const accent = element.style.getPropertyValue('--bl-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--bl-accent', accent);
 
         // Map height

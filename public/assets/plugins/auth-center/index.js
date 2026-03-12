@@ -1,3 +1,5 @@
+import { createColorSection } from '../_shared/color-picker.js';
+
 /*
 Usage:
 <div data-cb-type="auth-center">
@@ -111,6 +113,16 @@ export default {
         openContentEditor: function(element, builder, onChange) {
             const container = document.createElement('div');
             container.style.marginBottom = '23px';
+
+            // ── 강조 색상 ──
+            const accentColor = element.style.getPropertyValue('--ac-accent').trim() || '#0046A4';
+            container.appendChild(createColorSection([
+                {
+                    label: '강조 색상',
+                    value: accentColor,
+                    onChange: (v) => { element.style.setProperty('--ac-accent', v); onChange?.(); },
+                },
+            ]));
 
             // Header edit
             const headerSection = document.createElement('div');
@@ -309,7 +321,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = options.accentColor || '#0046A4';
+        const accent = element.style.getPropertyValue('--ac-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--ac-accent', accent);
 
         // Notice visibility
