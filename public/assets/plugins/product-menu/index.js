@@ -232,13 +232,17 @@ export default {
             container.appendChild(titleRow);
 
             // ── 색상 설정 ──
-            // 현재 인라인 스타일에서 색상 읽기 (없으면 기본값)
+            // data-pm-colors(JSON) → 인라인 스타일 → 기본값 순으로 읽기
+            const savedColors = JSON.parse(element.dataset.pmColors || '{}');
             const currentColors = {
-                title:  titleEl?.style.color || '#0046A4',
-                label:  element.querySelector('.pm-label')?.style.color || '#0046A4',
-                icon:   element.querySelector('.pm-icon-wrap svg')?.style.stroke || '#374151',
-                iconBg: element.querySelector('.pm-icon-wrap')?.style.background || '#F3F4F6',
+                title:  savedColors.title  || titleEl?.style.color || '#0046A4',
+                label:  savedColors.label  || element.querySelector('.pm-label')?.style.color || '#0046A4',
+                icon:   savedColors.icon   || element.querySelector('.pm-icon-wrap svg')?.style.stroke || '#374151',
+                iconBg: savedColors.iconBg || element.querySelector('.pm-icon-wrap')?.style.background || '#F3F4F6',
             };
+
+            // 색상 변경 시 dataset에 저장
+            const saveColors = () => { element.dataset.pmColors = JSON.stringify(currentColors); };
 
             // 색상을 DOM에 일괄 적용 (새 항목 추가 시에도 사용)
             const applyColorToScope = (scope) => {
@@ -258,18 +262,18 @@ export default {
                 {
                     label: '제목색',
                     value: currentColors.title,
-                    onChange: (v) => { currentColors.title = v; if (titleEl) titleEl.style.color = v; onChange?.(); },
+                    onChange: (v) => { currentColors.title = v; saveColors(); if (titleEl) titleEl.style.color = v; onChange?.(); },
                 },
                 {
                     label: '라벨색',
                     value: currentColors.label,
-                    onChange: (v) => { currentColors.label = v; element.querySelectorAll('.pm-label').forEach(el => el.style.color = v); onChange?.(); },
+                    onChange: (v) => { currentColors.label = v; saveColors(); element.querySelectorAll('.pm-label').forEach(el => el.style.color = v); onChange?.(); },
                 },
                 {
                     label: '아이콘색',
                     value: currentColors.icon,
                     onChange: (v) => {
-                        currentColors.icon = v;
+                        currentColors.icon = v; saveColors();
                         element.querySelectorAll('.pm-icon-wrap svg').forEach(svg => { svg.style.stroke = v; svg.style.color = v; });
                         onChange?.();
                     },
@@ -277,7 +281,7 @@ export default {
                 {
                     label: '아이콘 배경',
                     value: currentColors.iconBg,
-                    onChange: (v) => { currentColors.iconBg = v; element.querySelectorAll('.pm-icon-wrap').forEach(el => el.style.background = v); onChange?.(); },
+                    onChange: (v) => { currentColors.iconBg = v; saveColors(); element.querySelectorAll('.pm-icon-wrap').forEach(el => el.style.background = v); onChange?.(); },
                 },
             ]));
 

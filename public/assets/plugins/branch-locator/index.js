@@ -98,12 +98,12 @@ export default {
             container.style.marginBottom = '23px';
 
             // ── 강조 색상 ──
-            const accentColor = element.style.getPropertyValue('--bl-accent').trim() || '#0046A4';
+            const accentColor = element.dataset.blAccent || element.style.getPropertyValue('--bl-accent').trim() || '#0046A4';
             container.appendChild(createColorSection([
                 {
                     label: '강조 색상',
                     value: accentColor,
-                    onChange: (v) => { element.style.setProperty('--bl-accent', v); onChange?.(); },
+                    onChange: (v) => { element.dataset.blAccent = v; element.style.setProperty('--bl-accent', v); onChange?.(); },
                 },
             ]));
 
@@ -267,7 +267,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = element.style.getPropertyValue('--bl-accent').trim() || options.accentColor || '#0046A4';
+        const accent = element.dataset.blAccent || element.style.getPropertyValue('--bl-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--bl-accent', accent);
 
         // Map height

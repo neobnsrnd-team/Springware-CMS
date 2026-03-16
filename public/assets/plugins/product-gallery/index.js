@@ -73,12 +73,12 @@ export default {
             container.style.marginBottom = '23px';
 
             // ── 강조 색상 ──
-            const accentColor = element.style.getPropertyValue('--pg-accent').trim() || '#0046A4';
+            const accentColor = element.dataset.pgAccent || element.style.getPropertyValue('--pg-accent').trim() || '#0046A4';
             container.appendChild(createColorSection([
                 {
                     label: '강조 색상',
                     value: accentColor,
-                    onChange: (v) => { element.style.setProperty('--pg-accent', v); onChange?.(); },
+                    onChange: (v) => { element.dataset.pgAccent = v; element.style.setProperty('--pg-accent', v); onChange?.(); },
                 },
             ]));
 
@@ -239,7 +239,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = element.style.getPropertyValue('--pg-accent').trim() || options.accentColor || '#0046A4';
+        const accent = element.dataset.pgAccent || element.style.getPropertyValue('--pg-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--pg-accent', accent);
 
         const track = element.querySelector('.pg-track');

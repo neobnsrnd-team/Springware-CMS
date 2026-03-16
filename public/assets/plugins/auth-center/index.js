@@ -115,12 +115,12 @@ export default {
             container.style.marginBottom = '23px';
 
             // ── 강조 색상 ──
-            const accentColor = element.style.getPropertyValue('--ac-accent').trim() || '#0046A4';
+            const accentColor = element.dataset.acAccent || element.style.getPropertyValue('--ac-accent').trim() || '#0046A4';
             container.appendChild(createColorSection([
                 {
                     label: '강조 색상',
                     value: accentColor,
-                    onChange: (v) => { element.style.setProperty('--ac-accent', v); onChange?.(); },
+                    onChange: (v) => { element.dataset.acAccent = v; element.style.setProperty('--ac-accent', v); onChange?.(); },
                 },
             ]));
 
@@ -321,7 +321,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = element.style.getPropertyValue('--ac-accent').trim() || options.accentColor || '#0046A4';
+        const accent = element.dataset.acAccent || element.style.getPropertyValue('--ac-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--ac-accent', accent);
 
         // Notice visibility

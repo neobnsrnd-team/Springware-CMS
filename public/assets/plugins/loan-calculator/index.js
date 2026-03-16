@@ -159,12 +159,12 @@ export default {
             container.style.marginBottom = '23px';
 
             // ── 강조 색상 ──
-            const accentColor = element.style.getPropertyValue('--lc-accent').trim() || '#0046A4';
+            const accentColor = element.dataset.lcAccent || element.style.getPropertyValue('--lc-accent').trim() || '#0046A4';
             container.appendChild(createColorSection([
                 {
                     label: '강조 색상',
                     value: accentColor,
-                    onChange: (v) => { element.style.setProperty('--lc-accent', v); onChange?.(); },
+                    onChange: (v) => { element.dataset.lcAccent = v; element.style.setProperty('--lc-accent', v); onChange?.(); },
                 },
             ]));
 
@@ -178,7 +178,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = element.style.getPropertyValue('--lc-accent').trim() || options.accentColor || '#0046A4';
+        const accent = element.dataset.lcAccent || element.style.getPropertyValue('--lc-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--lc-accent', accent);
 
         // Tab switching

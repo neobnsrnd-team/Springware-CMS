@@ -105,12 +105,12 @@ export default {
 
                 // 배경 색상 선택
                 const slideBg = item.querySelector('.pb-slide-bg');
-                const currentBgColor = extractHex(slideBg?.style.background || '');
+                const currentBgColor = slideBg?.dataset.pbColor || extractHex(slideBg?.style.background || '');
                 body.appendChild(createColorField({
                     label: '배경색',
                     value: currentBgColor,
                     onChange: (v) => {
-                        if (slideBg) slideBg.style.background = v;
+                        if (slideBg) { slideBg.dataset.pbColor = v; slideBg.style.background = v; }
                         onChange?.();
                     },
                 }));

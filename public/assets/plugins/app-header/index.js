@@ -166,12 +166,13 @@ export default {
             wrap.appendChild(nameSection);
 
             // ── 강조 색상 ──
-            const accentColor = element.style.getPropertyValue('--ah-accent').trim() || '#0046A4';
+            const accentColor = element.dataset.ahAccent || element.style.getPropertyValue('--ah-accent').trim() || '#0046A4';
             wrap.appendChild(createColorSection([
                 {
                     label: '강조 색상',
                     value: accentColor,
                     onChange: (v) => {
+                        element.dataset.ahAccent = v;
                         element.style.setProperty('--ah-accent', v);
                         element.style.borderBottomColor = v;
                         onChange?.();
@@ -184,7 +185,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = element.style.getPropertyValue('--ah-accent').trim() || options.accentColor || '#0046A4';
+        const accent = element.dataset.ahAccent || element.style.getPropertyValue('--ah-accent').trim() || options.accentColor || '#0046A4';
         element.style.setProperty('--ah-accent', accent);
         element.style.borderBottomColor = accent;
 
