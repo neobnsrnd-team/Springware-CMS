@@ -154,24 +154,3 @@ export default {
 | `플러그인/퀵뱅킹` | `public/assets/plugins/quick-banking/index.js` |
 | `load API` | `src/app/api/builder/load/route.ts` |
 | `save API` | `src/app/api/builder/save/route.ts` |
-
----
-
-## 요청 예시 모음
-
-```
-"상단 네비바에 다크모드 토글 추가해줘"
-→ EditClient.tsx의 <nav> 영역 수정
-
-"블록 패널에서 환율 스니펫이 안보여"
-→ content-plugins.js의 IBK 스니펫 HTML 확인
-
-"환율 플러그인 블록 컨텐츠 편집 패널에 항목 추가 기능 만들어줘"
-→ exchange-board/index.js의 openContentEditor 수정
-
-"뷰 페이지에서 퀵뱅킹 스타일이 안나와"
-→ ViewClient.tsx의 Runtime 플러그인 등록 확인
-
-"에디터 캔버스 너비 1200px로 늘려줘"
-→ EditClient.tsx의 container maxWidth 수정
-```
