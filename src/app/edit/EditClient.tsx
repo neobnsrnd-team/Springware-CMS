@@ -760,6 +760,14 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         }, 300);
     }, []);
 
+    // ── 전체 블록 삭제 ──────────────────────────────────────────────────
+    const handleDeleteAllBlocks = useCallback(() => {
+        const builder = builderRef.current;
+        if (!builder) return;
+        builder.loadHtml('');
+        setCanvasBlocks([]);
+    }, []);
+
     // ── 블록 순서 변경 ──────────────────────────────────────────────────
     /**
      * 순서 패널의 ▲▼ 버튼으로 블록을 이동합니다.
@@ -1161,6 +1169,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             blocks={canvasBlocks}
             onMoveBlock={handleMoveBlock}
             onDelete={handleDelete}
+            onDeleteAll={handleDeleteAllBlocks}
             onActivate={handleActivate}
             basicBlocks={basicBlocks}
             onDragStart={() => {
