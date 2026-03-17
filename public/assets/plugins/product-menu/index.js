@@ -1,4 +1,4 @@
-import { createColorSection } from '../_shared/color-picker.js';
+import { createColorSection, toHex } from '../_shared/color-picker.js';
 
 // 기본 아이콘 SVG 모음
 const PRODUCT_ICONS = {
@@ -235,10 +235,10 @@ export default {
             // data-pm-colors(JSON) → 인라인 스타일 → 기본값 순으로 읽기
             const savedColors = JSON.parse(element.dataset.pmColors || '{}');
             const currentColors = {
-                title:  savedColors.title  || titleEl?.style.color || '#0046A4',
-                label:  savedColors.label  || element.querySelector('.pm-label')?.style.color || '#0046A4',
-                icon:   savedColors.icon   || element.querySelector('.pm-icon-wrap svg')?.style.stroke || '#374151',
-                iconBg: savedColors.iconBg || element.querySelector('.pm-icon-wrap')?.style.background || '#F3F4F6',
+                title:  savedColors.title  || toHex(titleEl?.style.color) || '#0046A4',
+                label:  savedColors.label  || toHex(element.querySelector('.pm-label')?.style.color) || '#0046A4',
+                icon:   savedColors.icon   || toHex(element.querySelector('.pm-icon-wrap svg')?.style.stroke) || '#374151',
+                iconBg: savedColors.iconBg || toHex(element.querySelector('.pm-icon-wrap')?.style.background) || '#F3F4F6',
             };
 
             // 색상 변경 시 dataset에 저장
