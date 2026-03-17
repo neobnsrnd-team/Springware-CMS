@@ -661,7 +661,16 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data = (window as any).data_basic;
             if (data?.snippets) {
-                setBasicBlocks(data.snippets);
+                // 상대경로 → 절대경로 변환 (캔버스에서 /edit 기준으로 해석되는 문제 방지)
+                const fixed = data.snippets.map((s: BasicBlock) => ({
+                    ...s,
+                    html: s.html
+                        .replace(/src="assets\//g, 'src="/assets/')
+                        .replace(/url\(&quot;assets\//g, 'url(&quot;/assets/')
+                        .replace(/url\('assets\//g, "url('/assets/")
+                        .replace(/url\(assets\//g, 'url(/assets/'),
+                }));
+                setBasicBlocks(fixed);
             }
         };
         document.head.appendChild(script);
