@@ -675,21 +675,38 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         localStorage.setItem('cms-custom-tabs', JSON.stringify(customTabs));
     }, [customTabs]);
 
-    // ── content-plugins.js 로드 → data_basic 읽기 ───────────────────────
+    // ── content-plugins 로드 (웹/모바일/반응형 3파일) ─────────────────────
     // ContentBuilder 기본 피커 대신 우측 패널 "기본 블록" 탭에 표시합니다.
     useEffect(() => {
-        const script = document.createElement('script');
-        script.src = '/assets/minimalist-blocks/content-plugins.js';
-        script.onload = () => {
+        const sources = [
+            { src: '/assets/minimalist-blocks/content-plugins.js',            key: 'data_basic' },
+            { src: '/assets/minimalist-blocks/content-plugins-mobile.js',     key: 'data_basic_mobile' },
+            { src: '/assets/minimalist-blocks/content-plugins-responsive.js', key: 'data_basic_responsive' },
+        ];
+        const scripts: HTMLScriptElement[] = [];
+        let loaded = 0;
+
+        const mergeAll = () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const data = (window as any).data_basic;
-            if (data?.snippets) {
-                setBasicBlocks(data.snippets);
-            }
+            const w = window as any;
+            const all: BasicBlock[] = [
+                ...(w.data_basic?.snippets ?? []),
+                ...(w.data_basic_mobile?.snippets ?? []),
+                ...(w.data_basic_responsive?.snippets ?? []),
+            ];
+            setBasicBlocks(all);
         };
-        document.head.appendChild(script);
+
+        sources.forEach(({ src }) => {
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = s.onerror = () => { loaded++; if (loaded >= sources.length) mergeAll(); };
+            document.head.appendChild(s);
+            scripts.push(s);
+        });
+
         return () => {
-            try { document.head.removeChild(script); } catch { /* 이미 제거됨 */ }
+            scripts.forEach(s => { try { document.head.removeChild(s); } catch { /* 이미 제거됨 */ } });
         };
     }, []);
 
