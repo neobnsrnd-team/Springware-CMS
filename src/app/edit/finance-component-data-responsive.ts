@@ -1,46 +1,67 @@
-// 금융 도메인 컴포넌트 — 패널 표시용 데이터
-// 금융권 모바일/웹/반응형 3벌 컴포넌트 목록
-// (IBK는 데모 예시이며, 실제 사용 시 콘텐츠를 교체하여 사용)
+// 금융 도메인 컴포넌트 — 반응형(Responsive) 버전
+// 데스크톱(넓은 화면)과 모바일(좁은 화면) 모두에서 최적화된 레이아웃을 제공
+// 동일한 data-cb-type, CSS 클래스 프리픽스, data-item-id를 유지하며
+// 미디어 쿼리를 통해 레이아웃만 변경
 
-import { FINANCE_COMPONENTS_WEB } from './finance-component-data-web';
-import { FINANCE_COMPONENTS_RESPONSIVE } from './finance-component-data-responsive';
+import type { FinanceComponent } from './finance-component-data';
 
-export interface FinanceComponent {
-    id: string;
-    label: string;
-    description: string;
-    preview: string; // SVG 미리보기 경로
-    html: string;    // ContentBuilder 삽입용 HTML (raw — EditClient에서 row/column으로 래핑)
-    viewMode: 'mobile' | 'web' | 'responsive';
-}
-
-// 모바일 전용 금융 컴포넌트 (기존)
-const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
+export const FINANCE_COMPONENTS_RESPONSIVE: FinanceComponent[] = [
     {
         id: 'app-header',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '최상단 헤더',
-        description: 'IBK 로고 + 햄버거 메뉴 버튼',
+        description: 'IBK 로고 + 햄버거 메뉴 버튼 (반응형)',
         preview: '/assets/minimalist-blocks/preview/ibk-app-header.svg',
         html: `
-<div data-cb-type="app-header">
+<div data-cb-type="app-header" class="responsive-layout">
+    <style>
+        [data-cb-type="app-header"].responsive-layout .ah-nav-links { display: none; }
+        @media (min-width: 768px) {
+            [data-cb-type="app-header"].responsive-layout .ah-nav-links { display: flex; gap: 24px; align-items: center; }
+            [data-cb-type="app-header"].responsive-layout .ah-inner { display: flex; align-items: center; justify-content: space-between; }
+            [data-cb-type="app-header"].responsive-layout .ah-hamburger { display: none; }
+        }
+        @media (max-width: 767px) {
+            [data-cb-type="app-header"].responsive-layout .ah-hamburger { display: block; }
+        }
+    </style>
     <div class="ah-inner">
         <a href="#" class="ah-logo">
             <img class="ah-logo-img" src="" alt="은행 로고" />
             <span class="ah-logo-text">IBK기업은행</span>
         </a>
+        <nav class="ah-nav-links">
+            <a href="#" class="ah-nav-link">개인뱅킹</a>
+            <a href="#" class="ah-nav-link">기업뱅킹</a>
+            <a href="#" class="ah-nav-link">금융상품</a>
+            <a href="#" class="ah-nav-link">고객센터</a>
+        </nav>
+        <button class="ah-hamburger" aria-label="메뉴">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
     </div>
 </div>
 `,
     },
     {
         id: 'product-gallery',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '금융 상품 갤러리',
-        description: '예금·적금·대출 스와이프 카드',
+        description: '예금·적금·대출 카드 (반응형 그리드)',
         preview: '/assets/minimalist-blocks/preview/ibk-product-gallery.svg',
         html: `
-<div data-cb-type="product-gallery">
+<div data-cb-type="product-gallery" class="responsive-layout">
+    <style>
+        [data-cb-type="product-gallery"].responsive-layout .pg-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        [data-cb-type="product-gallery"].responsive-layout .pg-slide {
+            width: auto;
+        }
+        [data-cb-type="product-gallery"].responsive-layout .pg-dots { display: none; }
+    </style>
     <div class="pg-header">
         <h3 class="pg-title">주요 금융상품</h3>
     </div>
@@ -76,12 +97,12 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'exchange-board',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '환율 및 금융 지수',
-        description: 'USD·EUR·JPY·CNY 실시간 환율',
+        description: 'USD·EUR·JPY·CNY 실시간 환율 (반응형)',
         preview: '/assets/minimalist-blocks/preview/ibk-exchange-board.svg',
         html: `
-<div data-cb-type="exchange-board">
+<div data-cb-type="exchange-board" class="responsive-layout">
     <div class="eb-header">
         <span class="eb-title">실시간 환율</span>
         <span class="eb-updated">로딩 중...</span>
@@ -95,12 +116,36 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'branch-locator',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '영업점/ATM 위치',
-        description: '지도 + 바텀시트 영업점 목록',
+        description: '지도 + 영업점 목록 (반응형 레이아웃)',
         preview: '/assets/minimalist-blocks/preview/ibk-branch-locator.svg',
         html: `
-<div data-cb-type="branch-locator">
+<div data-cb-type="branch-locator" class="responsive-layout">
+    <style>
+        @media (min-width: 768px) {
+            [data-cb-type="branch-locator"].responsive-layout {
+                display: flex;
+                flex-direction: row;
+                gap: 16px;
+            }
+            [data-cb-type="branch-locator"].responsive-layout .bl-map-area {
+                flex: 1;
+                min-height: 400px;
+            }
+            [data-cb-type="branch-locator"].responsive-layout .bl-sheet {
+                flex: 0 0 360px;
+                position: static;
+                border-radius: 8px;
+            }
+        }
+        @media (max-width: 767px) {
+            [data-cb-type="branch-locator"].responsive-layout {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+    </style>
     <div class="bl-map-area">
         <div class="bl-map-placeholder">
             <div class="bl-map-icon">📍</div>
@@ -145,12 +190,12 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'promo-banner',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '홍보 배너',
-        description: '스와이프 슬라이드 배너',
+        description: '스와이프 슬라이드 배너 (반응형)',
         preview: '/assets/minimalist-blocks/preview/ibk-promo-banner.svg',
         html: `
-<div data-cb-type="promo-banner">
+<div data-cb-type="promo-banner" class="responsive-layout">
     <div class="pb-banner-section">
         <div class="pb-track">
             <div class="pb-slide" data-item-id="pb-1">
@@ -180,12 +225,35 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'media-video',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '미디어 홍보',
-        description: '유튜브 영상 홍보 컴포넌트',
+        description: '유튜브 영상 홍보 컴포넌트 (반응형)',
         preview: '/assets/minimalist-blocks/preview/ibk-media-video.svg',
         html: `
-<div data-cb-type="media-video">
+<div data-cb-type="media-video" class="responsive-layout">
+    <style>
+        @media (min-width: 768px) {
+            [data-cb-type="media-video"].responsive-layout {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 24px;
+            }
+            [data-cb-type="media-video"].responsive-layout .mv-label {
+                flex: 0 0 200px;
+                padding-top: 16px;
+            }
+            [data-cb-type="media-video"].responsive-layout .mv-wrap {
+                flex: 1;
+            }
+        }
+        @media (max-width: 767px) {
+            [data-cb-type="media-video"].responsive-layout {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+    </style>
     <div class="mv-label">IBK 소개 영상</div>
     <div class="mv-wrap">
         <iframe src="https://www.youtube.com/embed/TSxZRHwZam8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="IBK 소개 영상"></iframe>
@@ -195,12 +263,33 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'loan-calculator',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '금융 계산기',
-        description: '대출·예금·적금 탭 계산기',
+        description: '대출·예금·적금 탭 계산기 (반응형)',
         preview: '/assets/minimalist-blocks/preview/ibk-loan-calculator.svg',
         html: `
-<div data-cb-type="loan-calculator">
+<div data-cb-type="loan-calculator" class="responsive-layout">
+    <style>
+        @media (min-width: 768px) {
+            [data-cb-type="loan-calculator"].responsive-layout .lc-body {
+                display: flex;
+                flex-direction: row;
+                gap: 32px;
+            }
+            [data-cb-type="loan-calculator"].responsive-layout .lc-body .lc-panel {
+                flex: 1;
+            }
+            [data-cb-type="loan-calculator"].responsive-layout .lc-body .lc-result {
+                flex: 0 0 320px;
+            }
+        }
+        @media (max-width: 767px) {
+            [data-cb-type="loan-calculator"].responsive-layout .lc-body {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+    </style>
     <div class="lc-tabs">
         <button class="lc-tab active" data-type="loan">대출</button>
         <button class="lc-tab" data-type="deposit">예금</button>
@@ -315,12 +404,19 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'product-menu',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '상품 메뉴',
-        description: '예금·대출·펀드 등 3×3 그리드',
+        description: '예금·대출·펀드 등 그리드 (반응형)',
         preview: '/assets/minimalist-blocks/preview/ibk-product-menu.svg',
         html: `
-<div data-cb-type="product-menu">
+<div data-cb-type="product-menu" class="responsive-layout">
+    <style>
+        [data-cb-type="product-menu"].responsive-layout .pm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+        }
+    </style>
     <div class="pm-header">
         <span class="pm-title edit">상품</span>
     </div>
@@ -367,12 +463,19 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'auth-center',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '보안·인증센터',
-        description: '공동인증서·금융인증서·OTP·보안카드',
+        description: '공동인증서·금융인증서·OTP·보안카드 (반응형 그리드)',
         preview: '/assets/minimalist-blocks/preview/ibk-auth-center.svg',
         html: `
-<div data-cb-type="auth-center">
+<div data-cb-type="auth-center" class="responsive-layout">
+    <style>
+        [data-cb-type="auth-center"].responsive-layout .ac-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+    </style>
     <div class="ac-header">
         <h3 class="ac-title">인증센터</h3>
         <p class="ac-desc">안전한 금융거래를 위한 인증 서비스</p>
@@ -408,12 +511,58 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
     },
     {
         id: 'site-footer',
-        viewMode: 'mobile',
+        viewMode: 'responsive',
         label: '사이트 푸터',
-        description: '약관·연락처·SNS·TOP 버튼',
+        description: '약관·연락처·SNS·TOP 버튼 (반응형)',
         preview: '/assets/minimalist-blocks/preview/ibk-site-footer.svg',
         html: `
-<div data-cb-type="site-footer">
+<div data-cb-type="site-footer" class="responsive-layout">
+    <style>
+        @media (min-width: 768px) {
+            [data-cb-type="site-footer"].responsive-layout .sf-inner {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            [data-cb-type="site-footer"].responsive-layout .sf-links {
+                flex: 1 1 100%;
+            }
+            [data-cb-type="site-footer"].responsive-layout .sf-contact {
+                flex: 1;
+            }
+            [data-cb-type="site-footer"].responsive-layout .sf-copyright {
+                flex: 1;
+            }
+            [data-cb-type="site-footer"].responsive-layout .sf-bottom {
+                flex: 1 1 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            [data-cb-type="site-footer"].responsive-layout .sf-selects {
+                display: flex;
+                gap: 12px;
+            }
+            [data-cb-type="site-footer"].responsive-layout .sf-social {
+                flex: 1 1 100%;
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+            }
+        }
+        @media (max-width: 767px) {
+            [data-cb-type="site-footer"].responsive-layout .sf-inner {
+                display: flex;
+                flex-direction: column;
+            }
+            [data-cb-type="site-footer"].responsive-layout .sf-selects {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
     <div class="sf-inner">
         <div class="sf-links">
             <a href="#" class="sf-link sf-link-bold">개인정보 처리방침</a><span class="sf-sep">|</span>
@@ -462,11 +611,4 @@ const FINANCE_COMPONENTS_MOBILE: FinanceComponent[] = [
 </div>
 `,
     },
-];
-
-// 모바일 + 웹 + 반응형 통합 배열
-export const FINANCE_COMPONENTS: FinanceComponent[] = [
-    ...FINANCE_COMPONENTS_MOBILE,
-    ...FINANCE_COMPONENTS_WEB,
-    ...FINANCE_COMPONENTS_RESPONSIVE,
 ];

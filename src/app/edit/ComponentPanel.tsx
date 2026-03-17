@@ -19,6 +19,8 @@ interface Props {
     onActivate: (idx: number) => void;
     /** content-plugins.js에서 읽어온 기본 블록 목록 */
     basicBlocks: BasicBlock[];
+    /** 현재 페이지의 뷰 모드 — 해당 모드의 컴포넌트만 표시 */
+    viewMode: 'mobile' | 'web' | 'responsive';
     /** 패널에서 외부 드래그 시작/종료 알림 */
     onDragStart?: () => void;
     onDragEnd?: () => void;
@@ -28,6 +30,97 @@ type Tab = 'finance' | 'basic' | 'order';
 
 const BASIC_THUMB_BASE = '/assets/minimalist-blocks/';
 
+// 썸네일 파일명 → 블록 고유 이름 매핑
+const BLOCK_LABELS: Record<string, string> = {
+    // 텍스트 (120)
+    'preview/basic-03.png': '제목 + 본문',
+    'preview/basic-05.png': '이미지',
+    'preview/basic-06.png': '2단 텍스트',
+    'preview/plugin-gallery-01.png': '미디어 갤러리',
+    'preview/basic-12.png': '이미지 + 텍스트',
+    'preview/basic-textslider.png': '텍스트 슬라이더',
+    'preview/ai-B2h6J.webp': '배경 영상',
+    'preview/basic-slider2.png': '이미지 슬라이더',
+    'preview/basic-18.png': '3단 프로세스',
+    'preview/basic-20.png': '구분선',
+    'preview/basic-youtube.png': '유튜브',
+    'preview/basic-map.png': '지도',
+    'preview/basic-audio.png': '오디오',
+    'preview/basic-form.png': '입력 폼',
+    'preview/basic-code.png': '코드 블록',
+    'preview/basic-codeview.png': '코드 뷰어',
+    // 기사 (118)
+    'preview/article-01.png': '기사 — 중앙 제목',
+    'preview/article-03.png': '기사 — 좌측 텍스트',
+    'preview/article-15.png': '기사 — 2단 본문',
+    // 헤드라인 (101)
+    'preview/headline-01.png': '헤드라인 — 대형',
+    'preview/headline-02.png': '헤드라인 — 아이콘',
+    'preview/headline-05.png': '헤드라인 — CTA',
+    'preview/headline-17.png': '헤드라인 — 히어로',
+    // 버튼 (119)
+    'preview/buttons-02.png': '버튼 — 텍스트+라인',
+    'preview/buttons-04.png': '버튼 — 둥근형',
+    'preview/buttons-06.png': '버튼 — 채움+라인',
+    'preview/buttons-07.png': '버튼 — 소형',
+    // 사진 (102)
+    'preview/photos-01.png': '사진 — 2열',
+    'preview/photos-02.png': '사진 — 3열',
+    'preview/photos-03.png': '사진 — 전체',
+    // 프로필 (103)
+    'preview/profile-01.png': '팀 — 3인 원형',
+    'preview/profile-05.png': '팀 — 2인 카드',
+    'preview/profile-07.png': '팀 — 상세 소개',
+    // 상품 (104)
+    'preview/products-05.png': '상품 카드',
+    // 프로세스 (106)
+    'preview/steps-05.png': '단계별 프로세스',
+    // 가격표 (107)
+    'preview/pricing-01.png': '가격표 — 2단',
+    'preview/pricing-04.png': '가격표 — 3단',
+    'preview/pricing-07.png': '가격표 — 하이라이트',
+    // 스킬 (108)
+    'preview/skills-10.png': '스킬 바',
+    // 성과 (109)
+    'preview/achievements-03.png': '성과 지표',
+    // 인용 (110)
+    'preview/quotes-02.png': '인용 — 중앙',
+    'preview/quotes-03.png': '인용 — 프로필',
+    'preview/quotes-06.png': '인용 — 큰 따옴표',
+    // 파트너 (111)
+    'preview/partners-02.png': '파트너 로고',
+    'preview/partners-05.png': '파트너 — 설명',
+    // 404 (113)
+    'preview/404-01.png': '404 — 대형 텍스트',
+    'preview/404-02.png': '404 — 일러스트',
+    'preview/404-03.png': '404 — 미니멀',
+    'preview/404-04.png': '404 — 검색',
+    // 준비중 (114)
+    'preview/comingsoon-03.png': '준비중 페이지',
+    // FAQ (115)
+    'preview/faq-08.png': 'FAQ 아코디언',
+    // 문의 (116)
+    'preview/contact-01.png': '문의 — 3단',
+    'preview/contact-13.png': '문의 — 간단',
+    // 소개 (117)
+    'preview/about-04.png': '소개 — 스토리',
+    'preview/about-06.png': '소개 — 이미지',
+    // 플러그인
+    'preview/plugin-pendulum.png': '펜들럼 애니메이션',
+    'preview/plugin-mockup.png': '브라우저 목업',
+    'preview/plugin-card-list.png': '카드 리스트',
+    'preview/plugin-media-slider.png': '미디어 슬라이더',
+    'preview/plugin-hero-anim.png': '히어로 애니메이션',
+    'preview/plugin-logo-loop.png': '로고 루프',
+    'preview/plugin-before-after.png': '전후 비교',
+    'preview/plugin-timeline.png': '타임라인',
+    'preview/plugin-accordion.png': '아코디언',
+    'preview/plugin-media-grid.png': '미디어 그리드',
+    'preview/plugin-social-share.png': '소셜 공유',
+    'preview/plugin-cta-buttons.png': 'CTA 버튼',
+    'preview/plugin-anim-stats.png': '애니메이션 통계',
+};
+
 export default function ComponentPanel({
     onInsert,
     blocks,
@@ -36,6 +129,7 @@ export default function ComponentPanel({
     onDeleteAll,
     onActivate,
     basicBlocks,
+    viewMode,
     onDragStart,
     onDragEnd,
 }: Props) {
@@ -246,7 +340,7 @@ export default function ComponentPanel({
                                 드래그하거나 + 클릭하여 캔버스에 추가
                             </p>
 
-                            {FINANCE_COMPONENTS.map(comp => (
+                            {FINANCE_COMPONENTS.filter(c => c.viewMode === viewMode).map(comp => (
                                 <div
                                     key={comp.id}
                                     draggable
@@ -360,7 +454,7 @@ export default function ComponentPanel({
                                     gridTemplateColumns: '1fr 1fr',
                                     gap: '6px',
                                 }}>
-                                    {basicBlocks.map((block, idx) => (
+                                    {basicBlocks.filter(b => b.viewMode === viewMode).map((block, idx) => (
                                         <BasicBlockCard
                                             key={idx}
                                             block={block}
@@ -609,6 +703,20 @@ function BasicBlockCard({
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }} />
                 )}
+            </div>
+
+            {/* 블록 이름 */}
+            <div style={{
+                padding: '3px 6px',
+                fontSize: '10px',
+                color: '#6b7280',
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: 1.3,
+            }}>
+                {BLOCK_LABELS[block.thumbnail] ?? block.thumbnail}
             </div>
 
             {/* 추가 버튼 */}
