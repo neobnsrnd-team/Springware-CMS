@@ -26,6 +26,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-03.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 			<h1>Heading 1 Text Goes Here.</h1>
             <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
@@ -34,6 +35,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-05.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 			<img src="assets/minimalist-blocks/images/ai-4fA9e.jpg" alt="">
 			`	
@@ -41,6 +43,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-06.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column half">
@@ -61,6 +64,7 @@ var data_basic = {
         {
 		    'thumbnail': 'preview/plugin-gallery-01.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column">
@@ -103,6 +107,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-12.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column half" style="width: 57.6087%; flex: 0 0 auto;"><img src="assets/minimalist-blocks/images/ai-4DbMv.jpg" alt=""></div>
@@ -115,6 +120,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-textslider.png',
 		    'category': '120',
+		    'viewMode': 'web',
 			'type': 'glide',
 		    'html': `
 			<div class="row">
@@ -293,6 +299,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/ai-B2h6J.webp',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 			<video style="width: 100%;" loop="" autoplay="">
 				<source src="assets/minimalist-blocks/images/ai-cQ5ST.mp4" type="video/mp4">
@@ -302,6 +309,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-slider2.png', // 'preview/basic-slider.webp',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 				<div data-cb-type="swiper-slider" data-cb-loading="fade" data-cb-effect="slide" data-cb-aspect-ratio="16/9" data-cb-autoplay="false" data-cb-loop="true" data-cb-slides-per-view="1" data-cb-speed="800" data-cb-space-between="0" data-cb-navigation="true" data-cb-pagination="true" data-cb-delay="3000" data-cb-text-position="position-bottom-left" style="--top-overlay-opacity: 0; --bottom-overlay-opacity: 0.4; --aspect-ratio: 16/9; --slider-height: 600px; --accent-color: #1a1a1a; --slide-background: #ffffff; --border-radius: 10px; --swiper-navigation-border-radius: 50%; --zoom-scale: 1.08; --swiper-navigation-size: 48px; --swiper-navigation-font-size: 16px; --swiper-navigation-sides-offset: 20px; --text-max-width: 400px;" data-cb-top-overlay-opacity="0" data-cb-bottom-overlay-opacity="0.4" data-cb-transition-speed="800" data-cb-navigation-style="solid" data-cb-pagination-style="rounded-rectangle" data-layout="split" data-cb-rounded-corners="10" data-cb-navigation-rounded-corners="50" data-cb-zoom-scale="108" data-cb-zoom-effect="false" data-cb-pause-on-hover="false" data-cb-navigation-button-size="48" data-cb-navigation-arrow-size="16" data-cb-navigation-offset="20" data-cb-text-max-width="400">
                     <div class="swiper">
@@ -335,6 +343,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-18.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column third">
@@ -361,11 +370,13 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-20.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': '<hr>'
 		},
 		{
 		    'thumbnail': 'preview/basic-youtube.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 				<div class="embed-responsive embed-responsive-16by9">
             		<iframe width="560" height="315" src="https://www.youtube.com/embed/TSxZRHwZam8?rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -375,6 +386,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-map.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 				<div class="embed-responsive embed-responsive-16by9">
 					<iframe width="100%" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" class="mg1" src="https://maps.google.com/maps?q=Melbourne,+Victoria,+Australia&amp;hl=en&amp;sll=-7.981898,112.626504&amp;sspn=0.009084,0.016512&amp;oq=melbourne&amp;hnear=Melbourne+Victoria,+Australia&amp;t=m&amp;z=10&amp;output=embed"></iframe>
@@ -384,6 +396,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-audio.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 				<div style="display:flex;width:100%;position:relative;margin:15px 0;background: transparent;">
 					<audio controls="" style="width:100%">
@@ -396,6 +409,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-form.png',
 		    'category': '120',
+		    'viewMode': 'web',
 			'type': 'form',
 		    'html': `
 				<div class="row">
@@ -577,6 +591,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/basic-code.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full" data-noedit data-html="
@@ -607,6 +622,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/article-01.png',
 		    'category': '118',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 
@@ -633,6 +649,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/article-03.png',
 		    'category': '118',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row relative sm-items-1">
     <div class="py-6 flex flex-col justify-center column third">
@@ -648,6 +665,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/article-15.png',
 		    'category': '118',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center">
@@ -677,6 +695,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/headline-01.png',
 		    'category': '101',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center">
@@ -688,6 +707,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/headline-02.png',
 		    'category': '101',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center">
@@ -701,6 +721,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/headline-05.png',
 		    'category': '101',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row clearfix">
 				<div class="column full">
@@ -725,6 +746,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/headline-17.png',
 		    'category': '101',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row relative sm-items-1">
     <div class="column half" style="width: 42.1053%; flex: 0 0 auto;">
@@ -758,6 +780,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/buttons-02.png',
 		    'category': '119',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
 				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid border-transparent ml-1 mr-1 hover:border-transparent rounded size-16 py-1 px-5 font-normal tracking-wide text-gray-800 underline leading-relaxed" title="">Get Started</a>
@@ -768,6 +791,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/buttons-04.png',
 		    'category': '119',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
 				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid mt-2 mb-1 py-2 size-18 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal tracking-wide underline px-2 ml-3 mr-3" data-bg="">Read More</a>
@@ -778,6 +802,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/buttons-06.png',
 		    'category': '119',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
 				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 font-normal leading-relaxed border-transparent rounded-full size-18 tracking-wide hover:border-transparent" style="color: rgb(255, 255, 255); background-color: rgb(0, 0, 0);" data-bg="rgb(0,0,0)">View Demo</a>
@@ -788,6 +813,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/buttons-07.png',
 		    'category': '119',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
 				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal size-14 uppercase tracking-125" title="" style="background-color: rgb(240, 240, 240);">Book a Call</a>
@@ -800,6 +826,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/photos-01.png',
 		    'category': '102',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column half"><img src="assets/minimalist-blocks/images/ai-XUe84.jpg" alt="" style="margin: 0;float: left;" data-filename="ai-MhBT8-editIx7MmTn.png"></div>
@@ -810,6 +837,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/photos-02.png',
 		    'category': '102',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column third"><img src="assets/minimalist-blocks/images/ai-uDhRs.jpg" alt="" style="margin: 0;float: left;" data-filename="ai-6ay66-editiYP7lM9.png"></div>
@@ -821,6 +849,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/photos-03.png',
 		    'category': '102',
+		    'viewMode': 'web',
 		    'html': `
 <img src="assets/minimalist-blocks/images/ai-gX9nR.jpg" alt="">
 			`	
@@ -830,6 +859,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/profile-01.png',
 		    'category': '103',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column full">
@@ -869,6 +899,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/profile-05.png',
 		    'category': '103',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column full">
@@ -907,6 +938,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/profile-07.png',
 		    'category': '103',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column full text-center">
@@ -954,6 +986,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/products-05.png',
 		    'category': '104',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column full">
@@ -998,6 +1031,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/steps-05.png',
 		    'category': '106',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full">
@@ -1031,6 +1065,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/pricing-01.png',
 		    'category': '107',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column third xs-hidden" style="width: 100%;">
@@ -1109,6 +1144,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/pricing-04.png',
 		    'category': '107',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center">
@@ -1168,6 +1204,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/pricing-07.png',
 		    'category': '107',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center">
@@ -1246,6 +1283,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/skills-10.png',
 		    'category': '108',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full">
@@ -1302,6 +1340,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/achievements-03.png',
 		    'category': '109',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full">
@@ -1350,6 +1389,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/quotes-02.png',
 		    'category': '110',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full text-left">
@@ -1388,6 +1428,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/quotes-03.png',
 		    'category': '110',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column two-third"><img src="assets/minimalist-blocks/images/ai-r43cG.jpg" alt="" data-filename=" ai-49P75-editRkU0S4C.png"></div>
@@ -1407,6 +1448,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/quotes-06.png',
 		    'category': '110',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column full">
@@ -1445,6 +1487,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/partners-02.png',
 		    'category': '111',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full text-center">
@@ -1476,6 +1519,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/partners-05.png',
 		    'category': '111',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full">
@@ -1510,6 +1554,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/404-01.png',
 		    'category': '113',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full">
@@ -1556,6 +1601,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/404-02.png',
 		    'category': '113',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center">
@@ -1580,6 +1626,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/404-03.png',
 		    'category': '113',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center">
@@ -1609,6 +1656,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/404-04.png',
 		    'category': '113',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full"><i class="icon ion-android-sad size-64"></i>
@@ -1638,6 +1686,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/comingsoon-03.png',
 		    'category': '114',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full center"><i class="icon ion-laptop size-64"></i>
@@ -1659,6 +1708,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/faq-08.png',
 		    'category': '115',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full">
@@ -1697,6 +1747,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/contact-01.png',
 		    'category': '116',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row relative sm-items-1">
 				<div class="py-6 flex flex-col justify-center column half">
@@ -1729,6 +1780,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/contact-13.png',
 		    'category': '116',
+		    'viewMode': 'web',
 		    'html': `
 			<div class="row">
 				<div class="column full" style="width: 100%; flex: 0 0 auto;">
@@ -1748,6 +1800,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/about-04.png',
 		    'category': '103',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column full"><img src="assets/minimalist-blocks/images/ai-lClur.jpg" alt=""></div>
@@ -1771,6 +1824,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/about-06.png',
 		    'category': '103',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column third">
@@ -1789,6 +1843,7 @@ var data_basic = {
 		{
 			'thumbnail': 'preview/basic-codeview.png',
 			'category': '120',
+		    'viewMode': 'web',
 			'html':
 				`<div class="row">
 					<div class="column full" data-noedit data-module="codeview" data-module-desc="Code" data-dialog-height="570px" data-html="${encodeURIComponent(`
@@ -1902,6 +1957,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-pendulum.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column flex flex-col justify-center items-start">
@@ -1921,6 +1977,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-mockup.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="browser-mockup" data-cb-max-width="1400" data-cb-rotate-x="8" data-cb-rotate-y="-3" data-cb-enable-hover="true">
     <div class="app-showcase">
@@ -1943,6 +2000,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-card-list.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="card-list" data-cb-items-per-row="2" data-cb-gap="26" data-cb-aspect-ratio="16/9" data-cb-accent-color="#000000" tabindex="0" role="region" aria-label="Card list" style="position: relative; --accent-color: #000000; --accent-color-light: rgb(64, 64, 64);">
     <div class="card-list-grid grid-sortable">
@@ -1993,6 +2051,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-media-slider.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="media-slider" data-cb-items-per-slide="3" data-cb-gap="26" data-cb-aspect-ratio="3/4" tabindex="0" role="region" aria-label="Media slider" aria-roledescription="carousel" style="position: relative; overflow: hidden; --accent-color: #000000; --accent-color-light: rgb(64, 64, 64);" data-cb-accent-color="#000000" data-cb-autoplay="false" data-cb-autoplay-speed="3000" data-cb-loop="true" data-cb-pause-on-hover="true" data-cb-show-arrows="true" data-cb-show-dots="true" data-cb-show-counter="false">
     <div class="media-slider-track">
@@ -2044,6 +2103,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-hero-anim.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div class="row">
     <div class="column flex flex-col justify-center" style="width: 42.5%; flex: 0 0 auto;">
@@ -2065,6 +2125,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-logo-loop.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="logo-loop" data-cb-speed="40" data-cb-gap="60" data-cb-pause-on-hover="true" class="cb-logo-loop--fade-edges flex" data-cb-direction="left">
     <div class="logo-item">
@@ -2090,6 +2151,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-before-after.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="before-after-slider" data-cb-orientation="horizontal" data-cb-start-position="40" data-cb-show-labels="true">
     <div class="ba-container">
@@ -2111,6 +2173,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-timeline.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="timeline" data-cb-orientation="vertical" data-cb-animate="true" data-cb-accentcolor="#8b5cf6" data-cb-linewidth="2" data-cb-dotsize="14" class="timeline-vertical" role="list" aria-label="Product Roadmap" style="--timeline-accent: rgba(59, 130, 246, 1); --timeline-line-width: 2px; --timeline-dot-size: 10px;" data-cb-accent-color="rgba(59, 130, 246, 1)" data-cb-line-width="2" data-cb-dot-size="10">
     <div>
@@ -2163,6 +2226,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-accordion.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="faq" data-cb-allow-multiple="true" data-cb-open-first="true" style="--border-radius: 10px;" data-cb-border-radius="10">
     <div class="accordion-item">
@@ -2216,6 +2280,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-media-grid.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="media-grid" data-cb-columns="3" class="grid-sortable" data-cb-gap="16" data-cb-rounded="8" data-cb-content-theme="light">
 
@@ -2256,6 +2321,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-social-share.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="social-share" data-cb-show-x="true" data-cb-show-facebook="true" data-cb-show-linked-in="true" data-cb-show-whats-app="true" data-cb-show-copy-link="true" data-cb-show-more="true" data-cb-share-title="How to Build Amazing Websites" data-cb-share-text="Learn the secrets to creating stunning, high-performance websites in 2025." data-cb-label-text="Share this article" data-cb-original-content="" data-cb-alignment="center" data-cb-show-label="true">
     <div class="share-container" role="group" aria-label="Share this page" data-alignment="center" aria-labelledby="share-label-cnftppq10"><span class="share-label" id="share-label-cnftppq10">Share this article</span>
@@ -2297,6 +2363,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-cta-buttons.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="cta-buttons" data-cb-primary-padding-y="12" data-cb-primary-padding-x="24" data-cb-primary-font-size="18" data-cb-secondary-padding-y="12" data-cb-secondary-padding-x="24" data-cb-secondary-font-size="18" style="gap: 24px; flex-wrap: wrap; display: flex; justify-content: center; align-items: center;" class="flex justify-center items-center" data-cb-primary-text="Start Building" data-cb-primary-link="" data-cb-primary-style="gradient" data-cb-primary-color1="#6366f1" data-cb-primary-color2="#8b5cf6" data-cb-primary-text-color="#ffffff" data-cb-primary-border-radius="12" data-cb-primary-font-weight="true" data-cb-primary-shadow="true" data-cb-primary-hover-lift="true" data-cb-secondary-text="View Documentation" data-cb-secondary-link="" data-cb-secondary-style="outline" data-cb-secondary-color1="rgba(229, 229, 229, 1)" data-cb-secondary-color2="rgba(205, 205, 205, 1)" data-cb-secondary-text-color="#0f172a" data-cb-secondary-border-radius="12" data-cb-secondary-font-weight="true" data-cb-secondary-shadow="true" data-cb-secondary-hover-lift="false" data-cb-gap="24" data-cb-alignment="center">
     <a href="#signup" class="cta-btn primary-gradient hover-lift">
@@ -2311,6 +2378,7 @@ var data_basic = {
 		{
 		    'thumbnail': 'preview/plugin-anim-stats.png',
 		    'category': '120',
+		    'viewMode': 'web',
 		    'html': `
 <div data-cb-type="animated-stats" data-variant="minimal" data-cb-columns="4" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;" class="text-center" data-cb-alignment="center" data-cb-duration="2" data-cb-delay="0.1" data-cb-easing="ease-out" data-cb-icon-size="32" data-cb-number-size="34" data-cb-label-size="16">
     <div class="stat-item" data-target="500" data-suffix="+" data-stat-id="stat-19">

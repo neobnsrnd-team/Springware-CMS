@@ -8,11 +8,13 @@ export interface FinanceComponent {
     description: string;
     preview: string; // SVG 미리보기 경로
     html: string;    // ContentBuilder 삽입용 HTML (raw — EditClient에서 row/column으로 래핑)
+    viewMode: 'mobile' | 'web' | 'responsive';
 }
 
 export const FINANCE_COMPONENTS: FinanceComponent[] = [
     {
         id: 'app-header',
+        viewMode: 'mobile',
         label: '최상단 헤더',
         description: 'IBK 로고 + 햄버거 메뉴 버튼',
         preview: '/assets/minimalist-blocks/preview/ibk-app-header.svg',
@@ -29,6 +31,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'product-gallery',
+        viewMode: 'mobile',
         label: '금융 상품 갤러리',
         description: '예금·적금·대출 스와이프 카드',
         preview: '/assets/minimalist-blocks/preview/ibk-product-gallery.svg',
@@ -69,6 +72,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'exchange-board',
+        viewMode: 'mobile',
         label: '환율 및 금융 지수',
         description: 'USD·EUR·JPY·CNY 실시간 환율',
         preview: '/assets/minimalist-blocks/preview/ibk-exchange-board.svg',
@@ -87,6 +91,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'branch-locator',
+        viewMode: 'mobile',
         label: '영업점/ATM 위치',
         description: '지도 + 바텀시트 영업점 목록',
         preview: '/assets/minimalist-blocks/preview/ibk-branch-locator.svg',
@@ -136,6 +141,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'promo-banner',
+        viewMode: 'mobile',
         label: '홍보 배너',
         description: '스와이프 슬라이드 배너',
         preview: '/assets/minimalist-blocks/preview/ibk-promo-banner.svg',
@@ -170,6 +176,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'media-video',
+        viewMode: 'mobile',
         label: '미디어 홍보',
         description: '유튜브 영상 홍보 컴포넌트',
         preview: '/assets/minimalist-blocks/preview/ibk-media-video.svg',
@@ -184,6 +191,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'loan-calculator',
+        viewMode: 'mobile',
         label: '금융 계산기',
         description: '대출·예금·적금 탭 계산기',
         preview: '/assets/minimalist-blocks/preview/ibk-loan-calculator.svg',
@@ -303,6 +311,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'product-menu',
+        viewMode: 'mobile',
         label: '상품 메뉴',
         description: '예금·대출·펀드 등 3×3 그리드',
         preview: '/assets/minimalist-blocks/preview/ibk-product-menu.svg',
@@ -354,6 +363,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'auth-center',
+        viewMode: 'mobile',
         label: '보안·인증센터',
         description: '공동인증서·금융인증서·OTP·보안카드',
         preview: '/assets/minimalist-blocks/preview/ibk-auth-center.svg',
@@ -394,6 +404,7 @@ export const FINANCE_COMPONENTS: FinanceComponent[] = [
     },
     {
         id: 'site-footer',
+        viewMode: 'mobile',
         label: '사이트 푸터',
         description: '약관·연락처·SNS·TOP 버튼',
         preview: '/assets/minimalist-blocks/preview/ibk-site-footer.svg',

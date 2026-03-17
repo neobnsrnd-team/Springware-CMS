@@ -18,6 +18,7 @@ export interface BasicBlock {
     thumbnail: string; // 예: 'preview/basic-01b.png'
     html: string;
     category: string;
+    viewMode: 'mobile' | 'web' | 'responsive';
 }
 
 // 캔버스에 올라간 블록 하나를 나타내는 타입
