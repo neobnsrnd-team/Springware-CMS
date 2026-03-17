@@ -28,8 +28,8 @@ var data_basic = {
 		    'category': '120',
 		    'viewMode': 'web',
 		    'html': `
-			<h1>Heading 1 Text Goes Here.</h1>
-            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+			<h1>제목 텍스트를 입력하세요.</h1>
+            <p>고객님의 소중한 자산을 안전하게 관리합니다. 최적의 금융 서비스를 통해 더 나은 미래를 설계하세요. 신뢰할 수 있는 파트너로서 항상 곁에 있겠습니다.</p>
 			`	
 		},
 		{
@@ -47,12 +47,10 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column half">
-						<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-						when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+						<p>디지털 금융의 새로운 기준을 제시합니다. 편리하고 안전한 금융 서비스로 고객의 일상에 가치를 더합니다.</p>
 				</div>
 				<div class="column half">
-						<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-						when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+						<p>혁신적인 기술과 전문성을 바탕으로 최고의 금융 솔루션을 제공합니다. 고객 중심의 서비스로 신뢰를 쌓아갑니다.</p>
 				</div>
 
 			</div>
@@ -70,31 +68,31 @@ var data_basic = {
     <div class="column">
         <div data-cb-type="media-grid" data-cb-columns="3" class="grid-sortable" data-cb-gap="16" data-cb-rounded="8" data-cb-content-theme="light">
             <div class="gallery-item">
-                <img src="assets/minimalist-blocks/images/ai-MILpb.jpg" alt="Sample Title">
+                <img src="assets/minimalist-blocks/images/ai-MILpb.jpg" alt="샘플 제목">
                 <div class="item-content">
 
-                    <h4>Sample Title</h4>
-                    <div>Short descriptive text goes here</div>
+                    <h4>샘플 제목</h4>
+                    <div>간단한 설명이 들어갑니다</div>
                 </div>
             </div>
             <div class="gallery-item">
-                <img src="assets/minimalist-blocks/images/ai-2JkRP.jpg" alt="Sample Title">
+                <img src="assets/minimalist-blocks/images/ai-2JkRP.jpg" alt="샘플 제목">
 
             </div>
             <div class="gallery-item">
-                <img src="assets/minimalist-blocks/images/ai-4mQ3H.jpg" alt="Sample Title">
+                <img src="assets/minimalist-blocks/images/ai-4mQ3H.jpg" alt="샘플 제목">
                 <div class="item-content">
 
-                    <h4>Sample Title</h4>
-                    <div>Short descriptive text goes here</div>
+                    <h4>샘플 제목</h4>
+                    <div>간단한 설명이 들어갑니다</div>
                 </div>
             </div>
             <div class="gallery-item">
-                <img src="assets/minimalist-blocks/images/ai-j6Oyc.jpg" alt="Sample Title">
+                <img src="assets/minimalist-blocks/images/ai-j6Oyc.jpg" alt="샘플 제목">
                 <div class="item-content">
 
-                    <h4>Sample Title</h4>
-                    <div>Short descriptive text goes here</div>
+                    <h4>샘플 제목</h4>
+                    <div>간단한 설명이 들어갑니다</div>
                 </div>
             </div>
             <div class="gallery-item"><img src="assets/minimalist-blocks/images/ai-lMoX0.jpg" alt=""></div>
@@ -112,10 +110,10 @@ var data_basic = {
 <div class="row">
     <div class="column half" style="width: 57.6087%; flex: 0 0 auto;"><img src="assets/minimalist-blocks/images/ai-4DbMv.jpg" alt=""></div>
     <div class="column half flex justify-center flex-col items-center" style="width: 100%;">
-        <p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+        <p>고객 맞춤형 자산관리 서비스를 제공합니다. 체계적인 포트폴리오 분석으로 안정적인 수익을 추구합니다.</p>
     </div>
 </div>
-			`	
+			`
 		},
 		{
 		    'thumbnail': 'preview/basic-textslider.png',
@@ -160,26 +158,26 @@ var data_basic = {
 										<div class="glide__slides space-x-3">
 											<div class="glide__slide">
 												<div class="is-subblock flex-col" data-subblock>
-													<h3 class="font-semibold">Item 1</h3>
-													<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+													<h3 class="font-semibold">항목 1</h3>
+													<p>스마트 뱅킹으로 언제 어디서나 편리하게 금융 서비스를 이용하세요. 계좌 조회부터 이체까지 한 번에 해결할 수 있습니다.</p>
 												</div>
 											</div>
 											<div class="glide__slide">
 												<div class="is-subblock flex-col" data-subblock>
-													<h3 class="font-semibold">Item 2</h3>
-													<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+													<h3 class="font-semibold">항목 2</h3>
+													<p>맞춤형 금융 상품으로 고객님의 자산을 효과적으로 운용합니다. 전문가의 분석과 조언으로 최적의 투자 전략을 세워드립니다.</p>
 												</div>
 											</div>
 											<div class="glide__slide">
 												<div class="is-subblock flex-col" data-subblock>
-													<h3 class="font-semibold">Item 3</h3>
-													<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+													<h3 class="font-semibold">항목 3</h3>
+													<p>안전한 보안 시스템으로 고객님의 금융 정보를 철저히 보호합니다. 최신 암호화 기술을 적용하여 안심하고 거래하실 수 있습니다.</p>
 												</div>
 											</div>
 											<div class="glide__slide">
 												<div class="is-subblock flex-col" data-subblock>
-													<h3 class="font-semibold">Item 4</h3>
-													<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+													<h3 class="font-semibold">항목 4</h3>
+													<p>글로벌 금융 네트워크를 통해 해외 송금과 환전 서비스를 빠르고 정확하게 처리합니다. 합리적인 수수료로 편리하게 이용하세요.</p>
 												</div>
 											</div>
 										</div>
@@ -322,12 +320,12 @@ var data_basic = {
                             </div>
                             <div class="swiper-slide">
                                 <div class="slide-image">
-                                    <img src="assets/minimalist-blocks/images/ai-mQEub.jpg" alt="New Slide">
+                                    <img src="assets/minimalist-blocks/images/ai-mQEub.jpg" alt="새 슬라이드">
                                     <div class="slide-overlay"></div>
                                     <div class="slide-caption">
                                         <div class="is-subblock edit">
-                                            <h3 class="slide-caption-title">Discover Timeless Elegance</h3>
-                                            <p class="slide-caption-description">Experience the perfect blend of minimalist design and exceptional craftsmanship in our latest collection.</p>
+                                            <h3 class="slide-caption-title">시대를 초월한 우아함을 발견하세요</h3>
+                                            <p class="slide-caption-description">미니멀한 디자인과 탁월한 장인정신이 조화를 이룬 최신 컬렉션을 경험해보세요.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -349,20 +347,20 @@ var data_basic = {
 				<div class="column third">
 					<h2 class="size-48">01</h2>
 					<div class="spacer height-20"></div>
-					<h3 class="size-19 uppercase leading-12">Step One</h3>
-					<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+					<h3 class="size-19 uppercase leading-12">1단계</h3>
+					<p>고객의 요구사항을 분석하고 최적의 솔루션을 설계합니다.</p>
 				</div>
 				<div class="column third">
 					<h2 class="size-48">02</h2>
 					<div class="spacer height-20"></div>
-					<h3 class="size-19 uppercase leading-12">Step Two</h3>
-					<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+					<h3 class="size-19 uppercase leading-12">2단계</h3>
+					<p>전문 팀이 체계적인 프로세스로 서비스를 구현합니다.</p>
 				</div>
 				<div class="column third">
 					<h2 class="size-48">03</h2>
 					<div class="spacer height-20"></div>
-					<h3 class="size-19 uppercase leading-12">Step Three</h3>
-					<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+					<h3 class="size-19 uppercase leading-12">3단계</h3>
+					<p>지속적인 모니터링과 개선으로 최상의 결과를 보장합니다.</p>
 				</div>
 			</div>
 			`	
@@ -401,7 +399,7 @@ var data_basic = {
 				<div style="display:flex;width:100%;position:relative;margin:15px 0;background: transparent;">
 					<audio controls="" style="width:100%">
 						<source src="assets/minimalist-blocks/example.mp3" type="audio/mpeg">
-						Your browser does not support the audio element.
+						브라우저에서 오디오를 지원하지 않습니다.
 					</audio>
 				</div>
 			`	
@@ -468,26 +466,26 @@ var data_basic = {
                                 var viewer = new FormViewer(elm);
 
                                 let json = {
-    "title": "Let’s Build Something Cool!",
-    "description": "Fuel your creativity with ease.",
+    "title": "멋진 것을 함께 만들어봐요!",
+    "description": "쉽고 빠르게 창의력을 발휘하세요.",
     "elements": [
         {
-            "title": "Your Name:",
+            "title": "이름:",
             "name": "your_name",
             "type": "short-text",
             "isRequired": true,
-            "placeholder": "Enter your name"
+            "placeholder": "이름을 입력하세요"
         },
         {
-            "title": "Your Best Email:",
+            "title": "이메일:",
             "name": "email",
             "type": "email",
             "isRequired": true,
-            "placeholder": "Enter your email"
+            "placeholder": "이메일을 입력하세요"
         }
     ],
     "useSubmitButton": true,
-    "submitText": "Let’s Go!"
+    "submitText": "시작하기!"
 };
                                 
                                 const initialFormData = JSON.stringify(json);
@@ -502,7 +500,7 @@ var data_basic = {
 
                                     var btnSend = form.querySelector('.btn-submitform');
                                     
-                                    btnSend.innerHTML = '<span class="loading-icon"><svg class="animate-spin" style="margin-right:7px;width:20px;height:20px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></span>Submit';
+                                    btnSend.innerHTML = '<span class="loading-icon"><svg class="animate-spin" style="margin-right:7px;width:20px;height:20px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></span>제출';
 
                                     var data = new FormData(form);
 
@@ -517,7 +515,7 @@ var data_basic = {
                                     .then(data=>{
                                         if(!data.error) {
                                             statusInfo.innerHTML = '<div class="text-center pt-4 pb-4"><i class="bi bi-send-check size-64"></i>' +
-                                            '</div><div class="leading-14 text-center size-38 pb-4">Thanks for your submission!</div>';
+                                            '</div><div class="leading-14 text-center size-38 pb-4">제출해 주셔서 감사합니다!</div>';
                                             form.reset();
 
                                             elm.classList.add('collapsed');
@@ -526,7 +524,7 @@ var data_basic = {
                                             },300);
 
                                         } else {
-                                            statusInfo.innerHTML = '<div class="leading-14 text-center size-38 pt-4 pb-4">Oops! There was a problem submitting your form.</div>';
+                                            statusInfo.innerHTML = '<div class="leading-14 text-center size-38 pt-4 pb-4">죄송합니다. 제출 중 문제가 발생했습니다.</div>';
                                         
                                             // elm.classList.toggle('collapsed');
                                             setTimeout(function(){
@@ -535,7 +533,7 @@ var data_basic = {
                                             },300);
                                         }
 
-                                        btnSend.innerHTML = 'Submit';
+                                        btnSend.innerHTML = '제출';
                                     });
                                 }
 
@@ -553,30 +551,30 @@ var data_basic = {
 							${encodeURIComponent(`
                             {
                               "json": {
-    "title": "Let’s Build Something Cool!",
-    "description": "Fuel your creativity with ease.",
+    "title": "멋진 것을 함께 만들어봐요!",
+    "description": "쉽고 빠르게 창의력을 발휘하세요.",
     "elements": [
         {
-            "title": "Your Name:",
+            "title": "이름:",
             "name": "your_name",
             "type": "short-text",
             "isRequired": true,
-            "placeholder": "Enter your full name"
+            "placeholder": "이름을 입력하세요"
         },
         {
-            "title": "Your Best Email:",
+            "title": "이메일:",
             "name": "email",
             "type": "email",
             "isRequired": true,
-            "placeholder": "Enter your email"
+            "placeholder": "이메일을 입력하세요"
         }
     ],
     "useSubmitButton": true,
-    "submitText": "Let’s Go!"
+    "submitText": "시작하기!"
 },
-                                "thankYouMessage": "Thanks for your submission!",
-                                "errorMessage": "Oops! There was a problem submitting your form.",
-                                "buttonText": "Submit",
+                                "thankYouMessage": "제출해 주셔서 감사합니다!",
+                                "errorMessage": "죄송합니다. 제출 중 문제가 발생했습니다.",
+                                "buttonText": "제출",
                                 "hideHeader": false,
                                 "formAction": "/formsubmission"
                             }
@@ -596,8 +594,8 @@ var data_basic = {
 			<div class="row">
 				<div class="column full" data-noedit data-html="
 
-					${encodeURIComponent(`<h1 id="{id}">Lorem ipsum</h1>
-						<p>This is a custom code block. To edit, select this block and click the Settings button.</p>
+					${encodeURIComponent(`<h1 id="{id}">안녕하세요</h1>
+						<p>커스텀 코드 블록입니다. 편집하려면 블록을 선택하고 설정 버튼을 클릭하세요.</p>
 						<script>
 						var docReady = function (fn) {
 							var stateCheck = setInterval(function () {
@@ -607,7 +605,7 @@ var data_basic = {
 							}, 1);
 						};
 						docReady(function() {
-							document.querySelector(\'#{id}\').innerHTML =\'<b>Code Block</b>\';
+							document.querySelector(\'#{id}\').innerHTML =\'<b>코드 블록</b>\';
 						});
 						</script>`)}
 
@@ -627,9 +625,9 @@ var data_basic = {
 			<div class="row">
 
 				<div class="column full">
-					<h1 class="text-center leading-none size-64 font-extralight">Words From Heart</h1>
+					<h1 class="text-center leading-none size-64 font-extralight">진심을 담아</h1>
 					<div class="spacer height-20"></div>
-					<p class="text-center uppercase tracking-125 size-14" style="color: rgb(102, 102, 102);">By Selma Laursen</p>
+					<p class="text-center uppercase tracking-125 size-14" style="color: rgb(102, 102, 102);">김지은 에디터</p>
 				</div>
 			</div>
 
@@ -640,8 +638,8 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="flex flex-col justify-center column full">
-					<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. Lorem Ipsum is simply dummy text of the printing and typesetting industry.&nbsp;Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.&nbsp;</p>
-					<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. Lorem Ipsum is simply dummy text of the printing and typesetting industry.&nbsp;Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.&nbsp;<br></p>
+					<p>금융의 본질은 신뢰입니다. 오랜 시간 축적된 경험과 전문성을 바탕으로 고객 한 분 한 분께 최선의 서비스를 제공하고자 합니다.&nbsp;</p>
+					<p>변화하는 시대 속에서도 변하지 않는 가치를 지키며, 고객과 함께 성장하는 금융 파트너가 되겠습니다. 새로운 도전과 혁신을 통해 더 나은 금융 환경을 만들어 나가겠습니다.&nbsp;<br></p>
 				</div>
 			</div>
 			`	
@@ -653,10 +651,9 @@ var data_basic = {
 		    'html': `
 <div class="row relative sm-items-1">
     <div class="py-6 flex flex-col justify-center column third">
-        <h1 class="leading-none size-28 font-normal">Fascinating Places, Great Journey.</h1>
+        <h1 class="leading-none size-28 font-normal">새로운 여정, 위대한 발견.</h1>
         <div class="spacer height-20"></div>
-        <p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-            when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+        <p>다양한 금융 상품과 서비스를 통해 고객님의 꿈을 현실로 만들어 드립니다. 전문 컨설턴트가 맞춤형 재무 설계를 도와드립니다.</p>
     </div>
     <div class="flex flex-col justify-center items-center column two-third"><img src="assets/minimalist-blocks/images/ai-EiDeP.jpg" alt=""></div>
 </div>
@@ -669,7 +666,7 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full center">
-					<h1 class="size-35 font-normal">Fying High</h1>
+					<h1 class="size-35 font-normal">높이 비상하다</h1>
 					<p style="border-bottom: 2px solid #e74c3c; width: 60px; display: inline-block;"></p>
 				</div>
 			</div>
@@ -680,12 +677,12 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column half">
-					<p class="text-justify">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type.</p>
-					<p class="text-justify">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+					<p class="text-justify">디지털 전환 시대에 맞춰 금융 서비스의 혁신을 이끌어갑니다. 인공지능과 빅데이터 기술을 활용한 맞춤형 서비스로 고객 경험을 한 차원 높였습니다.</p>
+					<p class="text-justify">모바일 뱅킹부터 자산관리까지, 모든 금융 서비스를 하나의 플랫폼에서 편리하게 이용하실 수 있습니다.</p>
 				</div>
 				<div class="column half">
-					<p class="text-justify">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type.</p>
-					<p class="text-justify">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+					<p class="text-justify">글로벌 시장에서의 풍부한 경험을 바탕으로 국내외 투자 기회를 발굴합니다. 리스크 관리 전문가가 안정적인 수익 창출을 지원합니다.</p>
+					<p class="text-justify">지속 가능한 금융을 위해 ESG 경영을 실천하며, 사회적 가치와 경제적 성과를 함께 추구합니다.</p>
 				</div>
 			</div>
 			`	
@@ -699,7 +696,7 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full center">
-					<h1 class="size-42 is-title4-48 inline-block tracking-125">STUNNING</h1>
+					<h1 class="size-42 is-title4-48 inline-block tracking-125">놀라운 경험</h1>
 				</div>
 			</div>
 			`	
@@ -712,8 +709,8 @@ var data_basic = {
 			<div class="row">
 				<div class="column full center">
 					<i class="icon ion-coffee leading-none size-60"></i>
-					<h1 class="font-medium size-54">Café &amp; Bistro</h1>
-					<p><span class="italic">Lorem Ipsum is simply dummy text</span></p>
+					<h1 class="font-medium size-54">카페 &amp; 비스트로</h1>
+					<p><span class="italic">특별한 순간을 위한 공간</span></p>
 				</div>
 			</div>
 			`	
@@ -725,7 +722,7 @@ var data_basic = {
 		    'html': `
 			<div class="row clearfix">
 				<div class="column full">
-					<h1 class="normal-case tracking-tight text-center font-normal size-64 leading-11">Great things don’t have to be complicated.</h1>
+					<h1 class="normal-case tracking-tight text-center font-normal size-64 leading-11">위대한 것은 복잡할 필요가 없습니다.</h1>
 				</div>
 			</div>
 			<div class="row">
@@ -736,8 +733,8 @@ var data_basic = {
 			<div class="row">
 				<div class="column full">
 					<div class="text-center">
-						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal tracking-wide" style="background-color: rgb(240, 240, 240);">How We Work</a>
-						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">Get In Touch</a>
+						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal tracking-wide" style="background-color: rgb(240, 240, 240);">서비스 안내</a>
+						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">문의하기</a>
 					</div>
 				</div>
 			</div>
@@ -751,14 +748,14 @@ var data_basic = {
 <div class="row relative sm-items-1">
     <div class="column half" style="width: 42.1053%; flex: 0 0 auto;">
         <div class="spacer height-40"></div>
-        <h1 class="tracking-wide leading-none font-medium size-48">Build Anything Beautifully</h1>
+        <h1 class="tracking-wide leading-none font-medium size-48">아름답게 만들어보세요</h1>
         <div class="spacer height-20"></div>
-        <p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+        <p>직관적인 도구로 누구나 쉽게 멋진 결과물을 만들 수 있습니다.</p>
         <div class="spacer height-20"></div>
 
         <div class="button-group">
-            <a href="#preview" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-14 rounded-full tracking-wide" title="">Preview</a>
-            <a href="#buynow" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 text-black leading-14 rounded-full border-transparent hover:border-transparent font-normal tracking-wide" title="" style="background-color: rgb(240, 240, 240);">Buy Now</a>
+            <a href="#preview" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-14 rounded-full tracking-wide" title="">미리보기</a>
+            <a href="#buynow" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 text-black leading-14 rounded-full border-transparent hover:border-transparent font-normal tracking-wide" title="" style="background-color: rgb(240, 240, 240);">지금 구매</a>
         </div>
     </div>
     <div style="position: relative; width: 100%;" class="flex flex-col justify-center column half">
@@ -783,8 +780,8 @@ var data_basic = {
 		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid border-transparent ml-1 mr-1 hover:border-transparent rounded size-16 py-1 px-5 font-normal tracking-wide text-gray-800 underline leading-relaxed" title="">Get Started</a>
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-8 border-current hover:border-current font-normal leading-relaxed rounded-none size-15 tracking-widest" title="">View Demo</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid border-transparent ml-1 mr-1 hover:border-transparent rounded size-16 py-1 px-5 font-normal tracking-wide text-gray-800 underline leading-relaxed" title="">시작하기</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-8 border-current hover:border-current font-normal leading-relaxed rounded-none size-15 tracking-widest" title="">미리보기</a>
 			</div>
 			`	
 		},
@@ -794,8 +791,8 @@ var data_basic = {
 		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid mt-2 mb-1 py-2 size-18 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal tracking-wide underline px-2 ml-3 mr-3" data-bg="">Read More</a>
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">Get Started</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid mt-2 mb-1 py-2 size-18 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal tracking-wide underline px-2 ml-3 mr-3" data-bg="">더 알아보기</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">시작하기</a>
 			</div>
 			`	
 		},
@@ -805,8 +802,8 @@ var data_basic = {
 		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 font-normal leading-relaxed border-transparent rounded-full size-18 tracking-wide hover:border-transparent" style="color: rgb(255, 255, 255); background-color: rgb(0, 0, 0);" data-bg="rgb(0,0,0)">View Demo</a>
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">Buy Now</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 font-normal leading-relaxed border-transparent rounded-full size-18 tracking-wide hover:border-transparent" style="color: rgb(255, 255, 255); background-color: rgb(0, 0, 0);" data-bg="rgb(0,0,0)">미리보기</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">지금 구매</a>
 			</div>
 			`	
 		},
@@ -816,8 +813,8 @@ var data_basic = {
 		    'viewMode': 'web',
 		    'html': `
 			<div class="text-center">
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal size-14 uppercase tracking-125" title="" style="background-color: rgb(240, 240, 240);">Book a Call</a>
-				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full size-14 uppercase tracking-125" title=""><i class="icon ion-android-arrow-dropright"></i>&nbsp; How We Work</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 text-black leading-relaxed rounded-full border-transparent hover:border-transparent font-normal size-14 uppercase tracking-125" title="" style="background-color: rgb(240, 240, 240);">상담 예약</a>
+				<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full size-14 uppercase tracking-125" title=""><i class="icon ion-android-arrow-dropright"></i>&nbsp; 서비스 안내</a>
 			</div>
 			`	
 		},
@@ -863,7 +860,7 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column full">
-        <h1 class="text-center tracking-wide size-42 font-normal">Meet Our Team</h1>
+        <h1 class="text-center tracking-wide size-42 font-normal">팀 소개</h1>
     </div>
 </div>
 <div class="row">
@@ -875,22 +872,22 @@ var data_basic = {
     <div class="flex flex-col justify-center items-center column third px-3">
         <div class="img-circular" style="margin:25px 0 0;width: 10vw;height: 10vw;min-width:150px;min-height:150px;"><img style="height: 100%; width: 100%; object-fit: cover" src="assets/minimalist-blocks/images/ai-Ayo6y.jpg" alt="" data-filename="ai-v0kWC-editXvGHq38.png"></div>
         <p class="text-center leading-14">
-            <span class="size-19 text-center font-normal">Jennifer Clarke</span><br>
-            <span style="color: rgb(109, 109, 109);">Developer</span>
+            <span class="size-19 text-center font-normal">김민지</span><br>
+            <span style="color: rgb(109, 109, 109);">개발자</span>
         </p>
     </div>
     <div class="flex flex-col justify-center items-center column third px-3">
         <div class="img-circular" style="margin:25px 0 0;width: 10vw;height: 10vw;min-width:150px;min-height:150px;"><img style="height: 100%; width: 100%; object-fit: cover" src="assets/minimalist-blocks/images/ai-U9Mhk.jpg" alt="" data-filename="ai-5LB8u-editHA3SVGs.png"></div>
         <p class="text-center leading-14">
-            <span class="size-19 text-center font-normal">Freja E. Andersen</span><br>
-            <span style="color: rgb(109, 109, 109);">Developer</span>
+            <span class="size-19 text-center font-normal">이수진</span><br>
+            <span style="color: rgb(109, 109, 109);">개발자</span>
         </p>
     </div>
     <div class="flex flex-col justify-center items-center column third px-3">
         <div class="img-circular" style="margin:25px 0 0;width: 10vw;height: 10vw;min-width:150px;min-height:150px;"><img style="height: 100%; width: 100%; object-fit: cover" src="assets/minimalist-blocks/images/ai-wfCwM.jpg" alt="" data-filename="ai-rBr7d-editQCT5GrW.png"></div>
         <p class="text-center leading-14">
-            <span class="size-19 text-center font-normal">Nathan Williams</span><br>
-            <span style="color: rgb(109, 109, 109);">Illustrator</span>
+            <span class="size-19 text-center font-normal">박준혁</span><br>
+            <span style="color: rgb(109, 109, 109);">디자이너</span>
         </p>
     </div>
 </div>
@@ -903,7 +900,7 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column full">
-        <h3 class="text-center font-normal size-32">The Team</h3>
+        <h3 class="text-center font-normal size-32">팀원 소개</h3>
     </div>
 </div>
 <div class="row">
@@ -914,8 +911,8 @@ var data_basic = {
 <div class="row">
     <div class="column half py-4">
         <img src="assets/minimalist-blocks/images/ai-M8a3L.jpg" alt="" data-filename="ai-Woik1-editxQ8cIMT.png">
-        <h3 class="font-normal size-24">Amanda Steele</h3>
-        <p style="max-width: 400px;">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+        <h3 class="font-normal size-24">정하윤</h3>
+        <p style="max-width: 400px;">사용자 경험을 최우선으로 생각하며 직관적인 인터페이스를 설계합니다.</p>
         <div class="is-social text-left">
             <a href="https://twitter.com/"><i class="bi bi-twitter-x" style="margin-right: 1em"></i></a>
             <a href="https://www.facebook.com/"><i class="bi bi-facebook" style="margin-right: 1em"></i></a>
@@ -924,8 +921,8 @@ var data_basic = {
     </div>
     <div class="column half py-4">
         <img src="assets/minimalist-blocks/images/ai-rBm3n.jpg" alt="" data-filename="ai-O2ED1-editFBpnp2k.png">
-        <h3 class="font-normal size-24">Peter A. Lassen</h3>
-        <p style="max-width: 400px;">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+        <h3 class="font-normal size-24">최민수</h3>
+        <p style="max-width: 400px;">최신 기술 트렌드를 반영한 안정적인 시스템을 구축합니다.</p>
         <div class="is-social text-left">
             <a href="https://twitter.com/"><i class="bi bi-twitter-x" style="margin-right: 1em"></i></a>
             <a href="https://www.facebook.com/"><i class="bi bi-facebook" style="margin-right: 1em"></i></a>
@@ -942,12 +939,12 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column full text-center">
-        <h1 class="size-60 font-normal">A Passionate Team</h1>
+        <h1 class="size-60 font-normal">열정적인 팀</h1>
     </div>
 </div>
 <div class="row">
     <div class="column full">
-        <p class="text-center">We work as equals &amp; celebrate as a team.</p>
+        <p class="text-center">함께 일하고, 함께 성장합니다.</p>
     </div>
 </div>
 <div class="row">
@@ -960,20 +957,18 @@ var data_basic = {
         <div class="img-circular" style="margin:25px 0;width: 13vw;height: 13vw;min-width:150px;min-height:150px;"><img style="height: 100%; width: 100%; object-fit: cover" src="assets/minimalist-blocks/images/ai-DJgsj.jpg" alt="" data-filename="ai-obZqc-editzbfsl0b.png"></div>
     </div>
     <div class="flex flex-col justify-center column two-third">
-        <h2 class="size-21 font-normal">Elaine Moreno</h2>
-        <h3 class="font-light size-18" style="color: rgb(174, 174, 174);">Designer</h3>
+        <h2 class="size-21 font-normal">김서연</h2>
+        <h3 class="font-light size-18" style="color: rgb(174, 174, 174);">디자이너</h3>
         <div class="spacer height-20"></div>
-        <p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-            when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+        <p>창의적인 디자인과 사용자 중심의 접근으로 최적의 UI/UX를 설계합니다. 아름다움과 기능성을 모두 갖춘 인터페이스를 만듭니다.</p>
     </div>
 </div>
 <div class="row relative desktop-column-reverse md-column-reverse sm-column-reverse">
     <div class="flex flex-col justify-center column two-third">
-        <h2 class="size-21 font-normal">Janice Smith</h2>
-        <h3 class="font-light size-18" style="color: rgb(174, 174, 174);">Developer</h3>
+        <h2 class="size-21 font-normal">이지현</h2>
+        <h3 class="font-light size-18" style="color: rgb(174, 174, 174);">개발자</h3>
         <div class="spacer height-20"></div>
-        <p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-            when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+        <p>안정적이고 확장 가능한 백엔드 시스템을 구축합니다. 최신 기술 스택을 활용하여 효율적인 개발을 추구합니다.</p>
     </div>
     <div class="text-left column third flex flex-col justify-center items-center">
         <div class="img-circular" style="margin:25px 0;width: 13vw;height: 13vw;min-width:150px;min-height:150px;"><img style="height: 100%; width: 100%; object-fit: cover" src="assets/minimalist-blocks/images/ai-qugm7.jpg" alt="" data-filename="ai-49P77-editKYIzbti.png"></div>
@@ -990,7 +985,7 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column full">
-        <h2 class="text-center size-42 font-normal">Products</h2>
+        <h2 class="text-center size-42 font-normal">상품</h2>
     </div>
 </div>
 <div class="row">
@@ -1001,26 +996,24 @@ var data_basic = {
 <div class="row relative sm-items-2">
     <div class="column py-4"><img src="assets/minimalist-blocks/images/ai-FpLps.jpg" alt="">
 
-        <h3 class="font-normal size-21">Coffee Table</h3>
-        <p class="font-medium size-32">$29</p>
+        <h3 class="font-normal size-21">스마트 데스크</h3>
+        <p class="font-medium size-32">₩39,000</p>
 
-        <p class="leading-13">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-            when an unknown printer.</p>
+        <p class="leading-13">세련된 디자인과 실용성을 겸비한 프리미엄 제품으로 일상에 품격을 더합니다.</p>
         <div>
-            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide">Buy Now</a>
-            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 text-black leading-12 rounded-full border-transparent hover:border-transparent font-normal tracking-wide px-2 underline" data-bg="">View Details</a>
+            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide">지금 구매</a>
+            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 text-black leading-12 rounded-full border-transparent hover:border-transparent font-normal tracking-wide px-2 underline" data-bg="">상세 보기</a>
         </div>
     </div>
     <div class="column py-4"><img src="assets/minimalist-blocks/images/ai-bHuNq.jpg" alt="">
 
-        <h3 class="size-21 font-normal">Bookcase</h3>
-        <p class="font-medium size-32">$49</p>
+        <h3 class="size-21 font-normal">모듈러 선반</h3>
+        <p class="font-medium size-32">₩59,000</p>
 
-        <p class="leading-13">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-            when an unknown printer.</p>
+        <p class="leading-13">공간 활용도를 극대화한 모듈러 디자인으로 어떤 인테리어에도 완벽하게 어울립니다.</p>
         <div>
-            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide">Buy Now</a>
-            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 text-black leading-12 rounded-full border-transparent hover:border-transparent font-normal tracking-wide px-2 underline" data-bg="">View Details</a>
+            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide">지금 구매</a>
+            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 text-black leading-12 rounded-full border-transparent hover:border-transparent font-normal tracking-wide px-2 underline" data-bg="">상세 보기</a>
         </div>
     </div>
 </div>
@@ -1035,8 +1028,8 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full">
-					<p class="italic size-17">Discover</p>
-					<h1 class="font-medium tracking-75 size-32">HOW WE WORK</h1>
+					<p class="italic size-17">알아보기</p>
+					<h1 class="font-medium tracking-75 size-32">서비스 안내</h1>
 				</div>
 			</div>
 			<div class="row">
@@ -1046,16 +1039,16 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column third"><i class="icon ion-android-bulb size-32" style="color: #ea653c;"></i>
-					<h3 class="font-medium tracking-wide size-19">STEP ONE</h3>
-					<p>Lorem Ipsum is simply dummy text of the printing industry.</p>
+					<h3 class="font-medium tracking-wide size-19">1단계</h3>
+					<p>아이디어를 발굴하고 프로젝트의 방향을 설정합니다.</p>
 				</div>
 				<div class="column third"><i class="icon ion-compose size-32" style="color: #ea653c;"></i>
-					<h3 class="font-medium tracking-wide size-19">STEP TWO</h3>
-					<p>Lorem Ipsum is simply dummy text of the printing industry.</p>
+					<h3 class="font-medium tracking-wide size-19">2단계</h3>
+					<p>설계와 개발을 통해 아이디어를 현실로 구현합니다.</p>
 				</div>
 				<div class="column third"><i class="icon ion-gear-b size-32" style="color: #ea653c;"></i>
-					<h3 class="font-medium tracking-wide size-19">STEP THREE</h3>
-					<p>Lorem Ipsum is simply dummy text of the printing industry.</p>
+					<h3 class="font-medium tracking-wide size-19">3단계</h3>
+					<p>테스트와 최적화를 거쳐 최고의 결과물을 완성합니다.</p>
 				</div>
 			</div>
 			`	
@@ -1072,11 +1065,10 @@ var data_basic = {
 					<div class="spacer height-80"></div>
 				</div>
 				<div style="width: 52.7981%; flex: 0 0 auto;" class="column third text-center">
-					<h2 class="text-center font-normal size-28">Simple Pricing</h2>
+					<h2 class="text-center font-normal size-28">합리적인 요금제</h2>
 					<p style="border-bottom: 3px solid #000; width: 80px; display: inline-block;"></p>
 					<div class="spacer height-20"></div>
-					<p style="color: rgb(109, 109, 109);" class="text-center size-14">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-						when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+					<p style="color: rgb(109, 109, 109);" class="text-center size-14">고객님의 필요에 맞는 최적의 요금제를 선택하세요. 모든 플랜에는 기본 기능이 포함되어 있으며, 언제든지 업그레이드가 가능합니다.</p>
 				</div>
 				<div class="column third xs-hidden" style="width: 100%;">
 					<div class="spacer height-80"></div>
@@ -1092,48 +1084,48 @@ var data_basic = {
 			<div class="row relative sm-items-2">
 				<div class="column third p-7 flex flex-col justify-center items-center">
 					<div style="padding: 50px 20px; box-sizing: border-box; border: 1px solid rgb(85, 85, 85); width: 100%; max-width: 450px;" class="text-left flex justify-center flex-col items-center">
-						<h3 class="text-center tracking-widest size-21">Standard</h3>
-						<p class="size-21 text-center">$<span class="size-64">9</span>/mo</p>
+						<h3 class="text-center tracking-widest size-21">스탠다드</h3>
+						<p class="size-21 text-center">₩<span class="size-64">9,900</span>/월</p>
 
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>10 GB Storage</li>
-							<li>2 Users</li>
-							<li>2 Domains</li>
+							<li>10 GB 저장공간</li>
+							<li>2명 사용자</li>
+							<li>2개 도메인</li>
 						</ul>
 						<div class="spacer height-20"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide" title="">Buy Now</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide" title="">지금 구매</a>
 						</div>
 					</div>
 				</div>
 				<div class="column third p-7 flex flex-col justify-center items-center">
 					<div style="padding: 90px 30px; width: 100%; box-sizing: border-box; border: 1px solid rgb(85, 85, 85); max-width: 450px;" class="text-left flex justify-center flex-col items-center">
-						<h3 class="text-center tracking-widest size-21">Deluxe</h3>
-						<p class="size-21 text-center">$<span class="size-64">19</span>/mo</p>
+						<h3 class="text-center tracking-widest size-21">디럭스</h3>
+						<p class="size-21 text-center">₩<span class="size-64">19,900</span>/월</p>
 
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>20 GB Storage</li>
-							<li>5 Users</li>
-							<li>3 Domains</li>
+							<li>20 GB 저장공간</li>
+							<li>5명 사용자</li>
+							<li>3개 도메인</li>
 						</ul>
 						<div class="spacer height-20"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide" title="">Buy Now</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide" title="">지금 구매</a>
 						</div>
 					</div>
 				</div>
 				<div class="column third p-7 flex flex-col justify-center items-center">
 					<div style="padding: 50px 20px; width: 100%; box-sizing: border-box; border: 1px solid rgb(85, 85, 85); max-width: 450px;" class="text-left flex justify-center flex-col items-center">
-						<h3 class="text-center tracking-widest capitalize size-21">Ultimate</h3>
-						<p class="size-21 text-center">$<span class="size-64">29</span>/mo</p>
+						<h3 class="text-center tracking-widest capitalize size-21">얼티밋</h3>
+						<p class="size-21 text-center">₩<span class="size-64">29,900</span>/월</p>
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>30 GB Storage</li>
-							<li>10 Users</li>
-							<li>Unlimited Domains</li>
+							<li>30 GB 저장공간</li>
+							<li>10명 사용자</li>
+							<li>무제한 도메인</li>
 						</ul>
 						<div class="spacer height-20"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide" title="">Buy Now</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-7 border-current hover:border-current font-normal leading-12 rounded-full tracking-wide" title="">지금 구매</a>
 						</div>
 					</div>
 				</div>
@@ -1148,9 +1140,9 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full center">
-					<h2 class="tracking-wide capitalize size-42 font-normal">Plans that meet your needs</h2>
+					<h2 class="tracking-wide capitalize size-42 font-normal">필요에 맞는 요금제</h2>
 					<div class="spacer height-20"></div>
-					<p class="size-17 tracking-widest" style="color: rgb(87, 87, 87);">Fair Prices. Excellent Services.</p>
+					<p class="size-17 tracking-widest" style="color: rgb(87, 87, 87);">합리적인 가격. 최고의 서비스.</p>
 				</div>
 
 			</div>
@@ -1163,37 +1155,37 @@ var data_basic = {
 			<div class="row relative">
 				<div class="flex flex-col justify-center items-center column half py-4">
 					<div style="width: 100%; padding: 50px 30px; box-sizing: border-box; max-width: 450px;" class="is-card shadow-1 text-left flex justify-center flex-col items-center">
-						<h3 class="size-21 tracking-wider">Standard</h3>
+						<h3 class="size-21 tracking-wider">스탠다드</h3>
 						<div class="spacer height-20"></div>
-						<p class="size-21 leading-none">$<span class="size-72 font-extralight">19</span>/mo</p>
-						<p style="color: rgb(123, 123, 123);">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s</p>
+						<p class="size-21 leading-none">₩<span class="size-72 font-extralight">19,900</span>/월</p>
+						<p style="color: rgb(123, 123, 123);">기본적인 기능을 합리적인 가격에 이용할 수 있는 플랜입니다.</p>
 
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>Feature One</li>
-							<li>Feature Two</li>
-							<li>Feature Three</li>
+							<li>기능 1</li>
+							<li>기능 2</li>
+							<li>기능 3</li>
 						</ul>
 						<div class="spacer height-40"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">Buy Now</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">지금 구매</a>
 						</div>
 					</div>
 				</div>
 				<div class="flex flex-col justify-center items-center column half py-4">
 					<div style="width: 100%; padding: 80px 40px; box-sizing: border-box; max-width: 550px;" class="is-card shadow-1 text-left flex justify-center flex-col items-center">
-						<h3 class="size-21 tracking-wider">Pro</h3>
+						<h3 class="size-21 tracking-wider">프로</h3>
 						<div class="spacer height-20"></div>
-						<p class="size-21 leading-none">$<span class="size-72 font-extralight">29</span>/mo</p>
-						<p style="color: rgb(123, 123, 123);">Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+						<p class="size-21 leading-none">₩<span class="size-72 font-extralight">29,900</span>/월</p>
+						<p style="color: rgb(123, 123, 123);">고급 기능과 우선 지원이 포함된 전문가용 플랜입니다.</p>
 
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>Feature One</li>
-							<li>Feature Two</li>
-							<li>Feature Three</li>
+							<li>기능 1</li>
+							<li>기능 2</li>
+							<li>기능 3</li>
 						</ul>
 						<div class="spacer height-40"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">Buy Now</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">지금 구매</a>
 						</div>
 					</div>
 				</div>
@@ -1208,8 +1200,8 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full center">
-					<h1 class="size-35 font-medium tracking-wider">SUBSCRIPTION PLANS</h1>
-					<p>Choose the right plan that works for you.</p>
+					<h1 class="size-35 font-medium tracking-wider">구독 요금제</h1>
+					<p>나에게 맞는 최적의 플랜을 선택하세요.</p>
 				</div>
 
 			</div>
@@ -1222,55 +1214,55 @@ var data_basic = {
 			<div class="row relative sm-items-2">
 				<div class="column third flex flex-col justify-center items-center py-4">
 					<div style="width: 100%; padding: 50px 30px; box-sizing: border-box; max-width: 450px;" class="is-card shadow-1 text-left flex justify-center flex-col items-center">
-						<h3 class="size-21 tracking-wider">Standard</h3>
+						<h3 class="size-21 tracking-wider">스탠다드</h3>
 						<div class="spacer height-20"></div>
-						<p class="size-21 leading-none font-semibold">$<span class="size-64">19</span>/mo</p>
-						<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+						<p class="size-21 leading-none font-semibold">₩<span class="size-64">19,900</span>/월</p>
+						<p>기본 기능을 합리적인 가격으로 이용할 수 있습니다.</p>
 
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>Feature One</li>
-							<li>Feature Two</li>
-							<li>Feature Three</li>
+							<li>기능 1</li>
+							<li>기능 2</li>
+							<li>기능 3</li>
 						</ul>
 						<div class="spacer height-20"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">Select Plan</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">플랜 선택</a>
 						</div>
 					</div>
 				</div>
 				<div class="column third flex flex-col justify-center items-center py-4 is-light-text">
 					<div style="width: 100%; padding: 80px 40px; box-sizing: border-box; max-width: 550px; background-color: rgb(2, 136, 216);" class="is-card shadow-1 text-left flex justify-center flex-col items-center">
-						<h3 class="size-21 tracking-wider">Deluxe</h3>
+						<h3 class="size-21 tracking-wider">디럭스</h3>
 						<div class="spacer height-20"></div>
-						<p class="size-21 leading-none font-semibold">$<span class="size-64">29</span>/mo</p>
-						<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+						<p class="size-21 leading-none font-semibold">₩<span class="size-64">29,900</span>/월</p>
+						<p>더 많은 기능과 용량으로 업무 효율을 높여줍니다.</p>
 
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>Feature One</li>
-							<li>Feature Two</li>
-							<li>Feature Three</li>
+							<li>기능 1</li>
+							<li>기능 2</li>
+							<li>기능 3</li>
 						</ul>
 						<div class="spacer height-20"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">Select Plan</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">플랜 선택</a>
 						</div>
 					</div>
 				</div>
 				<div class="column third flex flex-col justify-center items-center py-4 is-light-text">
 					<div style="width: 100%; padding: 50px 30px; box-sizing: border-box; max-width: 450px; background-color: rgb(249, 168, 37);" class="is-card shadow-1 text-left flex justify-center flex-col items-center">
-						<h3 class="size-21 tracking-wider">Ultimate</h3>
+						<h3 class="size-21 tracking-wider">얼티밋</h3>
 						<div class="spacer height-20"></div>
-						<p class="size-21 leading-none font-semibold">$<span class="size-64">39</span>/mo</p>
-						<p>Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.</p>
+						<p class="size-21 leading-none font-semibold">₩<span class="size-64">39,900</span>/월</p>
+						<p>모든 프리미엄 기능을 무제한으로 사용할 수 있습니다.</p>
 
 						<ul style="list-style: initial;padding-left: 20px;">
-							<li>Feature One</li>
-							<li>Feature Two</li>
-							<li>Feature Three</li>
+							<li>기능 1</li>
+							<li>기능 2</li>
+							<li>기능 3</li>
 						</ul>
 						<div class="spacer height-20"></div>
 						<div class="button-group">
-							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">Select Plan</a>
+							<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-17 px-6 border-current hover:border-current font-normal leading-12 rounded tracking-wide" title="">플랜 선택</a>
 						</div>
 					</div>
 				</div>
@@ -1287,7 +1279,7 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full">
-					<h1 class="text-center font-normal">Our Expertise</h1>
+					<h1 class="text-center font-normal">전문 분야</h1>
 				</div>
 
 			</div>
@@ -1299,16 +1291,16 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column third"><i class="icon ion-ios-lightbulb-outline size-35"></i>
-					<h4 class="font-normal size-19">UI/UX</h4>
-					<p>Lorem Ipsum is dummy text of the printing industry.</p>
+					<h4 class="font-normal size-19">UI/UX 디자인</h4>
+					<p>사용자 중심의 직관적인 인터페이스를 설계합니다.</p>
 				</div>
 				<div class="column third"><i class="icon ion-ios-heart-outline size-35"></i>
-					<h4 class="font-normal size-19">Full Stack Development</h4>
-					<p>Lorem Ipsum is dummy text of the printing industry.</p>
+					<h4 class="font-normal size-19">풀스택 개발</h4>
+					<p>프론트엔드부터 백엔드까지 통합 개발을 수행합니다.</p>
 				</div>
 				<div class="column third"><i class="icon ion-ios-list-outline size-35"></i>
-					<h4 class="font-normal size-19">Illustration</h4>
-					<p>Lorem Ipsum is dummy text of the printing industry.</p>
+					<h4 class="font-normal size-19">일러스트레이션</h4>
+					<p>브랜드 아이덴티티를 살린 비주얼 콘텐츠를 제작합니다.</p>
 				</div>
 
 			</div>
@@ -1320,16 +1312,16 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column third"><i class="icon ion-ios-camera-outline size-35"></i>
-					<h4 class="font-normal"><span class="size-19">Video Explainer</span></h4>
-					<p>Lorem Ipsum is dummy text of the printing industry.</p>
+					<h4 class="font-normal"><span class="size-19">영상 제작</span></h4>
+					<p>임팩트 있는 영상 콘텐츠로 메시지를 전달합니다.</p>
 				</div>
 				<div class="column third"><i class="icon ion-ios-locked-outline size-35"></i>
-					<h4 class="font-normal"><span class="size-19">Branding</span></h4>
-					<p>Lorem Ipsum is dummy text of the printing industry.</p>
+					<h4 class="font-normal"><span class="size-19">브랜딩</span></h4>
+					<p>일관된 브랜드 경험을 위한 전략을 수립합니다.</p>
 				</div>
 				<div class="column third"><i class="icon ion-ios-world-outline size-35"></i>
-					<h4><span class="font-normal size-19">Marketing</span></h4>
-					<p>Lorem Ipsum is dummy text of the printing industry.</p>
+					<h4><span class="font-normal size-19">마케팅</span></h4>
+					<p>데이터 기반의 효과적인 마케팅 전략을 실행합니다.</p>
 				</div>
 
 			</div>
@@ -1344,8 +1336,8 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full">
-					<p class="uppercase tracking-300 leading-18 size-12" style="color: rgb(109, 109, 109);">Achievements</p>
-					<h1 class="font-light size-35">Why we are so awesome.</h1>
+					<p class="uppercase tracking-300 leading-18 size-12" style="color: rgb(109, 109, 109);">성과</p>
+					<h1 class="font-light size-35">우리가 특별한 이유.</h1>
 				</div>
 			</div>
 			<div class="row">
@@ -1359,27 +1351,27 @@ var data_basic = {
 						<i class="icon ion-ios-heart-outline size-48"></i>
 					</div>
 					<h2 class="leading-12 size-35">100%</h2>
-					<h3 class="leading-12 tracking-wide size-19 font-light">Satisfaction</h3>
+					<h3 class="leading-12 tracking-wide size-19 font-light">고객 만족도</h3>
 					<div class="spacer height-20"></div>
-					<p style="color: rgb(109, 109, 109);" class="leading-13">Lorem Ipsum is simply dummy text of the printing industry.</p>
+					<p style="color: rgb(109, 109, 109);" class="leading-13">최고 수준의 서비스 품질로 고객 만족을 실현합니다.</p>
 				</div>
 				<div class="column third">
 					<div class="text-left leading-14">
 						<i class="icon ion-ios-people-outline size-48"></i>
 					</div>
 					<h2 class="leading-12 size-35">1.234</h2>
-					<h3 class="leading-12 size-19 tracking-wide font-light">Happy Clients</h3>
+					<h3 class="leading-12 size-19 tracking-wide font-light">만족한 고객</h3>
 					<div class="spacer height-20"></div>
-					<p style="color: rgb(109, 109, 109);" class="leading-13">Lorem Ipsum is simply dummy text of the printing industry.</p>
+					<p style="color: rgb(109, 109, 109);" class="leading-13">지속적인 신뢰 관계를 구축하며 함께 성장합니다.</p>
 				</div>
 				<div class="column third">
 					<div class="text-left leading-14">
 						<i class="icon ion-ios-compose-outline size-48"></i>
 					</div>
 					<h2 class="leading-12 size-35">567</h2>
-					<h3 class="leading-12 size-19 tracking-wide font-light">Projects Done</h3>
+					<h3 class="leading-12 size-19 tracking-wide font-light">완료된 프로젝트</h3>
 					<div class="spacer height-20"></div>
-					<p style="color: rgb(109, 109, 109);" class="leading-13">Lorem Ipsum is simply dummy text of the printing industry.</p>
+					<p style="color: rgb(109, 109, 109);" class="leading-13">다양한 분야에서 성공적인 프로젝트를 수행했습니다.</p>
 				</div>
 			</div>
 			`	
@@ -1407,7 +1399,7 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column full">
-					<h1 class="size-32 leading-11">[Company Name] provide us with a forward thinking and well placed service. This has made significant impact on the efficiency and stability of our network.</h1>
+					<h1 class="size-32 leading-11">[회사명]은 앞서가는 사고와 체계적인 서비스를 제공해 주었습니다. 이는 우리 네트워크의 효율성과 안정성에 큰 영향을 미쳤습니다.</h1>
 				</div>
 
 			</div>
@@ -1419,7 +1411,7 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column full">
-					<p class="italic tracking-wider">— A User</p>
+					<p class="italic tracking-wider">— 사용자</p>
 				</div>
 
 			</div>
@@ -1438,9 +1430,9 @@ var data_basic = {
             <i class="icon ion-quote size-28"></i>
         </div>
 
-        <p class="size-21 leading-14">It's easy to use, customizable, and user-friendly. A truly amazing features.</p>
+        <p class="size-21 leading-14">사용하기 쉽고, 맞춤 설정이 가능하며, 사용자 친화적입니다. 정말 놀라운 기능입니다.</p>
 
-        <p style="color: rgb(138, 138, 138);">- A User</p>
+        <p style="color: rgb(138, 138, 138);">- 사용자</p>
     </div>
 </div>
 			`	
@@ -1452,7 +1444,7 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column full">
-        <h1 class="text-center size-35 font-normal">Their Stories</h1>
+        <h1 class="text-center size-35 font-normal">고객의 이야기</h1>
     </div>
 </div>
 <div class="row">
@@ -1467,8 +1459,8 @@ var data_basic = {
             <i class="icon ion-quote size-28"></i>
         </div>
 
-        <h3 class="size-19 font-light">"Lorem Ipsum is simply dummy text of the printing and typesetting industry"</h3>
-        <p class="tracking-wider size-16" style="color: rgb(102, 102, 102);">— A Client</p>
+        <h3 class="size-19 font-light">"서비스 품질이 뛰어나고 고객 응대가 정말 훌륭합니다"</h3>
+        <p class="tracking-wider size-16" style="color: rgb(102, 102, 102);">— 고객</p>
     </div>
     <div class="text-center flex flex-col justify-center items-center column" style="width: 50%; flex: 0 0 auto;"><img src="assets/minimalist-blocks/images/ai-8ABNg.jpg" alt="" data-filename="ai-3A86k-edithSvRhPC.png">
         <div class="spacer height-20"></div>
@@ -1476,8 +1468,8 @@ var data_basic = {
             <i class="icon ion-quote size-28"></i>
         </div>
 
-        <h3 class="size-19 font-light">"Lorem Ipsum is simply dummy text of the printing and typesetting industry"</h3>
-        <p class="tracking-wider size-16" style="color: rgb(102, 102, 102);">— A Client</p>
+        <h3 class="size-19 font-light">"서비스 품질이 뛰어나고 고객 응대가 정말 훌륭합니다"</h3>
+        <p class="tracking-wider size-16" style="color: rgb(102, 102, 102);">— 고객</p>
     </div>
 </div>
 			`	
@@ -1491,7 +1483,7 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full text-center">
-					<h1 class="leading-18 text-center tracking-wide size-35">Our Lovely Clients</h1>
+					<h1 class="leading-18 text-center tracking-wide size-35">소중한 고객사</h1>
 					<p style="border-bottom: 3px solid; width: 80px; display: inline-block;"></p>
 				</div>
 
@@ -1523,8 +1515,8 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full">
-					<h1 class="size-42"><span class="font-semibold tracking-wide size-35">Serving Clients with Passion.</span></h1>
-					<p class="size-16">We are globally recognized and trusted by the world's best names.</p>
+					<h1 class="size-42"><span class="font-semibold tracking-wide size-35">열정으로 고객을 섬깁니다.</span></h1>
+					<p class="size-16">세계 최고의 기업들이 신뢰하고 인정하는 파트너입니다.</p>
 					<hr style="border-top: 3px solid #111;width: 60px;margin: 20px 0;">
 				</div>
 
@@ -1571,14 +1563,14 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column full">
-					<h1 class="is-title1-48 is-title-lite leading-none font-light text-center size-42">Page Not Found</h1>
+					<h1 class="is-title1-48 is-title-lite leading-none font-light text-center size-42">페이지를 찾을 수 없습니다</h1>
 					<div class="spacer height-20"></div>
 				</div>
 
 			</div>
 			<div class="row">
 				<div class="column full">
-					<p class="size-19 text-center" style="color: rgb(109, 109, 109);">The page you requested couldn't be found. This could be a spelling error in the URL or a removed page.</p>
+					<p class="size-19 text-center" style="color: rgb(109, 109, 109);">요청하신 페이지를 찾을 수 없습니다. URL의 오타이거나 삭제된 페이지일 수 있습니다.</p>
 				</div>
 
 			</div>
@@ -1591,7 +1583,7 @@ var data_basic = {
 			<div class="row">
 				<div class="column full">
 					<div class="text-center button-group">
-						<a href="#" role="button" class="transition-all inline-block cursor-pointer no-underline border-2 border-solid mr-1 mt-2 mb-2 tracking-75 py-2 border-current text-black hover:border-current font-normal ml-1 leading-relaxed rounded-full px-11 size-13" onmouseover="if(this.getAttribute('data-hover-bg'))this.style.backgroundColor=this.getAttribute('data-hover-bg');" onmouseout="if(this.getAttribute('data-bg'))this.style.backgroundColor=this.getAttribute('data-bg');else this.style.backgroundColor=''">Back to Home</a>
+						<a href="#" role="button" class="transition-all inline-block cursor-pointer no-underline border-2 border-solid mr-1 mt-2 mb-2 tracking-75 py-2 border-current text-black hover:border-current font-normal ml-1 leading-relaxed rounded-full px-11 size-13" onmouseover="if(this.getAttribute('data-hover-bg'))this.style.backgroundColor=this.getAttribute('data-hover-bg');" onmouseout="if(this.getAttribute('data-bg'))this.style.backgroundColor=this.getAttribute('data-bg');else this.style.backgroundColor=''">홈으로</a>
 					</div>
 				</div>
 
@@ -1606,9 +1598,9 @@ var data_basic = {
 			<div class="row">
 				<div class="column full center">
 					<i class="icon ion-alert-circled size-64"></i>
-					<h1 class="size-42 is-title2-48 is-title-lite">Oops, page not found.</h1>
+					<h1 class="size-42 is-title2-48 is-title-lite">앗, 페이지를 찾을 수 없습니다.</h1>
 					<div class="spacer height-20"></div>
-					<p style="color: rgb(109, 109, 109);">The page you are looking for might have been removed, had its name changed, or temporarily unavailable.</p>
+					<p style="color: rgb(109, 109, 109);">찾으시는 페이지가 삭제되었거나 이름이 변경되었을 수 있습니다. 일시적으로 이용할 수 없는 상태일 수도 있습니다.</p>
 					<div class="spacer height-20"></div>
 				</div>
 
@@ -1616,7 +1608,7 @@ var data_basic = {
 			<div class="row">
 				<div class="column full">
 					<div class="text-center button-group">
-						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full size-14 uppercase tracking-125">HomePage</a>
+						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full size-14 uppercase tracking-125">홈페이지</a>
 					</div>
 				</div>
 
@@ -1631,9 +1623,9 @@ var data_basic = {
 			<div class="row">
 				<div class="column full center">
 					<h1 class="size-196 leading-none tracking-wider" style="margin-bottom: 10px;">404</h1>
-					<h3 class="size-28 tracking-225">PAGE NOT FOUND</h3>
+					<h3 class="size-28 tracking-225">페이지를 찾을 수 없습니다</h3>
 					<div class="spacer height-20"></div>
-					<p style="color: rgb(109, 109, 109);">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+					<p style="color: rgb(109, 109, 109);">찾으시는 페이지가 삭제되었거나 이름이 변경되었을 수 있습니다. 일시적으로 이용할 수 없는 상태일 수도 있습니다.</p>
 				</div>
 
 			</div>
@@ -1646,7 +1638,7 @@ var data_basic = {
 			<div class="row">
 				<div class="column full">
 					<div class="text-center button-group">
-						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 border-current hover:border-current font-normal leading-relaxed rounded size-14 uppercase pt-2 pb-2 px-8 tracking-75">Back to Home</a>
+						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 border-current hover:border-current font-normal leading-relaxed rounded size-14 uppercase pt-2 pb-2 px-8 tracking-75">홈으로</a>
 					</div>
 				</div>
 
@@ -1660,8 +1652,8 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full"><i class="icon ion-android-sad size-64"></i>
-					<h1 class="is-title1-48 is-title-lite size-42">Something's wrong here... </h1>
-					<p class="size-21">The page you requested couldn't be found. This could be a spelling error in the URL or a removed page.</p>
+					<h1 class="is-title1-48 is-title-lite size-42">무언가 잘못되었습니다... </h1>
+					<p class="size-21">요청하신 페이지를 찾을 수 없습니다. URL의 오타이거나 삭제된 페이지일 수 있습니다.</p>
 				</div>
 
 			</div>
@@ -1674,7 +1666,7 @@ var data_basic = {
 			<div class="row">
 				<div class="column full">
 					<div style="white-space: nowrap;">
-						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">Back to Home</a>
+						<a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mr-2 mt-2 mb-1 py-2 size-18 px-9 border-current hover:border-current font-normal leading-relaxed rounded-full tracking-wide">홈으로</a>
 					</div>
 				</div>
 
@@ -1690,8 +1682,8 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full center"><i class="icon ion-laptop size-64"></i>
-					<h1 class="size-35 is-title2-48 is-title-lite font-semibold">SITE IS UNDER MAINTENANCE </h1>
-					<p class="size-21">Please check back in sometime.</p>
+					<h1 class="size-35 is-title2-48 is-title-lite font-semibold">사이트 점검 중입니다 </h1>
+					<p class="size-21">잠시 후 다시 방문해 주세요.</p>
 					<div class="spacer height-40"></div>
 					<div class="is-social edit size-21">
 						<a href="https://twitter.com/"><i class="bi bi-twitter-x" style="margin-right: 1em"></i></a>
@@ -1712,7 +1704,7 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full">
-					<h1 class="size-28 text-center tracking-wide font-normal">Frequently Asked Questions</h1>
+					<h1 class="size-28 text-center tracking-wide font-normal">자주 묻는 질문</h1>
 				</div>
 			</div>
 			<div class="row">
@@ -1722,22 +1714,22 @@ var data_basic = {
 			</div>
 			<div class="row">
 				<div class="column half"><i class="icon ion-android-cart size-28" style="color: rgb(174, 174, 174);"></i>
-					<p class="font-normal size-19">How can I buy your product?</p>
-					<p style="color: rgb(138, 138, 138); max-width: 600px;">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+					<p class="font-normal size-19">상품은 어떻게 구매하나요?</p>
+					<p style="color: rgb(138, 138, 138); max-width: 600px;">홈페이지에서 원하는 상품을 선택한 후 간편하게 구매하실 수 있습니다.</p>
 				</div>
 				<div class="column half"><i class="icon ion-earth size-28" style="color: rgb(174, 174, 174);"></i>
-					<p class="font-normal size-19">Do you ship internationally?</p>
-					<p style="color: rgb(138, 138, 138); max-width: 600px;">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+					<p class="font-normal size-19">해외 배송이 가능한가요?</p>
+					<p style="color: rgb(138, 138, 138); max-width: 600px;">네, 전 세계 대부분의 지역으로 배송 서비스를 제공하고 있습니다.</p>
 				</div>
 			</div>
 			<div class="row">
 				<div class="column half"><i class="icon ion-card size-28" style="color: rgb(174, 174, 174);"></i>
-					<p class="font-normal size-19">What payment methods are accepted?</p>
-					<p style="color: rgb(138, 138, 138); max-width: 600px;">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+					<p class="font-normal size-19">어떤 결제 수단을 사용할 수 있나요?</p>
+					<p style="color: rgb(138, 138, 138); max-width: 600px;">신용카드, 계좌이체, 간편결제 등 다양한 결제 수단을 지원합니다.</p>
 				</div>
 				<div class="column half"><i class="icon ion-arrow-swap size-28" style="color: rgb(174, 174, 174);"></i>
-					<p class="font-normal size-19">What should I do if my product arrives damaged or is not what I ordered?</p>
-					<p style="color: rgb(138, 138, 138); max-width: 600px;">Lorem Ipsum is dummy text of the printing.</p>
+					<p class="font-normal size-19">상품이 파손되었거나 주문과 다른 경우 어떻게 하나요?</p>
+					<p style="color: rgb(138, 138, 138); max-width: 600px;">고객센터로 연락 주시면 신속하게 교환 또는 환불 처리해 드립니다.</p>
 				</div>
 			</div>
 			`	
@@ -1751,16 +1743,14 @@ var data_basic = {
 		    'html': `
 			<div class="row relative sm-items-1">
 				<div class="py-6 flex flex-col justify-center column half">
-					<p class="uppercase size-12 tracking-125 text-left" style="color: rgb(102, 102, 102);">Your Company Name</p>
-					<h1 class="leading-none size-42 text-left font-normal">Get In Touch</h1>
+					<p class="uppercase size-12 tracking-125 text-left" style="color: rgb(102, 102, 102);">회사 이름</p>
+					<h1 class="leading-none size-42 text-left font-normal">문의하기</h1>
 					<div class="spacer height-20"></div>
 
-					<p style="color: rgb(109, 109, 109);" class="text-left">12345 Street Name, City. State 12345
-						<br>P: (123) 456 7890 / 456 7891.
+					<p style="color: rgb(109, 109, 109);" class="text-left">서울특별시 강남구 테헤란로 123
+						<br>전화: 02-1234-5678 / 02-1234-5679
 					</p>
-					<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-						Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-						when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+					<p>언제든지 편하게 문의해 주세요. 전문 상담원이 친절하고 신속하게 답변드리겠습니다. 고객님의 소중한 의견에 항상 귀 기울이겠습니다.</p>
 					<div class="spacer height-20"></div>
 					<div class="is-social text-center">
 						<a href="https://twitter.com/"><i class="bi bi-twitter-x" style="margin-right: 1em"></i></a>
@@ -1784,7 +1774,7 @@ var data_basic = {
 		    'html': `
 			<div class="row">
 				<div class="column full" style="width: 100%; flex: 0 0 auto;">
-					<h1 class="size-28 font-normal text-center">Have questions? Give us a call <span style="color: rgb(230, 126, 34);">0 123 456 78 90</span></h1>
+					<h1 class="size-28 font-normal text-center">궁금한 점이 있으신가요? 전화주세요 <span style="color: rgb(230, 126, 34);">02-1234-5678</span></h1>
 					<div class="spacer height-40"></div>
 					<div class="is-social  text-center size-18">
                         <a href="https://twitter.com/"><i class="bi bi-twitter-x" style="margin-right: 1em"></i></a>
@@ -1807,16 +1797,16 @@ var data_basic = {
 </div>
 <div class="row">
     <div class="column full pt-2">
-        <h1 class="tracking-wide">Our Story</h1>
+        <h1 class="tracking-wide">우리의 이야기</h1>
         <p style="border-bottom: 2px solid #f49400;width: 70px;display: inline-block;margin-top: 0;"></p>
     </div>
 </div>
 <div class="row">
     <div class="column two-third">
-        <p class="text-justify">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+        <p class="text-justify">고객 중심의 가치를 실현하기 위해 끊임없이 노력하고 있습니다. 혁신적인 기술과 풍부한 경험을 바탕으로 최고의 금융 서비스를 제공하며, 고객과 함께 성장해 나가고 있습니다.</p>
     </div>
     <div class="column third">
-        <p class="size-14" style="color: rgb(138, 138, 138);">1st floor, Building Name. <br>Street Name, City. State 456.<br>Phone: (123) 456 7890</p>
+        <p class="size-14" style="color: rgb(138, 138, 138);">서울특별시 강남구 <br>테헤란로 123, 1층<br>전화: 02-1234-5678</p>
     </div>
 </div>
 			`	
@@ -1828,11 +1818,11 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column third">
-        <h1 class="size-28" style="margin-top: 15px;"><span class="font-semibold">Who</span> We Are</h1>
+        <h1 class="size-28" style="margin-top: 15px;"><span class="font-semibold">회사</span> 소개</h1>
         <p style="border-bottom: 2px solid #000;width: 30px;display: inline-block;margin-top: 0;"></p>
     </div>
     <div class="column two-third pb-5">
-        <p class="text-justify">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type.</p>
+        <p class="text-justify">우리는 디지털 혁신을 선도하는 팀입니다. 최신 기술과 창의적인 아이디어를 결합하여 고객에게 최고의 가치를 전달합니다.</p>
     </div>
 </div>
 <div class="row">
@@ -1852,10 +1842,10 @@ var data_basic = {
 							<svg width="16" height="16" style="margin-right:3px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-sm">
 								<path fill-rule="evenodd" clip-rule="evenodd" d="M12 4C10.8954 4 10 4.89543 10 6H14C14 4.89543 13.1046 4 12 4ZM8.53513 4C9.22675 2.8044 10.5194 2 12 2C13.4806 2 14.7733 2.8044 15.4649 4H17C18.6569 4 20 5.34315 20 7V19C20 20.6569 18.6569 22 17 22H7C5.34315 22 4 20.6569 4 19V7C4 5.34315 5.34315 4 7 4H8.53513ZM8 6H7C6.44772 6 6 6.44772 6 7V19C6 19.5523 6.44772 20 7 20H17C17.5523 20 18 19.5523 18 19V7C18 6.44772 17.5523 6 17 6H16C16 7.10457 15.1046 8 14 8H10C8.89543 8 8 7.10457 8 6Z" fill="currentColor"></path>
 							</svg>
-							Copy Code</button><!-- Tooltip element below the button -->
-                            <div id="tooltip{id}" style="display: none; margin-top: 25px; background-color: #333; color: #fff; padding: 5px 10px; border-radius: 4px; position: absolute; z-index: 1; font-size: 12px;">Copied.</div>
+							코드 복사</button><!-- Tooltip element below the button -->
+                            <div id="tooltip{id}" style="display: none; margin-top: 25px; background-color: #333; color: #fff; padding: 5px 10px; border-radius: 4px; position: absolute; z-index: 1; font-size: 12px;">복사됨.</div>
 						</div>
-						<pre id="{id}" class="language-markup" style="font-size:14px;background-color: #f4f4f4;padding: 12px 16px;text-wrap: wrap;">&lt;h1>Hello World&lt;/h1></pre>
+						<pre id="{id}" class="language-markup" style="font-size:14px;background-color: #f4f4f4;padding: 12px 16px;text-wrap: wrap;">&lt;h1>안녕하세요&lt;/h1></pre>
 						<scr`+`ipt>
 							var docReady = function(fn) {
 								var stateCheck = setInterval(function() {
@@ -1943,7 +1933,7 @@ var data_basic = {
 						data-settings="${encodeURIComponent(`
 							
 							{
-								"code": "<h1>Hello World<h1>",
+								"code": "<h1>안녕하세요<h1>",
 								"theme": "none"
 							}
 
@@ -1961,10 +1951,10 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column flex flex-col justify-center items-start">
-        <h1 class="font-medium size-35">AI-Powered Data Science Solutions</h1>
-        <p>Transform your data into actionable insights with cutting-edge machine learning and advanced analytics.</p>
+        <h1 class="font-medium size-35">AI 기반 데이터 사이언스 솔루션</h1>
+        <p>최첨단 머신러닝과 고급 분석을 통해 데이터를 실행 가능한 인사이트로 전환하세요.</p>
         <div>
-            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mt-2 mb-1 font-normal tracking-normal rounded-full py-2 px-6 size-15 leading-14 border-transparent hover:border-transparent" style="color: rgb(250, 250, 250); background-color: rgb(24, 24, 27);" onmouseover="if(this.getAttribute('data-hover-bg'))this.style.backgroundColor=this.getAttribute('data-hover-bg');" onmouseout="if(this.getAttribute('data-bg'))this.style.backgroundColor=this.getAttribute('data-bg');else this.style.backgroundColor='';" data-bg="rgb(24, 24, 27)" data-hover-bg="rgb(63, 63, 70)">Read More</a>
+            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mt-2 mb-1 font-normal tracking-normal rounded-full py-2 px-6 size-15 leading-14 border-transparent hover:border-transparent" style="color: rgb(250, 250, 250); background-color: rgb(24, 24, 27);" onmouseover="if(this.getAttribute('data-hover-bg'))this.style.backgroundColor=this.getAttribute('data-hover-bg');" onmouseout="if(this.getAttribute('data-bg'))this.style.backgroundColor=this.getAttribute('data-bg');else this.style.backgroundColor='';" data-bg="rgb(24, 24, 27)" data-hover-bg="rgb(63, 63, 70)">자세히 보기</a>
         </div>
     </div>
     <div class="column" style="width: 70%; flex: 0 0 auto;">
@@ -1989,7 +1979,7 @@ var data_basic = {
                     <div class="window-dot"></div>
                 </div>
                 <div class="app-screenshot">
-                    <img src="assets/minimalist-blocks/images/ai-lClur.jpg" alt="App Mockup" class="screenshot-image">
+                    <img src="assets/minimalist-blocks/images/ai-lClur.jpg" alt="앱 목업" class="screenshot-image">
                 </div>
             </div>
         </div>
@@ -2002,46 +1992,46 @@ var data_basic = {
 		    'category': '120',
 		    'viewMode': 'web',
 		    'html': `
-<div data-cb-type="card-list" data-cb-items-per-row="2" data-cb-gap="26" data-cb-aspect-ratio="16/9" data-cb-accent-color="#000000" tabindex="0" role="region" aria-label="Card list" style="position: relative; --accent-color: #000000; --accent-color-light: rgb(64, 64, 64);">
+<div data-cb-type="card-list" data-cb-items-per-row="2" data-cb-gap="26" data-cb-aspect-ratio="16/9" data-cb-accent-color="#000000" tabindex="0" role="region" aria-label="카드 목록" style="position: relative; --accent-color: #000000; --accent-color-light: rgb(64, 64, 64);">
     <div class="card-list-grid grid-sortable">
         <div class="card-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-XUe84.jpg" alt="Product 1">
+                <img src="assets/minimalist-blocks/images/ai-XUe84.jpg" alt="상품 1">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Premium Widget</h3>
-                <p class="item-description">High-quality craftsmanship</p>
-                <a href="/product/1" class="item-link">Learn More →</a>
+                <h3 class="item-title">프리미엄 위젯</h3>
+                <p class="item-description">최고 품질의 장인정신</p>
+                <a href="/product/1" class="item-link">자세히 보기 →</a>
             </div>
         </div>
         <div class="card-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-cvlfg.jpg" alt="Product 1">
+                <img src="assets/minimalist-blocks/images/ai-cvlfg.jpg" alt="상품 1">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Premium Widget</h3>
-                <p class="item-description">High-quality craftsmanship</p>
-                <a href="/product/2" class="item-link">Learn More →</a>
+                <h3 class="item-title">프리미엄 위젯</h3>
+                <p class="item-description">최고 품질의 장인정신</p>
+                <a href="/product/2" class="item-link">자세히 보기 →</a>
             </div>
         </div>
         <div class="card-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-HzKor.jpg" alt="Product 1">
+                <img src="assets/minimalist-blocks/images/ai-HzKor.jpg" alt="상품 1">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Premium Widget</h3>
-                <p class="item-description">High-quality craftsmanship</p>
-                <a href="/product/3" class="item-link">Learn More →</a>
+                <h3 class="item-title">프리미엄 위젯</h3>
+                <p class="item-description">최고 품질의 장인정신</p>
+                <a href="/product/3" class="item-link">자세히 보기 →</a>
             </div>
         </div>
         <div class="card-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-iNSwQ.jpg" alt="Premium Widget">
+                <img src="assets/minimalist-blocks/images/ai-iNSwQ.jpg" alt="프리미엄 위젯">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Premium Widget</h3>
-                <p class="item-description">High-quality craftsmanship</p>
-                <a href="/product/4" class="item-link">Learn More →</a>
+                <h3 class="item-title">프리미엄 위젯</h3>
+                <p class="item-description">최고 품질의 장인정신</p>
+                <a href="/product/4" class="item-link">자세히 보기 →</a>
             </div>
         </div>
     </div>
@@ -2053,47 +2043,47 @@ var data_basic = {
 		    'category': '120',
 		    'viewMode': 'web',
 		    'html': `
-<div data-cb-type="media-slider" data-cb-items-per-slide="3" data-cb-gap="26" data-cb-aspect-ratio="3/4" tabindex="0" role="region" aria-label="Media slider" aria-roledescription="carousel" style="position: relative; overflow: hidden; --accent-color: #000000; --accent-color-light: rgb(64, 64, 64);" data-cb-accent-color="#000000" data-cb-autoplay="false" data-cb-autoplay-speed="3000" data-cb-loop="true" data-cb-pause-on-hover="true" data-cb-show-arrows="true" data-cb-show-dots="true" data-cb-show-counter="false">
+<div data-cb-type="media-slider" data-cb-items-per-slide="3" data-cb-gap="26" data-cb-aspect-ratio="3/4" tabindex="0" role="region" aria-label="미디어 슬라이더" aria-roledescription="carousel" style="position: relative; overflow: hidden; --accent-color: #000000; --accent-color-light: rgb(64, 64, 64);" data-cb-accent-color="#000000" data-cb-autoplay="false" data-cb-autoplay-speed="3000" data-cb-loop="true" data-cb-pause-on-hover="true" data-cb-show-arrows="true" data-cb-show-dots="true" data-cb-show-counter="false">
     <div class="media-slider-track">
 
         <div class="slider-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-ER9hZ.jpg" alt="Sample Title 1">
+                <img src="assets/minimalist-blocks/images/ai-ER9hZ.jpg" alt="샘플 제목 1">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Sample Title 1</h3>
-                <p class="item-description">Short descriptive text goes here</p>
-                <a href="#" class="item-link">Learn More →</a>
+                <h3 class="item-title">샘플 제목 1</h3>
+                <p class="item-description">간단한 설명이 들어갑니다</p>
+                <a href="#" class="item-link">자세히 보기 →</a>
             </div>
         </div>
         <div class="slider-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-ehmKk.jpg" alt="Sample Title 2">
+                <img src="assets/minimalist-blocks/images/ai-ehmKk.jpg" alt="샘플 제목 2">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Sample Title 2</h3>
-                <p class="item-description">Use any kind of image here</p>
-                <a href="#" class="item-link">Learn More →</a>
+                <h3 class="item-title">샘플 제목 2</h3>
+                <p class="item-description">다양한 이미지를 활용하세요</p>
+                <a href="#" class="item-link">자세히 보기 →</a>
             </div>
         </div>
         <div class="slider-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-0Yhoi.jpg" alt="Sample Title 3">
+                <img src="assets/minimalist-blocks/images/ai-0Yhoi.jpg" alt="샘플 제목 3">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Sample Title 4</h3>
-                <p class="item-description">Flexible placeholder text</p>
-                <a href="#" class="item-link">Learn More →</a>
+                <h3 class="item-title">샘플 제목 4</h3>
+                <p class="item-description">유연한 설명 텍스트</p>
+                <a href="#" class="item-link">자세히 보기 →</a>
             </div>
         </div>
         <div class="slider-item">
             <div class="item-media">
-                <img src="assets/minimalist-blocks/images/ai-uDhRs.jpg" alt="Sample Title 4">
+                <img src="assets/minimalist-blocks/images/ai-uDhRs.jpg" alt="샘플 제목 4">
             </div>
             <div class="item-content">
-                <h3 class="item-title">Sample Title 3</h3>
-                <p class="item-description">A brief caption or summary</p>
-                <a href="#" class="item-link">Learn More →</a>
+                <h3 class="item-title">샘플 제목 3</h3>
+                <p class="item-description">간략한 캡션 또는 요약</p>
+                <a href="#" class="item-link">자세히 보기 →</a>
             </div>
         </div>
     </div>
@@ -2107,10 +2097,10 @@ var data_basic = {
 		    'html': `
 <div class="row">
     <div class="column flex flex-col justify-center" style="width: 42.5%; flex: 0 0 auto;">
-        <h1 class="size-48 font-medium">AI-Powered Data Science Solutions</h1>
-        <p>Transform your data into actionable insights with cutting-edge machine learning and advanced analytics.</p>
+        <h1 class="size-48 font-medium">AI 기반 데이터 사이언스 솔루션</h1>
+        <p>최첨단 머신러닝과 고급 분석을 통해 데이터를 실행 가능한 인사이트로 전환하세요.</p>
         <div>
-            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mt-2 mb-1 font-normal tracking-normal rounded-full py-2 px-6 size-15 leading-14 border-transparent hover:border-transparent" style="color: rgb(250, 250, 250); background-color: rgb(24, 24, 27);" onmouseover="if(this.getAttribute('data-hover-bg'))this.style.backgroundColor=this.getAttribute('data-hover-bg');" onmouseout="if(this.getAttribute('data-bg'))this.style.backgroundColor=this.getAttribute('data-bg');else this.style.backgroundColor='';" data-bg="rgb(24, 24, 27)" data-hover-bg="rgb(63, 63, 70)">Read More</a>
+            <a href="#" role="button" class="transition-all inline-block whitespace-nowrap cursor-pointer no-underline border-2 border-solid mt-2 mb-1 font-normal tracking-normal rounded-full py-2 px-6 size-15 leading-14 border-transparent hover:border-transparent" style="color: rgb(250, 250, 250); background-color: rgb(24, 24, 27);" onmouseover="if(this.getAttribute('data-hover-bg'))this.style.backgroundColor=this.getAttribute('data-hover-bg');" onmouseout="if(this.getAttribute('data-bg'))this.style.backgroundColor=this.getAttribute('data-bg');else this.style.backgroundColor='';" data-bg="rgb(24, 24, 27)" data-hover-bg="rgb(63, 63, 70)">자세히 보기</a>
         </div>
     </div>
     <div class="column" style="width: 100%;">
@@ -2156,12 +2146,12 @@ var data_basic = {
 <div data-cb-type="before-after-slider" data-cb-orientation="horizontal" data-cb-start-position="40" data-cb-show-labels="true">
     <div class="ba-container">
         <div class="ba-before">
-            <img src="assets/minimalist-blocks/images/ai-iNSwQ.jpg" alt="Before renovation">
-            <span class="ba-label-before">Before</span>
+            <img src="assets/minimalist-blocks/images/ai-iNSwQ.jpg" alt="리노베이션 전">
+            <span class="ba-label-before">이전</span>
         </div>
         <div class="ba-after">
-            <img src="assets/minimalist-blocks/images/ai-HzKor.jpg" alt="After renovation">
-            <span class="ba-label-after">After</span>
+            <img src="assets/minimalist-blocks/images/ai-HzKor.jpg" alt="리노베이션 후">
+            <span class="ba-label-after">이후</span>
         </div>
         <div class="ba-slider">
             <div class="ba-handle"></div>
@@ -2175,46 +2165,46 @@ var data_basic = {
 		    'category': '120',
 		    'viewMode': 'web',
 		    'html': `
-<div data-cb-type="timeline" data-cb-orientation="vertical" data-cb-animate="true" data-cb-accentcolor="#8b5cf6" data-cb-linewidth="2" data-cb-dotsize="14" class="timeline-vertical" role="list" aria-label="Product Roadmap" style="--timeline-accent: rgba(59, 130, 246, 1); --timeline-line-width: 2px; --timeline-dot-size: 10px;" data-cb-accent-color="rgba(59, 130, 246, 1)" data-cb-line-width="2" data-cb-dot-size="10">
+<div data-cb-type="timeline" data-cb-orientation="vertical" data-cb-animate="true" data-cb-accentcolor="#8b5cf6" data-cb-linewidth="2" data-cb-dotsize="14" class="timeline-vertical" role="list" aria-label="제품 로드맵" style="--timeline-accent: rgba(59, 130, 246, 1); --timeline-line-width: 2px; --timeline-dot-size: 10px;" data-cb-accent-color="rgba(59, 130, 246, 1)" data-cb-line-width="2" data-cb-dot-size="10">
     <div>
         <div class="timeline-item" data-status="completed" data-item-id="item-h1" role="listitem">
             <div class="timeline-marker" aria-hidden="true"></div>
             <div class="timeline-content">
-                <span class="timeline-date">Phase 1</span>
-                <h3 class="timeline-title">Research &amp; Planning</h3>
-                <p class="timeline-desc">Conducted market research and defined product requirements with stakeholder input.</p>
+                <span class="timeline-date">1단계</span>
+                <h3 class="timeline-title">리서치 &amp; 기획</h3>
+                <p class="timeline-desc">시장 조사를 수행하고 이해관계자의 의견을 반영하여 제품 요구사항을 정의했습니다.</p>
             </div>
         </div>
         <div class="timeline-item" data-status="completed" data-item-id="item-h2" role="listitem">
             <div class="timeline-marker" aria-hidden="true"></div>
             <div class="timeline-content">
-                <span class="timeline-date">Phase 2</span>
-                <h3 class="timeline-title">Design &amp; Prototype</h3>
-                <p class="timeline-desc">Created user-centered designs and built interactive prototypes for testing.</p>
+                <span class="timeline-date">2단계</span>
+                <h3 class="timeline-title">디자인 &amp; 프로토타입</h3>
+                <p class="timeline-desc">사용자 중심 디자인을 수립하고 테스트용 인터랙티브 프로토타입을 제작했습니다.</p>
             </div>
         </div>
         <div class="timeline-item" data-status="current" data-item-id="item-h3" role="listitem">
             <div class="timeline-marker" aria-hidden="true"></div>
             <div class="timeline-content">
-                <span class="timeline-date">Phase 3</span>
-                <h3 class="timeline-title">Development</h3>
-                <p class="timeline-desc">Building the core platform with focus on performance and scalability.</p>
+                <span class="timeline-date">3단계</span>
+                <h3 class="timeline-title">개발</h3>
+                <p class="timeline-desc">성능과 확장성에 초점을 맞춰 핵심 플랫폼을 구축하고 있습니다.</p>
             </div>
         </div>
         <div class="timeline-item" data-status="upcoming" data-item-id="item-h4" role="listitem">
             <div class="timeline-marker" aria-hidden="true"></div>
             <div class="timeline-content">
-                <span class="timeline-date">Phase 4</span>
-                <h3 class="timeline-title">Testing &amp; QA</h3>
-                <p class="timeline-desc">Comprehensive testing across devices and browsers to ensure quality.</p>
+                <span class="timeline-date">4단계</span>
+                <h3 class="timeline-title">테스트 &amp; QA</h3>
+                <p class="timeline-desc">다양한 디바이스와 브라우저에서 품질을 보장하기 위한 종합 테스트를 진행합니다.</p>
             </div>
         </div>
         <div class="timeline-item" data-status="upcoming" data-item-id="item-h5" role="listitem">
             <div class="timeline-marker" aria-hidden="true"></div>
             <div class="timeline-content">
-                <span class="timeline-date">Phase 5</span>
-                <h3 class="timeline-title">Launch</h3>
-                <p class="timeline-desc">Official product release with marketing campaign and customer onboarding.</p>
+                <span class="timeline-date">5단계</span>
+                <h3 class="timeline-title">출시</h3>
+                <p class="timeline-desc">마케팅 캠페인과 고객 온보딩을 포함한 공식 제품 출시를 진행합니다.</p>
             </div>
         </div>
     </div>
@@ -2231,7 +2221,7 @@ var data_basic = {
 <div data-cb-type="faq" data-cb-allow-multiple="true" data-cb-open-first="true" style="--border-radius: 10px;" data-cb-border-radius="10">
     <div class="accordion-item">
         <div class="accordion-header">
-            <span class="accordion-question edit">What is this platform about?</span>
+            <span class="accordion-question edit">이 플랫폼은 무엇인가요?</span>
             <span class="accordion-icon">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -2240,13 +2230,13 @@ var data_basic = {
         </div>
         <div class="accordion-content">
             <div class="accordion-answer is-subblock edit">
-                <p>Our platform helps you connect, create, and collaborate effortlessly. Whether you’re exploring new ideas or managing ongoing projects, everything is designed to keep your workflow simple and organized.</p>
+                <p>저희 플랫폼은 연결, 생성, 협업을 손쉽게 도와줍니다. 새로운 아이디어를 탐색하거나 진행 중인 프로젝트를 관리할 때, 모든 것이 간단하고 체계적인 워크플로우를 위해 설계되었습니다.</p>
             </div>
         </div>
     </div>
     <div class="accordion-item">
         <div class="accordion-header">
-            <span class="accordion-question edit">How do I get started?</span>
+            <span class="accordion-question edit">어떻게 시작하나요?</span>
             <span class="accordion-icon">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -2255,13 +2245,13 @@ var data_basic = {
         </div>
         <div class="accordion-content">
             <div class="accordion-answer is-subblock edit">
-                <p>Just sign up with your email address, create a profile, and explore the dashboard. From there, you can access all available tools, tutorials, and community resources to help you begin.</p>
+                <p>이메일 주소로 가입하고 프로필을 만든 후 대시보드를 탐색하세요. 거기에서 모든 도구, 튜토리얼, 커뮤니티 리소스에 접근하여 시작할 수 있습니다.</p>
             </div>
         </div>
     </div>
     <div class="accordion-item">
         <div class="accordion-header">
-            <span class="accordion-question edit">Can I use this on mobile devices?</span>
+            <span class="accordion-question edit">모바일 기기에서도 사용할 수 있나요?</span>
             <span class="accordion-icon">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -2270,7 +2260,7 @@ var data_basic = {
         </div>
         <div class="accordion-content">
             <div class="accordion-answer is-subblock edit">
-                <p>Yes! The platform is fully optimized for smartphones and tablets, so you can stay productive wherever you are.</p>
+                <p>네! 플랫폼은 스마트폰과 태블릿에 완전히 최적화되어 있어 어디서든 생산적으로 활동할 수 있습니다.</p>
             </div>
         </div>
     </div>
@@ -2285,31 +2275,31 @@ var data_basic = {
 <div data-cb-type="media-grid" data-cb-columns="3" class="grid-sortable" data-cb-gap="16" data-cb-rounded="8" data-cb-content-theme="light">
 
     <div class="gallery-item">
-        <img src="assets/minimalist-blocks/images/ai-ehmKk.jpg" alt="Sample Title">
+        <img src="assets/minimalist-blocks/images/ai-ehmKk.jpg" alt="샘플 제목">
         <div class="item-content">
 
-            <h4>Sample Title</h4>
-            <div>Short descriptive text goes here</div>
+            <h4>샘플 제목</h4>
+            <div>간단한 설명이 들어갑니다</div>
         </div>
     </div>
     <div class="gallery-item">
-        <img src="assets/minimalist-blocks/images/ai-yBliz.jpg" alt="Sample Title">
+        <img src="assets/minimalist-blocks/images/ai-yBliz.jpg" alt="샘플 제목">
 
     </div>
     <div class="gallery-item">
-        <img src="assets/minimalist-blocks/images/ai-sFtJP2.jpg" alt="Sample Title">
+        <img src="assets/minimalist-blocks/images/ai-sFtJP2.jpg" alt="샘플 제목">
         <div class="item-content">
 
-            <h4>Sample Title</h4>
-            <div>Short descriptive text goes here</div>
+            <h4>샘플 제목</h4>
+            <div>간단한 설명이 들어갑니다</div>
         </div>
     </div>
     <div class="gallery-item">
-        <img src="assets/minimalist-blocks/images/ai-ER9hZ.jpg" alt="Sample Title">
+        <img src="assets/minimalist-blocks/images/ai-ER9hZ.jpg" alt="샘플 제목">
         <div class="item-content">
 
-            <h4>Sample Title</h4>
-            <div>Short descriptive text goes here</div>
+            <h4>샘플 제목</h4>
+            <div>간단한 설명이 들어갑니다</div>
         </div>
     </div>
     <div class="gallery-item"><img src="assets/minimalist-blocks/images/ai-XUe84.jpg" alt=""></div>
@@ -2323,33 +2313,33 @@ var data_basic = {
 		    'category': '120',
 		    'viewMode': 'web',
 		    'html': `
-<div data-cb-type="social-share" data-cb-show-x="true" data-cb-show-facebook="true" data-cb-show-linked-in="true" data-cb-show-whats-app="true" data-cb-show-copy-link="true" data-cb-show-more="true" data-cb-share-title="How to Build Amazing Websites" data-cb-share-text="Learn the secrets to creating stunning, high-performance websites in 2025." data-cb-label-text="Share this article" data-cb-original-content="" data-cb-alignment="center" data-cb-show-label="true">
-    <div class="share-container" role="group" aria-label="Share this page" data-alignment="center" aria-labelledby="share-label-cnftppq10"><span class="share-label" id="share-label-cnftppq10">Share this article</span>
+<div data-cb-type="social-share" data-cb-show-x="true" data-cb-show-facebook="true" data-cb-show-linked-in="true" data-cb-show-whats-app="true" data-cb-show-copy-link="true" data-cb-show-more="true" data-cb-share-title="멋진 웹사이트 만드는 방법" data-cb-share-text="2025년 고성능 웹사이트를 만드는 비결을 알아보세요." data-cb-label-text="이 글 공유하기" data-cb-original-content="" data-cb-alignment="center" data-cb-show-label="true">
+    <div class="share-container" role="group" aria-label="이 페이지 공유하기" data-alignment="center" aria-labelledby="share-label-cnftppq10"><span class="share-label" id="share-label-cnftppq10">이 글 공유하기</span>
         <div class="share-buttons flex" role="list">
-            <div role="listitem"><button class="share-btn" type="button" aria-label="Share on X"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <div role="listitem"><button class="share-btn" type="button" aria-label="X에 공유"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                         <path d="M18 6L6 18M6 6l12 12"></path>
                     </svg></button></div>
-            <div role="listitem"><button class="share-btn" type="button" aria-label="Share on Facebook"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+            <div role="listitem"><button class="share-btn" type="button" aria-label="Facebook에 공유"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
                     </svg></button></div>
-            <div role="listitem"><button class="share-btn" type="button" aria-label="Share on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+            <div role="listitem"><button class="share-btn" type="button" aria-label="LinkedIn에 공유"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
                         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
                     </svg></button></div>
-            <div role="listitem"><button class="share-btn" type="button" aria-label="Share on WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+            <div role="listitem"><button class="share-btn" type="button" aria-label="WhatsApp으로 공유"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"></path>
                     </svg></button></div>
-            <div role="listitem"><button class="share-btn" type="button" aria-label="Copy link to clipboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <div role="listitem"><button class="share-btn" type="button" aria-label="링크 복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                     </svg></button></div>
-            <div class="share-more" role="listitem"><button class="share-btn" type="button" aria-label="More sharing options" aria-expanded="false" aria-haspopup="true" aria-controls="share-dropdown-9zv110z4t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <div class="share-more" role="listitem"><button class="share-btn" type="button" aria-label="더 많은 공유 옵션" aria-expanded="false" aria-haspopup="true" aria-controls="share-dropdown-9zv110z4t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
                         <circle cx="18" cy="19" r="3"></circle>
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                     </svg></button>
-                <div class="share-dropdown" id="share-dropdown-9zv110z4t" role="menu" aria-label="Additional sharing options">
+                <div class="share-dropdown" id="share-dropdown-9zv110z4t" role="menu" aria-label="추가 공유 옵션">
                     <button type="button" role="menuitem" data-platform="reddit">Reddit</button>
                     <button type="button" role="menuitem" data-platform="telegram">Telegram</button>
                     <button type="button" role="menuitem" data-platform="email">Email</button>
@@ -2365,12 +2355,12 @@ var data_basic = {
 		    'category': '120',
 		    'viewMode': 'web',
 		    'html': `
-<div data-cb-type="cta-buttons" data-cb-primary-padding-y="12" data-cb-primary-padding-x="24" data-cb-primary-font-size="18" data-cb-secondary-padding-y="12" data-cb-secondary-padding-x="24" data-cb-secondary-font-size="18" style="gap: 24px; flex-wrap: wrap; display: flex; justify-content: center; align-items: center;" class="flex justify-center items-center" data-cb-primary-text="Start Building" data-cb-primary-link="" data-cb-primary-style="gradient" data-cb-primary-color1="#6366f1" data-cb-primary-color2="#8b5cf6" data-cb-primary-text-color="#ffffff" data-cb-primary-border-radius="12" data-cb-primary-font-weight="true" data-cb-primary-shadow="true" data-cb-primary-hover-lift="true" data-cb-secondary-text="View Documentation" data-cb-secondary-link="" data-cb-secondary-style="outline" data-cb-secondary-color1="rgba(229, 229, 229, 1)" data-cb-secondary-color2="rgba(205, 205, 205, 1)" data-cb-secondary-text-color="#0f172a" data-cb-secondary-border-radius="12" data-cb-secondary-font-weight="true" data-cb-secondary-shadow="true" data-cb-secondary-hover-lift="false" data-cb-gap="24" data-cb-alignment="center">
+<div data-cb-type="cta-buttons" data-cb-primary-padding-y="12" data-cb-primary-padding-x="24" data-cb-primary-font-size="18" data-cb-secondary-padding-y="12" data-cb-secondary-padding-x="24" data-cb-secondary-font-size="18" style="gap: 24px; flex-wrap: wrap; display: flex; justify-content: center; align-items: center;" class="flex justify-center items-center" data-cb-primary-text="시작하기" data-cb-primary-link="" data-cb-primary-style="gradient" data-cb-primary-color1="#6366f1" data-cb-primary-color2="#8b5cf6" data-cb-primary-text-color="#ffffff" data-cb-primary-border-radius="12" data-cb-primary-font-weight="true" data-cb-primary-shadow="true" data-cb-primary-hover-lift="true" data-cb-secondary-text="문서 보기" data-cb-secondary-link="" data-cb-secondary-style="outline" data-cb-secondary-color1="rgba(229, 229, 229, 1)" data-cb-secondary-color2="rgba(205, 205, 205, 1)" data-cb-secondary-text-color="#0f172a" data-cb-secondary-border-radius="12" data-cb-secondary-font-weight="true" data-cb-secondary-shadow="true" data-cb-secondary-hover-lift="false" data-cb-gap="24" data-cb-alignment="center">
     <a href="#signup" class="cta-btn primary-gradient hover-lift">
-        Sign Up Free
+        무료 가입
     </a>
     <a href="#demo" class="cta-btn secondary-outline">
-        Watch Demo
+        데모 보기
     </a>
 </div>
 `
@@ -2386,28 +2376,28 @@ var data_basic = {
             <i class="bi bi-globe"></i>
         </div>
         <div class="stat-number">500+</div>
-        <div class="stat-label">Global Clients</div>
+        <div class="stat-label">글로벌 고객</div>
     </div>
     <div class="stat-item" data-target="50" data-suffix="+" data-stat-id="stat-20">
         <div class="stat-icon" data-icon-type="bootstrap">
             <i class="bi bi-person-badge-fill"></i>
         </div>
         <div class="stat-number">50+</div>
-        <div class="stat-label">Team Members</div>
+        <div class="stat-label">팀원 수</div>
     </div>
     <div class="stat-item" data-target="10" data-suffix="+" data-stat-id="stat-21">
         <div class="stat-icon" data-icon-type="bootstrap">
             <i class="bi bi-pin-map-fill"></i>
         </div>
         <div class="stat-number">10+</div>
-        <div class="stat-label">Countries</div>
+        <div class="stat-label">진출 국가</div>
     </div>
     <div class="stat-item" data-target="100" data-suffix="%" data-stat-id="stat-22">
         <div class="stat-icon" data-icon-type="bootstrap">
             <i class="bi bi-bullseye"></i>
         </div>
         <div class="stat-number">100%</div>
-        <div class="stat-label">Commitment</div>
+        <div class="stat-label">헌신</div>
     </div>
 </div>
 `
