@@ -1,4 +1,3 @@
-import { createColorSection } from '../_shared/color-picker.js';
 
 /*
 Usage:
@@ -64,23 +63,13 @@ export default {
             type: 'color',
             label: '강조 색상',
             default: '#0046A4'
-        }
+        },
     },
 
     editor: {
         openContentEditor: function(element, builder, onChange) {
             const container = document.createElement('div');
             container.style.marginBottom = '23px';
-
-            // ── 강조 색상 ──
-            const accentColor = element.dataset.pgAccent || element.style.getPropertyValue('--pg-accent').trim() || '#0046A4';
-            container.appendChild(createColorSection([
-                {
-                    label: '강조 색상',
-                    value: accentColor,
-                    onChange: (v) => { element.dataset.pgAccent = v; element.style.setProperty('--pg-accent', v); onChange?.(); },
-                },
-            ]));
 
             const track = element.querySelector('.pg-track');
             const items = track ? track.querySelectorAll('.pg-slide') : [];
@@ -239,7 +228,7 @@ export default {
     },
 
     mount: function(element, options) {
-        const accent = element.dataset.pgAccent || element.style.getPropertyValue('--pg-accent').trim() || options.accentColor || '#0046A4';
+        const accent = element.getAttribute('data-cb-accent-color') || element.dataset.pgAccent || element.style.getPropertyValue('--pg-accent').trim() || '#0046A4';
         element.style.setProperty('--pg-accent', accent);
 
         const track = element.querySelector('.pg-track');
