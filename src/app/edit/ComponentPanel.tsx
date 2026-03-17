@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FINANCE_COMPONENTS, FinanceComponent } from './finance-component-data';
 import type { ParsedBlock, BasicBlock } from './EditClient';
 
@@ -13,6 +13,8 @@ interface Props {
     onMoveBlock: (from: number, to: number) => void;
     /** 블록 삭제 (인덱스) */
     onDelete: (idx: number) => void;
+    /** 캔버스 전체 블록 삭제 */
+    onDeleteAll: () => void;
     /** 순서 탭에서 블록 클릭 시 캔버스에서 해당 블록 활성화 */
     onActivate: (idx: number) => void;
     /** content-plugins.js에서 읽어온 기본 블록 목록 */
@@ -124,6 +126,7 @@ export default function ComponentPanel({
     blocks,
     onMoveBlock,
     onDelete,
+    onDeleteAll,
     onActivate,
     basicBlocks,
     viewMode,
@@ -134,6 +137,23 @@ export default function ComponentPanel({
     const [activeTab, setActiveTab] = useState<Tab>('finance');
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [hoveredOrderIdx, setHoveredOrderIdx] = useState<number | null>(null);
+
+    // ── 탭별 스크롤 위치 저장/복원 ────────────────────────────────────────
+    const scrollPositions = useRef<Record<Tab, number>>({ finance: 0, basic: 0, order: 0 });
+    const scrollRefs = useRef<Partial<Record<Tab, HTMLDivElement | null>>>({});
+
+    function handleTabChange(newTab: Tab) {
+        // 현재 탭 스크롤 위치 저장
+        const currentEl = scrollRefs.current[activeTab];
+        if (currentEl) scrollPositions.current[activeTab] = currentEl.scrollTop;
+        setActiveTab(newTab);
+    }
+
+    useEffect(() => {
+        // 탭 전환 후 저장된 스크롤 위치 복원
+        const el = scrollRefs.current[activeTab];
+        if (el) el.scrollTop = scrollPositions.current[activeTab] ?? 0;
+    }, [activeTab]);
 
     // ── 탭: 금융 컴포넌트 ─ 캔버스 드래그 핸들러 ─────────────────────────
     function handleCompDragStart(e: React.DragEvent, comp: FinanceComponent) {
@@ -256,7 +276,7 @@ export default function ComponentPanel({
                         ] as { key: Tab; label: string }[]).map(tab => (
                             <button
                                 key={tab.key}
-                                onClick={() => setActiveTab(tab.key)}
+                                onClick={() => handleTabChange(tab.key)}
                                 style={{
                                     flex: 1,
                                     padding: '4px 2px',
@@ -309,11 +329,13 @@ export default function ComponentPanel({
                 <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                     {/* ══ 탭 1: 금융 컴포넌트 ══ */}
                     {activeTab === 'finance' && (
-                        <div style={{
-                            flex: 1, minHeight: 0, overflowY: 'auto',
-                            padding: '10px',
-                            display: 'flex', flexDirection: 'column', gap: '6px',
-                        }}>
+                        <div
+                            ref={el => { scrollRefs.current['finance'] = el; }}
+                            style={{
+                                flex: 1, minHeight: 0, overflowY: 'auto',
+                                padding: '10px',
+                                display: 'flex', flexDirection: 'column', gap: '6px',
+                            }}>
                             <p style={{ margin: '0 0 4px', fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
                                 드래그하거나 + 클릭하여 캔버스에 추가
                             </p>
@@ -403,15 +425,17 @@ export default function ComponentPanel({
 
                     {/* ══ 탭 2: 기본 블록 ══ */}
                     {activeTab === 'basic' && (
-                        <div style={{
-                            flex: 1,
-                            minHeight: 0,
-                            overflowY: 'auto',
-                            padding: '10px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '6px',
-                        }}>
+                        <div
+                            ref={el => { scrollRefs.current['basic'] = el; }}
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                overflowY: 'auto',
+                                padding: '10px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                            }}>
                             <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
                                 드래그하거나 + 클릭하여 캔버스에 추가
                             </p>
@@ -447,6 +471,7 @@ export default function ComponentPanel({
                     {/* ══ 탭 3: 블록 순서 변경 ══ */}
                     {activeTab === 'order' && (
                         <div
+                            ref={el => { scrollRefs.current['order'] = el; }}
                             onDragOver={handleOrderDragOver}
                             onDrop={handleOrderDrop}
                             style={{
@@ -473,9 +498,33 @@ export default function ComponentPanel({
                                 </div>
                             ) : (
                                 <>
-                                    <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
-                                        드래그하여 순서 변경
-                                    </p>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                                        <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>
+                                            드래그하여 순서 변경
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('캔버스의 모든 블록을 삭제하시겠습니까?')) {
+                                                    onDeleteAll();
+                                                }
+                                            }}
+                                            title="전체 블록 삭제"
+                                            style={{
+                                                flexShrink: 0,
+                                                padding: '3px 8px',
+                                                border: '1px solid #fca5a5',
+                                                borderRadius: '6px',
+                                                background: '#fff5f5',
+                                                color: '#ef4444',
+                                                fontSize: '11px',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            전체 삭제
+                                        </button>
+                                    </div>
                                     {blocks.map((block, idx) => {
                                         const isDragging = draggingIdx === idx;
                                         // 삽입 구분선: 해당 인덱스 앞에 표시 (no-op 위치 제외)
