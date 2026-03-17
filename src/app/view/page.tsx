@@ -15,15 +15,15 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-const VALID_BANKS = ['ibk', 'hana', 'kb', 'shinhan', 'woori', 'nh'];
-
 export default async function View({
     searchParams,
 }: {
     searchParams: Promise<{ bank?: string }>;
 }) {
     const params = await searchParams;
-    const bank = VALID_BANKS.includes(params.bank ?? '') ? params.bank! : 'ibk';
+    // 경로 순회 방지: 영문·숫자·하이픈만 허용 (커스텀 탭 ID 포함)
+    const rawBank = params.bank ?? '';
+    const bank = /^[a-z0-9-]+$/i.test(rawBank) ? rawBank : 'ibk';
 
     let html = '';
     try {
