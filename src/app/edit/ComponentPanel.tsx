@@ -17,6 +17,8 @@ interface Props {
     onActivate: (idx: number) => void;
     /** content-plugins.js에서 읽어온 기본 블록 목록 */
     basicBlocks: BasicBlock[];
+    /** 현재 페이지의 뷰 모드 — 해당 모드의 컴포넌트만 표시 */
+    viewMode: 'mobile' | 'web' | 'responsive';
     /** 패널에서 외부 드래그 시작/종료 알림 */
     onDragStart?: () => void;
     onDragEnd?: () => void;
@@ -33,6 +35,7 @@ export default function ComponentPanel({
     onDelete,
     onActivate,
     basicBlocks,
+    viewMode,
     onDragStart,
     onDragEnd,
 }: Props) {
@@ -224,7 +227,7 @@ export default function ComponentPanel({
                                 드래그하거나 + 클릭하여 캔버스에 추가
                             </p>
 
-                            {FINANCE_COMPONENTS.map(comp => (
+                            {FINANCE_COMPONENTS.filter(c => c.viewMode === viewMode).map(comp => (
                                 <div
                                     key={comp.id}
                                     draggable
@@ -336,7 +339,7 @@ export default function ComponentPanel({
                                     gridTemplateColumns: '1fr 1fr',
                                     gap: '6px',
                                 }}>
-                                    {basicBlocks.map((block, idx) => (
+                                    {basicBlocks.filter(b => b.viewMode === viewMode).map((block, idx) => (
                                         <BasicBlockCard
                                             key={idx}
                                             block={block}

@@ -1182,6 +1182,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             onMoveBlock={handleMoveBlock}
             onDelete={handleDelete}
             onActivate={handleActivate}
+            viewMode={viewMode}
             basicBlocks={basicBlocks}
             onDragStart={() => {
                 // ref는 즉시 갱신 (dragover 핸들러에서 동기 참조)
