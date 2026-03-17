@@ -28,6 +28,15 @@ type Tab = 'finance' | 'basic' | 'order';
 
 const BASIC_THUMB_BASE = '/assets/minimalist-blocks/';
 
+// 카테고리 번호 → 한글 이름 매핑
+const CATEGORY_LABELS: Record<string, string> = {
+    '120': '텍스트', '119': '버튼', '102': '사진', '103': '프로필',
+    '101': '헤드라인', '118': '기사', '104': '상품', '106': '프로세스',
+    '107': '가격표', '108': '스킬', '109': '성과', '110': '인용',
+    '111': '파트너', '113': '404', '114': '준비중', '115': 'FAQ',
+    '116': '문의', '117': '소개',
+};
+
 export default function ComponentPanel({
     onInsert,
     blocks,
@@ -563,6 +572,20 @@ function BasicBlockCard({
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }} />
                 )}
+            </div>
+
+            {/* 카테고리 이름 */}
+            <div style={{
+                padding: '3px 6px',
+                fontSize: '10px',
+                color: '#6b7280',
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: 1.3,
+            }}>
+                {CATEGORY_LABELS[block.category] ?? block.category}
             </div>
 
             {/* 추가 버튼 */}
