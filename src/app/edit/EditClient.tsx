@@ -103,17 +103,28 @@ const CMS_COLORS = [
 ];
 if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>).__cmsColors = CMS_COLORS;
 
-const DEFAULT_TABS = [
-    { id: 'ibk',     label: 'IBK demo' },
-    { id: 'hana',    label: '하나 demo' },
-    { id: 'kb',      label: 'KB demo' },
-    { id: 'shinhan', label: '신한 demo' },
-    { id: 'woori',   label: '우리 demo' },
-    { id: 'nh',      label: 'NH농협 demo' },
+interface TabData { id: string; label: string; viewMode: ViewMode }
+
+const DEFAULT_TABS: TabData[] = [
+    { id: 'ibk',     label: 'IBK demo',    viewMode: 'mobile' },
+    { id: 'hana',    label: '하나 demo',   viewMode: 'mobile' },
+    { id: 'kb',      label: 'KB demo',     viewMode: 'mobile' },
+    { id: 'shinhan', label: '신한 demo',   viewMode: 'mobile' },
+    { id: 'woori',   label: '우리 demo',   viewMode: 'mobile' },
+    { id: 'nh',      label: 'NH농협 demo', viewMode: 'mobile' },
 ];
 
 // 패널 너비 (접힌 상태: 40px, 펼친 상태: 264px) — CSS transition과 동기화
 const PANEL_WIDTH_OPEN = 264;
+
+// ── 뷰 모드 ──────────────────────────────────────────────────────────────
+type ViewMode = 'mobile' | 'web' | 'responsive';
+
+const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon: string }> = {
+    mobile:     { label: '모바일', maxWidth: '390px',  icon: '📱' },
+    web:        { label: '웹',     maxWidth: '1280px', icon: '🖥️' },
+    responsive: { label: '반응형', maxWidth: '100%',   icon: '🔄' },
+};
 
 export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const builderRef = useRef<ContentBuilder | null>(null);         // ContentBuilder 인스턴스
@@ -142,13 +153,20 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [basicBlocks, setBasicBlocks] = useState<BasicBlock[]>([]);
 
     // 기본 탭 목록 (localStorage 영속화 — 삭제 가능)
-    const [defaultTabs, setDefaultTabs] = useState<{ id: string; label: string }[]>(DEFAULT_TABS);
+    const [defaultTabs, setDefaultTabs] = useState<TabData[]>(DEFAULT_TABS);
     // 사용자가 추가한 커스텀 탭 목록 (localStorage 영속화)
-    const [customTabs, setCustomTabs] = useState<{ id: string; label: string }[]>([]);
+    const [customTabs, setCustomTabs] = useState<TabData[]>([]);
     // 탭 추가 인라인 입력 표시 여부
     const [showAddTab, setShowAddTab] = useState(false);
     // 탭 이름 입력값
     const [newTabName, setNewTabName] = useState('');
+    // 새 탭 생성 시 선택할 뷰 모드
+    const [newTabViewMode, setNewTabViewMode] = useState<ViewMode>('mobile');
+
+    // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
+    const allTabs = [...defaultTabs, ...customTabs];
+    const currentTab = allTabs.find(t => t.id === bank);
+    const viewMode: ViewMode = currentTab?.viewMode ?? 'mobile';
 
     useEffect(() => {
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
@@ -634,13 +652,17 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
     // ── 탭 localStorage 영속화 ───────────────────────────────────────────
     useEffect(() => {
+        // viewMode가 없는 기존 탭 데이터 호환 — 없으면 'mobile'로 보정
+        const migrateViewMode = (tabs: TabData[]): TabData[] =>
+            tabs.map(t => ({ ...t, viewMode: t.viewMode ?? 'mobile' }));
+
         const savedDefault = localStorage.getItem('cms-default-tabs');
         if (savedDefault) {
-            try { setDefaultTabs(JSON.parse(savedDefault)); } catch { /* 손상된 데이터 무시 */ }
+            try { setDefaultTabs(migrateViewMode(JSON.parse(savedDefault))); } catch { /* 손상된 데이터 무시 */ }
         }
         const savedCustom = localStorage.getItem('cms-custom-tabs');
         if (savedCustom) {
-            try { setCustomTabs(JSON.parse(savedCustom)); } catch { /* 손상된 데이터 무시 */ }
+            try { setCustomTabs(migrateViewMode(JSON.parse(savedCustom))); } catch { /* 손상된 데이터 무시 */ }
         }
     }, []);
 
@@ -858,6 +880,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const label = newTabName.trim();
         if (!label) return;
         const id = `custom-${Date.now()}`;
+        const selectedViewMode = newTabViewMode;
 
         // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트
         const headerComp = FINANCE_COMPONENTS.find(c => c.id === 'app-header');
@@ -866,9 +889,10 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             : '';
 
         // 탭 목록 저장 후 기본 콘텐츠를 서버에 먼저 저장 → 이동
-        setCustomTabs(prev => [...prev, { id, label }]);
+        setCustomTabs(prev => [...prev, { id, label, viewMode: selectedViewMode }]);
         setShowAddTab(false);
         setNewTabName('');
+        setNewTabViewMode('mobile');
 
         fetch('/api/builder/save', {
             method: 'POST',
@@ -883,7 +907,6 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     // 기본 탭 / 커스텀 탭 모두 삭제 가능 (최소 1개 탭은 유지)
     // 삭제 시 탭 목록에서 제거 후 남은 첫 번째 탭으로 이동
     async function handleDeleteCanvas() {
-        const allTabs = [...defaultTabs, ...customTabs];
         const currentLabel = allTabs.find(t => t.id === bank)?.label ?? bank;
         if (!confirm(`'${currentLabel}' 탭을 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
 
@@ -987,47 +1010,34 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     </a>
                 ))}
 
-                {/* 탭 추가 인라인 입력 */}
-                {showAddTab ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }}>
-                        <input
-                            autoFocus
-                            value={newTabName}
-                            onChange={e => setNewTabName(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') handleAddTab();
-                                if (e.key === 'Escape') { setShowAddTab(false); setNewTabName(''); }
-                            }}
-                            placeholder="탭 이름"
-                            style={{
-                                height: '28px', padding: '0 8px', borderRadius: '6px',
-                                border: '1px solid #d1d5db', fontSize: '13px', width: '120px',
-                                outline: 'none',
-                            }}
-                        />
-                        <button
-                            onClick={handleAddTab}
-                            style={{ ...btnStyle, padding: '4px 10px', background: '#0046A4', color: '#fff', borderColor: '#0046A4' }}
-                        >확인</button>
-                        <button
-                            onClick={() => { setShowAddTab(false); setNewTabName(''); }}
-                            style={{ ...btnStyle, padding: '4px 10px' }}
-                        >취소</button>
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => setShowAddTab(true)}
-                        title="탭 추가"
-                        style={{
-                            width: '28px', height: '28px', borderRadius: '6px',
-                            border: '1px solid #e5e7eb', background: 'transparent',
-                            color: '#6b7280', fontSize: '18px', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            marginLeft: '4px', lineHeight: 1, flexShrink: 0,
-                        }}
-                    >+</button>
-                )}
+                {/* 새 페이지 추가 버튼 */}
+                <button
+                    onClick={() => setShowAddTab(true)}
+                    title="새 페이지 추가"
+                    style={{
+                        width: '28px', height: '28px', borderRadius: '6px',
+                        border: '1px solid #e5e7eb', background: 'transparent',
+                        color: '#6b7280', fontSize: '18px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        marginLeft: '4px', lineHeight: 1, flexShrink: 0,
+                    }}
+                >+</button>
             </div>
+
+            {/* 현재 뷰 모드 뱃지 (읽기 전용 — 생성 시 결정, 변경 불가) */}
+            <span
+                title={`이 페이지는 ${VIEW_MODE_CONFIG[viewMode].label} 레이아웃입니다`}
+                style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    padding: '3px 10px', borderRadius: '12px', marginLeft: '8px',
+                    background: '#f0f4ff', border: '1px solid #c7d8f4',
+                    color: '#0046A4', fontSize: '12px', fontWeight: 600,
+                    whiteSpace: 'nowrap', userSelect: 'none',
+                }}
+            >
+                <span style={{ fontSize: '13px' }}>{VIEW_MODE_CONFIG[viewMode].icon}</span>
+                {VIEW_MODE_CONFIG[viewMode].label}
+            </span>
 
             {/* 액션 버튼 */}
             <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
@@ -1055,7 +1065,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 marginRight: `${PANEL_WIDTH_OPEN}px`,
                 minHeight: 'calc(100vh - 52px)',
                 position: 'relative',
-                background: '#dde1e7',  // 모바일 기기 배경색
+                background: viewMode === 'responsive' ? '#ffffff' : '#dde1e7',  // 모바일 기기 배경색
                 overflowX: 'visible',
             }}
         >
@@ -1113,7 +1123,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                             pointerEvents: 'none',
                         }}>
                             <div style={{
-                                width: '390px',
+                                width: VIEW_MODE_CONFIG[viewMode].maxWidth,
+                                maxWidth: '100%',
                                 height: '3px',
                                 background: '#0046A4',
                                 borderRadius: '2px',
@@ -1133,14 +1144,14 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             <div
                 className="container"
                 style={{
-                    maxWidth: '390px',
+                    maxWidth: VIEW_MODE_CONFIG[viewMode].maxWidth,
                     width: '100%',
                     margin: '0 auto',  // 상단 간격은 wrapper paddingTop으로 처리
                     padding: '0 0 240px 0',
                     background: '#ffffff',
                     minHeight: '700px',
-                    boxShadow: '0 8px 48px rgba(0,0,0,0.22)',
-                    transition: 'opacity 0.6s ease',
+                    boxShadow: viewMode === 'responsive' ? 'none' : '0 8px 48px rgba(0,0,0,0.22)',
+                    transition: 'opacity 0.6s ease, max-width 0.3s ease',
                     opacity: containerOpacity,
                 }}
             />
@@ -1167,6 +1178,118 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 setDropLineY(null);
             }}
         />
+
+        {/* ── 새 페이지 추가 모달 ── */}
+        {showAddTab && (
+            <div
+                onClick={() => { setShowAddTab(false); setNewTabName(''); setNewTabViewMode('mobile'); }}
+                style={{
+                    position: 'fixed', inset: 0, zIndex: 200,
+                    background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+            >
+                <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        background: '#ffffff', borderRadius: '16px',
+                        padding: '32px', width: '480px', maxWidth: '90vw',
+                        boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+                    }}
+                >
+                    <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>
+                        새 페이지 만들기
+                    </h3>
+
+                    {/* 페이지 이름 */}
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                        페이지 이름
+                    </label>
+                    <input
+                        autoFocus
+                        value={newTabName}
+                        onChange={e => setNewTabName(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && newTabName.trim()) handleAddTab();
+                            if (e.key === 'Escape') { setShowAddTab(false); setNewTabName(''); setNewTabViewMode('mobile'); }
+                        }}
+                        placeholder="예: 메인 페이지"
+                        style={{
+                            width: '100%', height: '40px', padding: '0 12px', borderRadius: '8px',
+                            border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
+                            boxSizing: 'border-box',
+                        }}
+                    />
+
+                    {/* 레이아웃 선택 */}
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', margin: '20px 0 10px' }}>
+                        레이아웃 선택
+                    </label>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        {(Object.keys(VIEW_MODE_CONFIG) as ViewMode[]).map(mode => {
+                            const cfg = VIEW_MODE_CONFIG[mode];
+                            const selected = newTabViewMode === mode;
+                            const descriptions: Record<ViewMode, string> = {
+                                mobile: '390px 고정 너비\n모바일 앱 화면에 최적화',
+                                web: '1280px 고정 너비\n데스크톱 웹 페이지용',
+                                responsive: '전체 너비 사용\n모든 기기에 대응',
+                            };
+                            return (
+                                <button
+                                    key={mode}
+                                    type="button"
+                                    onClick={() => setNewTabViewMode(mode)}
+                                    style={{
+                                        flex: 1, padding: '16px 12px', borderRadius: '12px',
+                                        border: selected ? '2px solid #0046A4' : '2px solid #e5e7eb',
+                                        background: selected ? '#f0f4ff' : '#ffffff',
+                                        cursor: 'pointer', textAlign: 'center',
+                                        transition: 'all 0.15s',
+                                    }}
+                                >
+                                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>{cfg.icon}</div>
+                                    <div style={{
+                                        fontSize: '14px', fontWeight: 700,
+                                        color: selected ? '#0046A4' : '#374151', marginBottom: '6px',
+                                    }}>
+                                        {cfg.label}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '11px', color: '#6b7280', lineHeight: 1.4,
+                                        whiteSpace: 'pre-line',
+                                    }}>
+                                        {descriptions[mode]}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '12px 0 0', lineHeight: 1.4 }}>
+                        레이아웃은 페이지 생성 후 변경할 수 없습니다.
+                    </p>
+
+                    {/* 하단 버튼 */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
+                        <button
+                            onClick={() => { setShowAddTab(false); setNewTabName(''); setNewTabViewMode('mobile'); }}
+                            style={{ ...btnStyle, padding: '8px 20px' }}
+                        >취소</button>
+                        <button
+                            onClick={handleAddTab}
+                            disabled={!newTabName.trim()}
+                            style={{
+                                ...btnStyle, padding: '8px 20px',
+                                background: newTabName.trim() ? '#0046A4' : '#93c5fd',
+                                color: '#fff',
+                                borderColor: newTabName.trim() ? '#0046A4' : '#93c5fd',
+                                cursor: newTabName.trim() ? 'pointer' : 'not-allowed',
+                            }}
+                        >만들기</button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         </>
     );
