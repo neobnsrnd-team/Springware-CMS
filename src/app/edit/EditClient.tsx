@@ -217,6 +217,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             container: '.container',
             previewURL: 'preview-with-plugins.html',
             lang: ko,
+            // 삽입 HTML 앞뒤 공백 제거 — ContentBuilder 'row' 모드에서
+            // 선행 개행이 childNodes[0]을 텍스트 노드로 만들어
+            // element.tagName.toLowerCase() 크래시가 발생하는 버그 방지
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onAdd: ((html: string) => html.trim()) as any,
             upload,
 
             // Enable Code Chat (supports OpenAI or OpenRouter)
