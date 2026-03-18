@@ -536,6 +536,77 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             document.querySelectorAll<HTMLElement>('.is-rte-tool, .is-elementrte-tool').forEach(fixRteTop);
         }, 300);
 
+        // ── 기본블록 설정 모달 드래그 이동 ────────────────────────────────────
+        // ContentBuilder의 .is-modal은 라이브러리 내부에서 생성되므로 직접 수정 불가.
+        // MutationObserver로 .is-modal DOM 추가를 감지하여 드래그 이벤트를 동적으로 주입.
+        const makeModalDraggable = (modal: HTMLElement) => {
+            // 이미 드래그 핸들러가 등록된 경우 중복 방지
+            if (modal.dataset.draggable === 'true') return;
+            modal.dataset.draggable = 'true';
+
+            // 모달 헤더(첫 번째 자식 div 또는 모달 상단 영역)를 드래그 핸들로 사용
+            const handle = modal.querySelector<HTMLElement>('.is-modal-header, .modal-header, div:first-child') ?? modal;
+
+            handle.style.cursor = 'move';
+            handle.style.userSelect = 'none';
+
+            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+            const onMouseMove = (e: MouseEvent) => {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                modal.style.left = `${startLeft + dx}px`;
+                modal.style.top = `${startTop + dy}px`;
+                modal.style.transform = 'none';
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+
+            handle.addEventListener('mousedown', (e: MouseEvent) => {
+                // 입력 요소 클릭 시 드래그 방지
+                if ((e.target as HTMLElement).closest('input, textarea, select, button')) return;
+
+                const rect = modal.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
+
+                // 드래그 시작 시 position을 fixed로 고정
+                modal.style.position = 'fixed';
+                modal.style.left = `${rect.left}px`;
+                modal.style.top = `${rect.top}px`;
+                modal.style.transform = 'none';
+                modal.style.margin = '0';
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                e.preventDefault();
+            });
+        };
+
+        // MutationObserver로 .is-modal 생성 감지
+        const modalObserver = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (!(node instanceof HTMLElement)) return;
+                    // 직접 추가된 모달
+                    if (node.classList.contains('is-modal')) {
+                        makeModalDraggable(node);
+                    }
+                    // 하위에 포함된 모달
+                    node.querySelectorAll<HTMLElement>('.is-modal').forEach(makeModalDraggable);
+                });
+            });
+        });
+        modalObserver.observe(document.body, { childList: true, subtree: true });
+
+        // 이미 존재하는 모달에 즉시 적용
+        document.querySelectorAll<HTMLElement>('.is-modal').forEach(makeModalDraggable);
+
         // 에디터 캔버스 내 링크 클릭 시 페이지 이동 차단
         // (컴포넌트 내부 <a href> 가 실제 네비게이션을 일으키는 문제 방지)
         const blockCanvasLinkNavigation = (e: MouseEvent) => {
@@ -632,6 +703,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // Cleanup
         return () => {
             rteObserver.disconnect();
+            modalObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
             if (reinitTimer) clearTimeout(reinitTimer);
