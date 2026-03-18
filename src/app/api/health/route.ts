@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { 커넥션획득 } from '@/db/connection';
+import { getConnection } from '@/db/connection';
 
 export async function GET() {
   let conn;
   try {
-    conn = await 커넥션획득();
+    conn = await getConnection();
     const result = await conn.execute('SELECT 1 FROM DUAL');
     return NextResponse.json({ db: '연결 성공', result: result.rows });
   } catch (err: unknown) {

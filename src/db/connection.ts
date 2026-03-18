@@ -3,11 +3,14 @@ import oracledb from 'oracledb';
 // Thick 모드 사용: 로컬 Oracle Client 활용 (구버전 Oracle XE 지원)
 oracledb.initOracleClient();
 
-let 풀초기화완료 = false;
+// CLOB 컬럼을 string으로 자동 변환 (DATA, PAGE_DESC, RENDERED_HTML 등)
+oracledb.fetchAsString = [oracledb.CLOB];
+
+let isPoolInitialized = false;
 
 // 커넥션 풀 설정
-async function 풀초기화(): Promise<void> {
-  if (풀초기화완료) return;
+async function initPool(): Promise<void> {
+  if (isPoolInitialized) return;
 
   await oracledb.createPool({
     user: process.env.ORACLE_USER,
@@ -18,13 +21,13 @@ async function 풀초기화(): Promise<void> {
     poolIncrement: 1,
   });
 
-  풀초기화완료 = true;
+  isPoolInitialized = true;
   console.log('Oracle 커넥션 풀 초기화 완료');
 }
 
 // 커넥션 획득 (최초 호출 시 풀 자동 초기화, 스키마 설정 포함)
-export async function 커넥션획득(): Promise<oracledb.Connection> {
-  await 풀초기화();
+export async function getConnection(): Promise<oracledb.Connection> {
+  await initPool();
   const conn = await oracledb.getConnection();
   // 테이블 소유 스키마로 세션 변경 (쿼리에서 스키마 생략 가능)
   await conn.execute(`ALTER SESSION SET CURRENT_SCHEMA = ${process.env.ORACLE_SCHEMA}`);
@@ -32,9 +35,33 @@ export async function 커넥션획득(): Promise<oracledb.Connection> {
 }
 
 // 커넥션 풀 종료
-export async function 커넥션풀종료(): Promise<void> {
-  if (!풀초기화완료) return;
+export async function closePool(): Promise<void> {
+  if (!isPoolInitialized) return;
   await oracledb.getPool().close(10);
-  풀초기화완료 = false;
+  isPoolInitialized = false;
   console.log('Oracle 커넥션 풀 종료 완료');
+}
+
+// 트랜잭션 래퍼 — 콜백 내 모든 쿼리를 하나의 트랜잭션으로 실행
+// 성공 시 COMMIT, 예외 시 ROLLBACK 후 재throw
+export async function withTransaction<T>(
+  task: (conn: oracledb.Connection) => Promise<T>
+): Promise<T> {
+  const conn = await getConnection();
+  try {
+    const result = await task(conn);
+    await conn.commit();
+    return result;
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    await conn.close();
+  }
+}
+
+// CLOB 바인딩 헬퍼 — 4000바이트 초과 문자열을 CLOB 타입으로 바인딩
+export function clobBind(value: string | null): string | { val: string; type: number } | null {
+  if (!value) return null;
+  return value.length > 4000 ? { val: value, type: oracledb.CLOB } : value;
 }
