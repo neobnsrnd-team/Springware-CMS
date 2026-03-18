@@ -669,6 +669,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const KO_LONG_LOREM = '여기에 내용을 입력하세요. 이 텍스트를 클릭하여 편집할 수 있습니다.';
 
         const replaceEnglishPlaceholders = (node: HTMLElement) => {
+            // ① 일반 텍스트 노드 대체
             const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
             const textNodes: Text[] = [];
             let curr: Node | null;
@@ -683,6 +684,35 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 const match = KO_TEXT.find(([en]) => text.trim() === en);
                 if (match) t.textContent = match[1];
             }
+
+            // ② data-html 속성 대체 (HTML/JS 블록, 폼 블록)
+            // ContentBuilder는 code/form 블록 콘텐츠를 URL인코딩해 data-html에 저장합니다.
+            node.querySelectorAll<HTMLElement>('[data-html]').forEach(el => {
+                const encoded = el.getAttribute('data-html') ?? '';
+                let decoded = decodeURIComponent(encoded);
+                let changed = false;
+
+                // HTML/JS 블록 예시 텍스트
+                if (decoded.includes('Lorem ipsum')) {
+                    decoded = decoded.replace(/<h1([^>]*)>Lorem ipsum<\/h1>/,
+                        '<h1$1>안녕하세요</h1>');
+                    decoded = decoded.replace(
+                        'This is a code block. You can edit this block using the source dialog.',
+                        'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.'
+                    );
+                    decoded = decoded.replace("Hello World..!", "안녕하세요!");
+                    changed = true;
+                }
+
+                // 폼 블록 기본 제목/설명
+                if (decoded.includes('Your Form Title Here')) {
+                    decoded = decoded.replace('Your Form Title Here', '폼 제목을 입력하세요');
+                    decoded = decoded.replace('Your Description Here', '폼 설명을 입력하세요');
+                    changed = true;
+                }
+
+                if (changed) el.setAttribute('data-html', encodeURIComponent(decoded));
+            });
         };
 
         let pendingKorean = false;
