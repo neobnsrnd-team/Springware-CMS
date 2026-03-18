@@ -629,6 +629,26 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         };
         document.addEventListener('mousedown', activateRowOnMouseDown, true);
 
+        // ── .cell-add 클릭 → 새 행 추가로 리디렉션 ──────────────────────────
+        // .cell-add(is-col-tool 내부)의 기본 동작은 같은 열에 옆으로 추가합니다.
+        // 금융 컴포넌트 에디터에서는 항상 현재 행 아래에 새 행을 추가해야 하므로
+        // 클릭을 캡처 단계에서 가로채 같은 행의 is-rowadd-tool 버튼을 대신 클릭합니다.
+        const redirectCellAddToRowAdd = (e: MouseEvent) => {
+            const path = e.composedPath() as Element[];
+            const isCellAdd = path.some(el => el instanceof HTMLElement && el.classList.contains('cell-add'));
+            if (!isCellAdd) return;
+
+            e.stopImmediatePropagation();
+            e.preventDefault();
+
+            const row = path.find(el => el instanceof HTMLElement && el.classList.contains('row')) as HTMLElement | undefined;
+            if (!row) return;
+
+            const rowAddBtn = row.querySelector('.is-rowadd-tool button') as HTMLElement | null;
+            rowAddBtn?.click();
+        };
+        document.addEventListener('click', redirectCellAddToRowAdd, true);
+
         // Load content from the server
         fetch('/api/builder/load', {
             method: 'POST',
@@ -659,6 +679,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         return () => {
             rteObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
+            document.removeEventListener('click', redirectCellAddToRowAdd, true);
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
             if (reinitTimer) clearTimeout(reinitTimer);
             builderRef.current?.destroy();
