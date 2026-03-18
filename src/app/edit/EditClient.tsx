@@ -721,11 +721,27 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     changed = true;
                 }
 
-                // 폼 블록 기본 제목/설명
-                if (decoded.includes('Your Form Title Here')) {
-                    decoded = decoded.replace('Your Form Title Here', '폼 제목을 입력하세요');
-                    decoded = decoded.replace('Your Description Here', '폼 설명을 입력하세요');
-                    changed = true;
+                // 폼 블록: JSON 파싱 후 기본 텍스트 한글화
+                // FormViewer가 json.title / json.submitText를 직접 innerText로 설정하므로
+                // data-html 속성 단계에서 JSON 필드를 교체해야 합니다.
+                if (decoded.trim().startsWith('{') && decoded.includes('"title"')) {
+                    try {
+                        const formJson = JSON.parse(decoded) as Record<string, unknown>;
+                        let formChanged = false;
+                        const FORM_KO: [string, string][] = [
+                            ["Let's Build Something Cool!", '나만의 폼을 만들어보세요!'],
+                            ['Fuel your creativity with ease.', '쉽게 폼을 구성할 수 있습니다.'],
+                            ["Let's Go!", '제출하기'],
+                            ['Your Form Title Here', '폼 제목을 입력하세요'],
+                            ['Your Description Here', '폼 설명을 입력하세요'],
+                        ];
+                        for (const [en, ko] of FORM_KO) {
+                            if (formJson['title'] === en)       { formJson['title'] = ko;       formChanged = true; }
+                            if (formJson['description'] === en) { formJson['description'] = ko; formChanged = true; }
+                            if (formJson['submitText'] === en)  { formJson['submitText'] = ko;  formChanged = true; }
+                        }
+                        if (formChanged) { decoded = JSON.stringify(formJson); changed = true; }
+                    } catch { /* JSON 파싱 실패 시 무시 */ }
                 }
 
                 if (changed) el.setAttribute('data-html', encodeURIComponent(decoded));
