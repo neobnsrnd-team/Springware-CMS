@@ -154,9 +154,22 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [basicBlocks, setBasicBlocks] = useState<BasicBlock[]>([]);
 
     // 기본 탭 목록 (localStorage 영속화 — 삭제 가능)
-    const [defaultTabs, setDefaultTabs] = useState<TabData[]>(DEFAULT_TABS);
+    // lazy initializer로 첫 렌더링 전에 localStorage를 읽어 삭제된 탭이 잠깐 보이는 현상 방지
+    const [defaultTabs, setDefaultTabs] = useState<TabData[]>(() => {
+        try {
+            const saved = localStorage.getItem('cms-default-tabs');
+            if (saved) return (JSON.parse(saved) as TabData[]).map(t => ({ ...t, viewMode: t.viewMode ?? 'mobile' }));
+        } catch { /* 손상된 데이터 무시 */ }
+        return DEFAULT_TABS;
+    });
     // 사용자가 추가한 커스텀 탭 목록 (localStorage 영속화)
-    const [customTabs, setCustomTabs] = useState<TabData[]>([]);
+    const [customTabs, setCustomTabs] = useState<TabData[]>(() => {
+        try {
+            const saved = localStorage.getItem('cms-custom-tabs');
+            if (saved) return (JSON.parse(saved) as TabData[]).map(t => ({ ...t, viewMode: t.viewMode ?? 'mobile' }));
+        } catch { /* 손상된 데이터 무시 */ }
+        return [];
+    });
     // 탭 추가 인라인 입력 표시 여부
     const [showAddTab, setShowAddTab] = useState(false);
     // 탭 이름 입력값
@@ -652,21 +665,6 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     }, []);
 
     // ── 탭 localStorage 영속화 ───────────────────────────────────────────
-    useEffect(() => {
-        // viewMode가 없는 기존 탭 데이터 호환 — 없으면 'mobile'로 보정
-        const migrateViewMode = (tabs: TabData[]): TabData[] =>
-            tabs.map(t => ({ ...t, viewMode: t.viewMode ?? 'mobile' }));
-
-        const savedDefault = localStorage.getItem('cms-default-tabs');
-        if (savedDefault) {
-            try { setDefaultTabs(migrateViewMode(JSON.parse(savedDefault))); } catch { /* 손상된 데이터 무시 */ }
-        }
-        const savedCustom = localStorage.getItem('cms-custom-tabs');
-        if (savedCustom) {
-            try { setCustomTabs(migrateViewMode(JSON.parse(savedCustom))); } catch { /* 손상된 데이터 무시 */ }
-        }
-    }, []);
-
     useEffect(() => {
         localStorage.setItem('cms-default-tabs', JSON.stringify(defaultTabs));
     }, [defaultTabs]);
