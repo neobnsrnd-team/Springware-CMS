@@ -670,6 +670,18 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             ['Lorem Ipsum is simply dummy text', '예시 텍스트'],
             ['Read More',                  '더 보기'],
             ['Get Started',               '시작하기'],
+            // ── HTML/JS 블록 (applyBehaviorOn 실행 후 스크립트가 교체한 텍스트) ──
+            ['Hello World..!',             '안녕하세요!'],
+            ['This is a code block. You can edit this block using the source dialog.',
+             'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.'],
+            // ── 폼 블록 (FormViewer 기본 샘플 데이터) ──────────────────────
+            ["Let's Build Something Cool!", '나만의 폼을 만들어보세요!'],
+            ['Fuel your creativity with ease.', '쉽게 폼을 구성할 수 있습니다.'],
+            ["Let's Go!",                  '제출하기'],
+            ['Your Name:',                 '이름:'],
+            ['Your Best Email:',           '이메일:'],
+            ['Enter your name',            '이름을 입력하세요'],
+            ['Enter your email',           '이메일을 입력하세요'],
         ];
         const KO_LONG_LOREM = '여기에 내용을 입력하세요. 이 텍스트를 클릭하여 편집할 수 있습니다.';
 
@@ -736,6 +748,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 m.addedNodes.forEach(n => {
                     if (n instanceof HTMLElement && n.classList.contains('row')) {
                         replaceEnglishPlaceholders(n);
+                        // 폼/코드 블록은 FormViewer·스크립트가 비동기로 렌더링하므로
+                        // 100ms·500ms 후 재시도해 텍스트 노드를 교체합니다.
+                        const rowRef = n;
+                        setTimeout(() => replaceEnglishPlaceholders(rowRef), 100);
+                        setTimeout(() => replaceEnglishPlaceholders(rowRef), 500);
                         pendingKorean = false;
                     }
                 });
