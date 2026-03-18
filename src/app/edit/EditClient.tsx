@@ -564,11 +564,37 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         //    .column 조상을 안정적으로 탐색 (closest()는 SVG 경계에서 실패 가능)
         const activateRowOnMouseDown = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            // 도구 버튼 클릭(이동/삭제/더보기)은 ContentBuilder에 위임
-            if (target.closest?.('.is-tool')) return;
 
-            // composedPath()로 이벤트 경로 전체에서 .column 요소를 탐색
+            // composedPath()로 이벤트 경로 전체에서 요소 탐색
+            // (SVG <path>/<use> 같은 내부 요소에서도 안정적으로 동작)
             const path = e.composedPath() as Element[];
+
+            // ── .cell-add 버튼 클릭 처리 ─────────────────────────────────
+            // .cell-add는 .is-col-tool(.is-tool) 안에 있어서 아래 is-tool early-return에
+            // 걸려 ContentBuilder의 cellSelected()가 null을 반환하는 문제를 방지합니다.
+            // mousedown(캡처) 단계에서 .cell-active를 먼저 설정해두면
+            // 이후 click 단계의 ContentBuilder 핸들러가 정상 동작합니다.
+            const isCellAdd = path.some(el => el instanceof HTMLElement && el.classList.contains('cell-add'));
+            if (isCellAdd) {
+                const row = path.find(el => el instanceof HTMLElement && el.classList.contains('row')) as HTMLElement | undefined;
+                const container = document.querySelector('.container');
+                if (row && container?.contains(row)) {
+                    const col = row.querySelector('.column') as HTMLElement | null;
+                    if (col) {
+                        document.querySelectorAll('.row-active').forEach(r => r.classList.remove('row-active', 'row-outline'));
+                        document.querySelectorAll('.cell-active').forEach(c => c.classList.remove('cell-active'));
+                        document.querySelectorAll('.builder-active').forEach(b => b.classList.remove('builder-active'));
+                        row.classList.add('row-active');
+                        col.classList.add('cell-active');
+                        row.parentElement?.classList.add('builder-active');
+                        document.body.classList.add('content-edit');
+                    }
+                }
+                return; // ContentBuilder의 .cell-add click 핸들러로 위임
+            }
+
+            // 그 외 도구 버튼 클릭(이동/삭제/더보기)은 ContentBuilder에 위임
+            if (target.closest?.('.is-tool')) return;
             const col = path.find(
                 el => el instanceof HTMLElement && el.classList.contains('column')
             ) as HTMLElement | undefined;
