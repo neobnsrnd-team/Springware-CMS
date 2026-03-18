@@ -954,19 +954,18 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         });
 
         const isDefault = defaultTabs.some(t => t.id === bank);
-        const nextTabs = isDefault
-            ? defaultTabs.filter(t => t.id !== bank)
-            : defaultTabs;
-        if (isDefault) {
-            setDefaultTabs(nextTabs);
-        } else {
-            setCustomTabs(prev => prev.filter(t => t.id !== bank));
-        }
+        const nextDefaultTabs = isDefault ? defaultTabs.filter(t => t.id !== bank) : defaultTabs;
+        const nextCustomTabs = isDefault ? customTabs : customTabs.filter(t => t.id !== bank);
+
+        // useEffect 대기 없이 즉시 localStorage에 반영 (페이지 이동 전)
+        localStorage.setItem('cms-default-tabs', JSON.stringify(nextDefaultTabs));
+        localStorage.setItem('cms-custom-tabs', JSON.stringify(nextCustomTabs));
+
+        setDefaultTabs(nextDefaultTabs);
+        setCustomTabs(nextCustomTabs);
 
         // 남은 탭 중 첫 번째로 이동
-        const remaining = isDefault
-            ? [...nextTabs, ...customTabs]
-            : [...defaultTabs, ...customTabs.filter(t => t.id !== bank)];
+        const remaining = [...nextDefaultTabs, ...nextCustomTabs];
         const nextId = remaining[0]?.id ?? '';
         window.location.href = `/edit?bank=${nextId}`;
     }
