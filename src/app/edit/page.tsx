@@ -1,7 +1,7 @@
 // src/app/edit/page.tsx
 
 import { Suspense } from 'react';
-import EditClient from './EditClient';
+import EditClientLoader from './EditClientLoader';
 
 export default async function Edit({
     searchParams,
@@ -13,7 +13,7 @@ export default async function Edit({
 
     return (
         <Suspense>
-            <EditClient key={bank} bank={bank} />
+            <EditClientLoader key={bank} bank={bank} />
         </Suspense>
     );
 }
