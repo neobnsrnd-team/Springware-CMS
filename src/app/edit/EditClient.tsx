@@ -651,6 +651,64 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         };
         document.addEventListener('click', redirectCellAddToRowAdd, true);
 
+        // ── quickadd 블록 예시 텍스트 한글화 ────────────────────────────────
+        // quickadd 팝업에서 블록을 선택하면 ContentBuilder가 영문 예시 텍스트를 삽입합니다.
+        // 캡처 단계에서 클릭을 감지해 플래그를 세운 뒤,
+        // MutationObserver로 새 row 삽입을 감지해 한글로 대체합니다.
+        const KO_TEXT: [string, string][] = [
+            ['Headline Goes Here',         '제목을 입력하세요'],
+            ["It's easy to use, customizable, and user-friendly. A truly amazing features.", '사용하기 쉽고 커스터마이징이 가능합니다. 여기에 인용구를 입력하세요.'],
+            ['Heading 1 here',             '제목 1을 입력하세요'],
+            ['Heading 2 here',             '제목 2를 입력하세요'],
+            ['Heading 3 here',             '제목 3을 입력하세요'],
+            ['Heading 4 here',             '제목 4를 입력하세요'],
+            ['Lorem Ipsum is simply dummy text', '예시 텍스트'],
+            ['Read More',                  '더 보기'],
+            ['Get Started',               '시작하기'],
+        ];
+        const KO_LONG_LOREM = '여기에 내용을 입력하세요. 이 텍스트를 클릭하여 편집할 수 있습니다.';
+
+        const replaceEnglishPlaceholders = (node: HTMLElement) => {
+            const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+            const textNodes: Text[] = [];
+            let curr: Node | null;
+            while ((curr = walker.nextNode())) textNodes.push(curr as Text);
+
+            for (const t of textNodes) {
+                const text = t.textContent ?? '';
+                if (text.includes('Lorem Ipsum is simply dummy text of the printing')) {
+                    t.textContent = KO_LONG_LOREM;
+                    continue;
+                }
+                const match = KO_TEXT.find(([en]) => text.trim() === en);
+                if (match) t.textContent = match[1];
+            }
+        };
+
+        let pendingKorean = false;
+        const markKorean = (e: MouseEvent) => {
+            const path = e.composedPath() as Element[];
+            const inQuickadd = path.some(el => el instanceof HTMLElement && el.classList.contains('quickadd'));
+            if (!inQuickadd) return;
+            const isAddBtn = path.some(el => el instanceof HTMLElement && /\badd-\w/.test(el.className));
+            if (isAddBtn) pendingKorean = true;
+        };
+        document.addEventListener('click', markKorean, true);
+
+        const koObserver = new MutationObserver((mutations) => {
+            if (!pendingKorean) return;
+            for (const m of mutations) {
+                m.addedNodes.forEach(n => {
+                    if (n instanceof HTMLElement && n.classList.contains('row')) {
+                        replaceEnglishPlaceholders(n);
+                        pendingKorean = false;
+                    }
+                });
+            }
+        });
+        const containerEl = document.querySelector('.container');
+        if (containerEl) koObserver.observe(containerEl, { childList: true });
+
         // Load content from the server
         fetch('/api/builder/load', {
             method: 'POST',
@@ -682,6 +740,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             rteObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
             document.removeEventListener('click', redirectCellAddToRowAdd, true);
+            document.removeEventListener('click', markKorean, true);
+            koObserver.disconnect();
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
             if (reinitTimer) clearTimeout(reinitTimer);
             builderRef.current?.destroy();
