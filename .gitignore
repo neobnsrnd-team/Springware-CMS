@@ -47,6 +47,9 @@ next-env.d.ts
 # ── 배포 ──
 .vercel
 
+# ── Oracle Docker 볼륨 ──
+oracle-data/
+
 # ── OS / 에디터 잡파일 ──
 .DS_Store
 Thumbs.db
