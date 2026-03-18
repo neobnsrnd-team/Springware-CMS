@@ -12,6 +12,7 @@ import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css'
 
 import ComponentPanel from './ComponentPanel'
 import { FINANCE_COMPONENTS } from './finance-component-data'
+import ko from './ko'
 
 // content-plugins.js data_basic 스니펫 타입
 export interface BasicBlock {
@@ -215,6 +216,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         builderRef.current = new ContentBuilder({
             container: '.container',
             previewURL: 'preview-with-plugins.html',
+            lang: ko,
             upload,
 
             // Enable Code Chat (supports OpenAI or OpenRouter)
