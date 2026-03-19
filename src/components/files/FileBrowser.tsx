@@ -499,7 +499,7 @@ export default function FileBrowser({
                         <>
                             <button
                                 onClick={handleRefresh}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
                                 title="Refresh files"
                             >
                                 <RefreshCw className="w-4 h-4" />
@@ -507,21 +507,21 @@ export default function FileBrowser({
                             </button>
                             <button
                                 onClick={toggleSelectionMode}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
                             >
                                 <Check className="w-4 h-4" />
                                 <span className="text-sm">Select</span>
                             </button>
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-zinc-100 rounded-lg hover:bg-zinc-700 transition-colors cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#0046A4] text-white rounded-lg hover:bg-[#003399] transition-colors cursor-pointer"
                             >
                                 <Upload className="w-4 h-4" />
                                 <span className="text-sm">Upload</span>
                             </button>
                             <button
                                 onClick={() => setShowCreateFolderModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
                             >
                                 <FolderPlus className="w-4 h-4" />
                                 <span className="text-sm">New Folder</span>
@@ -530,7 +530,7 @@ export default function FileBrowser({
                         ) : (
                         <button
                             onClick={toggleSelectionMode}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
                         >
                             <X className="w-4 h-4" />
                             <span className="text-sm">Cancel</span>
@@ -575,11 +575,11 @@ export default function FileBrowser({
                         className="relative"
                     >
                     {isDragging && (
-                        <div className="absolute inset-0 z-10 bg-blue-50 border-4 border-dashed border-blue-400 rounded-lg flex items-center justify-center">
+                        <div className="absolute inset-0 z-10 bg-[#EBF4FF] border-4 border-dashed border-[#0046A4] rounded-lg flex items-center justify-center">
                         <div className="text-center">
-                            <Upload className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-                            <p className="text-lg font-medium text-blue-700">Drop files here to upload</p>
-                            <p className="text-sm text-blue-600 mt-1">
+                            <Upload className="w-16 h-16 text-[#0046A4] mx-auto mb-4" />
+                            <p className="text-lg font-medium text-[#0046A4]">파일을 여기에 드롭하여 업로드</p>
+                            <p className="text-sm text-[#2563EB] mt-1">
                                 Files will be uploaded to: {currentPath || 'Home'}
                             </p>
                         </div>
@@ -642,7 +642,7 @@ export default function FileBrowser({
                         {selectedFiles.size < files.length && (
                             <button
                             onClick={selectAllFiles}
-                            className="text-sm text-blue-600 hover:text-blue-700 cursor-pointer"
+                            className="text-sm text-[#0046A4] hover:text-[#003399] cursor-pointer"
                             >
                             Select all
                             </button>
@@ -658,7 +658,7 @@ export default function FileBrowser({
                         </button>
                         <button
                             onClick={toggleSelectionMode}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
                         >
                             <span className="text-sm">Cancel</span>
                         </button>

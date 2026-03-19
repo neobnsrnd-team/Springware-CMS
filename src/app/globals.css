@@ -22,21 +22,28 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
 }
 
 a {
     text-decoration: underline
 }
+/* 에디터 상단 네비바 버튼 — hover 상태 포함 */
+.nav-btn:hover {
+  background: #EBF4FF !important;
+  border-color: #0046A4 !important;
+  color: #0046A4 !important;
+}
+
 .btns {
   @apply fixed bottom-8 left-8 flex gap-2;
 }
 
 .btns button {
   @apply px-5 py-2.5 rounded-md text-sm font-medium
-         bg-white border border-gray-200 shadow-sm
-         hover:bg-gray-100 hover:border-gray-300
-         focus:outline-none focus:ring-2 focus:ring-gray-400/40
+         bg-white border border-[#e5e7eb] shadow-sm
+         hover:bg-[#EBF4FF] hover:border-[#0046A4] hover:text-[#0046A4]
+         focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30
          transition-all duration-200 cursor-pointer;
 }
 
@@ -102,6 +109,41 @@ a {
  * 390px 모바일 컨테이너가 가운데 정렬되어 있어 오른쪽에 충분한 공간이 있으므로
  * ContentBuilder 기본값(right: -40px)을 그대로 사용합니다.
  */
+
+/* ── quickadd 팝업 버튼 크기 & 텍스트 조정 ──────────────────────────────
+ * 라이브러리 기본값(font-size:9px, height:60px)이 너무 작아 가독성 개선
+ */
+#_cbhtml .is-pop.quickadd button {
+    height: 76px !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    text-transform: none !important;
+}
+#_cbhtml .is-pop.quickadd button svg,
+#_cbhtml .is-pop.quickadd button img {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* ── quickadd 팝업 열림 애니메이션 ──────────────────────────────────────
+ * ContentBuilder가 display:none → display:flex 전환 시 자동 재생
+ * pluginsettings 모달과 동일한 fade-in + scale-up 효과
+ */
+@keyframes quickadd-open {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#_cbhtml .is-pop.quickadd {
+    transform-origin: top center;
+    animation: quickadd-open 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 
 /* 겹치는 기능 버튼 숨김: 그리드 에디터(열 레이아웃 편집)는 금융 컴포넌트 편집 시 불필요 */
 .is-builder .is-tool.is-row-tool .row-grideditor {

@@ -72,14 +72,14 @@ export default function FileCard({ file, isSelected, selectionMode, onClick, pri
         <div 
             onClick={(e) => onClick(file, e)}
             className={`group cursor-pointer bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative ${
-                isSelected ? 'ring-2 ring-blue-500' : ''
+                isSelected ? 'ring-2 ring-[#0046A4]' : ''
             }`}
         >
             {selectionMode && (
                 <div className="absolute top-2 left-2 z-10">
                     <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center ${
-                        isSelected 
-                        ? 'bg-blue-600 border-blue-600' 
+                        isSelected
+                        ? 'bg-[#0046A4] border-[#0046A4]'
                         : 'bg-white border-gray-300'
                     }`}>
                         {isSelected && <Check className="w-4 h-4 text-white" />}

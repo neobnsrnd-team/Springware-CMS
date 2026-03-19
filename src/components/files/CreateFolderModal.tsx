@@ -103,13 +103,13 @@ export default function CreateFolderModal({
             aria-labelledby="create-folder-title"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative" style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}>
 
                 <h3 id="create-folder-title" className="text-lg font-semibold text-gray-900">Create New Folder</h3>
                             
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1 cursor-pointer"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-[#0046A4] focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 rounded p-1 cursor-pointer"
                     aria-label="Close"
                 >
                     <X className="w-5 h-5" />
@@ -130,7 +130,7 @@ export default function CreateFolderModal({
                                 if (error) setError(null);
                             }}
                             onKeyDown={handleKeyDown}
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 focus:border-[#0046A4] ${
                                 error ? 'border-red-500 bg-red-50' : 'border-gray-300'
                             }`}
                             placeholder="Enter folder name"
@@ -149,7 +149,7 @@ export default function CreateFolderModal({
                             type="button"
                             onClick={onClose}
                             disabled={isCreating}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            className="px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-xl hover:bg-[#EBF4FF] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 cursor-pointer"
                         >
                             Cancel
                         </button>
@@ -157,7 +157,7 @@ export default function CreateFolderModal({
                             type="button"
                             onClick={handleSubmit}
                             disabled={isCreating || !folderName.trim()}
-                            className="px-4 py-2 bg-zinc-900 text-zinc-100 rounded-lg hover:bg-zinc-700 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 cursor-pointer"
+                            className="px-4 py-2 bg-[#0046A4] text-white rounded-xl hover:bg-[#003399] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 flex items-center gap-2 cursor-pointer"
                         >
                         {isCreating ? (
                             <>

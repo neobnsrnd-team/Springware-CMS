@@ -37,8 +37,8 @@ export default function Sidebar({
                     onClick={() => onFolderClick('')}
                     className={`flex items-center gap-2 px-3 py-1.5 mb-1 rounded-md cursor-pointer transition-colors ${
                         currentPath === ''
-                        ? 'bg-gray-100 text-foreground'
-                        : 'hover:bg-gray-100 text-gray-700'
+                        ? 'bg-[#EBF4FF] text-[#0046A4] font-medium'
+                        : 'hover:bg-[#EBF4FF] hover:text-[#0046A4] text-gray-700'
                     }`}
                 >
                     <Folder className="w-4 h-4" />
