@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 
 // Runtime library for rendering ContentBuilder-generated content
 import ContentBuilderRuntime from '@innovastudio/contentbuilder-runtime'
@@ -11,7 +11,7 @@ import ContentBuilder from '@innovastudio/contentbuilder'
 import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css'
 
 import ComponentPanel from './ComponentPanel'
-import { FINANCE_COMPONENTS } from './finance-component-data'
+import type { FinanceComponent } from './finance-component-data'
 import ko from './ko'
 
 // content-plugins.js data_basic 스니펫 타입
@@ -42,7 +42,7 @@ export interface ParsedBlock {
  * outerHtml에는 row 전체를 저장하므로 reorder 시
  * loadHtml(rows.join(''))으로 ContentBuilder 구조가 그대로 복원됩니다.
  */
-function parseBuilderBlocks(html: string): ParsedBlock[] {
+function parseBuilderBlocks(html: string, componentsMap?: Record<string, FinanceComponent>): ParsedBlock[] {
     if (!html?.trim()) return [];
     const doc = new DOMParser().parseFromString(html, 'text/html');
 
@@ -56,7 +56,7 @@ function parseBuilderBlocks(html: string): ParsedBlock[] {
         const pluginEl = rowEl.querySelector('[data-cb-type]');
         if (pluginEl) {
             const cbType = pluginEl.getAttribute('data-cb-type') ?? '';
-            const comp = FINANCE_COMPONENTS.find(c => c.id === cbType);
+            const comp = componentsMap?.[cbType];
             return {
                 id: `block-${i}-${cbType}`,
                 cbType,
@@ -154,6 +154,18 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     // content-plugins.js 기본 블록 (우측 패널 "기본 블록" 탭에서 사용)
     const [basicBlocks, setBasicBlocks] = useState<BasicBlock[]>([]);
 
+    // 금융 컴포넌트 (DB 또는 파일에서 로드)
+    const [financeComponents, setFinanceComponents] = useState<FinanceComponent[]>([]);
+    const financeComponentsMap = useMemo(() =>
+        financeComponents.reduce((map, comp) => {
+            map[comp.id] = comp;
+            return map;
+        }, {} as Record<string, FinanceComponent>),
+        [financeComponents]
+    );
+    const financeComponentsMapRef = useRef<Record<string, FinanceComponent>>({});
+    useEffect(() => { financeComponentsMapRef.current = financeComponentsMap; }, [financeComponentsMap]);
+
     // 기본 탭 목록 (localStorage 영속화 — 삭제 가능)
     // lazy initializer로 첫 렌더링 전에 localStorage를 읽어 삭제된 탭이 잠깐 보이는 현상 방지
     const [defaultTabs, setDefaultTabs] = useState<TabData[]>(() => {
@@ -198,7 +210,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 builderRef.current?.applyBehavior();
                 // ContentBuilder 자체 삭제/이동 후 순서 패널 동기화
                 const html = builderRef.current?.html() ?? '';
-                setCanvasBlocks(parseBuilderBlocks(html));
+                setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
             }, 300);
         };
         // 툴바의 이동/복제/삭제 후 ContentBuilder 재연결을 위해 전역 노출
@@ -866,7 +878,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 setContainerOpacity(1);
                 // 초기 블록 목록 파싱
                 const html = builderRef.current?.html() ?? '';
-                setCanvasBlocks(parseBuilderBlocks(html));
+                setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
             }, 300);
         })
         .catch(error => {
@@ -966,6 +978,18 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         };
     }, []);
 
+    // ── 금융 컴포넌트 API 로드 (viewMode 변경 시 재요청) ────────────────
+    useEffect(() => {
+        let cancelled = false;
+        fetch(`/api/components?type=finance&viewMode=${viewMode}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!cancelled && data.ok) setFinanceComponents(data.components);
+            })
+            .catch(err => console.error('금융 컴포넌트 로드 오류:', err));
+        return () => { cancelled = true; };
+    }, [viewMode]);
+
     // ── 컴포넌트 패널 → 캔버스 삽입 ──────────────────────────────────────
     /**
      * 패널에서 선택한 컴포넌트 HTML을 캔버스의 targetIdx 위치에 삽입합니다.
@@ -980,7 +1004,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // canvasBlocksRef.current 대신 builder.html()로 현재 DOM 상태를 직접 읽음
         // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
         //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
-        const liveBlocks = parseBuilderBlocks(builder.html() ?? '');
+        const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
         const wrappedHtml = `<div class="row"><div class="column">\n${html}\n</div></div>`;
         const blockHtmls = liveBlocks.map(b => b.outerHtml);
 
@@ -999,7 +1023,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             await runtimeRef.current?.reinitialize();
             builderRef.current?.applyBehavior();
             const newHtml = builderRef.current?.html() ?? '';
-            setCanvasBlocks(parseBuilderBlocks(newHtml));
+            setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
         }, 300);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -1034,7 +1058,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const builder = builderRef.current;
         if (!builder) return;
 
-        const liveBlocks = parseBuilderBlocks(builder.html() ?? '');
+        const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
         const next = liveBlocks.filter((_, i) => i !== idx);
         const newHtml = next.map(b => b.outerHtml).join('\n');
         builder.loadHtml(newHtml);
@@ -1043,7 +1067,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             await runtimeRef.current?.reinitialize();
             builderRef.current?.applyBehavior();
             const updatedHtml = builderRef.current?.html() ?? '';
-            setCanvasBlocks(parseBuilderBlocks(updatedHtml));
+            setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
         }, 300);
     }, []);
 
@@ -1064,7 +1088,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const builder = builderRef.current;
         if (!builder) return;
 
-        const liveBlocks = parseBuilderBlocks(builder.html() ?? '');
+        const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
         if (from < 0 || from >= liveBlocks.length || to < 0 || to > liveBlocks.length) return;
         if (from === to || from === to - 1) return; // 위치 변동 없음
 
@@ -1080,7 +1104,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             await runtimeRef.current?.reinitialize();
             builderRef.current?.applyBehavior();
             const updatedHtml = builderRef.current?.html() ?? '';
-            setCanvasBlocks(parseBuilderBlocks(updatedHtml));
+            setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
         }, 300);
     }, []);
 
@@ -1165,7 +1189,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const selectedViewMode = newTabViewMode;
 
         // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트
-        const headerComp = FINANCE_COMPONENTS.find(c => c.id === 'app-header');
+        const headerComp = financeComponents.find(c => c.id === 'app-header');
         const defaultHtml = headerComp
             ? `<div class="row"><div class="column">\n${headerComp.html}\n</div></div>`
             : '';
@@ -1448,6 +1472,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             onActivate={handleActivate}
             viewMode={viewMode}
             basicBlocks={basicBlocks}
+            financeComponents={financeComponents}
             onDragStart={() => {
                 // ref는 즉시 갱신 (dragover 핸들러에서 동기 참조)
                 isDraggingRef.current = true;

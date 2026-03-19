@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FINANCE_COMPONENTS, FinanceComponent } from './finance-component-data';
+import type { FinanceComponent } from './finance-component-data';
 import type { ParsedBlock, BasicBlock } from './EditClient';
 
 interface Props {
@@ -19,6 +19,8 @@ interface Props {
     onActivate: (idx: number) => void;
     /** content-plugins.js에서 읽어온 기본 블록 목록 */
     basicBlocks: BasicBlock[];
+    /** DB 또는 파일에서 로드한 금융 컴포넌트 목록 */
+    financeComponents: FinanceComponent[];
     /** 현재 페이지의 뷰 모드 — 해당 모드의 컴포넌트만 표시 */
     viewMode: 'mobile' | 'web' | 'responsive';
     /** 패널에서 외부 드래그 시작/종료 알림 */
@@ -129,6 +131,7 @@ export default function ComponentPanel({
     onDeleteAll,
     onActivate,
     basicBlocks,
+    financeComponents,
     viewMode,
     onDragStart,
     onDragEnd,
@@ -340,7 +343,7 @@ export default function ComponentPanel({
                                 드래그하거나 + 클릭하여 캔버스에 추가
                             </p>
 
-                            {FINANCE_COMPONENTS.filter(c => c.viewMode === viewMode).map(comp => (
+                            {financeComponents.filter(c => c.viewMode === viewMode).map(comp => (
                                 <div
                                     key={comp.id}
                                     draggable

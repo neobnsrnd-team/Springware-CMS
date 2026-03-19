@@ -11,7 +11,7 @@ let isPoolInitialized = false;
 async function initPool(): Promise<void> {
   if (isPoolInitialized) return;
 
-  // Thick 모드 사용: 로컬 Oracle Client 활용 (구버전 Oracle XE 지원)
+  // Thick 모드 사용: Oracle Instant Client 필요 (구버전 Oracle XE 지원)
   oracledb.initOracleClient();
   // CLOB 컬럼을 string으로 자동 변환 (DATA, PAGE_DESC, RENDERED_HTML 등)
   oracledb.fetchAsString = [oracledb.CLOB];
