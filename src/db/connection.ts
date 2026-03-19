@@ -1,16 +1,20 @@
 import oracledb from 'oracledb';
 
-// Thick 모드 사용: 로컬 Oracle Client 활용 (구버전 Oracle XE 지원)
-oracledb.initOracleClient();
-
-// CLOB 컬럼을 string으로 자동 변환 (DATA, PAGE_DESC, RENDERED_HTML 등)
-oracledb.fetchAsString = [oracledb.CLOB];
+// DB 활성화 여부 — DB_ENABLED=true 일 때만 Oracle DB 사용, 아니면 파일 기반 폴백
+export function isDbEnabled(): boolean {
+  return process.env.DB_ENABLED === 'true';
+}
 
 let isPoolInitialized = false;
 
-// 커넥션 풀 설정
+// 커넥션 풀 설정 (최초 호출 시 Oracle Client 초기화 + CLOB 설정 포함)
 async function initPool(): Promise<void> {
   if (isPoolInitialized) return;
+
+  // Thick 모드 사용: 로컬 Oracle Client 활용 (구버전 Oracle XE 지원)
+  oracledb.initOracleClient();
+  // CLOB 컬럼을 string으로 자동 변환 (DATA, PAGE_DESC, RENDERED_HTML 등)
+  oracledb.fetchAsString = [oracledb.CLOB];
 
   await oracledb.createPool({
     user: process.env.ORACLE_USER,
