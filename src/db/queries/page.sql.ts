@@ -57,7 +57,7 @@ export const PAGE_INSERT = `
 /** 페이지 내용 수정 (에디터 저장 시) */
 export const PAGE_UPDATE = `
   UPDATE SPW_CMS_PAGE
-  SET PAGE_NAME = :pageName,
+  SET PAGE_NAME = NVL(:pageName, PAGE_NAME),
       PAGE_DESC = :pageDesc,
       PAGE_DESC_DETAIL = :pageDescDetail,
       FILE_PATH = :filePath,
