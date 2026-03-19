@@ -12,6 +12,7 @@ import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css'
 
 import ComponentPanel from './ComponentPanel'
 import { FINANCE_COMPONENTS } from './finance-component-data'
+import ko from './ko'
 
 // content-plugins.js data_basic 스니펫 타입
 export interface BasicBlock {
@@ -215,6 +216,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         builderRef.current = new ContentBuilder({
             container: '.container',
             previewURL: 'preview-with-plugins.html',
+            lang: ko,
+            // 삽입 HTML 앞뒤 공백 제거 — ContentBuilder 'row' 모드에서
+            // 선행 개행이 childNodes[0]을 텍스트 노드로 만들어
+            // element.tagName.toLowerCase() 크래시가 발생하는 버그 방지
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onAdd: ((html: string) => html.trim()) as any,
             upload,
 
             // Enable Code Chat (supports OpenAI or OpenRouter)
@@ -635,11 +642,37 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         //    .column 조상을 안정적으로 탐색 (closest()는 SVG 경계에서 실패 가능)
         const activateRowOnMouseDown = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            // 도구 버튼 클릭(이동/삭제/더보기)은 ContentBuilder에 위임
-            if (target.closest?.('.is-tool')) return;
 
-            // composedPath()로 이벤트 경로 전체에서 .column 요소를 탐색
+            // composedPath()로 이벤트 경로 전체에서 요소 탐색
+            // (SVG <path>/<use> 같은 내부 요소에서도 안정적으로 동작)
             const path = e.composedPath() as Element[];
+
+            // ── .cell-add 버튼 클릭 처리 ─────────────────────────────────
+            // .cell-add는 .is-col-tool(.is-tool) 안에 있어서 아래 is-tool early-return에
+            // 걸려 ContentBuilder의 cellSelected()가 null을 반환하는 문제를 방지합니다.
+            // mousedown(캡처) 단계에서 .cell-active를 먼저 설정해두면
+            // 이후 click 단계의 ContentBuilder 핸들러가 정상 동작합니다.
+            const isCellAdd = path.some(el => el instanceof HTMLElement && el.classList.contains('cell-add'));
+            if (isCellAdd) {
+                const row = path.find(el => el instanceof HTMLElement && el.classList.contains('row')) as HTMLElement | undefined;
+                const container = document.querySelector('.container');
+                if (row && container?.contains(row)) {
+                    const col = row.querySelector('.column') as HTMLElement | null;
+                    if (col) {
+                        document.querySelectorAll('.row-active').forEach(r => r.classList.remove('row-active', 'row-outline'));
+                        document.querySelectorAll('.cell-active').forEach(c => c.classList.remove('cell-active'));
+                        document.querySelectorAll('.builder-active').forEach(b => b.classList.remove('builder-active'));
+                        row.classList.add('row-active');
+                        col.classList.add('cell-active');
+                        row.parentElement?.classList.add('builder-active');
+                        document.body.classList.add('content-edit');
+                    }
+                }
+                return; // ContentBuilder의 .cell-add click 핸들러로 위임
+            }
+
+            // 그 외 도구 버튼 클릭(이동/삭제/더보기)은 ContentBuilder에 위임
+            if (target.closest?.('.is-tool')) return;
             const col = path.find(
                 el => el instanceof HTMLElement && el.classList.contains('column')
             ) as HTMLElement | undefined;
@@ -674,6 +707,147 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         };
         document.addEventListener('mousedown', activateRowOnMouseDown, true);
 
+        // ── .cell-add 클릭 → 새 행 추가로 리디렉션 ──────────────────────────
+        // .cell-add(is-col-tool 내부)의 기본 동작은 같은 열에 옆으로 추가합니다.
+        // 금융 컴포넌트 에디터에서는 항상 현재 행 아래에 새 행을 추가해야 하므로
+        // 클릭을 캡처 단계에서 가로채 같은 행의 is-rowadd-tool 버튼을 대신 클릭합니다.
+        const redirectCellAddToRowAdd = (e: MouseEvent) => {
+            const path = e.composedPath() as Element[];
+            const isCellAdd = path.some(el => el instanceof HTMLElement && el.classList.contains('cell-add'));
+            if (!isCellAdd) return;
+
+            e.stopImmediatePropagation();
+            e.preventDefault();
+
+            const row = path.find(el => el instanceof HTMLElement && el.classList.contains('row')) as HTMLElement | undefined;
+            if (!row) return;
+
+            const rowAddBtn = row.querySelector('.is-rowadd-tool button') as HTMLElement | null;
+            rowAddBtn?.click();
+        };
+        document.addEventListener('click', redirectCellAddToRowAdd, true);
+
+        // ── quickadd 블록 예시 텍스트 한글화 ────────────────────────────────
+        // quickadd 팝업에서 블록을 선택하면 ContentBuilder가 영문 예시 텍스트를 삽입합니다.
+        // 캡처 단계에서 클릭을 감지해 플래그를 세운 뒤,
+        // MutationObserver로 새 row 삽입을 감지해 한글로 대체합니다.
+        const KO_TEXT: [string, string][] = [
+            ['Headline Goes Here',         '제목을 입력하세요'],
+            ["It's easy to use, customizable, and user-friendly. A truly amazing features.", '사용하기 쉽고 커스터마이징이 가능합니다. 여기에 인용구를 입력하세요.'],
+            ['Heading 1 here',             '제목 1을 입력하세요'],
+            ['Heading 2 here',             '제목 2를 입력하세요'],
+            ['Heading 3 here',             '제목 3을 입력하세요'],
+            ['Heading 4 here',             '제목 4를 입력하세요'],
+            ['Lorem Ipsum is simply dummy text', '예시 텍스트'],
+            ['Read More',                  '더 보기'],
+            ['Get Started',               '시작하기'],
+            // ── HTML/JS 블록 (applyBehaviorOn 실행 후 스크립트가 교체한 텍스트) ──
+            ['Hello World..!',             '안녕하세요!'],
+            ['This is a code block. You can edit this block using the source dialog.',
+             'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.'],
+            // ── 폼 블록 (FormViewer 기본 샘플 데이터) ──────────────────────
+            ["Let's Build Something Cool!", '나만의 폼을 만들어보세요!'],
+            ['Fuel your creativity with ease.', '쉽게 폼을 구성할 수 있습니다.'],
+            ["Let's Go!",                  '제출하기'],
+            ['Your Name:',                 '이름:'],
+            ['Your Best Email:',           '이메일:'],
+            ['Enter your name',            '이름을 입력하세요'],
+            ['Enter your email',           '이메일을 입력하세요'],
+        ];
+        const KO_LONG_LOREM = '여기에 내용을 입력하세요. 이 텍스트를 클릭하여 편집할 수 있습니다.';
+
+        const replaceEnglishPlaceholders = (node: HTMLElement) => {
+            // ① 일반 텍스트 노드 대체
+            const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+            const textNodes: Text[] = [];
+            let curr: Node | null;
+            while ((curr = walker.nextNode())) textNodes.push(curr as Text);
+
+            for (const t of textNodes) {
+                const text = t.textContent ?? '';
+                if (text.includes('Lorem Ipsum is simply dummy text of the printing')) {
+                    t.textContent = KO_LONG_LOREM;
+                    continue;
+                }
+                const match = KO_TEXT.find(([en]) => text.trim() === en);
+                if (match) t.textContent = match[1];
+            }
+
+            // ② data-html 속성 대체 (HTML/JS 블록, 폼 블록)
+            // ContentBuilder는 code/form 블록 콘텐츠를 URL인코딩해 data-html에 저장합니다.
+            node.querySelectorAll<HTMLElement>('[data-html]').forEach(el => {
+                const encoded = el.getAttribute('data-html') ?? '';
+                let decoded = decodeURIComponent(encoded);
+                let changed = false;
+
+                // HTML/JS 블록 예시 텍스트
+                if (decoded.includes('Lorem ipsum')) {
+                    decoded = decoded.replace(/<h1([^>]*)>Lorem ipsum<\/h1>/,
+                        '<h1$1>안녕하세요</h1>');
+                    decoded = decoded.replace(
+                        'This is a code block. You can edit this block using the source dialog.',
+                        'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.'
+                    );
+                    decoded = decoded.replace("Hello World..!", "안녕하세요!");
+                    changed = true;
+                }
+
+                // 폼 블록: JSON 파싱 후 기본 텍스트 한글화
+                // FormViewer가 json.title / json.submitText를 직접 innerText로 설정하므로
+                // data-html 속성 단계에서 JSON 필드를 교체해야 합니다.
+                if (decoded.trim().startsWith('{') && decoded.includes('"title"')) {
+                    try {
+                        const formJson = JSON.parse(decoded) as Record<string, unknown>;
+                        let formChanged = false;
+                        const FORM_KO: [string, string][] = [
+                            ["Let's Build Something Cool!", '나만의 폼을 만들어보세요!'],
+                            ['Fuel your creativity with ease.', '쉽게 폼을 구성할 수 있습니다.'],
+                            ["Let's Go!", '제출하기'],
+                            ['Your Form Title Here', '폼 제목을 입력하세요'],
+                            ['Your Description Here', '폼 설명을 입력하세요'],
+                        ];
+                        for (const [en, ko] of FORM_KO) {
+                            if (formJson['title'] === en)       { formJson['title'] = ko;       formChanged = true; }
+                            if (formJson['description'] === en) { formJson['description'] = ko; formChanged = true; }
+                            if (formJson['submitText'] === en)  { formJson['submitText'] = ko;  formChanged = true; }
+                        }
+                        if (formChanged) { decoded = JSON.stringify(formJson); changed = true; }
+                    } catch { /* JSON 파싱 실패 시 무시 */ }
+                }
+
+                if (changed) el.setAttribute('data-html', encodeURIComponent(decoded));
+            });
+        };
+
+        let pendingKorean = false;
+        const markKorean = (e: MouseEvent) => {
+            const path = e.composedPath() as Element[];
+            const inQuickadd = path.some(el => el instanceof HTMLElement && el.classList.contains('quickadd'));
+            if (!inQuickadd) return;
+            const isAddBtn = path.some(el => el instanceof HTMLElement && /\badd-\w/.test(el.className));
+            if (isAddBtn) pendingKorean = true;
+        };
+        document.addEventListener('click', markKorean, true);
+
+        const koObserver = new MutationObserver((mutations) => {
+            if (!pendingKorean) return;
+            for (const m of mutations) {
+                m.addedNodes.forEach(n => {
+                    if (n instanceof HTMLElement && n.classList.contains('row')) {
+                        replaceEnglishPlaceholders(n);
+                        // 폼/코드 블록은 FormViewer·스크립트가 비동기로 렌더링하므로
+                        // 100ms·500ms 후 재시도해 텍스트 노드를 교체합니다.
+                        const rowRef = n;
+                        setTimeout(() => replaceEnglishPlaceholders(rowRef), 100);
+                        setTimeout(() => replaceEnglishPlaceholders(rowRef), 500);
+                        pendingKorean = false;
+                    }
+                });
+            }
+        });
+        const containerEl = document.querySelector('.container');
+        if (containerEl) koObserver.observe(containerEl, { childList: true });
+
         // Load content from the server
         fetch('/api/builder/load', {
             method: 'POST',
@@ -705,6 +879,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             rteObserver.disconnect();
             modalObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
+            document.removeEventListener('click', redirectCellAddToRowAdd, true);
+            document.removeEventListener('click', markKorean, true);
+            koObserver.disconnect();
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
             if (reinitTimer) clearTimeout(reinitTimer);
             builderRef.current?.destroy();
