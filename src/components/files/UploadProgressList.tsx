@@ -24,7 +24,7 @@ export default function UploadProgressList({ progressList, onRemove }: Props) {
                     ? 'bg-green-50 border border-green-200'
                     : progress.status === 'error'
                     ? 'bg-red-50 border border-red-200'
-                    : 'bg-blue-50 border border-blue-200'
+                    : 'bg-[#EBF4FF] border border-[#C7D8F4]'
                 }`}
             >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -34,7 +34,7 @@ export default function UploadProgressList({ progressList, onRemove }: Props) {
                             ? 'text-green-600'
                             : progress.status === 'error'
                             ? 'text-red-600'
-                            : 'text-blue-600'
+                            : 'text-[#0046A4]'
                         }`}
                     />
                     <div className="flex-1 min-w-0">
@@ -45,7 +45,7 @@ export default function UploadProgressList({ progressList, onRemove }: Props) {
                         {progress.status === 'success' && !progress.name.includes('deleted') && (
                             <p className="text-xs text-green-600">Upload complete</p>
                         )}
-                        {progress.status === 'uploading' && <p className="text-xs text-blue-600">Uploading...</p>}
+                        {progress.status === 'uploading' && <p className="text-xs text-[#0046A4]">업로드 중...</p>}
                     </div>
                 </div>
                 <button onClick={() => onRemove(progress.name)} className="p-1 hover:bg-gray-200 rounded cursor-pointer">

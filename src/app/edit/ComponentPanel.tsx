@@ -354,7 +354,7 @@ export default function ComponentPanel({
                                         alignItems: 'center',
                                         gap: '10px',
                                         padding: '10px 10px',
-                                        background: hoveredId === comp.id ? '#eff6ff' : '#ffffff',
+                                        background: hoveredId === comp.id ? '#EBF4FF' : '#ffffff',
                                         border: `1px solid ${hoveredId === comp.id ? '#0046A4' : '#e5e7eb'}`,
                                         borderRadius: '8px',
                                         cursor: 'grab',

@@ -184,7 +184,7 @@ export default function ViewClient({ html }: Props) {
                     width: '100%',
                     background: '#ffffff',
                     minHeight: '700px',
-                    boxShadow: '0 8px 48px rgba(0,0,0,0.22)',
+                    boxShadow: '0 8px 48px rgba(0,70,164,0.10)',
                     padding: 0,
                 }}
                 dangerouslySetInnerHTML={{ __html: html || '' }}

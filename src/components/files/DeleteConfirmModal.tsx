@@ -60,11 +60,11 @@ export default function DeleteConfirmModal({
         >
             <div 
                 ref={modalRef}
-                className="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative"
+                className="bg-white rounded-2xl w-full max-w-md p-6 relative" style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1 cursor-pointer"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-[#0046A4] focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 rounded p-1 cursor-pointer"
                     aria-label="Close"
                 >
                     <X className="w-5 h-5" />
@@ -93,7 +93,7 @@ export default function DeleteConfirmModal({
                         type="button"
                         onClick={onClose}
                         disabled={isDeleting || isConfirming}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        className="px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-xl hover:bg-[#EBF4FF] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 cursor-pointer"
                     >
                         Cancel
                     </button>

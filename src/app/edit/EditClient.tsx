@@ -337,12 +337,6 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // Initialize runtime BEFORE loading content
         try {
             runtimeRef.current = new ContentBuilderRuntime({
-                // 플러그인 전체 재초기화(reinitialize) 완료 후 ContentBuilder 편집 핸들러 재연결
-                // — 초기 로드 시 캐시 없는 플러그인들이 비동기로 로드되므로
-                //   setTimeout 기반 applyBehavior()보다 이 콜백이 훨씬 신뢰성 높음
-                onReInit: () => {
-                    builderRef.current?.applyBehavior();
-                },
                 // Registers available plugins (not yet loaded).
                 // Scripts and styles are fetched only when the plugin is actually used in content.
                 plugins: {
@@ -613,6 +607,68 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
         // 이미 존재하는 모달에 즉시 적용
         document.querySelectorAll<HTMLElement>('.is-modal').forEach(makeModalDraggable);
+
+        // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
+        // .is-pop.quickadd는 DOM에 항상 존재하며 ContentBuilder가 display만 토글함.
+        // style 변경을 감지하여 표시될 때 position:fixed로 전환 + 드래그 핸들 등록.
+        const makeQuickaddDraggable = (popup: HTMLElement) => {
+            if (popup.dataset.draggableQa === 'true') return;
+            popup.dataset.draggableQa = 'true';
+            popup.style.cursor = 'move';
+            popup.style.userSelect = 'none';
+
+            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+            let isDragging = false;
+
+            const onMouseMove = (e: MouseEvent) => {
+                if (!isDragging) return;
+                popup.style.left = `${startLeft + e.clientX - startX}px`;
+                popup.style.top  = `${startTop  + e.clientY - startY}px`;
+            };
+            const onMouseUp = () => {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+
+            popup.addEventListener('mousedown', (e: MouseEvent) => {
+                // 버튼 클릭은 드래그 시작 안 함 (실제 항목 선택 동작 보존)
+                if ((e.target as HTMLElement).closest('button')) return;
+
+                // 처음 드래그 시작 시 absolute → fixed 전환하여 뷰포트 기준으로 고정
+                if (popup.style.position !== 'fixed') {
+                    const rect = popup.getBoundingClientRect();
+                    popup.style.position = 'fixed';
+                    popup.style.left     = `${rect.left}px`;
+                    popup.style.top      = `${rect.top}px`;
+                    popup.style.margin   = '0';
+                }
+
+                isDragging = true;
+                const rect = popup.getBoundingClientRect();
+                startX    = e.clientX;
+                startY    = e.clientY;
+                startLeft = rect.left;
+                startTop  = rect.top;
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                e.preventDefault();
+            });
+        };
+
+        // style 변경으로 표시 여부가 바뀌는 것을 감지 → 드래그 핸들 1회 등록
+        const quickaddObserver = new MutationObserver(() => {
+            const popup = document.querySelector<HTMLElement>('#_cbhtml .is-pop.quickadd');
+            if (!popup) return;
+            const visible = popup.style.display !== '' && popup.style.display !== 'none';
+            if (visible) makeQuickaddDraggable(popup);
+        });
+        quickaddObserver.observe(document.body, {
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style'],
+        });
 
         // 에디터 캔버스 내 링크 클릭 시 페이지 이동 차단
         // (컴포넌트 내부 <a href> 가 실제 네비게이션을 일으키는 문제 방지)
@@ -1322,8 +1378,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
             {/* 액션 버튼 */}
             <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
-                <button onClick={handleViewHtml} style={btnStyle}>HTML</button>
-                <button onClick={handlePreview} style={btnStyle}>미리보기</button>
+                <button onClick={handleViewHtml} className="nav-btn" style={btnStyle}>HTML</button>
+                <button onClick={handlePreview} className="nav-btn" style={btnStyle}>미리보기</button>
                 <button
                     onClick={handleDeleteCanvas}
                     disabled={defaultTabs.length + customTabs.length <= 1}
@@ -1431,7 +1487,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     padding: '0 0 240px 0',
                     background: '#ffffff',
                     minHeight: '700px',
-                    boxShadow: viewMode === 'responsive' ? 'none' : '0 8px 48px rgba(0,0,0,0.22)',
+                    boxShadow: viewMode === 'responsive' ? 'none' : '0 8px 48px rgba(0,70,164,0.10)',
                     transition: 'opacity 0.6s ease, max-width 0.3s ease',
                     opacity: containerOpacity,
                 }}
@@ -1475,9 +1531,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 <div
                     onClick={e => e.stopPropagation()}
                     style={{
-                        background: '#ffffff', borderRadius: '16px',
+                        background: '#ffffff', borderRadius: '20px',
                         padding: '32px', width: '480px', maxWidth: '90vw',
-                        boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+                        boxShadow: '0 24px 64px rgba(0,70,164,0.15)',
                     }}
                 >
                     <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>
