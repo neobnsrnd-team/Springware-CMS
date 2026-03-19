@@ -6,7 +6,6 @@
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
-import { seedFinanceComponents } from './seed-components';
 import { seedBasicBlocks } from './seed-basic-blocks';
 import { closePool } from '@/db/connection';
 
@@ -15,10 +14,10 @@ async function main() {
     console.log('컴포넌트 데이터 시드 시작');
     console.log('='.repeat(60));
 
-    // 1. 금융 컴포넌트 시드
+    // 1. 금융 컴포넌트 시드 (초기 시드 완료됨 — 재시드 필요 시 컴포넌트 배열을 직접 전달)
     console.log('\n── 금융 컴포넌트 시드 ──');
-    const finance = await seedFinanceComponents();
-    console.log(`\n금융 컴포넌트: ${finance.inserted}건 INSERT, ${finance.skipped}건 건너뜀`);
+    console.log('금융 컴포넌트는 이미 DB에 시드 완료. 재시드가 필요하면 컴포넌트 배열을 전달하세요.');
+    const finance = { inserted: 0, skipped: 0 };
 
     // 2. 기본 블록 시드
     console.log('\n── 기본 블록 시드 ──');

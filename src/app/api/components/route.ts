@@ -1,10 +1,10 @@
 // src/app/api/components/route.ts
-// 컴포넌트 목록 조회 API — 듀얼 모드 (DB / 파일 폴백)
+// 컴포넌트 목록 조회 API — DB 전용
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isDbEnabled } from '@/db/connection';
 import type { FinanceComponent } from '@/app/edit/finance-component-data';
 import type { ComponentType, ViewMode, CmsComponentParsed } from '@/db/types';
+import { getComponentList } from '@/db/repository/component.repository';
 
 const VALID_TYPES = new Set<string>(['finance', 'basic']);
 const VALID_VIEW_MODES = new Set<string>(['mobile', 'web', 'responsive']);
@@ -27,26 +27,6 @@ function toFinanceComponent(row: CmsComponentParsed): FinanceComponent | null {
     };
 }
 
-/** DB 모드: repository에서 조회 */
-async function loadFromDb(componentType?: ComponentType, viewMode?: ViewMode): Promise<FinanceComponent[]> {
-    // 런타임에만 DB 모듈 import (파일 모드에서는 oracledb 의존성 불필요)
-    const { getComponentList } = await import('@/db/repository/component.repository');
-    const rows = await getComponentList({ componentType, viewMode });
-    return rows.map(toFinanceComponent).filter((c): c is FinanceComponent => c !== null);
-}
-
-/** 파일 모드: 기존 정적 데이터로 폴백 */
-async function loadFromFile(componentType?: string, viewMode?: string): Promise<FinanceComponent[]> {
-    if (componentType === 'basic') return []; // 기본 블록은 content-plugins.js에서 로드
-
-    const { FINANCE_COMPONENTS } = await import('@/app/edit/finance-component-data');
-    let components = FINANCE_COMPONENTS;
-    if (viewMode && VALID_VIEW_MODES.has(viewMode)) {
-        components = components.filter(c => c.viewMode === viewMode);
-    }
-    return components;
-}
-
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = req.nextUrl;
@@ -57,9 +37,8 @@ export async function GET(req: NextRequest) {
         const componentType = (type && VALID_TYPES.has(type)) ? type as ComponentType : undefined;
         const viewMode = (mode && VALID_VIEW_MODES.has(mode)) ? mode as ViewMode : undefined;
 
-        const components = isDbEnabled()
-            ? await loadFromDb(componentType, viewMode)
-            : await loadFromFile(componentType, viewMode);
+        const rows = await getComponentList({ componentType, viewMode });
+        const components = rows.map(toFinanceComponent).filter((c): c is FinanceComponent => c !== null);
 
         return NextResponse.json({ ok: true, components });
     } catch (error) {

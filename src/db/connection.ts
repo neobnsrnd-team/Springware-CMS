@@ -1,10 +1,5 @@
 import oracledb from 'oracledb';
 
-// DB 활성화 여부 — DB_ENABLED=true 일 때만 Oracle DB 사용, 아니면 파일 기반 폴백
-export function isDbEnabled(): boolean {
-  return process.env.DB_ENABLED === 'true';
-}
-
 let isPoolInitialized = false;
 
 // 커넥션 풀 설정 (최초 호출 시 Oracle Client 초기화 + CLOB 설정 포함)
