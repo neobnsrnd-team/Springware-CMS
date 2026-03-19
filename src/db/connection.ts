@@ -1,27 +1,37 @@
 import oracledb from 'oracledb';
 
-let isPoolInitialized = false;
+let poolInitPromise: Promise<void> | null = null;
 
 // 커넥션 풀 설정 (최초 호출 시 Oracle Client 초기화 + CLOB 설정 포함)
+// Promise 캐싱 패턴: 동시 요청이 동일한 Promise를 await하여 레이스 컨디션 방지
 async function initPool(): Promise<void> {
-  if (isPoolInitialized) return;
+  if (poolInitPromise) return poolInitPromise;
 
-  // Thick 모드 사용: Oracle Instant Client 필요 (구버전 Oracle XE 지원)
-  oracledb.initOracleClient();
-  // CLOB 컬럼을 string으로 자동 변환 (DATA, PAGE_DESC, RENDERED_HTML 등)
-  oracledb.fetchAsString = [oracledb.CLOB];
+  poolInitPromise = (async () => {
+    try {
+      // Thick 모드 사용: Oracle Instant Client 필요 (구버전 Oracle XE 지원)
+      oracledb.initOracleClient();
+      // CLOB 컬럼을 string으로 자동 변환 (DATA, PAGE_DESC, RENDERED_HTML 등)
+      oracledb.fetchAsString = [oracledb.CLOB];
 
-  await oracledb.createPool({
-    user: process.env.ORACLE_USER,
-    password: process.env.ORACLE_PASSWORD,
-    connectString: `${process.env.ORACLE_HOST}:${process.env.ORACLE_PORT}/${process.env.ORACLE_SERVICE}`,
-    poolMin: 0,  // 공유 Oracle XE 세션 제한 고려 (최대 20개)
-    poolMax: 5,
-    poolIncrement: 1,
-  });
+      await oracledb.createPool({
+        user: process.env.ORACLE_USER,
+        password: process.env.ORACLE_PASSWORD,
+        connectString: `${process.env.ORACLE_HOST}:${process.env.ORACLE_PORT}/${process.env.ORACLE_SERVICE}`,
+        poolMin: 0,  // 공유 Oracle XE 세션 제한 고려 (최대 20개)
+        poolMax: 5,
+        poolIncrement: 1,
+      });
 
-  isPoolInitialized = true;
-  console.log('Oracle 커넥션 풀 초기화 완료');
+      console.log('Oracle 커넥션 풀 초기화 완료');
+    } catch (err) {
+      poolInitPromise = null;
+      console.error('Oracle 커넥션 풀 초기화 실패:', err);
+      throw err;
+    }
+  })();
+
+  return poolInitPromise;
 }
 
 // 커넥션 획득 (최초 호출 시 풀 자동 초기화, 스키마 설정 포함)
@@ -35,9 +45,9 @@ export async function getConnection(): Promise<oracledb.Connection> {
 
 // 커넥션 풀 종료
 export async function closePool(): Promise<void> {
-  if (!isPoolInitialized) return;
+  if (!poolInitPromise) return;
   await oracledb.getPool().close(10);
-  isPoolInitialized = false;
+  poolInitPromise = null;
   console.log('Oracle 커넥션 풀 종료 완료');
 }
 
