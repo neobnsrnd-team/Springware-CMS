@@ -31,16 +31,20 @@ src/
 │   ├── page.tsx                # / — 랜딩 페이지 (Link → /edit)
 │   ├── edit/
 │   │   ├── page.tsx            # 서버 컴포넌트 (단순 래퍼)
-│   │   └── EditClient.tsx      # ★ 핵심 — ContentBuilder 인스턴스 생성, 플러그인 등록, AI 모델 설정, 저장/미리보기
+│   │   ├── EditClient.tsx      # ★ 핵심 — ContentBuilder 인스턴스 생성, 플러그인 등록, AI 모델 설정, 저장/미리보기
+│   │   ├── EditClientLoader.tsx # EditClient 동적 로더 (SSR 방지용 dynamic import 래퍼)
+│   │   ├── ComponentPanel.tsx  # 우측 패널 — 금융 컴포넌트 탭 UI
+│   │   ├── finance-component-data.ts # 금융 컴포넌트 데이터 (IBK 데모 포함)
+│   │   └── ko.ts               # ContentBuilder 한국어 로컬라이제이션
 │   ├── view/
-│   │   ├── page.tsx            # 서버 컴포넌트 — data/index.json 읽어서 html prop 전달
+│   │   ├── page.tsx            # 서버 컴포넌트 — DB에서 html 읽어서 prop 전달
 │   │   └── ViewClient.tsx      # ContentBuilderRuntime으로 저장된 HTML 렌더링 (dangerouslySetInnerHTML)
 │   ├── files/
 │   │   └── page.tsx            # FileBrowser에 API 엔드포인트 주입
 │   └── api/
 │       ├── builder/
-│       │   ├── load/route.ts   # POST — data/index.json에서 HTML 로드
-│       │   ├── save/route.ts   # POST — HTML을 data/index.json에 저장 ({content, updated})
+│       │   ├── load/route.ts   # POST — DB에서 HTML 로드
+│       │   ├── save/route.ts   # POST — HTML을 DB에 저장 ({content, updated})
 │       │   └── upload/route.ts # POST — FormData 파일 → public/uploads/ 저장, URL 반환
 │       ├── manage/
 │       │   ├── files/route.ts  # GET — 파일 목록 (페이지네이션 10개/페이지, 디렉토리 우선 정렬)
@@ -54,11 +58,15 @@ src/
 │       ├── openai/
 │       │   ├── route.ts        # POST — OpenAI API 프록시 (Responses/Chat 엔드포인트)
 │       │   └── stream/route.ts # POST — OpenAI 스트리밍 응답
-│       └── assets/
-│           ├── request-fal/route.ts  # POST — FAL AI 이미지 생성 큐 등록
-│           ├── status-fal/route.ts   # GET — 요청 상태 확인
-│           ├── result-fal/route.ts   # GET — 생성된 이미지 결과 조회
-│           └── cleanup/route.ts      # POST — 임시 데이터 정리
+│       ├── assets/
+│       │   ├── request-fal/route.ts  # POST — FAL AI 이미지 생성 큐 등록
+│       │   ├── status-fal/route.ts   # GET — 요청 상태 확인
+│       │   ├── result-fal/route.ts   # GET — 생성된 이미지 결과 조회
+│       │   └── cleanup/route.ts      # POST — 임시 데이터 정리
+│       ├── exchange/route.ts   # GET — 환율 데이터 (exchange-board 컴포넌트용)
+│       ├── branches/route.ts   # GET — 영업점/ATM 위치 데이터 (branch-locator 컴포넌트용)
+│       ├── components/route.ts # GET — 등록된 컴포넌트 목록
+│       └── health/route.ts     # GET — 헬스 체크
 ├── components/
 │   └── files/                  # 파일 브라우저 컴포넌트 (모두 'use client')
 │       ├── FileBrowser.tsx     # ★ 메인 — 상태 관리, 업로드, 삭제, 무한스크롤, postMessage 통신
@@ -69,13 +77,53 @@ src/
 │       ├── CreateFolderModal.tsx    # 폴더 생성 모달
 │       ├── DeleteConfirmModal.tsx   # 삭제 확인 모달
 │       └── UploadProgressList.tsx   # 업로드 진행률 표시
-data/
+├── db/                         # Oracle DB 레이어
+│   ├── connection.ts           # Oracle DB 커넥션 풀 관리
+│   ├── types.ts                # DB 타입 정의
+│   ├── ddl/
+│   │   ├── V1__init_schema.sql # 초기 스키마 DDL
+│   │   └── V1__triggers.sql    # DB 트리거
+│   ├── queries/
+│   │   ├── page.sql.ts         # 페이지 쿼리
+│   │   ├── component.sql.ts    # 컴포넌트 쿼리
+│   │   ├── component-map.sql.ts# 컴포넌트 매핑 쿼리
+│   │   ├── page-history.sql.ts # 페이지 이력 쿼리
+│   │   ├── file-send.sql.ts    # 파일 전송 쿼리
+│   │   └── server.sql.ts       # 서버 쿼리
+│   ├── repository/
+│   │   ├── page.repository.ts  # 페이지 데이터 접근 레이어
+│   │   ├── component.repository.ts  # 컴포넌트 데이터 접근 레이어
+│   │   └── file-send.repository.ts  # 파일 전송 데이터 접근 레이어
+│   └── seed/
+│       ├── run-seed.ts         # 시드 실행 진입점
+│       ├── seed-basic-blocks.ts# 기본 블록 시드 데이터
+│       └── seed-components.ts  # 컴포넌트 시드 데이터
+├── types/
+│   ├── contentbuilder-runtime.d.ts  # ContentBuilderRuntime 타입 선언
+│   └── oracledb.d.ts           # oracledb 모듈 타입 보강
+data/                           # 로컬 개발용 JSON 파일 (레거시/백업)
 └── index.json                  # 저장된 콘텐츠 ({content: "<html>", updated: "ISO날짜"})
 public/
 ├── uploads/                    # 업로드된 파일 (정적 서빙)
+├── runtime/                    # ContentBuilder 런타임 라이브러리
+│   ├── contentbuilder-runtime.esm.js / .min.js / .css
+│   ├── contentbuilder-blocks-runtime.esm.js / .min.js / .css
+│   └── contentbuilder-interactive-runtime.esm.js / .min.js / .css
 └── assets/
-    ├── minimalist-blocks/      # ContentBuilder 스니펫 (content-plugins.js)
-    └── plugins/<name>/         # 플러그인별 index.js + style.css (25개+, 런타임 lazy-load)
+    ├── minimalist-blocks/      # ContentBuilder 스니펫 (content-plugins.js 등)
+    ├── plugins/<name>/         # 플러그인별 index.js + style.css (50개+, 런타임 lazy-load)
+    ├── scripts/                # 서드파티 스크립트 (glide, glightbox, slick, tabs, formbuilderai 등)
+    ├── fonts/                  # Google Fonts 프리뷰 이미지 (300개+)
+    └── modules/                # 빌더 모달 HTML (form-builder, slider-builder, media-grid-builder 등)
+scripts/
+└── seed-pages.ts               # 페이지 시드 스크립트 (직접 실행용)
+migrations/                     # DB 마이그레이션 파일 디렉토리
+docs/                           # 프로젝트 문서
+├── technical-overview.md       # 기술 아키텍처 개요
+├── ui-style-guide.md           # UI 스타일 가이드
+├── UI-용어정의.md               # UI 용어 정의 (한국어)
+├── 새-컴포넌트-구현-가이드.md   # 신규 컴포넌트 구현 가이드 (한국어)
+└── rdbms-migration.md          # RDBMS 마이그레이션 가이드
 ```
 
 ## Component Details
@@ -86,6 +134,15 @@ public/
 - Runtime은 `window.builderRuntime`에 전역 등록 (에디터 내부에서 플러그인 미리보기용)
 - 하단 고정 버튼: HTML 보기 / Preview (새 탭 /view) / Save
 - AI 설정: OpenRouter 활성 (OpenAI는 주석 처리) — 전환시 해당 블록 주석 토글
+- `ko.ts`로 ContentBuilder UI 한국어 번역 주입
+
+### EditClientLoader.tsx
+- `dynamic(() => import('./EditClient'), { ssr: false })` 래퍼
+- ContentBuilder가 브라우저 전용이므로 SSR 비활성화 처리
+
+### ComponentPanel.tsx
+- 우측 패널의 금융 컴포넌트 탭 UI (드래그·클릭으로 캔버스에 블록 추가)
+- `finance-component-data.ts`에서 컴포넌트 메타데이터 import
 
 ### FileBrowser.tsx (파일 관리 메인)
 - Props: `apiEndpoints` (5개 API 경로), `className`
@@ -97,9 +154,39 @@ public/
 - 서버에서 받은 html을 `dangerouslySetInnerHTML`로 렌더링
 - ContentBuilderRuntime 초기화 → `runtime.init()` → 플러그인 활성화
 
+### DB 레이어 (src/db/)
+- `connection.ts`: oracledb 커넥션 풀 싱글턴, `initPool()` / `getConnection()` / `closePool()` 제공
+- `repository/*.ts`: SQL 쿼리를 추상화한 데이터 접근 레이어 (page, component, file-send)
+- `queries/*.sql.ts`: 각 도메인별 SQL 문자열 상수 모음
+- `ddl/`: Flyway 스타일 버전 네이밍 SQL (V1__init_schema.sql, V1__triggers.sql)
+
+## 기능별 구현 위치
+
+| 기능 | 파일 |
+|---|---|
+| 에디터 초기화·플러그인 등록 | `src/app/edit/EditClient.tsx` |
+| 에디터 SSR 방지 로딩 | `src/app/edit/EditClientLoader.tsx` |
+| 금융 컴포넌트 패널 UI | `src/app/edit/ComponentPanel.tsx` |
+| 금융 컴포넌트 HTML 데이터 | `src/app/edit/finance-component-data.ts` |
+| ContentBuilder 한국어 번역 | `src/app/edit/ko.ts` |
+| 저장된 HTML 렌더링(뷰어) | `src/app/view/ViewClient.tsx` |
+| 페이지 저장 API | `src/app/api/builder/save/route.ts` → `src/db/repository/page.repository.ts#updatePage/createPage` |
+| 페이지 불러오기 API | `src/app/api/builder/load/route.ts` → `src/db/repository/page.repository.ts#getPageById` + `getLatestHistory` |
+| 에디터 내 파일 업로드 | `src/app/api/builder/upload/route.ts` |
+| AI 코드 생성 (일반) | `src/app/api/openrouter/route.ts` (기본 모델: `openai/gpt-4o-mini`) |
+| AI 코드 생성 (스트리밍) | `src/app/api/openrouter/stream/route.ts` |
+| AI 이미지 생성 | `src/app/api/assets/request-fal` → `status-fal` → `result-fal` (FAL AI 큐 방식) |
+| 환율 데이터 | `src/app/api/exchange/route.ts` |
+| 영업점/ATM 위치 데이터 | `src/app/api/branches/route.ts` |
+| 파일 브라우저 상태·업로드·삭제 | `src/components/files/FileBrowser.tsx` |
+| 파일 브라우저 API (목록/업로드/삭제/폴더) | `src/app/api/manage/` |
+| Oracle DB 커넥션 풀·트랜잭션 | `src/db/connection.ts` (`getConnection`, `withTransaction`, `clobBind`) |
+| 페이지 DB CRUD | `src/db/repository/page.repository.ts` |
+| 컴포넌트 DB CRUD | `src/db/repository/component.repository.ts` |
+
 ## Key Patterns
 
-- **데이터 저장**: 파일 기반 (`data/index.json`). 프로덕션에서는 DB로 교체 필요
+- **데이터 저장**: Oracle DB 기반 (`src/db/repository/page.repository.ts`). `data/index.json`은 로컬 개발용 레거시 파일
 - **파일 업로드**: `public/uploads/`에 저장, 정적 서빙. 프로덕션에서는 S3 등으로 교체 필요
 - **AI 프록시**: API 키를 서버에 보관, 클라이언트는 `/api/openrouter` 등으로 요청
 - **Function Calling**: `anthropic/claude-3.5-sonnet` 고정 (모델 선택과 무관)
@@ -107,6 +194,8 @@ public/
 - **보안**: 파일 관리 API에 디렉토리 트래버설 방지 (`..` 포함 체크), 파일명 새니타이징
 - **플러그인**: `public/assets/plugins/<name>/`에 각각 index.js + style.css, 사용시에만 lazy-load
 - **에디터↔파일 피커 통신**: `window.postMessage` (`ASSET_SELECTED` 이벤트)
+- **SSR 방지**: ContentBuilder는 브라우저 전용 — `EditClientLoader.tsx`에서 `dynamic(..., { ssr: false })` 처리
+- **한국어 로컬라이제이션**: `ko.ts`에서 ContentBuilder UI 문자열 전부 한국어로 오버라이드
 
 ## 에디터 사용 방법 (한글 가이드)
 
