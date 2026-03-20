@@ -44,13 +44,13 @@ export const PAGE_INSERT = `
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
     APPROVE_STATE, PAGE_DESC, PAGE_DESC_DETAIL,
-    TEMPLATE_ID, THUMBNAIL, TARGET_CD, USE_YN, IS_PUBLIC
+    TEMPLATE_ID, THUMBNAIL, VIEW_MODE, USE_YN, IS_PUBLIC
   ) VALUES (
     :pageId, :pageName, :ownerDeptCode, :filePath,
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName,
     'WORK', :pageDesc, :pageDescDetail,
-    :templateId, :thumbnail, :targetCd, 'Y', 'Y'
+    :templateId, :thumbnail, :viewMode, 'Y', 'Y'
   )
 `;
 

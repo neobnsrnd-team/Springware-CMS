@@ -107,15 +107,6 @@ if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>
 
 interface TabData { id: string; label: string; viewMode: ViewMode }
 
-const DEFAULT_TABS: TabData[] = [
-    { id: 'ibk',     label: 'IBK demo',    viewMode: 'mobile' },
-    { id: 'hana',    label: '하나 demo',   viewMode: 'mobile' },
-    { id: 'kb',      label: 'KB demo',     viewMode: 'mobile' },
-    { id: 'shinhan', label: '신한 demo',   viewMode: 'mobile' },
-    { id: 'woori',   label: '우리 demo',   viewMode: 'mobile' },
-    { id: 'nh',      label: 'NH농협 demo', viewMode: 'mobile' },
-];
-
 // 패널 너비 (접힌 상태: 40px, 펼친 상태: 264px) — CSS transition과 동기화
 const PANEL_WIDTH_OPEN = 264;
 
@@ -166,23 +157,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const financeComponentsMapRef = useRef<Record<string, FinanceComponent>>({});
     useEffect(() => { financeComponentsMapRef.current = financeComponentsMap; }, [financeComponentsMap]);
 
-    // 기본 탭 목록 (localStorage 영속화 — 삭제 가능)
-    // lazy initializer로 첫 렌더링 전에 localStorage를 읽어 삭제된 탭이 잠깐 보이는 현상 방지
-    const [defaultTabs, setDefaultTabs] = useState<TabData[]>(() => {
-        try {
-            const saved = localStorage.getItem('cms-default-tabs');
-            if (saved) return (JSON.parse(saved) as TabData[]).map(t => ({ ...t, viewMode: t.viewMode ?? 'mobile' }));
-        } catch { /* 손상된 데이터 무시 */ }
-        return DEFAULT_TABS;
-    });
-    // 사용자가 추가한 커스텀 탭 목록 (localStorage 영속화)
-    const [customTabs, setCustomTabs] = useState<TabData[]>(() => {
-        try {
-            const saved = localStorage.getItem('cms-custom-tabs');
-            if (saved) return (JSON.parse(saved) as TabData[]).map(t => ({ ...t, viewMode: t.viewMode ?? 'mobile' }));
-        } catch { /* 손상된 데이터 무시 */ }
-        return [];
-    });
+    // DB 기반 탭 목록 (GET /api/builder/pages에서 로드)
+    const [tabs, setTabs] = useState<TabData[]>([]);
+    const [tabsLoading, setTabsLoading] = useState(true);
     // 탭 추가 인라인 입력 표시 여부
     const [showAddTab, setShowAddTab] = useState(false);
     // 탭 이름 입력값
@@ -191,8 +168,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [newTabViewMode, setNewTabViewMode] = useState<ViewMode>('mobile');
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
-    const allTabs = [...defaultTabs, ...customTabs];
-    const currentTab = allTabs.find(t => t.id === bank);
+    const currentTab = tabs.find(t => t.id === bank);
     const viewMode: ViewMode = currentTab?.viewMode ?? 'mobile';
 
     useEffect(() => {
@@ -981,14 +957,22 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         };
     }, []);
 
-    // ── 탭 localStorage 영속화 ───────────────────────────────────────────
+    // ── DB에서 탭 목록 로드 ─────────────────────────────────────────────
     useEffect(() => {
-        localStorage.setItem('cms-default-tabs', JSON.stringify(defaultTabs));
-    }, [defaultTabs]);
-
-    useEffect(() => {
-        localStorage.setItem('cms-custom-tabs', JSON.stringify(customTabs));
-    }, [customTabs]);
+        fetch('/api/builder/pages')
+            .then(res => res.json())
+            .then(data => {
+                if (data.pages?.length) {
+                    setTabs(data.pages.map((p: { id: string; label: string; viewMode?: string }) => ({
+                        id: p.id,
+                        label: p.label,
+                        viewMode: (p.viewMode as ViewMode) ?? 'mobile',
+                    })));
+                }
+            })
+            .catch(err => console.error('탭 목록 로드 실패:', err))
+            .finally(() => setTabsLoading(false));
+    }, []);
 
     // ── content-plugins 로드 (웹/모바일/반응형 3파일) ─────────────────────
     // ContentBuilder 기본 피커 대신 우측 패널 "기본 블록" 탭에 표시합니다.
@@ -1250,15 +1234,14 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             ? `<div class="row"><div class="column">\n${headerComp.html}\n</div></div>`
             : '';
 
-        // 탭 목록 저장 후 기본 콘텐츠를 서버에 먼저 저장 → 이동
-        setCustomTabs(prev => [...prev, { id, label, viewMode: selectedViewMode }]);
         setShowAddTab(false);
         setNewTabName('');
         setNewTabViewMode('mobile');
 
+        // DB에 페이지 생성 (pageName + viewMode 포함) → 이동
         fetch('/api/builder/save', {
             method: 'POST',
-            body: JSON.stringify({ html: defaultHtml, bank: id }),
+            body: JSON.stringify({ html: defaultHtml, bank: id, pageName: label, viewMode: selectedViewMode }),
             headers: { 'Content-Type': 'application/json' },
         }).finally(() => {
             window.location.href = `/edit?bank=${id}`;
@@ -1266,33 +1249,23 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     }
 
     // ── 캔버스(탭) 삭제 ──────────────────────────────────────────────────
-    // 기본 탭 / 커스텀 탭 모두 삭제 가능 (최소 1개 탭은 유지)
-    // 삭제 시 탭 목록에서 제거 후 남은 첫 번째 탭으로 이동
+    // 최소 1개 탭은 유지, 삭제 시 DB 논리 삭제 후 남은 첫 번째 탭으로 이동
     async function handleDeleteCanvas() {
-        const currentLabel = allTabs.find(t => t.id === bank)?.label ?? bank;
+        const currentLabel = tabs.find(t => t.id === bank)?.label ?? bank;
         if (!confirm(`'${currentLabel}' 탭을 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
 
         builderRef.current?.loadHtml('');
         setCanvasBlocks([]);
-        await fetch('/api/builder/save', {
-            method: 'POST',
-            body: JSON.stringify({ html: '', bank }),
-            headers: { 'Content-Type': 'application/json' },
+
+        // DB 논리 삭제 (USE_YN = 'N')
+        await fetch(`/api/builder/pages?pageId=${encodeURIComponent(bank)}`, {
+            method: 'DELETE',
         });
 
-        const isDefault = defaultTabs.some(t => t.id === bank);
-        const nextDefaultTabs = isDefault ? defaultTabs.filter(t => t.id !== bank) : defaultTabs;
-        const nextCustomTabs = isDefault ? customTabs : customTabs.filter(t => t.id !== bank);
-
-        // useEffect 대기 없이 즉시 localStorage에 반영 (페이지 이동 전)
-        localStorage.setItem('cms-default-tabs', JSON.stringify(nextDefaultTabs));
-        localStorage.setItem('cms-custom-tabs', JSON.stringify(nextCustomTabs));
-
-        setDefaultTabs(nextDefaultTabs);
-        setCustomTabs(nextCustomTabs);
+        const remaining = tabs.filter(t => t.id !== bank);
+        setTabs(remaining);
 
         // 남은 탭 중 첫 번째로 이동
-        const remaining = [...nextDefaultTabs, ...nextCustomTabs];
         const nextId = remaining[0]?.id ?? '';
         window.location.href = `/edit?bank=${nextId}`;
     }
@@ -1349,9 +1322,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 Springware CMS
             </span>
 
-            {/* 은행별 탭 */}
+            {/* 페이지 탭 */}
             <div style={{ display: 'flex', gap: '2px', flex: 1, overflowX: 'auto', alignItems: 'center' }}>
-                {[...defaultTabs, ...customTabs].map(b => (
+                {tabsLoading ? (
+                    <span style={{ fontSize: '12px', color: '#9ca3af', padding: '5px 14px' }}>로딩 중...</span>
+                ) : tabs.map(b => (
                     <a
                         key={b.id}
                         href={`/edit?bank=${b.id}`}
@@ -1371,7 +1346,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     </a>
                 ))}
 
-                {/* 새 페이지 추가 버튼 */}
+                {/* 새 페이지 추가 버튼 — 로딩 중에는 숨김 */}
+                {!tabsLoading && (
                 <button
                     onClick={() => setShowAddTab(true)}
                     title="새 페이지 추가"
@@ -1383,6 +1359,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                         marginLeft: '4px', lineHeight: 1, flexShrink: 0,
                     }}
                 >+</button>
+                )}
             </div>
 
             {/* 현재 뷰 모드 뱃지 (읽기 전용 — 생성 시 결정, 변경 불가) */}
@@ -1406,12 +1383,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 <button onClick={handlePreview} className="nav-btn" style={btnStyle}>미리보기</button>
                 <button
                     onClick={handleDeleteCanvas}
-                    disabled={defaultTabs.length + customTabs.length <= 1}
+                    disabled={tabs.length <= 1}
                     style={{
                         ...btnStyle,
-                        color: defaultTabs.length + customTabs.length <= 1 ? '#d1d5db' : '#dc2626',
-                        borderColor: defaultTabs.length + customTabs.length <= 1 ? '#e5e7eb' : '#fca5a5',
-                        cursor: defaultTabs.length + customTabs.length <= 1 ? 'not-allowed' : 'pointer',
+                        color: tabs.length <= 1 ? '#d1d5db' : '#dc2626',
+                        borderColor: tabs.length <= 1 ? '#e5e7eb' : '#fca5a5',
+                        cursor: tabs.length <= 1 ? 'not-allowed' : 'pointer',
                     }}
                 >삭제</button>
                 <button onClick={handleSave} style={{ ...btnStyle, background: '#0046A4', color: '#fff', borderColor: '#0046A4' }}>저장</button>

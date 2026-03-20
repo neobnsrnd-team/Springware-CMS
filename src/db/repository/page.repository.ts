@@ -88,7 +88,7 @@ export async function createPage(input: {
   pageDescDetail?: string;
   templateId?: string;
   thumbnail?: string;
-  targetCd?: string;
+  viewMode?: string;
   renderedHtml?: string;
 }): Promise<void> {
   await withTransaction(async (conn) => {
@@ -106,7 +106,7 @@ export async function createPage(input: {
       pageDescDetail: clobBind(input.pageDescDetail ?? null),
       templateId: input.templateId ?? null,
       thumbnail: input.thumbnail ?? null,
-      targetCd: input.targetCd ?? null,
+      viewMode: input.viewMode ?? null,
     });
 
     // 2. PAGE_HISTORY v1 INSERT

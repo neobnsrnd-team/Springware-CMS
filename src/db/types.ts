@@ -55,7 +55,7 @@ export interface CmsPage {
   PAGE_DESC_DETAIL: string | null;
   TEMPLATE_ID: string | null;
   THUMBNAIL: string | null;
-  TARGET_CD: string | null;
+  VIEW_MODE: string | null;
   USER_GUIDE: string | null;
   FILE_PATH_BACK: string | null;
   REJECTED_REASON: string | null;
