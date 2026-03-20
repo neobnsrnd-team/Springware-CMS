@@ -160,6 +160,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     // DB 기반 탭 목록 (GET /api/builder/pages에서 로드)
     const [tabs, setTabs] = useState<TabData[]>([]);
     const [tabsLoading, setTabsLoading] = useState(true);
+    // 현재 사용자 ID (서버에서 수신, PAGE_ID 생성에 사용)
+    const [currentUserId, setCurrentUserId] = useState('system');
     // 탭 추가 인라인 입력 표시 여부
     const [showAddTab, setShowAddTab] = useState(false);
     // 탭 이름 입력값
@@ -962,6 +964,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         fetch('/api/builder/pages')
             .then(res => res.json())
             .then(data => {
+                if (data.currentUserId) setCurrentUserId(data.currentUserId);
                 if (data.pages?.length) {
                     setTabs(data.pages.map((p: { id: string; label: string; viewMode?: string }) => ({
                         id: p.id,
@@ -1225,7 +1228,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     function handleAddTab() {
         const label = newTabName.trim();
         if (!label) return;
-        const id = `custom-${Date.now()}`;
+        const id = `${currentUserId}-${Date.now()}`;
         const selectedViewMode = newTabViewMode;
 
         // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트

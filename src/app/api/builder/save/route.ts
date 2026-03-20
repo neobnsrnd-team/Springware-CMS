@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { updatePage, createPage, getPageById } from '@/db/repository/page.repository';
+import { getCurrentUser } from '@/lib/current-user';
 
 // bank id 검증: 영문 소문자·숫자·하이픈만 허용, 1~64자 (디렉토리 트래버설 방지)
 function isValidBankId(id: unknown): id is string {
@@ -10,6 +11,7 @@ function isValidBankId(id: unknown): id is string {
 
 // DB에 페이지 저장
 async function savePage(bank: string, html: string, pageName?: string, viewMode?: string): Promise<void> {
+    const { userId, userName } = getCurrentUser();
     const existing = await getPageById(bank);
 
     if (existing) {
@@ -18,15 +20,15 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
             pageName: pageName,
             pageDesc: html,
             renderedHtml: html,
-            lastModifierId: 'system',
-            lastModifierName: '시스템',
+            lastModifierId: userId,
+            lastModifierName: userName,
         });
     } else {
         await createPage({
             pageId: bank,
             pageName: pageName ?? bank,
-            createUserId: 'system',
-            createUserName: '시스템',
+            createUserId: userId,
+            createUserName: userName,
             pageDesc: html,
             renderedHtml: html,
             viewMode: viewMode ?? 'mobile',

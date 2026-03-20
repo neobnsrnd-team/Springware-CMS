@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getPageList, deletePage } from '@/db/repository/page.repository';
+import { getCurrentUser } from '@/lib/current-user';
 
 /** GET /api/builder/pages — USE_YN='Y'인 전체 페이지 목록 반환 */
 export async function GET() {
@@ -16,7 +17,8 @@ export async function GET() {
             viewMode: p.VIEW_MODE ?? 'mobile',
         }));
 
-        return NextResponse.json({ pages });
+        const { userId } = getCurrentUser();
+        return NextResponse.json({ pages, currentUserId: userId });
     } catch (error) {
         console.error('페이지 목록 조회 실패:', error);
         return NextResponse.json({ error: '페이지 목록 조회 실패' }, { status: 500 });
@@ -31,7 +33,8 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'pageId가 필요합니다' }, { status: 400 });
         }
 
-        await deletePage(pageId, 'system');
+        const { userId } = getCurrentUser();
+        await deletePage(pageId, userId);
 
         return NextResponse.json({ ok: true });
     } catch (error) {

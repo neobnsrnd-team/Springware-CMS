@@ -92,7 +92,6 @@ export async function createPage(input: {
   renderedHtml?: string;
 }): Promise<void> {
   await withTransaction(async (conn) => {
-    // 1. PAGE INSERT
     await conn.execute(PAGE_INSERT, {
       pageId: input.pageId,
       pageName: input.pageName,
@@ -109,7 +108,7 @@ export async function createPage(input: {
       viewMode: input.viewMode ?? null,
     });
 
-    // 2. PAGE_HISTORY v1 INSERT
+    // PAGE_HISTORY v1 INSERT
     await conn.execute(PAGE_HISTORY_INSERT, {
       pageId: input.pageId,
       version: 1,
