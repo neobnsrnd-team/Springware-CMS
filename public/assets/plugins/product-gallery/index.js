@@ -59,11 +59,6 @@ export default {
             label: '페이지 점 표시',
             default: true
         },
-        accentColor: {
-            type: 'color',
-            label: '강조 색상',
-            default: '#0046A4'
-        },
     },
 
     editor: {
