@@ -4,6 +4,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
+import { useDraggable } from '@/lib/useDraggable';
+
 interface CreateFolderModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -23,6 +25,9 @@ export default function CreateFolderModal({
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // 드래그 훅
+    const { modalRef, handleRef, isDragging } = useDraggable(isOpen);
 
     // 모달 열고 닫을 때 상태 초기화
     useEffect(() => {
@@ -101,15 +106,29 @@ export default function CreateFolderModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-folder-title"
-            onClick={(e) => e.target === e.currentTarget && onClose()}
+            onClick={(e) => {
+                if (isDragging) return;
+                e.target === e.currentTarget && onClose();
+            }}
         >
             <div
+                ref={modalRef}
                 className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative"
                 style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}
             >
-                <h3 id="create-folder-title" className="text-lg font-semibold text-gray-900">
-                    새 폴더 만들기
-                </h3>
+                {/* 드래그 핸들 영역 */}
+                <div
+                    ref={handleRef}
+                    style={{
+                        cursor: isDragging ? 'grabbing' : 'grab',
+                        userSelect: 'none',
+                        WebkitTapHighlightColor: 'transparent',
+                    }}
+                >
+                    <h3 id="create-folder-title" className="text-lg font-semibold text-gray-900">
+                        새 폴더 만들기
+                    </h3>
+                </div>
 
                 <button
                     onClick={onClose}
