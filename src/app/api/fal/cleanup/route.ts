@@ -1,3 +1,5 @@
+// src/app/api/fal/cleanup/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -6,7 +8,7 @@ const uploadPath = process.env.UPLOAD_PATH || '';
 
 export async function POST(
     request: NextRequest) {
-    
+
     try {
         const input: Record<string, string> = await request.json();
 

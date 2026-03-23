@@ -276,9 +276,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             },
 
             defaultImageGenerationProvider: 'fal',
-            generateMediaUrl_Fal: '/api/assets/request-fal',
-            checkRequestStatusUrl_Fal: '/api/assets/status-fal',
-            getResultUrl_Fal: '/api/assets/result-fal',
+            generateMediaUrl_Fal: '/api/fal/request',
+            checkRequestStatusUrl_Fal: '/api/fal/status',
+            getResultUrl_Fal: '/api/fal/result',
             filePicker: '/files',
             filePickerSize: 'large',
 

@@ -1,4 +1,4 @@
-// src/app/api/assets/status-fal/route.ts
+// src/app/api/fal/status/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";
@@ -21,7 +21,7 @@ export async function POST(
     fal.config({
         credentials: falApiKey
     });
-    
+
     const { request_id, model }: PostRequestBody = await req.json();
 
     try {

@@ -1,4 +1,4 @@
-// src/app/api/assets/result-fal/route.ts
+// src/app/api/fal/result/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";
@@ -38,13 +38,13 @@ export async function POST(req: NextRequest) {
     fal.config({
         credentials: falApiKey
     });
-    
+
     const { request_id, model, customData }: PostRequestBody = await req.json();
 
     const folderPath = customData?.folderPath ?? '';
 
     try {
-        const result = await fal.queue.result(model, { 
+        const result = await fal.queue.result(model, {
             requestId: request_id,
             // logs: true
         });
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
                         const filePath = path.join(process.cwd(), uploadPath, folderPath, filename);
                         fs.writeFileSync(filePath, fileData);
                         new_file_url = uploadUrl + path.posix.join(folderPath, filename);
-                        
+
                     } else {
 
                         // do nothing for S3
@@ -113,7 +113,6 @@ export async function POST(req: NextRequest) {
         } else if (result.data.image || result.data.audio || result.data.audio_file || result.data.video) {
             let file_url = "";
             if (result.data.image) file_url = result.data.image.url;
-            // if (result.data.audio) file_url = result.data.audio.url;
             if (result.data.audio) {
                 if (Array.isArray(result.data.audio)) {
                     file_url = result.data.audio[0].url; // take first item
@@ -138,7 +137,7 @@ export async function POST(req: NextRequest) {
                 const filePath = path.join(process.cwd(), uploadPath, folderPath, filename);
                 fs.writeFileSync(filePath, fileData);
                 new_file_url = uploadUrl + path.posix.join(folderPath, filename);
-                
+
             } else {
 
                 // do nothing for S3
@@ -146,9 +145,9 @@ export async function POST(req: NextRequest) {
                 new_file_url = '';
             }
 
-            const entries = [{ 
-                url: new_file_url, 
-                file_url 
+            const entries = [{
+                url: new_file_url,
+                file_url
             }];
             output = { entries };
 
@@ -189,4 +188,3 @@ function generateRandomString(length: number): string {
 function generateRandomFileName(s?: string): string {
     return s ? `${s}-${generateRandomString(5)}` : `ai-${generateRandomString(5)}`;
 }
-

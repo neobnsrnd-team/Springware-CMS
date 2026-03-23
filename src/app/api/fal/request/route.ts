@@ -1,4 +1,4 @@
-// src/app/api/assets/request-fal/route.ts
+// src/app/api/fal/request/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fal } from "@fal-ai/client";
@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
 
         const input = payload;
 
-        const { request_id }: { request_id: string } = await fal.queue.submit(model, { 
-            input 
+        const { request_id }: { request_id: string } = await fal.queue.submit(model, {
+            input
         });
 
         return NextResponse.json({ ok: true, request_id }, { status: 200 });
