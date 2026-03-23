@@ -1,6 +1,7 @@
 // src/app/api/openrouter/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getErrorMessage } from '@/lib/api-response';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
@@ -92,14 +93,11 @@ export async function POST(req: NextRequest) {
 
                 return NextResponse.json({ answer, usage });
             }
-        } catch (error) {
-            return NextResponse.json(
-                { ok: false, status: 500, error: error instanceof Error ? error.message : '알 수 없는 오류' },
-                { status: 200 },
-            );
+        } catch (err: unknown) {
+            return NextResponse.json({ ok: false, status: 500, error: getErrorMessage(err) }, { status: 200 });
         }
-    } catch (error) {
-        console.error('OpenRouter 요청 실패:', error);
-        return NextResponse.json({ ok: false, status: 500, error: '서버 오류가 발생했습니다.' }, { status: 200 });
+    } catch (err: unknown) {
+        console.error('OpenRouter 요청 실패:', err);
+        return NextResponse.json({ ok: false, status: 500, error: getErrorMessage(err) }, { status: 200 });
     }
 }

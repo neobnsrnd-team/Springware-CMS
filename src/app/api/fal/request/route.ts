@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
+import { getErrorMessage } from '@/lib/api-response';
 
 const FAL_API_KEY = process.env.FAL_API_KEY;
 
@@ -23,10 +24,7 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ ok: true, request_id }, { status: 200 });
-    } catch (error) {
-        return NextResponse.json(
-            { ok: false, error: error instanceof Error ? error.message : '알 수 없는 오류' },
-            { status: 500 },
-        );
+    } catch (err: unknown) {
+        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
     }
 }
