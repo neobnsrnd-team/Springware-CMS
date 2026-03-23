@@ -163,7 +163,6 @@ export async function updateApproveState(input: {
     approverName?: string;
     rejectedReason?: string;
     lastModifierId: string;
-    renderedHtml?: string;
 }): Promise<{ version?: number }> {
     return await withTransaction(async (conn) => {
         // 1. 결재 상태 UPDATE
@@ -188,7 +187,6 @@ export async function updateApproveState(input: {
             await conn.execute(PAGE_HISTORY_INSERT, {
                 pageId: input.pageId,
                 version: nextVersion,
-                renderedHtml: clobBind(input.renderedHtml ?? null),
             });
 
             return { version: nextVersion };
@@ -231,7 +229,7 @@ export async function deletePage(pageId: string, lastModifierId: string): Promis
 // 이력 조회
 // ═══════════════════════════════════════════════
 
-/** 최신 이력 조회 (미리보기용 RENDERED_HTML 포함) */
+/** 최신 이력 조회 */
 export async function getLatestHistory(pageId: string): Promise<CmsPageHistory | null> {
     const conn = await getConnection();
     try {
