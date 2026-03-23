@@ -11,7 +11,7 @@ import {
 } from '@/db/queries/component.sql';
 import {
   COMP_MAP_SELECT_BY_PAGE, COMP_MAP_INSERT,
-  COMP_MAP_UPDATE_ORDER, COMP_MAP_DELETE, COMP_MAP_DELETE_BY_PAGE,
+  COMP_MAP_DELETE, COMP_MAP_DELETE_BY_PAGE_VERSION,
 } from '@/db/queries/component-map.sql';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
@@ -117,18 +117,19 @@ export async function deleteComponent(componentId: string, lastModifierId: strin
 
 
 // ═══════════════════════════════════════════════
-// 컴포넌트-페이지 매핑
+// 컴포넌트-페이지 매핑 (W-5: VERSION 기반으로 변경)
+// PK: (PAGE_ID, VERSION, SORT_ORDER)
 // ═══════════════════════════════════════════════
 
-/** 매핑 조회 — 페이지별 (컴포넌트 정보 JOIN) */
-export async function getMapByPage(pageId: string): Promise<(CmsCompPageMap & {
+/** 매핑 조회 — 페이지+버전별 (컴포넌트 정보 JOIN) */
+export async function getMapByPage(pageId: string, version: number): Promise<(CmsCompPageMap & {
   COMPONENT_TYPE: ComponentType;
   VIEW_MODE: ViewMode;
   COMPONENT_THUMBNAIL: string | null;
 })[]> {
   const conn = await getConnection();
   try {
-    const result = await conn.execute(COMP_MAP_SELECT_BY_PAGE, { pageId }, OBJ);
+    const result = await conn.execute(COMP_MAP_SELECT_BY_PAGE, { pageId, version }, OBJ);
     return (result.rows ?? []) as (CmsCompPageMap & {
       COMPONENT_TYPE: ComponentType;
       VIEW_MODE: ViewMode;
@@ -139,55 +140,55 @@ export async function getMapByPage(pageId: string): Promise<(CmsCompPageMap & {
   }
 }
 
-/** 매핑 추가 (단건, SEQ 자동 채번) */
+/** 매핑 추가 (단건, PK: PAGE_ID + VERSION + SORT_ORDER) */
 export async function createMap(input: {
   pageId: string;
-  componentId: string;
+  version: number;
   sortOrder: number;
+  componentId: string;
   lastModifierId: string;
 }): Promise<void> {
   await withTransaction(async (conn) => {
     await conn.execute(COMP_MAP_INSERT, {
       pageId: input.pageId,
-      componentId: input.componentId,
+      version: input.version,
       sortOrder: input.sortOrder,
+      componentId: input.componentId,
       lastModifierId: input.lastModifierId,
     });
   });
 }
 
-/** 매핑 전체 교체 — 페이지 저장 시 DELETE ALL + INSERT ALL (트랜잭션) */
+/** 매핑 전체 교체 — 승인 시 DELETE ALL + INSERT ALL (트랜잭션) */
 export async function replaceAllMaps(input: {
   pageId: string;
+  version: number;
   mappings: Array<{ componentId: string; sortOrder: number }>;
   lastModifierId: string;
 }): Promise<void> {
   await withTransaction(async (conn) => {
-    // 1. 기존 매핑 전체 삭제
-    await conn.execute(COMP_MAP_DELETE_BY_PAGE, { pageId: input.pageId });
+    // 1. 해당 버전의 기존 매핑 전체 삭제
+    await conn.execute(COMP_MAP_DELETE_BY_PAGE_VERSION, {
+      pageId: input.pageId,
+      version: input.version,
+    });
 
     // 2. 새 매핑 순서대로 INSERT
     for (const mapping of input.mappings) {
       await conn.execute(COMP_MAP_INSERT, {
         pageId: input.pageId,
-        componentId: mapping.componentId,
+        version: input.version,
         sortOrder: mapping.sortOrder,
+        componentId: mapping.componentId,
         lastModifierId: input.lastModifierId,
       });
     }
   });
 }
 
-/** 매핑 순서 변경 */
-export async function updateMapOrder(seq: number, sortOrder: number, lastModifierId: string): Promise<void> {
+/** 매핑 삭제 (단건, 복합 PK 기반) */
+export async function deleteMap(pageId: string, version: number, sortOrder: number): Promise<void> {
   await withTransaction(async (conn) => {
-    await conn.execute(COMP_MAP_UPDATE_ORDER, { seq, sortOrder, lastModifierId });
-  });
-}
-
-/** 매핑 삭제 (단건) */
-export async function deleteMap(seq: number): Promise<void> {
-  await withTransaction(async (conn) => {
-    await conn.execute(COMP_MAP_DELETE, { seq });
+    await conn.execute(COMP_MAP_DELETE, { pageId, version, sortOrder });
   });
 }

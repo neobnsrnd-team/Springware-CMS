@@ -9,7 +9,7 @@ function isValidBankId(id: unknown): id is string {
     return typeof id === 'string' && /^[a-z0-9-]{1,64}$/.test(id);
 }
 
-// DB에 페이지 저장
+// DB에 페이지 저장 (W-7: renderedHtml 제거 — HISTORY는 승인 시에만 INSERT)
 async function savePage(bank: string, html: string, pageName?: string, viewMode?: string): Promise<void> {
     const { userId, userName } = getCurrentUser();
     const existing = await getPageById(bank);
@@ -18,8 +18,8 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
         await updatePage({
             pageId: bank,
             pageName: pageName,
+            viewMode: viewMode as 'mobile' | 'web' | 'responsive' | undefined,
             pageDesc: html,
-            renderedHtml: html,
             lastModifierId: userId,
             lastModifierName: userName,
         });
@@ -27,11 +27,10 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
         await createPage({
             pageId: bank,
             pageName: pageName ?? bank,
+            viewMode: (viewMode as 'mobile' | 'web' | 'responsive') ?? 'mobile',
             createUserId: userId,
             createUserName: userName,
             pageDesc: html,
-            renderedHtml: html,
-            viewMode: viewMode ?? 'mobile',
         });
     }
 }

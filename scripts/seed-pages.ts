@@ -53,7 +53,6 @@ async function main() {
             createUserId: 'system',
             createUserName: '시스템',
             pageDesc: html,
-            renderedHtml: html,
         });
 
         console.log(`✅ ${bankId} (${bankName}) — INSERT 완료`);
