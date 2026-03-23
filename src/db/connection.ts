@@ -43,7 +43,13 @@ export async function getConnection(): Promise<oracledb.Connection> {
     await initPool();
     const conn = await oracledb.getConnection();
     // 테이블 소유 스키마로 세션 변경 (쿼리에서 스키마 생략 가능)
-    await conn.execute(`ALTER SESSION SET CURRENT_SCHEMA = ${ORACLE_SCHEMA}`);
+    // SQL 인젝션 방지를 위해 PL/SQL 블록과 바인드 변수 사용
+    await conn.execute(
+        `BEGIN
+           EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(:schemaName);
+         END;`,
+        { schemaName: ORACLE_SCHEMA },
+    );
     return conn;
 }
 
