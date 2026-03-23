@@ -15,7 +15,9 @@ import {
     PAGE_INSERT,
     PAGE_UPDATE,
     PAGE_UPDATE_APPROVE_STATE,
-    PAGE_DELETE,
+    PAGE_SOFT_DELETE,
+    PAGE_HARD_DELETE,
+    COMP_MAP_DELETE_BY_PAGE,
 } from '@/db/queries/page.sql';
 import {
     PAGE_HISTORY_NEXT_VERSION,
@@ -23,6 +25,7 @@ import {
     PAGE_HISTORY_SELECT_LATEST,
     PAGE_HISTORY_SELECT_BY_VERSION,
     PAGE_HISTORY_SELECT_LIST,
+    PAGE_HISTORY_COUNT_BY_PAGE,
 } from '@/db/queries/page-history.sql';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
@@ -195,10 +198,32 @@ export async function updateApproveState(input: {
     });
 }
 
-/** 페이지 논리 삭제 */
-export async function deletePage(pageId: string, lastModifierId: string): Promise<void> {
-    await withTransaction(async (conn) => {
-        await conn.execute(PAGE_DELETE, { pageId, lastModifierId });
+/**
+ * 페이지 삭제 — 이슈 #26 삭제 정책:
+ * - 미승인 (HISTORY 없음): PAGE + COMP_MAP 하드 삭제
+ * - 승인됨 (HISTORY 있음): PAGE 소프트 삭제 (USE_YN='N'), HISTORY 보존
+ * @returns 삭제 유형 ('hard' | 'soft')
+ */
+export async function deletePage(pageId: string, lastModifierId: string): Promise<{ deleteType: 'hard' | 'soft' }> {
+    return await withTransaction(async (conn) => {
+        // 승인 이력 존재 여부 확인
+        const historyResult = await conn.execute<{ CNT: number }>(
+            PAGE_HISTORY_COUNT_BY_PAGE,
+            { pageId },
+            { outFormat: oracledb.OUT_FORMAT_OBJECT },
+        );
+        const hasHistory = (historyResult.rows?.[0]?.CNT ?? 0) > 0;
+
+        if (hasHistory) {
+            // 승인된 페이지: 소프트 삭제 (DB 보존, HISTORY 유지)
+            await conn.execute(PAGE_SOFT_DELETE, { pageId, lastModifierId });
+            return { deleteType: 'soft' };
+        } else {
+            // 미승인 페이지: COMP_MAP + PAGE 하드 삭제
+            await conn.execute(COMP_MAP_DELETE_BY_PAGE, { pageId });
+            await conn.execute(PAGE_HARD_DELETE, { pageId });
+            return { deleteType: 'hard' };
+        }
     });
 }
 

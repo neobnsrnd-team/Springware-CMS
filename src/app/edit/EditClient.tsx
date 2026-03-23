@@ -941,14 +941,22 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const containerEl = document.querySelector('.container');
         if (containerEl) koObserver.observe(containerEl, { childList: true });
 
-        // Load content from the server
+        // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
+        const loadController = new AbortController();
         fetch('/api/builder/load', {
             method: 'POST',
             body: JSON.stringify({ bank }),
             headers: { 'Content-Type': 'application/json' },
+            signal: loadController.signal,
         })
             .then((response) => response.json())
             .then((response) => {
+                if (loadController.signal.aborted) return;
+                if (response.fileNotFound) {
+                    alert(
+                        '페이지 파일이 로컬에 존재하지 않습니다.\ngit pull 후 다시 시도하거나, 에디터에서 새로 저장해 주세요.',
+                    );
+                }
                 if (response.html && builderRef.current) {
                     builderRef.current.loadHtml(response.html);
                 }
@@ -963,12 +971,14 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 }, 300);
             })
             .catch((error) => {
+                if (loadController.signal.aborted) return;
                 console.error('로드 오류:', error);
                 setContainerOpacity(1);
             });
 
         // Cleanup
         return () => {
+            loadController.abort();
             rteObserver.disconnect();
             modalObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
@@ -1351,12 +1361,22 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     };
 
     async function handleSave() {
+        const html = builderRef.current?.html() ?? '';
+        if (!html.trim()) {
+            alert('저장할 콘텐츠가 없습니다.');
+            return;
+        }
         await save();
         alert('저장이 완료되었습니다.');
     }
 
-    function handlePreview() {
-        save();
+    async function handlePreview() {
+        const html = builderRef.current?.html() ?? '';
+        if (!html.trim()) {
+            alert('저장할 콘텐츠가 없습니다.\n에디터에 내용을 추가한 후 미리보기를 사용해 주세요.');
+            return;
+        }
+        await save();
         window.open(`/view?bank=${bank}`, '_blank');
     }
 

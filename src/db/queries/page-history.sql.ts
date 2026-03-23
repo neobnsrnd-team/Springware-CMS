@@ -79,3 +79,10 @@ export const PAGE_HISTORY_SELECT_LIST = `
   WHERE PAGE_ID = :pageId
   ORDER BY VERSION DESC
 `;
+
+/** 페이지별 이력 존재 여부 (삭제 정책 판단용) */
+export const PAGE_HISTORY_COUNT_BY_PAGE = `
+  SELECT COUNT(*) AS CNT
+  FROM SPW_CMS_PAGE_HISTORY
+  WHERE PAGE_ID = :pageId
+`;

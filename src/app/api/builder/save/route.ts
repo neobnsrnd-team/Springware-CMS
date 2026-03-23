@@ -4,10 +4,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updatePage, createPage, getPageById } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
 import { isValidBankId } from '@/lib/validators';
+import { writePageHtml } from '@/lib/page-file';
 
-// DB에 페이지 저장 (W-7: renderedHtml 제거 — HISTORY는 승인 시에만 INSERT)
+// 페이지 저장: 파일 먼저 쓰기 → 성공 시 DB에 FILE_PATH 기록
+// PAGE_DESC에 HTML 저장하지 않음 (파일만 저장 정책)
 async function savePage(bank: string, html: string, pageName?: string, viewMode?: string): Promise<void> {
     const { userId, userName } = getCurrentUser();
+
+    // 1. 파일 먼저 저장 (실패 시 예외 → DB 호출 안 함)
+    const filePath = await writePageHtml(bank, html);
+
+    // 2. DB 업데이트 (FILE_PATH만 기록)
     const existing = await getPageById(bank);
 
     if (existing) {
@@ -15,7 +22,7 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
             pageId: bank,
             pageName: pageName,
             viewMode: viewMode as 'mobile' | 'web' | 'responsive' | undefined,
-            pageDesc: html,
+            filePath,
             lastModifierId: userId,
             lastModifierName: userName,
         });
@@ -24,9 +31,9 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
             pageId: bank,
             pageName: pageName ?? bank,
             viewMode: (viewMode as 'mobile' | 'web' | 'responsive') ?? 'mobile',
+            filePath,
             createUserId: userId,
             createUserName: userName,
-            pageDesc: html,
         });
     }
 }
