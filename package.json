@@ -10,7 +10,14 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
-    "seed": "npx tsx src/db/seed/run-seed.ts"
+    "seed": "npx tsx src/db/seed/run-seed.ts",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@fal-ai/client": "^1.6.2",
@@ -33,6 +40,8 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
     "typescript": "^5"
