@@ -37,27 +37,28 @@ export const PAGE_COUNT = `
     AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
 `;
 
-/** 페이지 신규 생성 */
+/** 페이지 신규 생성 (W-3: VIEW_MODE 바인딩 추가) */
 export const PAGE_INSERT = `
   INSERT INTO SPW_CMS_PAGE (
-    PAGE_ID, PAGE_NAME, OWNER_DEPT_CODE, FILE_PATH,
+    PAGE_ID, PAGE_NAME, VIEW_MODE, OWNER_DEPT_CODE, FILE_PATH,
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
     APPROVE_STATE, PAGE_DESC, PAGE_DESC_DETAIL,
-    TEMPLATE_ID, THUMBNAIL, VIEW_MODE, USE_YN, IS_PUBLIC
+    TEMPLATE_ID, THUMBNAIL, TARGET_CD, USE_YN, IS_PUBLIC
   ) VALUES (
-    :pageId, :pageName, :ownerDeptCode, :filePath,
+    :pageId, :pageName, NVL(:viewMode, 'mobile'), :ownerDeptCode, :filePath,
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName,
     'WORK', :pageDesc, :pageDescDetail,
-    :templateId, :thumbnail, :viewMode, 'Y', 'Y'
+    :templateId, :thumbnail, :targetCd, 'Y', 'Y'
   )
 `;
 
-/** 페이지 내용 수정 (에디터 저장 시) */
+/** 페이지 내용 수정 (에디터 저장 시, W-3: VIEW_MODE 추가) */
 export const PAGE_UPDATE = `
   UPDATE SPW_CMS_PAGE
   SET PAGE_NAME = NVL(:pageName, PAGE_NAME),
+      VIEW_MODE = NVL(:viewMode, VIEW_MODE),
       PAGE_DESC = :pageDesc,
       PAGE_DESC_DETAIL = :pageDescDetail,
       FILE_PATH = :filePath,

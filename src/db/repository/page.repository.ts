@@ -1,11 +1,13 @@
 // ============================================================================
 // SPW_CMS_PAGE + SPW_CMS_PAGE_HISTORY — Repository
 // ============================================================================
-// PAGE 수정/결재변경 시 반드시 PAGE_HISTORY와 트랜잭션으로 묶는다.
+// W-6 해결: VIEW_MODE 추가, HISTORY INSERT 타이밍 변경 (승인 시에만), SNAPSHOT_DTIME 제거
+// 설계 원칙: PAGE는 최신 상태 조회용 (INSERT 1회 + UPDATE 반복)
+//           PAGE_HISTORY는 승인(APPROVED) 시에만 VERSION INSERT
 
 import oracledb from 'oracledb';
 import { getConnection, withTransaction, clobBind } from '@/db/connection';
-import type { CmsPage, CmsPageHistory, ApproveState } from '@/db/types';
+import type { CmsPage, CmsPageHistory, ApproveState, ViewMode } from '@/db/types';
 import {
   PAGE_SELECT_BY_ID, PAGE_SELECT_LIST, PAGE_COUNT,
   PAGE_INSERT, PAGE_UPDATE, PAGE_UPDATE_APPROVE_STATE, PAGE_DELETE,
@@ -73,13 +75,14 @@ export async function getPageList(options: {
 
 
 // ═══════════════════════════════════════════════
-// 페이지 저장 (트랜잭션 — PAGE + PAGE_HISTORY)
+// 페이지 저장 (W-6.3: PAGE만 INSERT/UPDATE, HISTORY INSERT 제거)
 // ═══════════════════════════════════════════════
 
-/** 페이지 신규 생성 + 이력 v1 INSERT */
+/** 페이지 신규 생성 — PAGE INSERT만 (HISTORY는 승인 시에만 INSERT) */
 export async function createPage(input: {
   pageId: string;
   pageName: string;
+  viewMode?: ViewMode;
   ownerDeptCode?: string;
   filePath?: string;
   createUserId: string;
@@ -88,13 +91,13 @@ export async function createPage(input: {
   pageDescDetail?: string;
   templateId?: string;
   thumbnail?: string;
-  viewMode?: string;
-  renderedHtml?: string;
+  targetCd?: string;
 }): Promise<void> {
   await withTransaction(async (conn) => {
     await conn.execute(PAGE_INSERT, {
       pageId: input.pageId,
       pageName: input.pageName,
+      viewMode: input.viewMode ?? null,
       ownerDeptCode: input.ownerDeptCode ?? null,
       filePath: input.filePath ?? null,
       createUserId: input.createUserId,
@@ -105,41 +108,28 @@ export async function createPage(input: {
       pageDescDetail: clobBind(input.pageDescDetail ?? null),
       templateId: input.templateId ?? null,
       thumbnail: input.thumbnail ?? null,
-      viewMode: input.viewMode ?? null,
-    });
-
-    // PAGE_HISTORY v1 INSERT
-    await conn.execute(PAGE_HISTORY_INSERT, {
-      pageId: input.pageId,
-      version: 1,
-      renderedHtml: clobBind(input.renderedHtml ?? null),
+      targetCd: input.targetCd ?? null,
     });
   });
 }
 
-/** 페이지 수정 + 이력 INSERT (에디터 Save 핵심) */
+/** 페이지 수정 — PAGE UPDATE만 (HISTORY는 승인 시에만 INSERT) */
 export async function updatePage(input: {
   pageId: string;
   pageName?: string;
+  viewMode?: ViewMode;
   pageDesc?: string;
   pageDescDetail?: string;
   filePath?: string;
   thumbnail?: string;
   lastModifierId: string;
   lastModifierName: string;
-  renderedHtml: string;
 }): Promise<void> {
   await withTransaction(async (conn) => {
-    // 1. 다음 버전 번호 조회
-    const versionResult = await conn.execute<{ NEXT_VERSION: number }>(
-      PAGE_HISTORY_NEXT_VERSION, { pageId: input.pageId }, OBJ,
-    );
-    const nextVersion = versionResult.rows?.[0]?.NEXT_VERSION ?? 1;
-
-    // 2. PAGE UPDATE
     await conn.execute(PAGE_UPDATE, {
       pageId: input.pageId,
       pageName: input.pageName ?? null,
+      viewMode: input.viewMode ?? null,
       pageDesc: clobBind(input.pageDesc ?? null),
       pageDescDetail: clobBind(input.pageDescDetail ?? null),
       filePath: input.filePath ?? null,
@@ -147,17 +137,10 @@ export async function updatePage(input: {
       lastModifierId: input.lastModifierId,
       lastModifierName: input.lastModifierName,
     });
-
-    // 3. PAGE_HISTORY INSERT (현재 PAGE 스냅샷 + renderedHtml)
-    await conn.execute(PAGE_HISTORY_INSERT, {
-      pageId: input.pageId,
-      version: nextVersion,
-      renderedHtml: clobBind(input.renderedHtml),
-    });
   });
 }
 
-/** 결재 상태 변경 + 이력 INSERT */
+/** 결재 상태 변경 — APPROVED일 때만 HISTORY INSERT (W-6.3 핵심) */
 export async function updateApproveState(input: {
   pageId: string;
   approveState: ApproveState;
@@ -166,15 +149,9 @@ export async function updateApproveState(input: {
   rejectedReason?: string;
   lastModifierId: string;
   renderedHtml?: string;
-}): Promise<void> {
-  await withTransaction(async (conn) => {
-    // 1. 다음 버전 번호 조회
-    const versionResult = await conn.execute<{ NEXT_VERSION: number }>(
-      PAGE_HISTORY_NEXT_VERSION, { pageId: input.pageId }, OBJ,
-    );
-    const nextVersion = versionResult.rows?.[0]?.NEXT_VERSION ?? 1;
-
-    // 2. 결재 상태 UPDATE
+}): Promise<{ version?: number }> {
+  return await withTransaction(async (conn) => {
+    // 1. 결재 상태 UPDATE
     await conn.execute(PAGE_UPDATE_APPROVE_STATE, {
       pageId: input.pageId,
       approveState: input.approveState,
@@ -184,12 +161,23 @@ export async function updateApproveState(input: {
       lastModifierId: input.lastModifierId,
     });
 
-    // 3. PAGE_HISTORY INSERT
-    await conn.execute(PAGE_HISTORY_INSERT, {
-      pageId: input.pageId,
-      version: nextVersion,
-      renderedHtml: clobBind(input.renderedHtml ?? null),
-    });
+    // 2. 승인(APPROVED)일 때만 PAGE_HISTORY INSERT
+    if (input.approveState === 'APPROVED') {
+      const versionResult = await conn.execute<{ NEXT_VERSION: number }>(
+        PAGE_HISTORY_NEXT_VERSION, { pageId: input.pageId }, OBJ,
+      );
+      const nextVersion = versionResult.rows?.[0]?.NEXT_VERSION ?? 1;
+
+      await conn.execute(PAGE_HISTORY_INSERT, {
+        pageId: input.pageId,
+        version: nextVersion,
+        renderedHtml: clobBind(input.renderedHtml ?? null),
+      });
+
+      return { version: nextVersion };
+    }
+
+    return {};
   });
 }
 
@@ -229,16 +217,16 @@ export async function getHistoryByVersion(pageId: string, version: number): Prom
   }
 }
 
-/** 이력 목록 조회 (버전 역순, 요약 정보) */
+/** 이력 목록 조회 (버전 역순, 요약 정보) — W-6.2: SNAPSHOT_DTIME → APPROVE_DATE */
 export async function getHistoryList(pageId: string): Promise<Pick<CmsPageHistory,
   'PAGE_ID' | 'VERSION' | 'PAGE_NAME' | 'APPROVE_STATE' |
-  'LAST_MODIFIER_ID' | 'LAST_MODIFIER_NAME' | 'SNAPSHOT_DTIME'>[]> {
+  'LAST_MODIFIER_ID' | 'LAST_MODIFIER_NAME' | 'APPROVE_DATE'>[]> {
   const conn = await getConnection();
   try {
     const result = await conn.execute(PAGE_HISTORY_SELECT_LIST, { pageId }, OBJ);
     return (result.rows ?? []) as Pick<CmsPageHistory,
       'PAGE_ID' | 'VERSION' | 'PAGE_NAME' | 'APPROVE_STATE' |
-      'LAST_MODIFIER_ID' | 'LAST_MODIFIER_NAME' | 'SNAPSHOT_DTIME'>[];
+      'LAST_MODIFIER_ID' | 'LAST_MODIFIER_NAME' | 'APPROVE_DATE'>[];
   } finally {
     await conn.close();
   }
