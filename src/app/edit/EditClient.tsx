@@ -1494,6 +1494,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 setIsDropOver(false);
                 setDropLineY(null);
             }}
+            onComponentUpdate={() => {
+                fetch(`/api/components?type=finance&viewMode=${viewMode}`)
+                    .then(res => res.json())
+                    .then(data => { if (data.ok) setFinanceComponents(data.components); })
+                    .catch(err => console.error('금융 컴포넌트 재로드 오류:', err));
+            }}
         />
 
         {/* ── 새 페이지 추가 모달 ── */}
