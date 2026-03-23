@@ -5,7 +5,7 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 export async function POST(req: NextRequest) {
     try {
-        const url = "https://openrouter.ai/api/v1/chat/completions";
+        const url = 'https://openrouter.ai/api/v1/chat/completions';
         const DEFAULT_MODEL = 'openai/gpt-4o-mini';
         const DEFAULT_TEMPERATURE = 0.6;
         const DEFAULT_TOP_P = 0.9;
@@ -17,14 +17,14 @@ export async function POST(req: NextRequest) {
         const messages = [
             { role: 'system', content: system },
             { role: 'assistant', content: context || '' },
-            { role: 'user', content: question }
+            { role: 'user', content: question },
         ];
 
         const openRouterResponse = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`
+                Authorization: `Bearer ${OPENROUTER_API_KEY}`,
             },
             body: JSON.stringify({
                 model: model || DEFAULT_MODEL,
@@ -33,15 +33,15 @@ export async function POST(req: NextRequest) {
                 top_p: parseFloat(topP) || DEFAULT_TOP_P,
                 n: parseInt(num) || DEFAULT_NUM,
                 stream: true,
-                stream_options: { 'include_usage': true }
-            })
+                stream_options: { include_usage: true },
+            }),
         });
 
         if (!openRouterResponse.ok) {
             const errorData = await openRouterResponse.json();
             return new Response(JSON.stringify({ error: errorData }), {
                 status: openRouterResponse.status,
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
             });
         }
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
                 try {
                     while (true) {
                         const { done, value } = await reader.read();
-                        
+
                         if (done) {
                             // Signal end of stream
                             controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
                         }
 
                         const chunkStr = decoder.decode(value, { stream: true });
-                        
+
                         // Split the chunk into lines (streamed data is line-delimited)
                         const lines = chunkStr.split('\n');
                         lines.forEach((line) => {
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
                     console.error('스트리밍 응답 실패:', error);
                     controller.error(error);
                 }
-            }
+            },
         });
 
         // Return the stream with appropriate headers
@@ -89,18 +89,14 @@ export async function POST(req: NextRequest) {
             headers: {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-            }
+                Connection: 'keep-alive',
+            },
         });
-
     } catch (error) {
         console.error('OpenRouter 데이터 요청 오류:', error);
-        return new Response(
-            JSON.stringify({ error: 'OpenRouter 데이터 요청에 실패했습니다.' }),
-            { 
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            }
-        );
+        return new Response(JSON.stringify({ error: 'OpenRouter 데이터 요청에 실패했습니다.' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+        });
     }
 }

@@ -11,7 +11,7 @@ export async function GET() {
         // 페이지 수 제한 없이 전체 조회 (탭 목록용)
         const { list } = await getPageList({ pageSize: 9999 });
 
-        const pages = list.map(p => ({
+        const pages = list.map((p) => ({
             id: p.PAGE_ID,
             label: p.PAGE_NAME,
             viewMode: p.VIEW_MODE ?? 'mobile',

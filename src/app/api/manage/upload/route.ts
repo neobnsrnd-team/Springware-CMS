@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
         const file = formData.get('file') as File | null;
-        const targetPath = formData.get('path') as string || '';
+        const targetPath = (formData.get('path') as string) || '';
 
         if (!file) {
             return Response.json({ error: '파일이 없습니다.' }, { status: 400 });
@@ -27,9 +27,12 @@ export async function POST(request: NextRequest) {
 
         // 파일 크기 검증
         if (file.size > MAX_FILE_SIZE) {
-            return Response.json({ 
-                error: `파일 크기가 초과되었습니다. 최대 ${MAX_FILE_SIZE / 1024 / 1024}MB까지 업로드 가능합니다.`
-            }, { status: 400 });
+            return Response.json(
+                {
+                    error: `파일 크기가 초과되었습니다. 최대 ${MAX_FILE_SIZE / 1024 / 1024}MB까지 업로드 가능합니다.`,
+                },
+                { status: 400 },
+            );
         }
 
         // 파일명 새니타이징 (특수문자 → _)
@@ -46,9 +49,12 @@ export async function POST(request: NextRequest) {
 
         // 동일한 파일 존재 여부 확인
         if (fs.existsSync(filePath)) {
-            return Response.json({ 
-                error: '이미 존재하는 파일입니다.'
-            }, { status: 409 });
+            return Response.json(
+                {
+                    error: '이미 존재하는 파일입니다.',
+                },
+                { status: 409 },
+            );
         }
 
         // 파일 버퍼 변환 후 저장
@@ -57,18 +63,17 @@ export async function POST(request: NextRequest) {
         await writeFile(filePath, buffer);
 
         const urlPath = targetPath ? `${targetPath}/${filename}` : filename;
-        
+
         return Response.json({
             ok: true,
             file: {
                 name: filename,
                 url: `${UPLOAD_URL}${urlPath}`,
                 size: file.size,
-            }
+            },
         });
     } catch (error) {
         console.error('업로드 오류:', error);
         return Response.json({ error: '파일 업로드에 실패했습니다.' }, { status: 500 });
     }
 }
-

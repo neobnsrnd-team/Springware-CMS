@@ -20,7 +20,7 @@ async function initPool(): Promise<void> {
                 user: process.env.ORACLE_USER,
                 password: process.env.ORACLE_PASSWORD,
                 connectString: `${process.env.ORACLE_HOST}:${process.env.ORACLE_PORT}/${process.env.ORACLE_SERVICE}`,
-                poolMin: 0,  // 공유 Oracle XE 세션 제한 고려 (최대 20개)
+                poolMin: 0, // 공유 Oracle XE 세션 제한 고려 (최대 20개)
                 poolMax: 5,
                 poolIncrement: 1,
             });
@@ -55,9 +55,7 @@ export async function closePool(): Promise<void> {
 
 // 트랜잭션 래퍼 — 콜백 내 모든 쿼리를 하나의 트랜잭션으로 실행
 // 성공 시 COMMIT, 예외 시 ROLLBACK 후 재throw
-export async function withTransaction<T>(
-    task: (conn: oracledb.Connection) => Promise<T>
-): Promise<T> {
+export async function withTransaction<T>(task: (conn: oracledb.Connection) => Promise<T>): Promise<T> {
     const conn = await getConnection();
     try {
         const result = await task(conn);

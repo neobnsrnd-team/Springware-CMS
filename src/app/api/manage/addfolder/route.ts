@@ -25,7 +25,12 @@ export async function POST(request: NextRequest) {
         }
 
         // 위험한 이름 차단
-        if (sanitizedName.includes('/') || sanitizedName.includes('\\') || sanitizedName === '..' || sanitizedName === '.') {
+        if (
+            sanitizedName.includes('/') ||
+            sanitizedName.includes('\\') ||
+            sanitizedName === '..' ||
+            sanitizedName === '.'
+        ) {
             return Response.json({ error: '유효하지 않은 폴더 이름입니다.' }, { status: 400 });
         }
 
@@ -56,12 +61,11 @@ export async function POST(request: NextRequest) {
                 name: sanitizedName,
                 url: `${UPLOAD_URL}${relativePath ? `${relativePath}/${sanitizedName}` : sanitizedName}`,
                 isDirectory: true,
-                size: 0
-            }
+                size: 0,
+            },
         });
     } catch (error) {
         console.error('폴더 생성 오류:', error);
         return Response.json({ error: '폴더 생성에 실패했습니다.' }, { status: 500 });
     }
 }
-

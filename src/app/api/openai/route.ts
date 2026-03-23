@@ -13,34 +13,34 @@ export async function POST(req: NextRequest) {
         const RESPONSE_ENDPOINT_MODELS = ['gpt-5.1-codex-mini', 'gpt-5.1-codex'];
         const useResponsesEndpoint = RESPONSE_ENDPOINT_MODELS.includes(model);
 
-        const url = useResponsesEndpoint 
+        const url = useResponsesEndpoint
             ? 'https://api.openai.com/v1/responses'
             : 'https://api.openai.com/v1/chat/completions';
 
         const messages = [
             { role: 'system', content: system },
             { role: 'assistant', content: context || '' },
-            { role: 'user', content: question }
+            { role: 'user', content: question },
         ];
 
         const requestBody = useResponsesEndpoint
             ? {
-                model,
-                input: messages,
-            }
+                  model,
+                  input: messages,
+              }
             : {
-                model: model || DEFAULT_MODEL,
-                messages,
-                functions: functs.length === 0 ? undefined : functs
-            };
+                  model: model || DEFAULT_MODEL,
+                  messages,
+                  functions: functs.length === 0 ? undefined : functs,
+              };
 
         const openAiResponse = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
+                Authorization: `Bearer ${OPENAI_API_KEY}`,
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(requestBody),
         });
 
         if (!openAiResponse.ok) {
@@ -57,30 +57,32 @@ export async function POST(req: NextRequest) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const messageOutput = data.output.find((item: any) => item.type === 'message');
             answer = {
-                choices: [{
-                    message: {
-                        role: messageOutput.role,
-                        content: messageOutput.content[0].text
-                    }
-                }]
+                choices: [
+                    {
+                        message: {
+                            role: messageOutput.role,
+                            content: messageOutput.content[0].text,
+                        },
+                    },
+                ],
             };
             usage = data.usage;
         } else {
             const choices = data.choices;
-            answer = functs.length === 0
-                ? data
-                : (choices[0]?.message?.function_call
-                    ? choices[0].message.function_call.arguments
-                    : choices[0]?.message);
+            answer =
+                functs.length === 0
+                    ? data
+                    : choices[0]?.message?.function_call
+                      ? choices[0].message.function_call.arguments
+                      : choices[0]?.message;
             usage = data.usage;
         }
 
         return NextResponse.json({ answer, usage });
-
     } catch (error) {
         return NextResponse.json(
             { ok: false, error: error instanceof Error ? error.message : '알 수 없는 오류' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -91,15 +91,12 @@ export async function GET(request: NextRequest) {
     let result = PLACEHOLDER_BRANCHES;
 
     if (type !== 'all') {
-        result = result.filter(b => b.type === type);
+        result = result.filter((b) => b.type === type);
     }
 
     if (q) {
         const query = q.toLowerCase();
-        result = result.filter(b =>
-            b.name.includes(q) ||
-            b.address.includes(q)
-        );
+        result = result.filter((b) => b.name.includes(q) || b.address.includes(q));
     }
 
     return NextResponse.json(result, {

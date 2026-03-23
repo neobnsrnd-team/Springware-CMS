@@ -21,7 +21,7 @@ function toFinanceComponent(row: CmsComponentParsed): FinanceComponent | null {
         id: typeof d.id === 'string' ? d.id : row.COMPONENT_ID,
         label: typeof d.label === 'string' ? d.label : '',
         description: typeof d.description === 'string' ? d.description : '',
-        preview: typeof d.preview === 'string' ? d.preview : row.COMPONENT_THUMBNAIL ?? '',
+        preview: typeof d.preview === 'string' ? d.preview : (row.COMPONENT_THUMBNAIL ?? ''),
         html: typeof d.html === 'string' ? d.html : '',
         viewMode: isValidViewMode ? (viewMode as FinanceComponent['viewMode']) : row.VIEW_MODE,
     };
@@ -34,8 +34,8 @@ export async function GET(req: NextRequest) {
         const mode = searchParams.get('viewMode') ?? undefined;
 
         // 입력 검증
-        const componentType = (type && VALID_TYPES.has(type)) ? type as ComponentType : undefined;
-        const viewMode = (mode && VALID_VIEW_MODES.has(mode)) ? mode as ViewMode : undefined;
+        const componentType = type && VALID_TYPES.has(type) ? (type as ComponentType) : undefined;
+        const viewMode = mode && VALID_VIEW_MODES.has(mode) ? (mode as ViewMode) : undefined;
 
         const rows = await getComponentList({ componentType, viewMode });
         const components = rows.map(toFinanceComponent).filter((c): c is FinanceComponent => c !== null);
