@@ -37,6 +37,7 @@ export interface CmsComponentParsed extends Omit<CmsComponent, 'DATA'> {
 export interface CmsPage {
   PAGE_ID: string;
   PAGE_NAME: string;
+  VIEW_MODE: ViewMode;
   OWNER_DEPT_CODE: string | null;
   FILE_PATH: string | null;
   CREATE_USER_ID: string | null;
@@ -55,7 +56,7 @@ export interface CmsPage {
   PAGE_DESC_DETAIL: string | null;
   TEMPLATE_ID: string | null;
   THUMBNAIL: string | null;
-  VIEW_MODE: string | null;
+  TARGET_CD: string | null;
   USER_GUIDE: string | null;
   FILE_PATH_BACK: string | null;
   REJECTED_REASON: string | null;
@@ -74,18 +75,17 @@ export interface CmsPage {
 
 export interface CmsPageHistory extends CmsPage {
   VERSION: number;
-  SNAPSHOT_DTIME: Date | null;
-  RENDERED_HTML: string | null;
+  RENDERED_HTML: string | null;  // #74에서 제거 예정, 현재 유지
 }
 
 
 // ── SPW_CMS_COMP_PAGE_MAP ──
 
 export interface CmsCompPageMap {
-  SEQ: number;
   PAGE_ID: string;
-  COMPONENT_ID: string;
+  VERSION: number;
   SORT_ORDER: number;
+  COMPONENT_ID: string;
   LAST_MODIFIER_ID: string | null;
   LAST_MODIFIED_DTIME: Date | null;
 }

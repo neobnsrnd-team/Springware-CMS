@@ -70,11 +70,11 @@ export const PAGE_HISTORY_SELECT_BY_VERSION = `
     AND VERSION = :version
 `;
 
-/** 이력 목록 조회 (버전 역순, 요약 정보만) */
+/** 이력 목록 조회 (버전 역순, 요약 정보만) — W-4: SNAPSHOT_DTIME → APPROVE_DATE */
 export const PAGE_HISTORY_SELECT_LIST = `
   SELECT PAGE_ID, VERSION, PAGE_NAME, APPROVE_STATE,
          LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
-         SNAPSHOT_DTIME
+         APPROVE_DATE
   FROM SPW_CMS_PAGE_HISTORY
   WHERE PAGE_ID = :pageId
   ORDER BY VERSION DESC
