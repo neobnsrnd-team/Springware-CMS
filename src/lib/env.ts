@@ -22,19 +22,19 @@ export function optionalEnv(key: string, defaultValue = ''): string {
 }
 
 // ── AI 서비스 ──
-export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? '';
-export const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? '';
-export const FAL_API_KEY = process.env.FAL_API_KEY ?? '';
-export const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
+export const OPENROUTER_API_KEY = optionalEnv('OPENROUTER_API_KEY');
+export const OPENAI_API_KEY = optionalEnv('OPENAI_API_KEY');
+export const FAL_API_KEY = optionalEnv('FAL_API_KEY');
+export const GEMINI_API_KEY = optionalEnv('GEMINI_API_KEY');
 
 // ── 파일 업로드 ──
-export const UPLOAD_PATH_ENV = process.env.UPLOAD_PATH || 'public/uploads/';
-export const UPLOAD_URL_ENV = process.env.UPLOAD_URL || 'uploads/';
+export const UPLOAD_PATH_ENV = optionalEnv('UPLOAD_PATH', 'public/uploads/');
+export const UPLOAD_URL_ENV = optionalEnv('UPLOAD_URL', 'uploads/');
 
 // ── Oracle DB ──
-export const ORACLE_USER = process.env.ORACLE_USER ?? '';
-export const ORACLE_PASSWORD = process.env.ORACLE_PASSWORD ?? '';
-export const ORACLE_HOST = process.env.ORACLE_HOST ?? '';
-export const ORACLE_PORT = process.env.ORACLE_PORT ?? '1521';
-export const ORACLE_SERVICE = process.env.ORACLE_SERVICE ?? '';
-export const ORACLE_SCHEMA = process.env.ORACLE_SCHEMA ?? '';
+export const ORACLE_USER = optionalEnv('ORACLE_USER');
+export const ORACLE_PASSWORD = optionalEnv('ORACLE_PASSWORD');
+export const ORACLE_HOST = optionalEnv('ORACLE_HOST');
+export const ORACLE_PORT = optionalEnv('ORACLE_PORT', '1521');
+export const ORACLE_SERVICE = optionalEnv('ORACLE_SERVICE');
+export const ORACLE_SCHEMA = optionalEnv('ORACLE_SCHEMA');
