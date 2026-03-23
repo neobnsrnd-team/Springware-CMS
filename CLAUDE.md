@@ -133,7 +133,7 @@ docs/                           # 프로젝트 문서
 - ContentBuilder 옵션: upload 핸들러, AI 엔드포인트, 모델 목록, 이미지 생성 설정, filePicker
 - Runtime은 `window.builderRuntime`에 전역 등록 (에디터 내부에서 플러그인 미리보기용)
 - 하단 고정 버튼: HTML 보기 / Preview (새 탭 /view) / Save
-- AI 설정: OpenRouter 활성 (OpenAI는 주석 처리) — 전환시 해당 블록 주석 토글
+- AI 설정: OpenRouter 단일 사용 (`/api/openrouter`) — OpenAI 직접 연결 설정 블록 제거됨
 - `ko.ts`로 ContentBuilder UI 한국어 번역 주입
 
 ### EditClientLoader.tsx

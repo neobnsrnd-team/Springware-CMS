@@ -50,7 +50,7 @@ export async function DELETE(request: NextRequest) {
 
                 deletedCount++;
             } catch (err) {
-                console.error(`Failed to delete ${file}:`, err);
+                console.error(`파일 삭제 실패 - ${file}:`, err);
                 errors.push(`${file}: ${err instanceof Error ? err.message : 'Delete failed'}`);
                 failedCount++;
             }
@@ -80,7 +80,7 @@ export async function DELETE(request: NextRequest) {
             });
         }
     } catch (error) {
-        console.error('Delete error:', error);
+        console.error('삭제 오류:', error);
         return Response.json({ error: 'Failed to delete files' }, { status: 500 });
     }
 }

@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         );
     } catch (error) {
-        console.error("Upload error:", error);
+        console.error('파일 업로드 실패:', error);
         return NextResponse.json(
             { ok: false, error: "Something went wrong while saving the file." },
             { status: 500 }

@@ -275,33 +275,6 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 imageSize: ''
             },
 
-            // OpenAI:
-            /*
-            sendCommandUrl: '/api/openai',
-            sendCommandStreamUrl: '/api/openai/stream',
-            systemModel: 'gpt-4o-mini',
-            codeModels: [
-                { id: 'gpt-5.1-2025-11-13', label: 'GPT-5.1' },
-                { id: 'gpt-5-mini-2025-08-07', label: 'GPT-5 Mini' },
-                { id: 'gpt-4.1-2025-04-14', label: 'GPT-4.1' },
-                { id: 'gpt-4.1-mini-2025-04-14', label: 'GPT-4.1 Mini' },
-                { id: 'gpt-5.1-codex', label: 'GPT-5.1 Codex' },
-                { id: 'gpt-5.1-codex-mini', label: 'GPT-5.1 Codex Mini' },
-            ],
-            chatModels: [
-                { id: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-                { id: 'gpt-5-mini-2025-08-07', label: 'GPT-5 Mini' },
-                { id: 'gpt-5.1-2025-11-13', label: 'GPT-5.1' },
-                { id: 'gpt-5.1-chat-latest', label: 'GPT-5.1 Chat' },
-            ],
-            defaultChatSettings: {
-                codeModel: 'gpt-5-mini-2025-08-07',
-                chatModel: 'gpt-5-mini-2025-08-07',
-                imageModel: 'fal-ai/nano-banana',
-                imageSize: ''
-            },
-            */
-
             defaultImageGenerationProvider: 'fal',
             generateMediaUrl_Fal: '/api/assets/request-fal',
             checkRequestStatusUrl_Fal: '/api/assets/status-fal',
@@ -479,7 +452,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).builderRuntime = runtimeRef.current;
         } catch (error) {
-            console.error('Runtime initialization error:', error);
+            console.error('런타임 초기화 오류:', error);
         }
 
         // ── RTE 툴바 위치 보정 ────────────────────────────────────────────
@@ -916,7 +889,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             }, 300);
         })
         .catch(error => {
-            console.error('Load error:', error);
+            console.error('로드 오류:', error);
             setContainerOpacity(1);
         });
 
@@ -1286,9 +1259,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         });
         const result = await response.json();
         if (result.error) {
-            console.error('Save error:', result.error);
+            console.error('저장 오류:', result.error);
         } else {
-            console.log('Content saved successfully.');
+            console.log('콘텐츠 저장 완료.');
         }
     };
 

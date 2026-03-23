@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
             }
         });
     } catch (error) {
-        console.error('Folder creation error:', error);
+        console.error('폴더 생성 오류:', error);
         return Response.json({ error: 'Failed to create folder' }, { status: 500 });
     }
 }

@@ -49,7 +49,7 @@ export async function GET() {
             folders: folderTree
         });
     } catch (error) {
-        console.error('Folder tree error:', error);
+        console.error('폴더 트리 조회 실패:', error);
         return Response.json({ error: 'Failed to build folder tree' }, { status: 500 });
     }
 }

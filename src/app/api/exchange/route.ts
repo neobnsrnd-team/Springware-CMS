@@ -13,10 +13,6 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
     // TODO: 실제 환율 API로 교체
-    // const res = await fetch(`https://www.koreaexim.go.kr/site/program/financial/exchangeJSON?authkey=${process.env.EXIM_API_KEY}&data=AP01`);
-    // const data = await res.json();
-    // return NextResponse.json(transformExchangeData(data));
-
     const rates = {
         USD: { buy: 1325.50, sell: 1296.50, change: 3.50 },
         EUR: { buy: 1445.20, sell: 1408.30, change: -5.20 },

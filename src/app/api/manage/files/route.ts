@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
             currentPath: relativePath
         });
     } catch (error) {
-        console.error('File listing error:', error);
+        console.error('파일 목록 조회 실패:', error);
         return Response.json({ error: 'Failed to list files' }, { status: 500 });
     }
 }

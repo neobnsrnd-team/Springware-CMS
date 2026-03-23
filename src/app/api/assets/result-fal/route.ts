@@ -190,6 +190,3 @@ function generateRandomFileName(s?: string): string {
     return s ? `${s}-${generateRandomString(5)}` : `ai-${generateRandomString(5)}`;
 }
 
-// async function saveFileToS3(folderPath: string, filename: string, base64Image: string) {
-//     return '';
-// }

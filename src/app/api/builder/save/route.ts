@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ ok: true });
     } catch (error) {
-        console.error('Failed to save page:', error);
+        console.error('페이지 저장 실패:', error);
         return NextResponse.json({ error: 'Failed to save page' }, { status: 500 });
     }
 }

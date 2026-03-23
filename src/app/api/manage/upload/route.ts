@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             }
         });
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('업로드 오류:', error);
         return Response.json({ error: 'Failed to upload file' }, { status: 500 });
     }
 }

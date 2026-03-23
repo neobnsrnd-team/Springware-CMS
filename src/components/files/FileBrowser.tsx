@@ -88,7 +88,7 @@ export default function FileBrowser({
             const data = await res.json();
             setFolderTree(data.folders || []);
         } catch (err) {
-            console.error('Failed to load folder tree:', err);
+            console.error('폴더 트리 로드 실패:', err);
         }
     }, [endpoints.folders]);
 
@@ -107,8 +107,8 @@ export default function FileBrowser({
             setHasMore(data.hasMore);
             setPage(pageNum);
         } catch (err) {
-            setError('Failed to load files');
-            console.error(err);
+            setError('파일 로드 실패');
+            console.error('파일 로드 오류:', err);
         } finally {
             isFetchingRef.current = false;
             setLoading(false);
@@ -136,10 +136,6 @@ export default function FileBrowser({
                     body: formData,
                 });
 
-                // if (!res.ok) {
-                //     const errorData = await res.json();
-                //     throw new Error(errorData.error || 'Upload failed');
-                // }
                 if (!res.ok) {
                     const errorData = await res.json();
                     setUploadProgress(prev =>
@@ -163,7 +159,7 @@ export default function FileBrowser({
                 await fetchFiles(1, currentPath);
                 await fetchFolderTree();
             } catch (err) {
-                console.error('Upload error:', err);
+                console.error('업로드 오류:', err);
                 setUploadProgress(prev => 
                     prev.map(p => 
                         p.name === file.name 
@@ -201,13 +197,9 @@ export default function FileBrowser({
                 }),
             });
 
-            // if (!res.ok) {
-            //     const errorData = await res.json();
-            //     throw new Error(errorData.error || 'Delete failed');
-            // }
             if (!res.ok) {
                 const errorData = await res.json();
-                console.error('Delete error:', errorData);
+                console.error('삭제 오류:', errorData);
                 setUploadProgress(prev => [...prev, {
                     name: 'Failed to delete files',
                     progress: 0,
@@ -217,19 +209,6 @@ export default function FileBrowser({
                 return; // exit early, don’t continue
             }
 
-            // const result = await res.json();
-            
-            // Show success message
-            /*
-            if (result.deleted > 0) {
-                setUploadProgress(prev => [...prev, {
-                    name: `${result.deleted} item(s) deleted successfully`,
-                    progress: 100,
-                    status: 'success'
-                }]);
-            }
-            */
-
             // Refresh file list and folder tree
             await fetchFiles(1, currentPath);
             await fetchFolderTree();
@@ -238,17 +217,8 @@ export default function FileBrowser({
             setSelectedFiles(new Set());
             setSelectionMode(false);
             setShowDeleteConfirm(false);
-
-            // Clear success message after 3 seconds
-            /*
-            setTimeout(() => {
-                setUploadProgress(prev => 
-                    prev.filter(p => !p.name.includes('deleted successfully'))
-                );
-            }, 3000);
-            */
         } catch (err) {
-            console.error('Delete error:', err);
+            console.error('삭제 오류:', err);
             setUploadProgress(prev => [...prev, {
                 name: 'Failed to delete files',
                 progress: 0,
@@ -259,28 +229,6 @@ export default function FileBrowser({
             setIsDeleting(false);
         }
     };
-
-    /*
-    const handleFolderCreated = (folderName: string) => {
-        // Show success message
-        setUploadProgress(prev => [...prev, {
-            name: `Folder "${folderName}" created`,
-            progress: 100,
-            status: 'success'
-        }]);
-
-        // Refresh data
-        fetchFiles(1, currentPath);
-        fetchFolderTree();
-
-        // Clear success message after 3s
-        setTimeout(() => {
-            setUploadProgress(prev => 
-                prev.filter(p => p.name !== `Folder "${folderName}" created`)
-            );
-        }, 3000);
-    };
-    */
 
     const handleFolderCreated = () => {
 
@@ -415,8 +363,6 @@ export default function FileBrowser({
             const urlPath = file.url.replace('/uploads/', '');
             setCurrentPath(urlPath);
         } else {
-            // console.log('Selected file URL:', file.url);
-            // window.open(file.url, '_blank');
             if(window.parent) window.parent.postMessage({ type: "ASSET_SELECTED", url: file.url }, "*");
         }
     };
@@ -596,7 +542,6 @@ export default function FileBrowser({
                         <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
                             {files.map((file, index) => {
-                            // const isSelected = selectedFiles.has(file.url);
                             return (
                                 <FileCard
                                     key={`${file.url}-${index}`}
