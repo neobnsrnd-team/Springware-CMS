@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
                         });
                     }
                 } catch (error) {
-                    console.error('Stream error:', error);
+                    console.error('스트리밍 응답 실패:', error);
                     controller.error(error);
                 }
             }
@@ -94,9 +94,9 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error) {
-        console.error('Error fetching data from OpenRouter:', error);
+        console.error('OpenRouter 데이터 요청 오류:', error);
         return new Response(
-            JSON.stringify({ error: 'Error fetching data from OpenRouter' }),
+            JSON.stringify({ error: 'OpenRouter 데이터 요청에 실패했습니다.' }),
             { 
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }

@@ -30,32 +30,34 @@ npm run dev
 프로젝트 루트에 `.env` 파일 생성 후 아래 키 입력:
 
 ```env
+# Oracle DB
+ORACLE_USER=
+ORACLE_PASSWORD=
+ORACLE_HOST=
+ORACLE_PORT=
+ORACLE_SERVICE=
+ORACLE_SCHEMA=
+
+# AI
 OPENROUTER_API_KEY=   # AI 코드 생성 (기본 프로바이더)
 OPENAI_API_KEY=       # AI 대안 프로바이더
 FAL_API_KEY=          # AI 이미지 생성 (fal.ai)
 GEMINI_API_KEY=       # Google GenAI
+
+# 파일 업로드
 UPLOAD_PATH=          # 업로드 경로 (기본: public/uploads/)
 UPLOAD_URL=           # 업로드 URL (기본: uploads/)
 ```
 
 ## 데이터 저장 방식
 
-현재 DB 없이 파일 기반으로 동작합니다.
-
 | 데이터 | 저장 위치 | 비고 |
 |--------|-----------|------|
-| 에디터 캔버스 HTML | `data/*.json` (서버 파일) | Save 버튼 → API → 파일 쓰기 |
-| 탭 목록 | 브라우저 `localStorage` | 같은 PC/브라우저에서만 유지 |
-| 업로드 이미지 | `public/uploads/` | 정적 서빙 |
+| 에디터 캔버스 HTML | Oracle DB (`SPW_CMS_PAGE`) | Save 버튼 → API → DB |
+| 페이지 수정 이력 | Oracle DB (`SPW_CMS_PAGE_HISTORY`) | 버전별 렌더링 HTML 보관 |
+| 업로드 이미지 | `public/uploads/` | 정적 서빙. 프로덕션에서는 S3 등으로 교체 필요 |
 
-```
-data/
-├── ibk.json          # IBK 탭 저장 내용
-├── hana.json         # 하나 탭
-└── custom-xxx.json   # + 버튼으로 추가한 커스텀 탭
-```
-
-> 프로덕션 전환 시 `data/*.json` → DB, `public/uploads/` → S3로 교체 필요
+> DB 스키마 초기화: `src/db/ddl/V1__init_schema.sql`, `src/db/ddl/V1__triggers.sql`
 
 ## 금융 컴포넌트
 
@@ -98,11 +100,15 @@ src/
 │   ├── files/                  # 파일 브라우저
 │   └── api/                    # 서버 API 라우트
 ├── components/files/           # 파일 브라우저 UI 컴포넌트
+├── db/                         # Oracle DB 레이어
+│   ├── connection.ts           # 커넥션 풀, withTransaction, clobBind
+│   ├── queries/                # SQL 상수
+│   └── repository/             # 데이터 접근 레이어 (page, component, file-send)
+└── types/                      # 타입 선언 (contentbuilder-runtime, oracledb)
 public/
 ├── assets/plugins/             # 금융·범용 컴포넌트 플러그인 (lazy-load)
-│   └── _shared/color-picker.js # 공유 색상 피커 유틸리티
+├── runtime/                    # ContentBuilder 런타임 라이브러리
 └── uploads/                    # 업로드된 파일
-data/                           # 저장된 캔버스 콘텐츠 (JSON)
 docs/                           # 기술 문서
 ```
 

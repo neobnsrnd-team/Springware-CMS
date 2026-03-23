@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ ok: true, html, updated });
     } catch (error) {
-        console.error('Load error:', error);
-        return NextResponse.json({ error: 'Failed to load page.' }, { status: 500 });
+        console.error('페이지 로드 실패:', error);
+        return NextResponse.json({ error: '페이지 로드에 실패했습니다.' }, { status: 500 });
     }
 }

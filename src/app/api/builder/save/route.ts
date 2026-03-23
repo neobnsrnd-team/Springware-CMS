@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         const bank = isValidBankId(body.bank) ? body.bank : 'ibk';
 
         if (html === undefined || html === null) {
-            return NextResponse.json({ error: 'Missing html content' }, { status: 400 });
+            return NextResponse.json({ error: 'HTML 콘텐츠가 없습니다.' }, { status: 400 });
         }
 
         await savePage(
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ ok: true });
     } catch (error) {
-        console.error('Failed to save page:', error);
-        return NextResponse.json({ error: 'Failed to save page' }, { status: 500 });
+        console.error('페이지 저장 실패:', error);
+        return NextResponse.json({ error: '페이지 저장에 실패했습니다.' }, { status: 500 });
     }
 }

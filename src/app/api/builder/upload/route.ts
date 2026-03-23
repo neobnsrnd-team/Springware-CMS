@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     if (!uploadPath || !uploadUrl) {
         return NextResponse.json(
-            { ok: false, error: "UPLOAD_PATH or UPLOAD_URL is not defined." },
+            { ok: false, error: 'UPLOAD_PATH 또는 UPLOAD_URL이 설정되지 않았습니다.' },
             { status: 500 }
         );
     }
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     if (!file) {
         return NextResponse.json(
-            { ok: false, error: "No files received." },
+            { ok: false, error: '파일이 없습니다.' },
             { status: 400 }
         );
     }
@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         );
     } catch (error) {
-        console.error("Upload error:", error);
+        console.error('파일 업로드 실패:', error);
         return NextResponse.json(
-            { ok: false, error: "Something went wrong while saving the file." },
+            { ok: false, error: '파일 저장 중 오류가 발생했습니다.' },
             { status: 500 }
         );
     }

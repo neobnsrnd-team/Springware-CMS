@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
 
     } catch (e) {
         return NextResponse.json(
-            { ok: true, status: 500, error: 'Something went wrong.' },
+            { ok: true, status: 500, error: '서버 오류가 발생했습니다.' },
             { status: 200 }
         );
     }
