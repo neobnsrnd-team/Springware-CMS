@@ -1,4 +1,4 @@
-// src/app/api/assets/upload/route.ts
+// src/app/api/manage/upload/route.ts
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';

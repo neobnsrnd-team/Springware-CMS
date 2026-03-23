@@ -1,4 +1,4 @@
-// src/app/api/assets/files/route.ts
+// src/app/api/manage/files/route.ts
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';

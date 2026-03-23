@@ -1,4 +1,4 @@
-// src/app/api/assets/delete/route.ts
+// src/app/api/manage/delete/route.ts
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';

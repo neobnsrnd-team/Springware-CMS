@@ -1,4 +1,4 @@
-// src/app/api/manage/folders/route.ts
+// src/app/api/manage/addfolder/route.ts
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
