@@ -1127,7 +1127,6 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             const newHtml = builderRef.current?.html() ?? '';
             setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
         }, 300);
-         
     }, []);
 
     // ── 순서 탭 블록 클릭 → 캔버스 활성화 ──────────────────────────────
