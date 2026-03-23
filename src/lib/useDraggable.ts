@@ -12,6 +12,7 @@ export interface UseDraggableReturn {
 /**
  * 모달 드래그 이동 훅
  * handleRef 영역을 잡고 드래그하면 modalRef 요소가 이동합니다.
+ * 마우스 및 터치 이벤트를 모두 지원합니다.
  * isOpen이 true가 될 때 이벤트 리스너를 등록하고, false가 되면 위치를 초기화합니다.
  */
 export function useDraggable(isOpen: boolean): UseDraggableReturn {
@@ -39,45 +40,77 @@ export function useDraggable(isOpen: boolean): UseDraggableReturn {
         pos.current = { x: 0, y: 0 };
         modal.style.transform = '';
 
-        const onMouseDown = (e: MouseEvent) => {
-            // 버튼·입력 요소 클릭은 드래그 시작 안 함
-            if ((e.target as HTMLElement).closest('button, input, textarea, select, a')) return;
-
+        // 드래그 시작 공통 로직
+        const startDrag = (clientX: number, clientY: number, target: EventTarget | null) => {
+            if ((target as HTMLElement).closest('button, input, textarea, select, a')) return false;
             isDraggingRef.current = true;
             setIsDragging(true);
             dragStart.current = {
-                mouseX: e.clientX,
-                mouseY: e.clientY,
+                mouseX: clientX,
+                mouseY: clientY,
                 posX: pos.current.x,
                 posY: pos.current.y,
             };
-            e.preventDefault();
+            return true;
         };
 
-        const onMouseMove = (e: MouseEvent) => {
+        // 드래그 이동 공통 로직
+        const moveDrag = (clientX: number, clientY: number) => {
             if (!isDraggingRef.current) return;
             pos.current = {
-                x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
-                y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
+                x: dragStart.current.posX + clientX - dragStart.current.mouseX,
+                y: dragStart.current.posY + clientY - dragStart.current.mouseY,
             };
             // 성능을 위해 DOM 직접 조작 (setState 호출 없음)
             modal.style.transform = `translate(${pos.current.x}px, ${pos.current.y}px)`;
         };
 
-        const onMouseUp = () => {
+        // 드래그 종료 공통 로직 — setTimeout으로 click 이벤트보다 늦게 상태 초기화
+        const endDrag = () => {
             if (!isDraggingRef.current) return;
             isDraggingRef.current = false;
-            setIsDragging(false);
+            setTimeout(() => setIsDragging(false), 0);
         };
+
+        // 마우스 이벤트
+        const onMouseDown = (e: MouseEvent) => {
+            if (startDrag(e.clientX, e.clientY, e.target)) {
+                e.preventDefault();
+            }
+        };
+        const onMouseMove = (e: MouseEvent) => moveDrag(e.clientX, e.clientY);
+        const onMouseUp = () => endDrag();
+
+        // 터치 이벤트
+        const onTouchStart = (e: TouchEvent) => {
+            const touch = e.touches[0];
+            if (startDrag(touch.clientX, touch.clientY, e.target)) {
+                e.preventDefault();
+            }
+        };
+        const onTouchMove = (e: TouchEvent) => {
+            const touch = e.touches[0];
+            moveDrag(touch.clientX, touch.clientY);
+        };
+        const onTouchEnd = () => endDrag();
 
         handle.addEventListener('mousedown', onMouseDown);
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
 
+        handle.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('touchend', onTouchEnd);
+
         return () => {
             handle.removeEventListener('mousedown', onMouseDown);
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
+
+            handle.removeEventListener('touchstart', onTouchStart);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+
             isDraggingRef.current = false;
             setIsDragging(false);
         };
