@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 의존성 설치
+        run: npm ci
+
+      - name: Prettier 포맷 검사
+        run: npm run format:check
+
+      - name: ESLint 검사
+        run: npm run lint
+
+      - name: 빌드 검사
+        # DB 연결은 런타임에만 발생 — 빌드 시 Oracle 환경변수 불필요
+        run: npm run build
