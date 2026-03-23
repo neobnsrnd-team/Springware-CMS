@@ -50,16 +50,14 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
-        const { componentId, viewMode, label, description, html } = body as {
-            componentId: string;
-            viewMode: string;
-            label?: string;
-            description?: string;
-            html?: string;
-        };
+        if (typeof body !== 'object' || body === null) {
+            return NextResponse.json({ error: '잘못된 요청 본문입니다.' }, { status: 400 });
+        }
 
-        if (!componentId || !viewMode) {
-            return NextResponse.json({ error: 'componentId와 viewMode가 필요합니다.' }, { status: 400 });
+        const { componentId, viewMode, label, description, html } = body as Record<string, unknown>;
+
+        if (typeof componentId !== 'string' || typeof viewMode !== 'string') {
+            return NextResponse.json({ error: 'componentId와 viewMode는 필수 문자열입니다.' }, { status: 400 });
         }
 
         // DB COMPONENT_ID는 "{id}-{viewMode}" 형식으로 저장됨

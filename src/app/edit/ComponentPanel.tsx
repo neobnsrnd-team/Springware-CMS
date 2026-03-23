@@ -725,7 +725,8 @@ function EditCompModal({
             } else {
                 onSaved();
             }
-        } catch {
+        } catch (err) {
+            console.error('컴포넌트 저장 API 호출 오류:', err);
             setError('네트워크 오류가 발생했습니다.');
         } finally {
             setSaving(false);
