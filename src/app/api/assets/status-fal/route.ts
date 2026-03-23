@@ -15,7 +15,7 @@ export async function POST(
     req: NextRequest) {
 
     const falApiKey = FAL_API_KEY;
-    if (!falApiKey) return NextResponse.json({ error: 'FAL API key not found' }, { status: 403 });
+    if (!falApiKey) return NextResponse.json({ error: 'FAL API 키를 찾을 수 없습니다.' }, { status: 403 });
 
     // Configure FAL client with the dynamic key
     fal.config({

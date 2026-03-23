@@ -15,18 +15,18 @@ export async function POST(request: NextRequest) {
         const targetPath = formData.get('path') as string || '';
 
         if (!file) {
-            return Response.json({ error: 'No file provided' }, { status: 400 });
+            return Response.json({ error: '파일이 없습니다.' }, { status: 400 });
         }
 
         // Security: prevent directory traversal
         if (targetPath.includes('..')) {
-            return Response.json({ error: 'Invalid path' }, { status: 400 });
+            return Response.json({ error: '유효하지 않은 경로입니다.' }, { status: 400 });
         }
 
         // Check file size
         if (file.size > MAX_FILE_SIZE) {
             return Response.json({ 
-                error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` 
+                error: `파일 크기가 초과되었습니다. 최대 ${MAX_FILE_SIZE / 1024 / 1024}MB까지 업로드 가능합니다.`
             }, { status: 400 });
         }
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         // Check if file already exists
         if (fs.existsSync(filePath)) {
             return Response.json({ 
-                error: 'File already exists' 
+                error: '이미 존재하는 파일입니다.'
             }, { status: 409 });
         }
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error('업로드 오류:', error);
-        return Response.json({ error: 'Failed to upload file' }, { status: 500 });
+        return Response.json({ error: '파일 업로드에 실패했습니다.' }, { status: 500 });
     }
 }
 

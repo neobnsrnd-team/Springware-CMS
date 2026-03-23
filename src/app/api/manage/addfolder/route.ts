@@ -13,23 +13,23 @@ export async function POST(request: NextRequest) {
 
         // Validation
         if (!name || typeof name !== 'string') {
-            return Response.json({ error: 'Folder name is required' }, { status: 400 });
+            return Response.json({ error: '폴더 이름을 입력해주세요.' }, { status: 400 });
         }
 
         // Sanitize: remove leading/trailing whitespace
         const sanitizedName = name.trim();
         if (!sanitizedName) {
-            return Response.json({ error: 'Folder name cannot be empty' }, { status: 400 });
+            return Response.json({ error: '폴더 이름은 비워둘 수 없습니다.' }, { status: 400 });
         }
 
         // Block dangerous names
         if (sanitizedName.includes('/') || sanitizedName.includes('\\') || sanitizedName === '..' || sanitizedName === '.') {
-            return Response.json({ error: 'Invalid folder name' }, { status: 400 });
+            return Response.json({ error: '유효하지 않은 폴더 이름입니다.' }, { status: 400 });
         }
 
         // Security: prevent directory traversal in path
         if (relativePath.includes('..')) {
-            return Response.json({ error: 'Invalid path' }, { status: 400 });
+            return Response.json({ error: '유효하지 않은 경로입니다.' }, { status: 400 });
         }
 
         const absoluteBasePath = path.join(process.cwd(), UPLOAD_PATH);
@@ -37,12 +37,12 @@ export async function POST(request: NextRequest) {
 
         // Prevent creating outside uploads dir
         if (!absoluteFolderPath.startsWith(absoluteBasePath)) {
-            return Response.json({ error: 'Invalid path' }, { status: 400 });
+            return Response.json({ error: '유효하지 않은 경로입니다.' }, { status: 400 });
         }
 
         // Check if folder already exists
         if (fs.existsSync(absoluteFolderPath)) {
-            return Response.json({ error: 'Folder already exists' }, { status: 409 });
+            return Response.json({ error: '이미 존재하는 폴더입니다.' }, { status: 409 });
         }
 
         // Create directory (recursive)
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error('폴더 생성 오류:', error);
-        return Response.json({ error: 'Failed to create folder' }, { status: 500 });
+        return Response.json({ error: '폴더 생성에 실패했습니다.' }, { status: 500 });
     }
 }
 
