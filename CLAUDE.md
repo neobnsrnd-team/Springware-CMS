@@ -58,10 +58,10 @@ src/
 │       ├── openai/
 │       │   ├── route.ts        # POST — OpenAI API 프록시 (Responses/Chat 엔드포인트)
 │       │   └── stream/route.ts # POST — OpenAI 스트리밍 응답
-│       ├── assets/
-│       │   ├── request-fal/route.ts  # POST — FAL AI 이미지 생성 큐 등록
-│       │   ├── status-fal/route.ts   # GET — 요청 상태 확인
-│       │   ├── result-fal/route.ts   # GET — 생성된 이미지 결과 조회
+│       ├── fal/
+│       │   ├── request/route.ts      # POST — FAL AI 이미지 생성 큐 등록
+│       │   ├── status/route.ts       # POST — 요청 상태 확인
+│       │   ├── result/route.ts       # POST — 생성된 이미지 결과 조회
 │       │   └── cleanup/route.ts      # POST — 임시 데이터 정리
 │       ├── exchange/route.ts   # GET — 환율 데이터 (exchange-board 컴포넌트용)
 │       ├── branches/route.ts   # GET — 영업점/ATM 위치 데이터 (branch-locator 컴포넌트용)
@@ -119,11 +119,14 @@ scripts/
 └── seed-pages.ts               # 페이지 시드 스크립트 (직접 실행용)
 migrations/                     # DB 마이그레이션 파일 디렉토리
 docs/                           # 프로젝트 문서
-├── technical-overview.md       # 기술 아키텍처 개요
-├── ui-style-guide.md           # UI 스타일 가이드
-├── UI-용어정의.md               # UI 용어 정의 (한국어)
-├── 새-컴포넌트-구현-가이드.md   # 신규 컴포넌트 구현 가이드 (한국어)
-└── rdbms-migration.md          # RDBMS 마이그레이션 가이드
+├── guide/                      # 실무 가이드 (어떻게 할 것인가)
+│   └── 컴포넌트-개발-가이드.md  # 신규 컴포넌트 구현 순서 및 코드 패턴
+├── reference/                  # 참조 자료 (무엇인가)
+│   ├── 기술-개요.md             # 기술 스택, API 목록, 데이터 저장 방식
+│   ├── UI-스타일-가이드.md      # 색상·타이포·간격·컴포넌트별 스타일 토큰
+│   └── UI-용어-정의.md          # 에디터 UI 영역 명칭 및 소통 용어
+└── convention/                 # 팀 규칙 (어떤 규칙으로 개발하는가)
+    └── 코딩-컨벤션.md           # 네이밍, 타입, API 구조, 에러 처리 등
 ```
 
 ## Component Details
@@ -175,7 +178,7 @@ docs/                           # 프로젝트 문서
 | 에디터 내 파일 업로드 | `src/app/api/builder/upload/route.ts` |
 | AI 코드 생성 (일반) | `src/app/api/openrouter/route.ts` (기본 모델: `openai/gpt-4o-mini`) |
 | AI 코드 생성 (스트리밍) | `src/app/api/openrouter/stream/route.ts` |
-| AI 이미지 생성 | `src/app/api/assets/request-fal` → `status-fal` → `result-fal` (FAL AI 큐 방식) |
+| AI 이미지 생성 | `src/app/api/fal/request` → `status` → `result` (FAL AI 큐 방식) |
 | 환율 데이터 | `src/app/api/exchange/route.ts` |
 | 영업점/ATM 위치 데이터 | `src/app/api/branches/route.ts` |
 | 파일 브라우저 상태·업로드·삭제 | `src/components/files/FileBrowser.tsx` |

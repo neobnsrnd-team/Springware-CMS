@@ -1,3 +1,4 @@
+// src/app/edit/EditClient.tsx
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
@@ -276,9 +277,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             },
 
             defaultImageGenerationProvider: 'fal',
-            generateMediaUrl_Fal: '/api/assets/request-fal',
-            checkRequestStatusUrl_Fal: '/api/assets/status-fal',
-            getResultUrl_Fal: '/api/assets/result-fal',
+            generateMediaUrl_Fal: '/api/fal/request',
+            checkRequestStatusUrl_Fal: '/api/fal/status',
+            getResultUrl_Fal: '/api/fal/result',
             filePicker: '/files',
             filePickerSize: 'large',
 
@@ -1260,8 +1261,6 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const result = await response.json();
         if (result.error) {
             console.error('저장 오류:', result.error);
-        } else {
-            console.log('콘텐츠 저장 완료.');
         }
     };
 

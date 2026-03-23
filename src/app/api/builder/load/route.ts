@@ -2,11 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getPageById } from '@/db/repository/page.repository';
-
-// bank id 검증: 영문 소문자·숫자·하이픈만 허용, 1~64자 (디렉토리 트래버설 방지)
-function isValidBankId(id: unknown): id is string {
-    return typeof id === 'string' && /^[a-z0-9-]{1,64}$/.test(id);
-}
+import { isValidBankId } from '@/lib/validators';
 
 // DB에서 페이지 로드 — PAGE.PAGE_DESC에서 직접 읽기
 // HISTORY는 승인 이력 조회/롤백 전용이므로 에디터 로드에 사용하지 않음

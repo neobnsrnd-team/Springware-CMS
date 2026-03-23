@@ -1,16 +1,11 @@
+// src/components/files/FileCard.tsx
 'use client';
 
 import Image from 'next/image';
 import { Check, Folder } from 'lucide-react';
+import type { FileItem } from '@/components/files/types';
 
-interface FileItem {
-    name: string;
-    url: string;
-    isDirectory: boolean;
-    size: number;
-}
-
-interface FileCardProps {
+export interface FileCardProps {
     file: FileItem;
     isSelected: boolean;
     selectionMode: boolean;

@@ -1,4 +1,4 @@
-// src/app/api/assets/folders/route.ts
+// src/app/api/manage/folders/route.ts
 import fs from 'fs';
 import path from 'path';
 

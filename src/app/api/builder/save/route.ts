@@ -3,11 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updatePage, createPage, getPageById } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
-
-// bank id 검증: 영문 소문자·숫자·하이픈만 허용, 1~64자 (디렉토리 트래버설 방지)
-function isValidBankId(id: unknown): id is string {
-    return typeof id === 'string' && /^[a-z0-9-]{1,64}$/.test(id);
-}
+import { isValidBankId } from '@/lib/validators';
 
 // DB에 페이지 저장 (W-7: renderedHtml 제거 — HISTORY는 승인 시에만 INSERT)
 async function savePage(bank: string, html: string, pageName?: string, viewMode?: string): Promise<void> {

@@ -9,13 +9,9 @@ import CreateFolderModal from '@/components/files/CreateFolderModal';
 import DeleteConfirmModal from '@/components/files/DeleteConfirmModal';
 import UploadProgressList from '@/components/files/UploadProgressList';
 import Breadcrumbs from '@/components/files/Breadcrumbs';
+import type { FileItem } from '@/components/files/types';
 
-interface FileItem {
-    name: string;
-    url: string;
-    isDirectory: boolean;
-    size: number;
-}
+export type { FileItem } from '@/components/files/types';
 
 interface FolderNode {
     name: string;
@@ -84,11 +80,11 @@ export default function FileBrowser({
     const fetchFolderTree = useCallback(async () => {
         try {
             const res = await fetch(endpoints.folders);
-            if (!res.ok) throw new Error('Failed to fetch folders');
+            if (!res.ok) throw new Error('폴더 목록을 불러오지 못했습니다.');
             const data = await res.json();
             setFolderTree(data.folders || []);
-        } catch (err) {
-            console.error('폴더 트리 로드 실패:', err);
+        } catch (error) {
+            console.error('폴더 트리 로드 실패:', error);
         }
     }, [endpoints.folders]);
 
@@ -100,15 +96,15 @@ export default function FileBrowser({
             isFetchingRef.current = true;
             const pathParam = path ? `&path=${encodeURIComponent(path)}` : '';
             const res = await fetch(`${endpoints.files}?page=${pageNum}${pathParam}`);
-            if (!res.ok) throw new Error('Failed to fetch files');
+            if (!res.ok) throw new Error('파일 목록을 불러오지 못했습니다.');
             const data = await res.json();
             
             setFiles(prev => pageNum === 1 ? data.files : [...prev, ...data.files]);
             setHasMore(data.hasMore);
             setPage(pageNum);
-        } catch (err) {
+        } catch (error) {
             setError('파일 로드 실패');
-            console.error('파일 로드 오류:', err);
+            console.error('파일 로드 오류:', error);
         } finally {
             isFetchingRef.current = false;
             setLoading(false);
@@ -158,12 +154,12 @@ export default function FileBrowser({
 
                 await fetchFiles(1, currentPath);
                 await fetchFolderTree();
-            } catch (err) {
-                console.error('업로드 오류:', err);
-                setUploadProgress(prev => 
-                    prev.map(p => 
-                        p.name === file.name 
-                        ? { ...p, status: 'error' as const, error: err instanceof Error ? err.message : 'Upload failed' }
+            } catch (error) {
+                console.error('업로드 오류:', error);
+                setUploadProgress(prev =>
+                    prev.map(p =>
+                        p.name === file.name
+                        ? { ...p, status: 'error' as const, error: error instanceof Error ? error.message : '업로드에 실패했습니다.' }
                         : p
                     )
                 );
@@ -217,13 +213,13 @@ export default function FileBrowser({
             setSelectedFiles(new Set());
             setSelectionMode(false);
             setShowDeleteConfirm(false);
-        } catch (err) {
-            console.error('삭제 오류:', err);
+        } catch (error) {
+            console.error('삭제 오류:', error);
             setUploadProgress(prev => [...prev, {
                 name: 'Failed to delete files',
                 progress: 0,
                 status: 'error',
-                error: err instanceof Error ? err.message : 'Delete failed'
+                error: error instanceof Error ? error.message : '삭제에 실패했습니다.'
             }]);
         } finally {
             setIsDeleting(false);

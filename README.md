@@ -85,7 +85,7 @@ UPLOAD_URL=           # 업로드 URL (기본: uploads/)
 /api/manage/*           파일 브라우저 (목록·폴더·삭제)
 /api/openrouter         AI 코드 생성 프록시
 /api/openai             AI 대안 프록시
-/api/assets/*           FAL AI 이미지 생성
+/api/fal/*              FAL AI 이미지 생성 (request → status → result)
 /api/exchange           환율 데이터
 /api/branches           지점 데이터
 ```

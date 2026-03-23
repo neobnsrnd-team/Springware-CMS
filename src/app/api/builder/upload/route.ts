@@ -1,18 +1,16 @@
-// src/app/api/upload/route.ts
+// src/app/api/builder/upload/route.ts
 
-import path from "path";
-import { writeFile } from "fs/promises";
-import { NextRequest, NextResponse } from "next/server";
+import path from 'path';
+import { writeFile } from 'fs/promises';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
 
-    // Demo only: saving uploaded files to the public folder.
-    // In production, you would typically use a more robust storage solution:
-    // - a dedicated directory outside the app managed by your server,
-    // - or an S3-compatible storage service (e.g. Amazon S3, DigitalOcean Spaces).
+    // 데모용: 업로드 파일을 public 폴더에 저장
+    // 프로덕션에서는 S3 등 외부 스토리지로 교체 권장
 
-    const uploadPath = process.env.UPLOAD_PATH;   // Physical path (e.g. "/public/uploads/")
-    const uploadUrl = process.env.UPLOAD_URL;     // URL base (e.g. "/uploads/")
+    const uploadPath = process.env.UPLOAD_PATH;   // 실제 저장 경로 (예: "/public/uploads/")
+    const uploadUrl = process.env.UPLOAD_URL;     // URL 기본 경로 (예: "/uploads/")
 
     if (!uploadPath || !uploadUrl) {
         return NextResponse.json(
@@ -22,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    const file = formData.get('file') as File | null;
 
     if (!file) {
         return NextResponse.json(
@@ -32,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = file.name.replaceAll(" ", "_");
+    const filename = file.name.replaceAll(' ', '_');
 
     try {
         await writeFile(

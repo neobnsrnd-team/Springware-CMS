@@ -1,7 +1,7 @@
-// src/app/api/assets/status-fal/route.ts
+// src/app/api/fal/status/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fal } from "@fal-ai/client";
+import { fal } from '@fal-ai/client';
 
 const FAL_API_KEY = process.env.FAL_API_KEY;
 
@@ -17,11 +17,11 @@ export async function POST(
     const falApiKey = FAL_API_KEY;
     if (!falApiKey) return NextResponse.json({ error: 'FAL API 키를 찾을 수 없습니다.' }, { status: 403 });
 
-    // Configure FAL client with the dynamic key
+    // FAL 클라이언트 초기화
     fal.config({
         credentials: falApiKey
     });
-    
+
     const { request_id, model }: PostRequestBody = await req.json();
 
     try {
@@ -32,16 +32,16 @@ export async function POST(
         });
 
         return NextResponse.json({ ok: true, result, status: result.status });
-    } catch (err: unknown) {
-        let message = "Unknown error";
+    } catch (error) {
+        let message = '알 수 없는 오류';
 
-        if (err instanceof Error) {
-            message = err.message;
+        if (error instanceof Error) {
+            message = error.message;
         }
 
-        // throw structured errors with `body.detail`
-        if (typeof err === "object" && err !== null && "body" in err) {
-            const body = (err as { body?: { detail?: string } }).body;
+        // FAL AI 구조화 에러 처리 (`body.detail`)
+        if (typeof error === 'object' && error !== null && 'body' in error) {
+            const body = (error as { body?: { detail?: string } }).body;
             if (body?.detail) {
                 message = body.detail;
             }

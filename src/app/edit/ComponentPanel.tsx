@@ -1,3 +1,4 @@
+// src/app/edit/ComponentPanel.tsx
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -725,8 +726,8 @@ function EditCompModal({
             } else {
                 onSaved();
             }
-        } catch (err) {
-            console.error('컴포넌트 저장 API 호출 오류:', err);
+        } catch (error) {
+            console.error('컴포넌트 저장 API 호출 오류:', error);
             setError('네트워크 오류가 발생했습니다.');
         } finally {
             setSaving(false);
