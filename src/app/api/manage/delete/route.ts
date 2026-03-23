@@ -61,22 +61,25 @@ export async function DELETE(request: NextRequest) {
             return Response.json({
                 ok: true,
                 deleted: deletedCount,
-                message: `${deletedCount}개 항목이 삭제되었습니다.`
+                message: `${deletedCount}개 항목이 삭제되었습니다.`,
             });
         } else if (deletedCount === 0) {
-            return Response.json({
-                error: '모든 항목 삭제에 실패했습니다.',
-                deleted: 0,
-                failed: failedCount,
-                errors
-            }, { status: 500 });
+            return Response.json(
+                {
+                    error: '모든 항목 삭제에 실패했습니다.',
+                    deleted: 0,
+                    failed: failedCount,
+                    errors,
+                },
+                { status: 500 },
+            );
         } else {
             return Response.json({
                 ok: true,
                 deleted: deletedCount,
                 failed: failedCount,
                 message: `${deletedCount}개 삭제 완료, ${failedCount}개 실패`,
-                errors
+                errors,
             });
         }
     } catch (error) {

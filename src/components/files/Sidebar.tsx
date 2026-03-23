@@ -13,19 +13,19 @@ interface FolderNode {
 }
 
 interface SidebarProps {
-  folderTree: FolderNode[];
-  currentPath: string;
-  onFolderClick: (path: string) => void;
-  expandedFolders: Set<string>;
-  onToggleFolder: (path: string) => void;
+    folderTree: FolderNode[];
+    currentPath: string;
+    onFolderClick: (path: string) => void;
+    expandedFolders: Set<string>;
+    onToggleFolder: (path: string) => void;
 }
 
-export default function Sidebar({ 
-    folderTree, 
-    currentPath, 
+export default function Sidebar({
+    folderTree,
+    currentPath,
     onFolderClick,
     expandedFolders,
-    onToggleFolder
+    onToggleFolder,
 }: SidebarProps) {
     return (
         <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
@@ -37,8 +37,8 @@ export default function Sidebar({
                     onClick={() => onFolderClick('')}
                     className={`flex items-center gap-2 px-3 py-1.5 mb-1 rounded-md cursor-pointer transition-colors ${
                         currentPath === ''
-                        ? 'bg-[#EBF4FF] text-[#0046A4] font-medium'
-                        : 'hover:bg-[#EBF4FF] hover:text-[#0046A4] text-gray-700'
+                            ? 'bg-[#EBF4FF] text-[#0046A4] font-medium'
+                            : 'hover:bg-[#EBF4FF] hover:text-[#0046A4] text-gray-700'
                     }`}
                 >
                     <Folder className="w-4 h-4" />

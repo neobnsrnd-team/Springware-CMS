@@ -1,19 +1,19 @@
 // src/app/edit/EditClient.tsx
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 
 // Runtime library for rendering ContentBuilder-generated content
-import ContentBuilderRuntime from '@innovastudio/contentbuilder-runtime'
-import '@innovastudio/contentbuilder-runtime/dist/contentbuilder-runtime.css'
+import ContentBuilderRuntime from '@innovastudio/contentbuilder-runtime';
+import '@innovastudio/contentbuilder-runtime/dist/contentbuilder-runtime.css';
 
 // ContentBuilder library for editing
-import ContentBuilder from '@innovastudio/contentbuilder'
-import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css'
+import ContentBuilder from '@innovastudio/contentbuilder';
+import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css';
 
-import ComponentPanel from './ComponentPanel'
-import type { FinanceComponent } from './finance-component-data'
-import ko from './ko'
+import ComponentPanel from './ComponentPanel';
+import type { FinanceComponent } from './finance-component-data';
+import ko from './ko';
 
 // content-plugins.js data_basic 스니펫 타입
 export interface BasicBlock {
@@ -26,9 +26,9 @@ export interface BasicBlock {
 // 캔버스에 올라간 블록 하나를 나타내는 타입
 export interface ParsedBlock {
     id: string;
-    cbType: string;   // data-cb-type 값 (금융 컴포넌트 아닌 경우 빈 문자열)
-    label: string;    // 블록 이름 (금융 컴포넌트면 한글명, 아니면 타입명)
-    preview: string;  // 썸네일 경로 (금융 컴포넌트만 존재)
+    cbType: string; // data-cb-type 값 (금융 컴포넌트 아닌 경우 빈 문자열)
+    label: string; // 블록 이름 (금융 컴포넌트면 한글명, 아니면 타입명)
+    preview: string; // 썸네일 경로 (금융 컴포넌트만 존재)
     outerHtml: string; // ContentBuilder가 감싼 전체 HTML
 }
 
@@ -95,18 +95,45 @@ const btnStyle: React.CSSProperties = {
 // CMS 전체에서 공유하는 색상 팔레트 — 플러그인 에디터에서 window.__cmsColors로 접근
 const CMS_COLORS = [
     // ── 은행 대표 색상 ──
-    '#004B9C', '#0064C8', '#5B9BD5', '#BDD7EE',
-    '#008C6A', '#00A887', '#5EC4A8', '#B7E3D8',
-    '#FFBC00', '#FFD966', '#594A2E', '#C9B07A',
-    '#003DA5', '#0046FF', '#5B78D5', '#B4C2F0',
+    '#004B9C',
+    '#0064C8',
+    '#5B9BD5',
+    '#BDD7EE',
+    '#008C6A',
+    '#00A887',
+    '#5EC4A8',
+    '#B7E3D8',
+    '#FFBC00',
+    '#FFD966',
+    '#594A2E',
+    '#C9B07A',
+    '#003DA5',
+    '#0046FF',
+    '#5B78D5',
+    '#B4C2F0',
     // ── 기본 팔레트 ──
-    '#000000', '#404040', '#808080', '#BFBFBF', '#FFFFFF',
-    '#FF0000', '#FF6600', '#FFFF00', '#00FF00', '#00FFFF',
-    '#0000FF', '#8000FF', '#FF00FF', '#FF0080',
+    '#000000',
+    '#404040',
+    '#808080',
+    '#BFBFBF',
+    '#FFFFFF',
+    '#FF0000',
+    '#FF6600',
+    '#FFFF00',
+    '#00FF00',
+    '#00FFFF',
+    '#0000FF',
+    '#8000FF',
+    '#FF00FF',
+    '#FF0080',
 ];
 if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>).__cmsColors = CMS_COLORS;
 
-interface TabData { id: string; label: string; viewMode: ViewMode }
+interface TabData {
+    id: string;
+    label: string;
+    viewMode: ViewMode;
+}
 
 // 패널 너비 (접힌 상태: 40px, 펼친 상태: 264px) — CSS transition과 동기화
 const PANEL_WIDTH_OPEN = 264;
@@ -115,14 +142,14 @@ const PANEL_WIDTH_OPEN = 264;
 type ViewMode = 'mobile' | 'web' | 'responsive';
 
 const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon: string }> = {
-    mobile:     { label: '모바일', maxWidth: '390px',  icon: '📱' },
-    web:        { label: '웹',     maxWidth: '1280px', icon: '🖥️' },
-    responsive: { label: '반응형', maxWidth: '100%',   icon: '🔄' },
+    mobile: { label: '모바일', maxWidth: '390px', icon: '📱' },
+    web: { label: '웹', maxWidth: '1280px', icon: '🖥️' },
+    responsive: { label: '반응형', maxWidth: '100%', icon: '🔄' },
 };
 
 export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
-    const builderRef = useRef<ContentBuilder | null>(null);         // ContentBuilder 인스턴스
-    const runtimeRef = useRef<ContentBuilderRuntime | null>(null);  // Runtime 인스턴스
+    const builderRef = useRef<ContentBuilder | null>(null); // ContentBuilder 인스턴스
+    const runtimeRef = useRef<ContentBuilderRuntime | null>(null); // Runtime 인스턴스
     const [containerOpacity, setContainerOpacity] = useState(0);
 
     // 컴포넌트 패널 드래그 상태
@@ -141,22 +168,30 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [canvasBlocks, setCanvasBlocks] = useState<ParsedBlock[]>([]);
     // ref: 이벤트 핸들러 클로저에서 최신 blocks를 동기적으로 참조
     const canvasBlocksRef = useRef<ParsedBlock[]>([]);
-    useEffect(() => { canvasBlocksRef.current = canvasBlocks; }, [canvasBlocks]);
+    useEffect(() => {
+        canvasBlocksRef.current = canvasBlocks;
+    }, [canvasBlocks]);
 
     // content-plugins.js 기본 블록 (우측 패널 "기본 블록" 탭에서 사용)
     const [basicBlocks, setBasicBlocks] = useState<BasicBlock[]>([]);
 
     // 금융 컴포넌트 (DB 또는 파일에서 로드)
     const [financeComponents, setFinanceComponents] = useState<FinanceComponent[]>([]);
-    const financeComponentsMap = useMemo(() =>
-        financeComponents.reduce((map, comp) => {
-            map[comp.id] = comp;
-            return map;
-        }, {} as Record<string, FinanceComponent>),
-        [financeComponents]
+    const financeComponentsMap = useMemo(
+        () =>
+            financeComponents.reduce(
+                (map, comp) => {
+                    map[comp.id] = comp;
+                    return map;
+                },
+                {} as Record<string, FinanceComponent>,
+            ),
+        [financeComponents],
     );
     const financeComponentsMapRef = useRef<Record<string, FinanceComponent>>({});
-    useEffect(() => { financeComponentsMapRef.current = financeComponentsMap; }, [financeComponentsMap]);
+    useEffect(() => {
+        financeComponentsMapRef.current = financeComponentsMap;
+    }, [financeComponentsMap]);
 
     // DB 기반 탭 목록 (GET /api/builder/pages에서 로드)
     const [tabs, setTabs] = useState<TabData[]>([]);
@@ -171,7 +206,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [newTabViewMode, setNewTabViewMode] = useState<ViewMode>('mobile');
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
-    const currentTab = tabs.find(t => t.id === bank);
+    const currentTab = tabs.find((t) => t.id === bank);
     const viewMode: ViewMode = currentTab?.viewMode ?? 'mobile';
 
     useEffect(() => {
@@ -223,7 +258,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             sendCommandUrl: '/api/openrouter',
             sendCommandStreamUrl: '/api/openrouter/stream',
             systemModel: 'openai/gpt-4o-mini', // Configure model for analyzing request
-            codeModels: [ // Configure available models for code generation
+            codeModels: [
+                // Configure available models for code generation
                 { id: 'anthropic/claude-opus-4.5', label: 'Claude Opus 4.5' },
                 { id: 'google/gemini-3-pro-preview', label: 'Google Gemini 3 Pro Preview' },
                 { id: 'google/gemini-2.5-flash', label: 'Google Gemini 2.5 Flash' },
@@ -248,7 +284,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 { id: 'deepseek/deepseek-chat-v3-0324', label: 'DeepSeek Chat V3' },
                 { id: 'minimax/minimax-m2', label: 'MiniMax M2' },
             ],
-            chatModels: [ // Configure available models for chat
+            chatModels: [
+                // Configure available models for chat
                 { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
                 { id: 'openai/gpt-4o', label: 'GPT-4o' },
                 { id: 'openai/gpt-5.1', label: 'GPT-5.1' },
@@ -269,11 +306,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 { id: 'deepseek/deepseek-chat-v3-0324', label: 'DeepSeek Chat V3' },
                 { id: 'minimax/minimax-m2', label: 'MiniMax M2' },
             ],
-            defaultChatSettings: { // Configure default code chat settings
+            defaultChatSettings: {
+                // Configure default code chat settings
                 codeModel: 'google/gemini-3-pro-preview',
                 chatModel: 'openai/gpt-5-mini',
                 imageModel: 'fal-ai/nano-banana',
-                imageSize: ''
+                imageSize: '',
             },
 
             defaultImageGenerationProvider: 'fal',
@@ -289,7 +327,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             // 블록 추가/변경 시 플러그인 CSS·JS 재적용 (디바운스)
             onChange: debouncedReinit,
             onSnippetAdd: debouncedReinit,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
         // ContentBuilder 기본 피커는 사용하지 않습니다.
@@ -306,148 +344,149 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 plugins: {
                     'logo-loop': {
                         url: basePath + '/assets/plugins/logo-loop/index.js',
-                        css: basePath + '/assets/plugins/logo-loop/style.css'
+                        css: basePath + '/assets/plugins/logo-loop/style.css',
                     },
                     'click-counter': {
                         url: basePath + '/assets/plugins/click-counter/index.js',
-                        css: basePath + '/assets/plugins/click-counter/style.css'
+                        css: basePath + '/assets/plugins/click-counter/style.css',
                     },
                     'card-list': {
                         url: basePath + '/assets/plugins/card-list/index.js',
-                        css: basePath + '/assets/plugins/card-list/style.css'
+                        css: basePath + '/assets/plugins/card-list/style.css',
                     },
-                    'accordion': {
+                    accordion: {
                         url: basePath + '/assets/plugins/accordion/index.js',
-                        css: basePath + '/assets/plugins/accordion/style.css'
+                        css: basePath + '/assets/plugins/accordion/style.css',
                     },
                     'hero-animation': {
                         url: basePath + '/assets/plugins/hero-animation/index.js',
-                        css: basePath + '/assets/plugins/hero-animation/style.css'
+                        css: basePath + '/assets/plugins/hero-animation/style.css',
                     },
                     'animated-stats': {
                         url: basePath + '/assets/plugins/animated-stats/index.js',
-                        css: basePath + '/assets/plugins/animated-stats/style.css'
+                        css: basePath + '/assets/plugins/animated-stats/style.css',
                     },
-                    'timeline': {
+                    timeline: {
                         url: basePath + '/assets/plugins/timeline/index.js',
-                        css: basePath + '/assets/plugins/timeline/style.css'
+                        css: basePath + '/assets/plugins/timeline/style.css',
                     },
                     'before-after-slider': {
                         url: basePath + '/assets/plugins/before-after-slider/index.js',
-                        css: basePath + '/assets/plugins/before-after-slider/style.css'
+                        css: basePath + '/assets/plugins/before-after-slider/style.css',
                     },
                     'more-info': {
                         url: basePath + '/assets/plugins/more-info/index.js',
-                        css: basePath + '/assets/plugins/more-info/style.css'
+                        css: basePath + '/assets/plugins/more-info/style.css',
                     },
                     'social-share': {
                         url: basePath + '/assets/plugins/social-share/index.js',
-                        css: basePath + '/assets/plugins/social-share/style.css'
+                        css: basePath + '/assets/plugins/social-share/style.css',
                     },
-                    'pendulum': {
+                    pendulum: {
                         url: basePath + '/assets/plugins/pendulum/index.js',
-                        css: basePath + '/assets/plugins/pendulum/style.css'
+                        css: basePath + '/assets/plugins/pendulum/style.css',
                     },
                     'browser-mockup': {
                         url: basePath + '/assets/plugins/browser-mockup/index.js',
-                        css: basePath + '/assets/plugins/browser-mockup/style.css'
+                        css: basePath + '/assets/plugins/browser-mockup/style.css',
                     },
                     'hero-background': {
                         url: basePath + '/assets/plugins/hero-background/index.js',
-                        css: basePath + '/assets/plugins/hero-background/style.css'
+                        css: basePath + '/assets/plugins/hero-background/style.css',
                     },
                     'cta-buttons': {
                         url: basePath + '/assets/plugins/cta-buttons/index.js',
-                        css: basePath + '/assets/plugins/cta-buttons/style.css'
+                        css: basePath + '/assets/plugins/cta-buttons/style.css',
                     },
 
                     'media-slider': {
                         url: basePath + '/assets/plugins/media-slider/index.js',
-                        css: basePath + '/assets/plugins/media-slider/style.css'
+                        css: basePath + '/assets/plugins/media-slider/style.css',
                     },
                     'media-grid': {
                         url: basePath + '/assets/plugins/media-grid/index.js',
-                        css: basePath + '/assets/plugins/media-grid/style.css'
+                        css: basePath + '/assets/plugins/media-grid/style.css',
                     },
                     'particle-constellation': {
                         url: basePath + '/assets/plugins/particle-constellation/index.js',
-                        css: basePath + '/assets/plugins/particle-constellation/style.css'
+                        css: basePath + '/assets/plugins/particle-constellation/style.css',
                     },
                     'vector-force': {
                         url: basePath + '/assets/plugins/vector-force/index.js',
-                        css: basePath + '/assets/plugins/vector-force/style.css'
+                        css: basePath + '/assets/plugins/vector-force/style.css',
                     },
                     'aurora-glow': {
                         url: basePath + '/assets/plugins/aurora-glow/index.js',
-                        css: basePath + '/assets/plugins/aurora-glow/style.css'
+                        css: basePath + '/assets/plugins/aurora-glow/style.css',
                     },
                     'simple-stats': {
                         url: basePath + '/assets/plugins/simple-stats/index.js',
-                        css: basePath + '/assets/plugins/simple-stats/style.css'
+                        css: basePath + '/assets/plugins/simple-stats/style.css',
                     },
-                    'faq': {
+                    faq: {
                         url: basePath + '/assets/plugins/faq/index.js',
-                        css: basePath + '/assets/plugins/faq/style.css'
+                        css: basePath + '/assets/plugins/faq/style.css',
                     },
                     'callout-box': {
                         url: basePath + '/assets/plugins/callout-box/index.js',
-                        css: basePath + '/assets/plugins/callout-box/style.css'
+                        css: basePath + '/assets/plugins/callout-box/style.css',
                     },
-                    'code': {
+                    code: {
                         url: basePath + '/assets/plugins/code/index.js',
-                        css: basePath + '/assets/plugins/code/style.css'
+                        css: basePath + '/assets/plugins/code/style.css',
                     },
-                    'video-embed': { // Experimental
+                    'video-embed': {
+                        // Experimental
                         url: basePath + '/assets/plugins/video-embed/index.js',
-                        css: basePath + '/assets/plugins/video-embed/style.css'
+                        css: basePath + '/assets/plugins/video-embed/style.css',
                     },
                     'swiper-slider': {
                         url: basePath + '/assets/plugins/swiper-slider/index.js',
-                        css: basePath + '/assets/plugins/swiper-slider/style.css'
+                        css: basePath + '/assets/plugins/swiper-slider/style.css',
                     },
 
                     // ── IBK 금융 모바일 컴포넌트 ──────────────────────────────
                     'product-gallery': {
                         url: basePath + '/assets/plugins/product-gallery/index.js',
-                        css: basePath + '/assets/plugins/product-gallery/style.css'
+                        css: basePath + '/assets/plugins/product-gallery/style.css',
                     },
                     'exchange-board': {
                         url: basePath + '/assets/plugins/exchange-board/index.js',
-                        css: basePath + '/assets/plugins/exchange-board/style.css'
+                        css: basePath + '/assets/plugins/exchange-board/style.css',
                     },
                     'branch-locator': {
                         url: basePath + '/assets/plugins/branch-locator/index.js',
-                        css: basePath + '/assets/plugins/branch-locator/style.css'
+                        css: basePath + '/assets/plugins/branch-locator/style.css',
                     },
                     'promo-banner': {
                         url: basePath + '/assets/plugins/promo-banner/index.js',
-                        css: basePath + '/assets/plugins/promo-banner/style.css'
+                        css: basePath + '/assets/plugins/promo-banner/style.css',
                     },
                     'media-video': {
                         url: basePath + '/assets/plugins/media-video/index.js',
-                        css: basePath + '/assets/plugins/media-video/style.css'
+                        css: basePath + '/assets/plugins/media-video/style.css',
                     },
                     'loan-calculator': {
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
-                        css: basePath + '/assets/plugins/loan-calculator/style.css'
+                        css: basePath + '/assets/plugins/loan-calculator/style.css',
                     },
                     'auth-center': {
                         url: basePath + '/assets/plugins/auth-center/index.js',
-                        css: basePath + '/assets/plugins/auth-center/style.css'
+                        css: basePath + '/assets/plugins/auth-center/style.css',
                     },
                     'app-header': {
                         url: basePath + '/assets/plugins/app-header/index.js',
-                        css: basePath + '/assets/plugins/app-header/style.css'
+                        css: basePath + '/assets/plugins/app-header/style.css',
                     },
                     'product-menu': {
                         url: basePath + '/assets/plugins/product-menu/index.js',
-                        css: basePath + '/assets/plugins/product-menu/style.css'
+                        css: basePath + '/assets/plugins/product-menu/style.css',
                     },
                     'site-footer': {
                         url: basePath + '/assets/plugins/site-footer/index.js',
-                        css: basePath + '/assets/plugins/site-footer/style.css'
+                        css: basePath + '/assets/plugins/site-footer/style.css',
                     },
-                }
+                },
             });
             // Make runtime available globally for ContentBuilder editor
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -461,7 +500,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // MutationObserver로 툴바 요소의 style 변경을 감지해 top을 강제 오버라이드합니다.
         // 툴바를 네비바 아래, 캔버스 영역(뷰포트 - 우측 패널) 수평 중앙에 배치
         const fixRtePos = (el: HTMLElement) => {
-            if (el.style.getPropertyValue('top') === '52px' && el.style.getPropertyPriority('top') === 'important') return;
+            if (el.style.getPropertyValue('top') === '52px' && el.style.getPropertyPriority('top') === 'important')
+                return;
             el.style.setProperty('top', '52px', 'important');
             el.style.setProperty('left', `calc((100vw - ${PANEL_WIDTH_OPEN}px) / 2)`, 'important');
             el.style.setProperty('transform', 'translateX(-50%)', 'important');
@@ -470,9 +510,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const fixRteTop = fixRtePos;
 
         const rteObserver = new MutationObserver((mutations) => {
-            mutations.forEach(mutation => {
+            mutations.forEach((mutation) => {
                 // 새 요소가 DOM에 추가될 때
-                mutation.addedNodes.forEach(node => {
+                mutation.addedNodes.forEach((node) => {
                     if (!(node instanceof HTMLElement)) return;
                     if (node.classList.contains('is-rte-tool') || node.classList.contains('is-elementrte-tool')) {
                         fixRteTop(node);
@@ -510,12 +550,16 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             modal.dataset.draggable = 'true';
 
             // 모달 헤더(첫 번째 자식 div 또는 모달 상단 영역)를 드래그 핸들로 사용
-            const handle = modal.querySelector<HTMLElement>('.is-modal-header, .modal-header, div:first-child') ?? modal;
+            const handle =
+                modal.querySelector<HTMLElement>('.is-modal-header, .modal-header, div:first-child') ?? modal;
 
             handle.style.cursor = 'move';
             handle.style.userSelect = 'none';
 
-            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+            let startX = 0,
+                startY = 0,
+                startLeft = 0,
+                startTop = 0;
 
             const onMouseMove = (e: MouseEvent) => {
                 const dx = e.clientX - startX;
@@ -555,8 +599,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
         // MutationObserver로 .is-modal 생성 감지
         const modalObserver = new MutationObserver((mutations) => {
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
                     if (!(node instanceof HTMLElement)) return;
                     // 직접 추가된 모달
                     if (node.classList.contains('is-modal')) {
@@ -581,13 +625,16 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             popup.style.cursor = 'move';
             popup.style.userSelect = 'none';
 
-            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+            let startX = 0,
+                startY = 0,
+                startLeft = 0,
+                startTop = 0;
             let isDragging = false;
 
             const onMouseMove = (e: MouseEvent) => {
                 if (!isDragging) return;
                 popup.style.left = `${startLeft + e.clientX - startX}px`;
-                popup.style.top  = `${startTop  + e.clientY - startY}px`;
+                popup.style.top = `${startTop + e.clientY - startY}px`;
             };
             const onMouseUp = () => {
                 isDragging = false;
@@ -603,17 +650,17 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 if (popup.style.position !== 'fixed') {
                     const rect = popup.getBoundingClientRect();
                     popup.style.position = 'fixed';
-                    popup.style.left     = `${rect.left}px`;
-                    popup.style.top      = `${rect.top}px`;
-                    popup.style.margin   = '0';
+                    popup.style.left = `${rect.left}px`;
+                    popup.style.top = `${rect.top}px`;
+                    popup.style.margin = '0';
                 }
 
                 isDragging = true;
                 const rect = popup.getBoundingClientRect();
-                startX    = e.clientX;
-                startY    = e.clientY;
+                startX = e.clientX;
+                startY = e.clientY;
                 startLeft = rect.left;
-                startTop  = rect.top;
+                startTop = rect.top;
 
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
@@ -672,16 +719,22 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             // 걸려 ContentBuilder의 cellSelected()가 null을 반환하는 문제를 방지합니다.
             // mousedown(캡처) 단계에서 .cell-active를 먼저 설정해두면
             // 이후 click 단계의 ContentBuilder 핸들러가 정상 동작합니다.
-            const isCellAdd = path.some(el => el instanceof HTMLElement && el.classList.contains('cell-add'));
+            const isCellAdd = path.some((el) => el instanceof HTMLElement && el.classList.contains('cell-add'));
             if (isCellAdd) {
-                const row = path.find(el => el instanceof HTMLElement && el.classList.contains('row')) as HTMLElement | undefined;
+                const row = path.find((el) => el instanceof HTMLElement && el.classList.contains('row')) as
+                    | HTMLElement
+                    | undefined;
                 const container = document.querySelector('.container');
                 if (row && container?.contains(row)) {
                     const col = row.querySelector('.column') as HTMLElement | null;
                     if (col) {
-                        document.querySelectorAll('.row-active').forEach(r => r.classList.remove('row-active', 'row-outline'));
-                        document.querySelectorAll('.cell-active').forEach(c => c.classList.remove('cell-active'));
-                        document.querySelectorAll('.builder-active').forEach(b => b.classList.remove('builder-active'));
+                        document
+                            .querySelectorAll('.row-active')
+                            .forEach((r) => r.classList.remove('row-active', 'row-outline'));
+                        document.querySelectorAll('.cell-active').forEach((c) => c.classList.remove('cell-active'));
+                        document
+                            .querySelectorAll('.builder-active')
+                            .forEach((b) => b.classList.remove('builder-active'));
                         row.classList.add('row-active');
                         col.classList.add('cell-active');
                         row.parentElement?.classList.add('builder-active');
@@ -693,9 +746,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
             // 그 외 도구 버튼 클릭(이동/삭제/더보기)은 ContentBuilder에 위임
             if (target.closest?.('.is-tool')) return;
-            const col = path.find(
-                el => el instanceof HTMLElement && el.classList.contains('column')
-            ) as HTMLElement | undefined;
+            const col = path.find((el) => el instanceof HTMLElement && el.classList.contains('column')) as
+                | HTMLElement
+                | undefined;
             if (!col) return;
 
             // .container(.is-builder) 내부 클릭만 처리
@@ -709,9 +762,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             if (row.classList.contains('row-active')) return;
 
             // 기존 활성 상태 제거 (ContentBuilder의 clearActiveCell()에 해당)
-            document.querySelectorAll('.row-active').forEach(r => r.classList.remove('row-active', 'row-outline'));
-            document.querySelectorAll('.cell-active').forEach(c => c.classList.remove('cell-active'));
-            document.querySelectorAll('.builder-active').forEach(b => b.classList.remove('builder-active'));
+            document.querySelectorAll('.row-active').forEach((r) => r.classList.remove('row-active', 'row-outline'));
+            document.querySelectorAll('.cell-active').forEach((c) => c.classList.remove('cell-active'));
+            document.querySelectorAll('.builder-active').forEach((b) => b.classList.remove('builder-active'));
 
             // 행/열 활성화
             row.classList.add('row-active');
@@ -720,8 +773,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             document.body.classList.add('content-edit');
 
             // 다중 열 행인 경우 row-outline 추가 (is-row-tool 등 비열 자식 제외)
-            const colCount = Array.from(row.children).filter(
-                c => (c as HTMLElement).classList.contains('column')
+            const colCount = Array.from(row.children).filter((c) =>
+                (c as HTMLElement).classList.contains('column'),
             ).length;
             if (colCount > 1) row.classList.add('row-outline');
         };
@@ -733,13 +786,15 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // 클릭을 캡처 단계에서 가로채 같은 행의 is-rowadd-tool 버튼을 대신 클릭합니다.
         const redirectCellAddToRowAdd = (e: MouseEvent) => {
             const path = e.composedPath() as Element[];
-            const isCellAdd = path.some(el => el instanceof HTMLElement && el.classList.contains('cell-add'));
+            const isCellAdd = path.some((el) => el instanceof HTMLElement && el.classList.contains('cell-add'));
             if (!isCellAdd) return;
 
             e.stopImmediatePropagation();
             e.preventDefault();
 
-            const row = path.find(el => el instanceof HTMLElement && el.classList.contains('row')) as HTMLElement | undefined;
+            const row = path.find((el) => el instanceof HTMLElement && el.classList.contains('row')) as
+                | HTMLElement
+                | undefined;
             if (!row) return;
 
             const rowAddBtn = row.querySelector('.is-rowadd-tool button') as HTMLElement | null;
@@ -752,27 +807,32 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // 캡처 단계에서 클릭을 감지해 플래그를 세운 뒤,
         // MutationObserver로 새 row 삽입을 감지해 한글로 대체합니다.
         const KO_TEXT: [string, string][] = [
-            ['Headline Goes Here',         '제목을 입력하세요'],
-            ["It's easy to use, customizable, and user-friendly. A truly amazing features.", '사용하기 쉽고 커스터마이징이 가능합니다. 여기에 인용구를 입력하세요.'],
-            ['Heading 1 here',             '제목 1을 입력하세요'],
-            ['Heading 2 here',             '제목 2를 입력하세요'],
-            ['Heading 3 here',             '제목 3을 입력하세요'],
-            ['Heading 4 here',             '제목 4를 입력하세요'],
+            ['Headline Goes Here', '제목을 입력하세요'],
+            [
+                "It's easy to use, customizable, and user-friendly. A truly amazing features.",
+                '사용하기 쉽고 커스터마이징이 가능합니다. 여기에 인용구를 입력하세요.',
+            ],
+            ['Heading 1 here', '제목 1을 입력하세요'],
+            ['Heading 2 here', '제목 2를 입력하세요'],
+            ['Heading 3 here', '제목 3을 입력하세요'],
+            ['Heading 4 here', '제목 4를 입력하세요'],
             ['Lorem Ipsum is simply dummy text', '예시 텍스트'],
-            ['Read More',                  '더 보기'],
-            ['Get Started',               '시작하기'],
+            ['Read More', '더 보기'],
+            ['Get Started', '시작하기'],
             // ── HTML/JS 블록 (applyBehaviorOn 실행 후 스크립트가 교체한 텍스트) ──
-            ['Hello World..!',             '안녕하세요!'],
-            ['This is a code block. You can edit this block using the source dialog.',
-             'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.'],
+            ['Hello World..!', '안녕하세요!'],
+            [
+                'This is a code block. You can edit this block using the source dialog.',
+                'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.',
+            ],
             // ── 폼 블록 (FormViewer 기본 샘플 데이터) ──────────────────────
             ["Let's Build Something Cool!", '나만의 폼을 만들어보세요!'],
             ['Fuel your creativity with ease.', '쉽게 폼을 구성할 수 있습니다.'],
-            ["Let's Go!",                  '제출하기'],
-            ['Your Name:',                 '이름:'],
-            ['Your Best Email:',           '이메일:'],
-            ['Enter your name',            '이름을 입력하세요'],
-            ['Enter your email',           '이메일을 입력하세요'],
+            ["Let's Go!", '제출하기'],
+            ['Your Name:', '이름:'],
+            ['Your Best Email:', '이메일:'],
+            ['Enter your name', '이름을 입력하세요'],
+            ['Enter your email', '이메일을 입력하세요'],
         ];
         const KO_LONG_LOREM = '여기에 내용을 입력하세요. 이 텍스트를 클릭하여 편집할 수 있습니다.';
 
@@ -795,20 +855,19 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
             // ② data-html 속성 대체 (HTML/JS 블록, 폼 블록)
             // ContentBuilder는 code/form 블록 콘텐츠를 URL인코딩해 data-html에 저장합니다.
-            node.querySelectorAll<HTMLElement>('[data-html]').forEach(el => {
+            node.querySelectorAll<HTMLElement>('[data-html]').forEach((el) => {
                 const encoded = el.getAttribute('data-html') ?? '';
                 let decoded = decodeURIComponent(encoded);
                 let changed = false;
 
                 // HTML/JS 블록 예시 텍스트
                 if (decoded.includes('Lorem ipsum')) {
-                    decoded = decoded.replace(/<h1([^>]*)>Lorem ipsum<\/h1>/,
-                        '<h1$1>안녕하세요</h1>');
+                    decoded = decoded.replace(/<h1([^>]*)>Lorem ipsum<\/h1>/, '<h1$1>안녕하세요</h1>');
                     decoded = decoded.replace(
                         'This is a code block. You can edit this block using the source dialog.',
-                        'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.'
+                        'HTML/JS 블록입니다. 소스 편집기로 수정할 수 있습니다.',
                     );
-                    decoded = decoded.replace("Hello World..!", "안녕하세요!");
+                    decoded = decoded.replace('Hello World..!', '안녕하세요!');
                     changed = true;
                 }
 
@@ -827,12 +886,26 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                             ['Your Description Here', '폼 설명을 입력하세요'],
                         ];
                         for (const [en, ko] of FORM_KO) {
-                            if (formJson['title'] === en)       { formJson['title'] = ko;       formChanged = true; }
-                            if (formJson['description'] === en) { formJson['description'] = ko; formChanged = true; }
-                            if (formJson['submitText'] === en)  { formJson['submitText'] = ko;  formChanged = true; }
+                            if (formJson['title'] === en) {
+                                formJson['title'] = ko;
+                                formChanged = true;
+                            }
+                            if (formJson['description'] === en) {
+                                formJson['description'] = ko;
+                                formChanged = true;
+                            }
+                            if (formJson['submitText'] === en) {
+                                formJson['submitText'] = ko;
+                                formChanged = true;
+                            }
                         }
-                        if (formChanged) { decoded = JSON.stringify(formJson); changed = true; }
-                    } catch { /* JSON 파싱 실패 시 무시 */ }
+                        if (formChanged) {
+                            decoded = JSON.stringify(formJson);
+                            changed = true;
+                        }
+                    } catch {
+                        /* JSON 파싱 실패 시 무시 */
+                    }
                 }
 
                 if (changed) el.setAttribute('data-html', encodeURIComponent(decoded));
@@ -842,9 +915,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         let pendingKorean = false;
         const markKorean = (e: MouseEvent) => {
             const path = e.composedPath() as Element[];
-            const inQuickadd = path.some(el => el instanceof HTMLElement && el.classList.contains('quickadd'));
+            const inQuickadd = path.some((el) => el instanceof HTMLElement && el.classList.contains('quickadd'));
             if (!inQuickadd) return;
-            const isAddBtn = path.some(el => el instanceof HTMLElement && /\badd-\w/.test(el.className));
+            const isAddBtn = path.some((el) => el instanceof HTMLElement && /\badd-\w/.test(el.className));
             if (isAddBtn) pendingKorean = true;
         };
         document.addEventListener('click', markKorean, true);
@@ -852,7 +925,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const koObserver = new MutationObserver((mutations) => {
             if (!pendingKorean) return;
             for (const m of mutations) {
-                m.addedNodes.forEach(n => {
+                m.addedNodes.forEach((n) => {
                     if (n instanceof HTMLElement && n.classList.contains('row')) {
                         replaceEnglishPlaceholders(n);
                         // 폼/코드 블록은 FormViewer·스크립트가 비동기로 렌더링하므로
@@ -872,27 +945,27 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         fetch('/api/builder/load', {
             method: 'POST',
             body: JSON.stringify({ bank }),
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
         })
-        .then(response => response.json())
-        .then(response => {
-            if (response.html && builderRef.current) {
-                builderRef.current.loadHtml(response.html);
-            }
-            // 플러그인 CSS·JS 로드 및 mount() 실행 + ContentBuilder 핸들러 재연결
-            setTimeout(async () => {
-                await runtimeRef.current?.reinitialize();
-                builderRef.current?.applyBehavior();
+            .then((response) => response.json())
+            .then((response) => {
+                if (response.html && builderRef.current) {
+                    builderRef.current.loadHtml(response.html);
+                }
+                // 플러그인 CSS·JS 로드 및 mount() 실행 + ContentBuilder 핸들러 재연결
+                setTimeout(async () => {
+                    await runtimeRef.current?.reinitialize();
+                    builderRef.current?.applyBehavior();
+                    setContainerOpacity(1);
+                    // 초기 블록 목록 파싱
+                    const html = builderRef.current?.html() ?? '';
+                    setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
+                }, 300);
+            })
+            .catch((error) => {
+                console.error('로드 오류:', error);
                 setContainerOpacity(1);
-                // 초기 블록 목록 파싱
-                const html = builderRef.current?.html() ?? '';
-                setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
-            }, 300);
-        })
-        .catch(error => {
-            console.error('로드 오류:', error);
-            setContainerOpacity(1);
-        });
+            });
 
         // Cleanup
         return () => {
@@ -919,7 +992,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             switch (event.data.type) {
-                case "ASSET_SELECTED":
+                case 'ASSET_SELECTED':
                     builderRef.current?.selectAsset(event.data.url);
                     window.focus();
                     break;
@@ -927,27 +1000,29 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     break;
             }
         };
-        window.addEventListener("message", handleMessage);
+        window.addEventListener('message', handleMessage);
         return () => {
-            window.removeEventListener("message", handleMessage);
+            window.removeEventListener('message', handleMessage);
         };
     }, []);
 
     // ── DB에서 탭 목록 로드 ─────────────────────────────────────────────
     useEffect(() => {
         fetch('/api/builder/pages')
-            .then(res => res.json())
-            .then(data => {
+            .then((res) => res.json())
+            .then((data) => {
                 if (data.currentUserId) setCurrentUserId(data.currentUserId);
                 if (data.pages?.length) {
-                    setTabs(data.pages.map((p: { id: string; label: string; viewMode?: string }) => ({
-                        id: p.id,
-                        label: p.label,
-                        viewMode: (p.viewMode as ViewMode) ?? 'mobile',
-                    })));
+                    setTabs(
+                        data.pages.map((p: { id: string; label: string; viewMode?: string }) => ({
+                            id: p.id,
+                            label: p.label,
+                            viewMode: (p.viewMode as ViewMode) ?? 'mobile',
+                        })),
+                    );
                 }
             })
-            .catch(err => console.error('탭 목록 로드 실패:', err))
+            .catch((err) => console.error('탭 목록 로드 실패:', err))
             .finally(() => setTabsLoading(false));
     }, []);
 
@@ -955,8 +1030,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     // ContentBuilder 기본 피커 대신 우측 패널 "기본 블록" 탭에 표시합니다.
     useEffect(() => {
         const sources = [
-            { src: '/assets/minimalist-blocks/content-plugins.js',            key: 'data_basic' },
-            { src: '/assets/minimalist-blocks/content-plugins-mobile.js',     key: 'data_basic_mobile' },
+            { src: '/assets/minimalist-blocks/content-plugins.js', key: 'data_basic' },
+            { src: '/assets/minimalist-blocks/content-plugins-mobile.js', key: 'data_basic_mobile' },
             { src: '/assets/minimalist-blocks/content-plugins-responsive.js', key: 'data_basic_responsive' },
         ];
         const scripts: HTMLScriptElement[] = [];
@@ -985,13 +1060,22 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         sources.forEach(({ src }) => {
             const s = document.createElement('script');
             s.src = src;
-            s.onload = s.onerror = () => { loaded++; if (loaded >= sources.length) mergeAll(); };
+            s.onload = s.onerror = () => {
+                loaded++;
+                if (loaded >= sources.length) mergeAll();
+            };
             document.head.appendChild(s);
             scripts.push(s);
         });
 
         return () => {
-            scripts.forEach(s => { try { document.head.removeChild(s); } catch { /* 이미 제거됨 */ } });
+            scripts.forEach((s) => {
+                try {
+                    document.head.removeChild(s);
+                } catch {
+                    /* 이미 제거됨 */
+                }
+            });
         };
     }, []);
 
@@ -999,12 +1083,14 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     useEffect(() => {
         let cancelled = false;
         fetch(`/api/components?type=finance&viewMode=${viewMode}`)
-            .then(res => res.json())
-            .then(data => {
+            .then((res) => res.json())
+            .then((data) => {
                 if (!cancelled && data.ok) setFinanceComponents(data.components);
             })
-            .catch(err => console.error('금융 컴포넌트 로드 오류:', err));
-        return () => { cancelled = true; };
+            .catch((err) => console.error('금융 컴포넌트 로드 오류:', err));
+        return () => {
+            cancelled = true;
+        };
     }, [viewMode]);
 
     // ── 컴포넌트 패널 → 캔버스 삽입 ──────────────────────────────────────
@@ -1023,14 +1109,13 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
         const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
         const wrappedHtml = `<div class="row"><div class="column">\n${html}\n</div></div>`;
-        const blockHtmls = liveBlocks.map(b => b.outerHtml);
+        const blockHtmls = liveBlocks.map((b) => b.outerHtml);
 
         // insertIdx가 유효하면 해당 위치에, 아니면 끝에 추가
         // addSnippet 대신 loadHtml로 통일 — addSnippet은 내부 스니펫 레지스트리를
         // 참조해 의도치 않은 컴포넌트를 함께 삽입하는 부작용이 있음
-        const targetIdx = (insertIdx !== undefined && insertIdx >= 0)
-            ? Math.min(insertIdx, blockHtmls.length)
-            : blockHtmls.length;
+        const targetIdx =
+            insertIdx !== undefined && insertIdx >= 0 ? Math.min(insertIdx, blockHtmls.length) : blockHtmls.length;
 
         blockHtmls.splice(targetIdx, 0, wrappedHtml);
         builder.loadHtml(blockHtmls.join('\n'));
@@ -1042,7 +1127,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             const newHtml = builderRef.current?.html() ?? '';
             setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
         }, 300);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ── 순서 탭 블록 클릭 → 캔버스 활성화 ──────────────────────────────
@@ -1055,8 +1140,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const container = document.querySelector('.container');
         if (!container) return;
 
-        const rows = Array.from(container.children).filter(
-            c => (c as HTMLElement).classList.contains('row')
+        const rows = Array.from(container.children).filter((c) =>
+            (c as HTMLElement).classList.contains('row'),
         ) as HTMLElement[];
 
         const row = rows[idx];
@@ -1077,7 +1162,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
         const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
         const next = liveBlocks.filter((_, i) => i !== idx);
-        const newHtml = next.map(b => b.outerHtml).join('\n');
+        const newHtml = next.map((b) => b.outerHtml).join('\n');
         builder.loadHtml(newHtml);
 
         setTimeout(async () => {
@@ -1114,7 +1199,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const next = liveBlocks.filter((_, i) => i !== from);
         const insertAt = from < to ? to - 1 : to;
         next.splice(insertAt, 0, liveBlocks[from]);
-        builder.loadHtml(next.map(b => b.outerHtml).join('\n'));
+        builder.loadHtml(next.map((b) => b.outerHtml).join('\n'));
 
         // 플러그인 재초기화 + ContentBuilder 편집 핸들러 재연결 + 블록 목록 갱신
         setTimeout(async () => {
@@ -1136,14 +1221,18 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
         // ── 마우스 Y 위치로 삽입 인덱스 계산 ──────────────────────────
         const container = document.querySelector('.container') as HTMLElement | null;
-        if (!container) { dropInsertIdxRef.current = -1; setDropLineY(null); return; }
+        if (!container) {
+            dropInsertIdxRef.current = -1;
+            setDropLineY(null);
+            return;
+        }
 
         // ':scope > .row'로 직계 자식 .row만 선택 (ContentBuilder 내부 UI 요소 제외)
         // rows가 없으면 container 직계 자식 전체를 폴백으로 사용
         let rows = Array.from(container.querySelectorAll<HTMLElement>(':scope > .row'));
         if (rows.length === 0) {
             rows = Array.from(container.children).filter(
-                c => !(c as HTMLElement).classList.contains('is-tool')
+                (c) => !(c as HTMLElement).classList.contains('is-tool'),
             ) as HTMLElement[];
         }
 
@@ -1171,7 +1260,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             setDropLineY(lastRect.bottom);
         } else {
             const prevBottom = rows[insertIdx - 1].getBoundingClientRect().bottom;
-            const nextTop    = rows[insertIdx].getBoundingClientRect().top;
+            const nextTop = rows[insertIdx].getBoundingClientRect().top;
             setDropLineY((prevBottom + nextTop) / 2);
         }
     }
@@ -1206,10 +1295,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const selectedViewMode = newTabViewMode;
 
         // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트
-        const headerComp = financeComponents.find(c => c.id === 'app-header');
-        const defaultHtml = headerComp
-            ? `<div class="row"><div class="column">\n${headerComp.html}\n</div></div>`
-            : '';
+        const headerComp = financeComponents.find((c) => c.id === 'app-header');
+        const defaultHtml = headerComp ? `<div class="row"><div class="column">\n${headerComp.html}\n</div></div>` : '';
 
         setShowAddTab(false);
         setNewTabName('');
@@ -1228,7 +1315,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     // ── 캔버스(탭) 삭제 ──────────────────────────────────────────────────
     // 최소 1개 탭은 유지, 삭제 시 DB 논리 삭제 후 남은 첫 번째 탭으로 이동
     async function handleDeleteCanvas() {
-        const currentLabel = tabs.find(t => t.id === bank)?.label ?? bank;
+        const currentLabel = tabs.find((t) => t.id === bank)?.label ?? bank;
         if (!confirm(`'${currentLabel}' 탭을 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
 
         builderRef.current?.loadHtml('');
@@ -1239,7 +1326,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             method: 'DELETE',
         });
 
-        const remaining = tabs.filter(t => t.id !== bank);
+        const remaining = tabs.filter((t) => t.id !== bank);
         setTabs(remaining);
 
         // 남은 탭 중 첫 번째로 이동
@@ -1256,7 +1343,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const response = await fetch('/api/builder/save', {
             method: 'POST',
             body: JSON.stringify({ html, bank }),
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
         });
         const result = await response.json();
         if (result.error) {
@@ -1280,339 +1367,450 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
     return (
         <>
-        {/* ── 상단 네비바 ── */}
-        <nav style={{
-            position: 'fixed', top: 0, left: 0, right: 0,
-            height: '52px', zIndex: 100,
-            background: '#ffffff', borderBottom: '1px solid #e5e7eb',
-            display: 'flex', alignItems: 'center',
-            padding: '0 16px', gap: '4px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-        }}>
-            {/* 로고 */}
-            <span style={{
-                fontWeight: 700, fontSize: '15px', color: '#0046A4',
-                marginRight: '16px', whiteSpace: 'nowrap', letterSpacing: '-0.3px',
-            }}>
-                Springware CMS
-            </span>
-
-            {/* 페이지 탭 */}
-            <div style={{ display: 'flex', gap: '2px', flex: 1, overflowX: 'auto', alignItems: 'center' }}>
-                {tabsLoading ? (
-                    <span style={{ fontSize: '12px', color: '#9ca3af', padding: '5px 14px' }}>로딩 중...</span>
-                ) : tabs.map(b => (
-                    <a
-                        key={b.id}
-                        href={`/edit?bank=${b.id}`}
-                        style={{
-                            padding: '5px 14px',
-                            borderRadius: '6px',
-                            background: bank === b.id ? '#0046A4' : 'transparent',
-                            color: bank === b.id ? '#ffffff' : '#374151',
-                            textDecoration: 'none',
-                            fontSize: '13px',
-                            fontWeight: bank === b.id ? 600 : 400,
-                            whiteSpace: 'nowrap',
-                            transition: 'background 0.15s',
-                        }}
-                    >
-                        {b.label}
-                    </a>
-                ))}
-
-                {/* 새 페이지 추가 버튼 — 로딩 중에는 숨김 */}
-                {!tabsLoading && (
-                <button
-                    onClick={() => setShowAddTab(true)}
-                    title="새 페이지 추가"
-                    style={{
-                        width: '28px', height: '28px', borderRadius: '6px',
-                        border: '1px solid #e5e7eb', background: 'transparent',
-                        color: '#6b7280', fontSize: '18px', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        marginLeft: '4px', lineHeight: 1, flexShrink: 0,
-                    }}
-                >+</button>
-                )}
-            </div>
-
-            {/* 현재 뷰 모드 뱃지 (읽기 전용 — 생성 시 결정, 변경 불가) */}
-            <span
-                title={`이 페이지는 ${VIEW_MODE_CONFIG[viewMode].label} 레이아웃입니다`}
+            {/* ── 상단 네비바 ── */}
+            <nav
                 style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '4px',
-                    padding: '3px 10px', borderRadius: '12px', marginLeft: '8px',
-                    background: '#f0f4ff', border: '1px solid #c7d8f4',
-                    color: '#0046A4', fontSize: '12px', fontWeight: 600,
-                    whiteSpace: 'nowrap', userSelect: 'none',
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '52px',
+                    zIndex: 100,
+                    background: '#ffffff',
+                    borderBottom: '1px solid #e5e7eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 16px',
+                    gap: '4px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
                 }}
             >
-                <span style={{ fontSize: '13px' }}>{VIEW_MODE_CONFIG[viewMode].icon}</span>
-                {VIEW_MODE_CONFIG[viewMode].label}
-            </span>
-
-            {/* 액션 버튼 */}
-            <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
-                <button onClick={handleViewHtml} className="nav-btn" style={btnStyle}>HTML</button>
-                <button onClick={handlePreview} className="nav-btn" style={btnStyle}>미리보기</button>
-                <button
-                    onClick={handleDeleteCanvas}
-                    disabled={tabs.length <= 1}
+                {/* 로고 */}
+                <span
                     style={{
-                        ...btnStyle,
-                        color: tabs.length <= 1 ? '#d1d5db' : '#dc2626',
-                        borderColor: tabs.length <= 1 ? '#e5e7eb' : '#fca5a5',
-                        cursor: tabs.length <= 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: 700,
+                        fontSize: '15px',
+                        color: '#0046A4',
+                        marginRight: '16px',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '-0.3px',
                     }}
-                >삭제</button>
-                <button onClick={handleSave} style={{ ...btnStyle, background: '#0046A4', color: '#fff', borderColor: '#0046A4' }}>저장</button>
-            </div>
-        </nav>
+                >
+                    Springware CMS
+                </span>
 
-        {/* ── ContentBuilder 캔버스 + 드롭 오버레이 ── */}
-        <div
-            style={{
-                marginTop: '52px',       // 네비바 높이
-                paddingTop: '56px',      // RTE 툴바 높이(~44px) + 여백 12px — container margin 대신 여기에 설정
-                marginRight: `${PANEL_WIDTH_OPEN}px`,
-                minHeight: 'calc(100vh - 52px)',
-                position: 'relative',
-                background: viewMode === 'responsive' ? '#ffffff' : '#dde1e7',  // 모바일 기기 배경색
-                overflowX: 'visible',
-            }}
-        >
-            {/*
+                {/* 페이지 탭 */}
+                <div style={{ display: 'flex', gap: '2px', flex: 1, overflowX: 'auto', alignItems: 'center' }}>
+                    {tabsLoading ? (
+                        <span style={{ fontSize: '12px', color: '#9ca3af', padding: '5px 14px' }}>로딩 중...</span>
+                    ) : (
+                        tabs.map((b) => (
+                            <a
+                                key={b.id}
+                                href={`/edit?bank=${b.id}`}
+                                style={{
+                                    padding: '5px 14px',
+                                    borderRadius: '6px',
+                                    background: bank === b.id ? '#0046A4' : 'transparent',
+                                    color: bank === b.id ? '#ffffff' : '#374151',
+                                    textDecoration: 'none',
+                                    fontSize: '13px',
+                                    fontWeight: bank === b.id ? 600 : 400,
+                                    whiteSpace: 'nowrap',
+                                    transition: 'background 0.15s',
+                                }}
+                            >
+                                {b.label}
+                            </a>
+                        ))
+                    )}
+
+                    {/* 새 페이지 추가 버튼 — 로딩 중에는 숨김 */}
+                    {!tabsLoading && (
+                        <button
+                            onClick={() => setShowAddTab(true)}
+                            title="새 페이지 추가"
+                            style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '6px',
+                                border: '1px solid #e5e7eb',
+                                background: 'transparent',
+                                color: '#6b7280',
+                                fontSize: '18px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginLeft: '4px',
+                                lineHeight: 1,
+                                flexShrink: 0,
+                            }}
+                        >
+                            +
+                        </button>
+                    )}
+                </div>
+
+                {/* 현재 뷰 모드 뱃지 (읽기 전용 — 생성 시 결정, 변경 불가) */}
+                <span
+                    title={`이 페이지는 ${VIEW_MODE_CONFIG[viewMode].label} 레이아웃입니다`}
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        marginLeft: '8px',
+                        background: '#f0f4ff',
+                        border: '1px solid #c7d8f4',
+                        color: '#0046A4',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        userSelect: 'none',
+                    }}
+                >
+                    <span style={{ fontSize: '13px' }}>{VIEW_MODE_CONFIG[viewMode].icon}</span>
+                    {VIEW_MODE_CONFIG[viewMode].label}
+                </span>
+
+                {/* 액션 버튼 */}
+                <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+                    <button onClick={handleViewHtml} className="nav-btn" style={btnStyle}>
+                        HTML
+                    </button>
+                    <button onClick={handlePreview} className="nav-btn" style={btnStyle}>
+                        미리보기
+                    </button>
+                    <button
+                        onClick={handleDeleteCanvas}
+                        disabled={tabs.length <= 1}
+                        style={{
+                            ...btnStyle,
+                            color: tabs.length <= 1 ? '#d1d5db' : '#dc2626',
+                            borderColor: tabs.length <= 1 ? '#e5e7eb' : '#fca5a5',
+                            cursor: tabs.length <= 1 ? 'not-allowed' : 'pointer',
+                        }}
+                    >
+                        삭제
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        style={{ ...btnStyle, background: '#0046A4', color: '#fff', borderColor: '#0046A4' }}
+                    >
+                        저장
+                    </button>
+                </div>
+            </nav>
+
+            {/* ── ContentBuilder 캔버스 + 드롭 오버레이 ── */}
+            <div
+                style={{
+                    marginTop: '52px', // 네비바 높이
+                    paddingTop: '56px', // RTE 툴바 높이(~44px) + 여백 12px — container margin 대신 여기에 설정
+                    marginRight: `${PANEL_WIDTH_OPEN}px`,
+                    minHeight: 'calc(100vh - 52px)',
+                    position: 'relative',
+                    background: viewMode === 'responsive' ? '#ffffff' : '#dde1e7', // 모바일 기기 배경색
+                    overflowX: 'visible',
+                }}
+            >
+                {/*
               드래그 중 캔버스 위에 덮는 실제 드롭 타겟 오버레이.
               ContentBuilder 내부 DOM이 dragover에 stopPropagation을 호출해도
               오버레이는 ContentBuilder 위에 직접 렌더링되므로 이벤트를 수신합니다.
             */}
-            {isDraggingComponent && (
-                <div
-                    onDragOver={handleOverlayDragOver}
-                    onDragLeave={handleOverlayDragLeave}
-                    onDrop={handleOverlayDrop}
-                    style={{
-                        position: 'absolute',
-                        inset: 0,
-                        zIndex: 85,
-                        border: isDropOver ? '2px dashed #0046A4' : '2px dashed #93c5fd',
-                        background: isDropOver ? 'rgba(0,70,164,0.06)' : 'rgba(0,70,164,0.02)',
-                        transition: 'border-color 0.15s, background 0.15s',
-                        borderRadius: '4px',
-                        cursor: 'copy',
-                    }}
-                >
-                    {/* 드롭 안내 배지 */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        background: isDropOver ? '#0046A4' : 'rgba(0,70,164,0.75)',
-                        color: '#ffffff',
-                        padding: '10px 24px',
-                        borderRadius: '24px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 4px 16px rgba(0,70,164,0.25)',
-                        pointerEvents: 'none',
-                        transition: 'background 0.15s',
-                    }}>
-                        {isDropOver ? '놓으면 캔버스에 추가됩니다' : '이곳에 놓아 추가하세요'}
-                    </div>
-
-                    {/* 삽입 위치 표시 선 (드래그오버 시) — 모바일 컨테이너 너비에 맞춤 */}
-                    {dropLineY !== null && (
-                        <div style={{
-                            position: 'fixed',
-                            top: dropLineY,
-                            left: 0,
-                            right: `${PANEL_WIDTH_OPEN}px`,
-                            display: 'flex',
-                            justifyContent: 'center',
-                            zIndex: 86,
-                            pointerEvents: 'none',
-                        }}>
-                            <div style={{
-                                width: VIEW_MODE_CONFIG[viewMode].maxWidth,
-                                maxWidth: '100%',
-                                height: '3px',
-                                background: '#0046A4',
-                                borderRadius: '2px',
-                                boxShadow: '0 0 6px rgba(0,70,164,0.5)',
-                            }} />
+                {isDraggingComponent && (
+                    <div
+                        onDragOver={handleOverlayDragOver}
+                        onDragLeave={handleOverlayDragLeave}
+                        onDrop={handleOverlayDrop}
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            zIndex: 85,
+                            border: isDropOver ? '2px dashed #0046A4' : '2px dashed #93c5fd',
+                            background: isDropOver ? 'rgba(0,70,164,0.06)' : 'rgba(0,70,164,0.02)',
+                            transition: 'border-color 0.15s, background 0.15s',
+                            borderRadius: '4px',
+                            cursor: 'copy',
+                        }}
+                    >
+                        {/* 드롭 안내 배지 */}
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                background: isDropOver ? '#0046A4' : 'rgba(0,70,164,0.75)',
+                                color: '#ffffff',
+                                padding: '10px 24px',
+                                borderRadius: '24px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                boxShadow: '0 4px 16px rgba(0,70,164,0.25)',
+                                pointerEvents: 'none',
+                                transition: 'background 0.15s',
+                            }}
+                        >
+                            {isDropOver ? '놓으면 캔버스에 추가됩니다' : '이곳에 놓아 추가하세요'}
                         </div>
-                    )}
-                </div>
-            )}
 
-            {/* 모바일 앱 캔버스
-              * 390px (iPhone 표준) 크기로 모바일 앱 화면을 시뮬레이션
-              * 행도구는 컨테이너 오른쪽 바깥(right: -40px)에 표시 —
-              *   좁은 컨테이너가 가운데 정렬되므로 패널과 충분한 간격 확보
-              * padding-bottom: 240px — 마지막 컴포넌트 아래 드롭 공간
-              */}
-            <div
-                className="container"
-                style={{
-                    maxWidth: VIEW_MODE_CONFIG[viewMode].maxWidth,
-                    width: '100%',
-                    margin: '0 auto',  // 상단 간격은 wrapper paddingTop으로 처리
-                    padding: '0 0 240px 0',
-                    background: '#ffffff',
-                    minHeight: '700px',
-                    boxShadow: viewMode === 'responsive' ? 'none' : '0 8px 48px rgba(0,70,164,0.10)',
-                    transition: 'opacity 0.6s ease, max-width 0.3s ease',
-                    opacity: containerOpacity,
+                        {/* 삽입 위치 표시 선 (드래그오버 시) — 모바일 컨테이너 너비에 맞춤 */}
+                        {dropLineY !== null && (
+                            <div
+                                style={{
+                                    position: 'fixed',
+                                    top: dropLineY,
+                                    left: 0,
+                                    right: `${PANEL_WIDTH_OPEN}px`,
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    zIndex: 86,
+                                    pointerEvents: 'none',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: VIEW_MODE_CONFIG[viewMode].maxWidth,
+                                        maxWidth: '100%',
+                                        height: '3px',
+                                        background: '#0046A4',
+                                        borderRadius: '2px',
+                                        boxShadow: '0 0 6px rgba(0,70,164,0.5)',
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 모바일 앱 캔버스
+                 * 390px (iPhone 표준) 크기로 모바일 앱 화면을 시뮬레이션
+                 * 행도구는 컨테이너 오른쪽 바깥(right: -40px)에 표시 —
+                 *   좁은 컨테이너가 가운데 정렬되므로 패널과 충분한 간격 확보
+                 * padding-bottom: 240px — 마지막 컴포넌트 아래 드롭 공간
+                 */}
+                <div
+                    className="container"
+                    style={{
+                        maxWidth: VIEW_MODE_CONFIG[viewMode].maxWidth,
+                        width: '100%',
+                        margin: '0 auto', // 상단 간격은 wrapper paddingTop으로 처리
+                        padding: '0 0 240px 0',
+                        background: '#ffffff',
+                        minHeight: '700px',
+                        boxShadow: viewMode === 'responsive' ? 'none' : '0 8px 48px rgba(0,70,164,0.10)',
+                        transition: 'opacity 0.6s ease, max-width 0.3s ease',
+                        opacity: containerOpacity,
+                    }}
+                />
+            </div>
+
+            {/* ── 우측 컴포넌트 패널 ── */}
+            <ComponentPanel
+                onInsert={handleInsertComponent}
+                blocks={canvasBlocks}
+                onMoveBlock={handleMoveBlock}
+                onDelete={handleDelete}
+                onDeleteAll={handleDeleteAllBlocks}
+                onActivate={handleActivate}
+                viewMode={viewMode}
+                basicBlocks={basicBlocks}
+                financeComponents={financeComponents}
+                onDragStart={() => {
+                    // ref는 즉시 갱신 (dragover 핸들러에서 동기 참조)
+                    isDraggingRef.current = true;
+                    // state는 리렌더링 트리거 (오버레이 표시)
+                    setIsDraggingComponent(true);
+                }}
+                onDragEnd={() => {
+                    isDraggingRef.current = false;
+                    setIsDraggingComponent(false);
+                    setIsDropOver(false);
+                    setDropLineY(null);
+                }}
+                onComponentUpdate={() => {
+                    fetch(`/api/components?type=finance&viewMode=${viewMode}`)
+                        .then((res) => res.json())
+                        .then((data) => {
+                            if (data.ok) setFinanceComponents(data.components);
+                        })
+                        .catch((err) => console.error('금융 컴포넌트 재로드 오류:', err));
                 }}
             />
-        </div>
 
-        {/* ── 우측 컴포넌트 패널 ── */}
-        <ComponentPanel
-            onInsert={handleInsertComponent}
-            blocks={canvasBlocks}
-            onMoveBlock={handleMoveBlock}
-            onDelete={handleDelete}
-            onDeleteAll={handleDeleteAllBlocks}
-            onActivate={handleActivate}
-            viewMode={viewMode}
-            basicBlocks={basicBlocks}
-            financeComponents={financeComponents}
-            onDragStart={() => {
-                // ref는 즉시 갱신 (dragover 핸들러에서 동기 참조)
-                isDraggingRef.current = true;
-                // state는 리렌더링 트리거 (오버레이 표시)
-                setIsDraggingComponent(true);
-            }}
-            onDragEnd={() => {
-                isDraggingRef.current = false;
-                setIsDraggingComponent(false);
-                setIsDropOver(false);
-                setDropLineY(null);
-            }}
-            onComponentUpdate={() => {
-                fetch(`/api/components?type=finance&viewMode=${viewMode}`)
-                    .then(res => res.json())
-                    .then(data => { if (data.ok) setFinanceComponents(data.components); })
-                    .catch(err => console.error('금융 컴포넌트 재로드 오류:', err));
-            }}
-        />
-
-        {/* ── 새 페이지 추가 모달 ── */}
-        {showAddTab && (
-            <div
-                onClick={() => { setShowAddTab(false); setNewTabName(''); setNewTabViewMode('mobile'); }}
-                style={{
-                    position: 'fixed', inset: 0, zIndex: 200,
-                    background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-            >
+            {/* ── 새 페이지 추가 모달 ── */}
+            {showAddTab && (
                 <div
-                    onClick={e => e.stopPropagation()}
+                    onClick={() => {
+                        setShowAddTab(false);
+                        setNewTabName('');
+                        setNewTabViewMode('mobile');
+                    }}
                     style={{
-                        background: '#ffffff', borderRadius: '20px',
-                        padding: '32px', width: '480px', maxWidth: '90vw',
-                        boxShadow: '0 24px 64px rgba(0,70,164,0.15)',
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 200,
+                        background: 'rgba(0,0,0,0.4)',
+                        backdropFilter: 'blur(2px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
                 >
-                    <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>
-                        새 페이지 만들기
-                    </h3>
-
-                    {/* 페이지 이름 */}
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                        페이지 이름
-                    </label>
-                    <input
-                        autoFocus
-                        value={newTabName}
-                        onChange={e => setNewTabName(e.target.value)}
-                        onKeyDown={e => {
-                            if (e.key === 'Enter' && newTabName.trim()) handleAddTab();
-                            if (e.key === 'Escape') { setShowAddTab(false); setNewTabName(''); setNewTabViewMode('mobile'); }
-                        }}
-                        placeholder="예: 메인 페이지"
+                    <div
+                        onClick={(e) => e.stopPropagation()}
                         style={{
-                            width: '100%', height: '40px', padding: '0 12px', borderRadius: '8px',
-                            border: '1px solid #d1d5db', fontSize: '14px', outline: 'none',
-                            boxSizing: 'border-box',
+                            background: '#ffffff',
+                            borderRadius: '20px',
+                            padding: '32px',
+                            width: '480px',
+                            maxWidth: '90vw',
+                            boxShadow: '0 24px 64px rgba(0,70,164,0.15)',
                         }}
-                    />
+                    >
+                        <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>
+                            새 페이지 만들기
+                        </h3>
 
-                    {/* 레이아웃 선택 */}
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', margin: '20px 0 10px' }}>
-                        레이아웃 선택
-                    </label>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        {(Object.keys(VIEW_MODE_CONFIG) as ViewMode[]).map(mode => {
-                            const cfg = VIEW_MODE_CONFIG[mode];
-                            const selected = newTabViewMode === mode;
-                            const descriptions: Record<ViewMode, string> = {
-                                mobile: '390px 고정 너비\n모바일 앱 화면에 최적화',
-                                web: '1280px 고정 너비\n데스크톱 웹 페이지용',
-                                responsive: '전체 너비 사용\n모든 기기에 대응',
-                            };
-                            return (
-                                <button
-                                    key={mode}
-                                    type="button"
-                                    onClick={() => setNewTabViewMode(mode)}
-                                    style={{
-                                        flex: 1, padding: '16px 12px', borderRadius: '12px',
-                                        border: selected ? '2px solid #0046A4' : '2px solid #e5e7eb',
-                                        background: selected ? '#f0f4ff' : '#ffffff',
-                                        cursor: 'pointer', textAlign: 'center',
-                                        transition: 'all 0.15s',
-                                    }}
-                                >
-                                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>{cfg.icon}</div>
-                                    <div style={{
-                                        fontSize: '14px', fontWeight: 700,
-                                        color: selected ? '#0046A4' : '#374151', marginBottom: '6px',
-                                    }}>
-                                        {cfg.label}
-                                    </div>
-                                    <div style={{
-                                        fontSize: '11px', color: '#6b7280', lineHeight: 1.4,
-                                        whiteSpace: 'pre-line',
-                                    }}>
-                                        {descriptions[mode]}
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '12px 0 0', lineHeight: 1.4 }}>
-                        레이아웃은 페이지 생성 후 변경할 수 없습니다.
-                    </p>
-
-                    {/* 하단 버튼 */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
-                        <button
-                            onClick={() => { setShowAddTab(false); setNewTabName(''); setNewTabViewMode('mobile'); }}
-                            style={{ ...btnStyle, padding: '8px 20px' }}
-                        >취소</button>
-                        <button
-                            onClick={handleAddTab}
-                            disabled={!newTabName.trim()}
+                        {/* 페이지 이름 */}
+                        <label
                             style={{
-                                ...btnStyle, padding: '8px 20px',
-                                background: newTabName.trim() ? '#0046A4' : '#93c5fd',
-                                color: '#fff',
-                                borderColor: newTabName.trim() ? '#0046A4' : '#93c5fd',
-                                cursor: newTabName.trim() ? 'pointer' : 'not-allowed',
+                                display: 'block',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#374151',
+                                marginBottom: '6px',
                             }}
-                        >만들기</button>
+                        >
+                            페이지 이름
+                        </label>
+                        <input
+                            autoFocus
+                            value={newTabName}
+                            onChange={(e) => setNewTabName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newTabName.trim()) handleAddTab();
+                                if (e.key === 'Escape') {
+                                    setShowAddTab(false);
+                                    setNewTabName('');
+                                    setNewTabViewMode('mobile');
+                                }
+                            }}
+                            placeholder="예: 메인 페이지"
+                            style={{
+                                width: '100%',
+                                height: '40px',
+                                padding: '0 12px',
+                                borderRadius: '8px',
+                                border: '1px solid #d1d5db',
+                                fontSize: '14px',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                            }}
+                        />
+
+                        {/* 레이아웃 선택 */}
+                        <label
+                            style={{
+                                display: 'block',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#374151',
+                                margin: '20px 0 10px',
+                            }}
+                        >
+                            레이아웃 선택
+                        </label>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            {(Object.keys(VIEW_MODE_CONFIG) as ViewMode[]).map((mode) => {
+                                const cfg = VIEW_MODE_CONFIG[mode];
+                                const selected = newTabViewMode === mode;
+                                const descriptions: Record<ViewMode, string> = {
+                                    mobile: '390px 고정 너비\n모바일 앱 화면에 최적화',
+                                    web: '1280px 고정 너비\n데스크톱 웹 페이지용',
+                                    responsive: '전체 너비 사용\n모든 기기에 대응',
+                                };
+                                return (
+                                    <button
+                                        key={mode}
+                                        type="button"
+                                        onClick={() => setNewTabViewMode(mode)}
+                                        style={{
+                                            flex: 1,
+                                            padding: '16px 12px',
+                                            borderRadius: '12px',
+                                            border: selected ? '2px solid #0046A4' : '2px solid #e5e7eb',
+                                            background: selected ? '#f0f4ff' : '#ffffff',
+                                            cursor: 'pointer',
+                                            textAlign: 'center',
+                                            transition: 'all 0.15s',
+                                        }}
+                                    >
+                                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>{cfg.icon}</div>
+                                        <div
+                                            style={{
+                                                fontSize: '14px',
+                                                fontWeight: 700,
+                                                color: selected ? '#0046A4' : '#374151',
+                                                marginBottom: '6px',
+                                            }}
+                                        >
+                                            {cfg.label}
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontSize: '11px',
+                                                color: '#6b7280',
+                                                lineHeight: 1.4,
+                                                whiteSpace: 'pre-line',
+                                            }}
+                                        >
+                                            {descriptions[mode]}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <p style={{ fontSize: '11px', color: '#9ca3af', margin: '12px 0 0', lineHeight: 1.4 }}>
+                            레이아웃은 페이지 생성 후 변경할 수 없습니다.
+                        </p>
+
+                        {/* 하단 버튼 */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
+                            <button
+                                onClick={() => {
+                                    setShowAddTab(false);
+                                    setNewTabName('');
+                                    setNewTabViewMode('mobile');
+                                }}
+                                style={{ ...btnStyle, padding: '8px 20px' }}
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleAddTab}
+                                disabled={!newTabName.trim()}
+                                style={{
+                                    ...btnStyle,
+                                    padding: '8px 20px',
+                                    background: newTabName.trim() ? '#0046A4' : '#93c5fd',
+                                    color: '#fff',
+                                    borderColor: newTabName.trim() ? '#0046A4' : '#93c5fd',
+                                    cursor: newTabName.trim() ? 'pointer' : 'not-allowed',
+                                }}
+                            >
+                                만들기
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
-
+            )}
         </>
     );
 }

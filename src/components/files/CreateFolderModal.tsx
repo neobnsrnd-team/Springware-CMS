@@ -17,7 +17,7 @@ export default function CreateFolderModal({
     onClose,
     currentPath,
     onFolderCreated,
-    apiEndpoint = '/api/manage/addfolder'
+    apiEndpoint = '/api/manage/addfolder',
 }: CreateFolderModalProps) {
     const [folderName, setFolderName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
@@ -27,28 +27,28 @@ export default function CreateFolderModal({
     // 모달 열고 닫을 때 상태 초기화
     useEffect(() => {
         if (isOpen) {
-        setFolderName('');
-        setError(null);
+            setFolderName('');
+            setError(null);
         }
     }, [isOpen]);
 
     // 모달 열릴 때 입력창 포커스
     useEffect(() => {
         if (isOpen && inputRef.current) {
-        inputRef.current.focus();
+            inputRef.current.focus();
         }
     }, [isOpen]);
 
     // Escape 키로 모달 닫기
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && isOpen) {
-            onClose();
-        }
+            if (e.key === 'Escape' && isOpen) {
+                onClose();
+            }
         };
 
         if (isOpen) {
-        window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keydown', handleKeyDown);
         }
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
@@ -68,8 +68,8 @@ export default function CreateFolderModal({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: folderName.trim(),
-                    path: currentPath
-                })
+                    path: currentPath,
+                }),
             });
 
             if (!res.ok) {
@@ -96,17 +96,21 @@ export default function CreateFolderModal({
     if (!isOpen) return null;
 
     return (
-        <div 
+        <div
             className="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-folder-title"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative" style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}>
+            <div
+                className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative"
+                style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}
+            >
+                <h3 id="create-folder-title" className="text-lg font-semibold text-gray-900">
+                    새 폴더 만들기
+                </h3>
 
-                <h3 id="create-folder-title" className="text-lg font-semibold text-gray-900">새 폴더 만들기</h3>
-                            
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-[#0046A4] focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 rounded p-1 cursor-pointer"
@@ -135,12 +139,12 @@ export default function CreateFolderModal({
                             }`}
                             placeholder="폴더 이름 입력"
                             aria-invalid={!!error}
-                            aria-describedby={error ? "folder-error" : undefined}
+                            aria-describedby={error ? 'folder-error' : undefined}
                         />
                         {error && (
-                        <p id="folder-error" className="mt-1 text-sm text-red-600">
-                            {error}
-                        </p>
+                            <p id="folder-error" className="mt-1 text-sm text-red-600">
+                                {error}
+                            </p>
                         )}
                     </div>
 
@@ -159,14 +163,14 @@ export default function CreateFolderModal({
                             disabled={isCreating || !folderName.trim()}
                             className="px-4 py-2 bg-[#0046A4] text-white rounded-xl hover:bg-[#003399] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 flex items-center gap-2 cursor-pointer"
                         >
-                        {isCreating ? (
-                            <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            생성 중...
-                            </>
-                        ) : (
-                            '만들기'
-                        )}
+                            {isCreating ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    생성 중...
+                                </>
+                            ) : (
+                                '만들기'
+                            )}
                         </button>
                     </div>
                 </div>

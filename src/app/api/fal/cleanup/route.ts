@@ -6,9 +6,7 @@ import * as path from 'path';
 
 const UPLOAD_PATH = process.env.UPLOAD_PATH || '';
 
-export async function POST(
-    request: NextRequest) {
-
+export async function POST(request: NextRequest) {
     try {
         const input: Record<string, string> = await request.json();
 
@@ -39,9 +37,7 @@ async function cleanup(input: Record<string, unknown>): Promise<void> {
         const value = input[name];
 
         if (typeof value === 'string' && value.includes('amazonaws.com')) {
-
             // S3 URL은 삭제하지 않음
-
         } else if (typeof value === 'string') {
             const filename = path.basename(value);
             const inputFilePath = path.join(UPLOAD_PATH, filename);

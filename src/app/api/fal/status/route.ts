@@ -11,21 +11,18 @@ interface PostRequestBody {
     customData?: unknown;
 }
 
-export async function POST(
-    req: NextRequest) {
-
+export async function POST(req: NextRequest) {
     const falApiKey = FAL_API_KEY;
     if (!falApiKey) return NextResponse.json({ error: 'FAL API 키를 찾을 수 없습니다.' }, { status: 403 });
 
     // FAL 클라이언트 초기화
     fal.config({
-        credentials: falApiKey
+        credentials: falApiKey,
     });
 
     const { request_id, model }: PostRequestBody = await req.json();
 
     try {
-
         const result = await fal.queue.status(model, {
             requestId: request_id,
             logs: true,
@@ -49,5 +46,4 @@ export async function POST(
 
         return NextResponse.json({ ok: false, error: message }, { status: 500 });
     }
-
 }

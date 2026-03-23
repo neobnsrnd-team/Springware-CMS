@@ -13,9 +13,7 @@ async function loadPage(bank: string): Promise<{ html: string; updated: string |
     }
 
     const html = page.PAGE_DESC ?? '';
-    const updated = page.LAST_MODIFIED_DTIME
-        ? new Date(page.LAST_MODIFIED_DTIME).toISOString()
-        : null;
+    const updated = page.LAST_MODIFIED_DTIME ? new Date(page.LAST_MODIFIED_DTIME).toISOString() : null;
 
     return { html, updated };
 }
