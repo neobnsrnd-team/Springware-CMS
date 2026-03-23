@@ -75,6 +75,7 @@ export default {
             const items = track ? track.querySelectorAll('.pg-slide') : [];
 
             const TYPE_MAP = { deposit: '예금', savings: '적금', loan: '대출', fund: '펀드' };
+            const TYPE_DEFAULT_COLORS = { loan: '#FF6600', fund: '#059669', deposit: '#0046A4', savings: '#0046A4' };
 
             const createItemEditor = (item, index) => {
                 const section = document.createElement('div');
@@ -187,8 +188,9 @@ export default {
                 body.appendChild(linkInput);
 
                 // 개별 강조 색상
-                body.appendChild(makeLabel('강조 색상 (미설정 시 전체 색상 적용)'));
-                const colorInput = makeInput('color', item.dataset.pgItemColor || '#0046A4', '');
+                body.appendChild(makeLabel('강조 색상 (미설정 시 상품 유형 기본 색상 적용)'));
+                const currentColor = item.dataset.pgItemColor || TYPE_DEFAULT_COLORS[item.dataset.type] || '#0046A4';
+                const colorInput = makeInput('color', currentColor, '');
                 colorInput.style.cssText += 'padding:2px 4px;height:34px;cursor:pointer;';
                 colorInput.addEventListener('input', () => {
                     item.dataset.pgItemColor = colorInput.value;
