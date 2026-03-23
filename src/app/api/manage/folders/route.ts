@@ -2,7 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
+import { UPLOAD_PATH } from '@/lib/upload';
 
 interface FolderNode {
     name: string;

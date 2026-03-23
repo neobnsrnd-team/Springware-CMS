@@ -2,6 +2,8 @@
 
 import oracledb from 'oracledb';
 
+import { ORACLE_USER, ORACLE_PASSWORD, ORACLE_HOST, ORACLE_PORT, ORACLE_SERVICE, ORACLE_SCHEMA } from '@/lib/env';
+
 let poolInitPromise: Promise<void> | null = null;
 
 // 커넥션 풀 설정 (최초 호출 시 Oracle Client 초기화 + CLOB 설정 포함)
@@ -17,9 +19,9 @@ async function initPool(): Promise<void> {
             oracledb.fetchAsString = [oracledb.CLOB];
 
             await oracledb.createPool({
-                user: process.env.ORACLE_USER,
-                password: process.env.ORACLE_PASSWORD,
-                connectString: `${process.env.ORACLE_HOST}:${process.env.ORACLE_PORT}/${process.env.ORACLE_SERVICE}`,
+                user: ORACLE_USER,
+                password: ORACLE_PASSWORD,
+                connectString: `${ORACLE_HOST}:${ORACLE_PORT}/${ORACLE_SERVICE}`,
                 poolMin: 0, // 공유 Oracle XE 세션 제한 고려 (최대 20개)
                 poolMax: 5,
                 poolIncrement: 1,
@@ -41,7 +43,13 @@ export async function getConnection(): Promise<oracledb.Connection> {
     await initPool();
     const conn = await oracledb.getConnection();
     // 테이블 소유 스키마로 세션 변경 (쿼리에서 스키마 생략 가능)
-    await conn.execute(`ALTER SESSION SET CURRENT_SCHEMA = ${process.env.ORACLE_SCHEMA}`);
+    // SQL 인젝션 방지를 위해 PL/SQL 블록과 바인드 변수 사용
+    await conn.execute(
+        `BEGIN
+           EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(:schemaName);
+         END;`,
+        { schemaName: ORACLE_SCHEMA },
+    );
     return conn;
 }
 

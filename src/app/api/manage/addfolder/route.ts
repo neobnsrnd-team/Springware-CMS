@@ -3,10 +3,7 @@ import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-import { normalizeUploadUrl } from '@/lib/upload-utils';
-
-const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
-const UPLOAD_URL = normalizeUploadUrl(process.env.UPLOAD_URL || 'uploads/');
+import { UPLOAD_PATH, UPLOAD_URL } from '@/lib/upload';
 
 export async function POST(request: NextRequest) {
     try {
