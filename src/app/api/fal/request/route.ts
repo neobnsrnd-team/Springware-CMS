@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
 
-const FAL_API_KEY = process.env.FAL_API_KEY;
+import { FAL_API_KEY } from '@/lib/env';
 
 export async function POST(req: NextRequest) {
     const falApiKey = FAL_API_KEY;

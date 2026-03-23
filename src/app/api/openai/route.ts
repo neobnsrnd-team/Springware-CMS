@@ -1,7 +1,7 @@
 // src/app/api/openai/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+import { OPENAI_API_KEY } from '@/lib/env';
 
 export async function POST(req: NextRequest) {
     try {
