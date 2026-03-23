@@ -8,6 +8,7 @@ export async function GET() {
     try {
         conn = await getConnection();
         const result = await conn.execute('SELECT 1 FROM DUAL');
+        console.log('test');
         return NextResponse.json({ db: '연결 성공', result: result.rows });
     } catch (error) {
         const message = error instanceof Error ? error.message : '알 수 없는 오류';
