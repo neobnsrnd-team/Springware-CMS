@@ -72,7 +72,6 @@ export interface CmsPage {
 
 export interface CmsPageHistory extends CmsPage {
     VERSION: number;
-    RENDERED_HTML: string | null; // #74에서 제거 예정, 현재 유지
 }
 
 // ── SPW_CMS_COMP_PAGE_MAP ──
