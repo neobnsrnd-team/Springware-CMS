@@ -1,4 +1,4 @@
-// src/app/api/assets/folders/route.ts
+// src/app/api/manage/folders/route.ts
 import fs from 'fs';
 import path from 'path';
 
@@ -20,15 +20,15 @@ function buildFolderTree(dirPath: string, basePath: string = '', relativePath: s
         const stats = fs.statSync(fullPath);
 
         if (stats.isDirectory()) {
-        const itemRelativePath = relativePath ? `${relativePath}/${item}` : item;
-        const children = buildFolderTree(fullPath, basePath, itemRelativePath);
-        
-        folders.push({
-            name: item,
-            path: itemRelativePath,
-            children: children.length > 0 ? children : undefined,
-            isExpanded: false
-        });
+            const itemRelativePath = relativePath ? `${relativePath}/${item}` : item;
+            const children = buildFolderTree(fullPath, basePath, itemRelativePath);
+
+            folders.push({
+                name: item,
+                path: itemRelativePath,
+                children: children.length > 0 ? children : undefined,
+                isExpanded: false,
+            });
         }
     }
 
@@ -38,15 +38,15 @@ function buildFolderTree(dirPath: string, basePath: string = '', relativePath: s
 export async function GET() {
     try {
         const absolutePath = path.join(process.cwd(), UPLOAD_PATH);
-        
+
         if (!fs.existsSync(absolutePath)) {
             return Response.json({ folders: [] });
         }
 
         const folderTree = buildFolderTree(absolutePath);
-        
-        return Response.json({ 
-            folders: folderTree
+
+        return Response.json({
+            folders: folderTree,
         });
     } catch (error) {
         console.error('폴더 트리 조회 실패:', error);

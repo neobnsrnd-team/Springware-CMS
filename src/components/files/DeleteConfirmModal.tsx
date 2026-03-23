@@ -17,7 +17,7 @@ export default function DeleteConfirmModal({
     onClose,
     onConfirm,
     itemCount,
-    isDeleting
+    isDeleting,
 }: DeleteConfirmModalProps) {
     const [isConfirming, setIsConfirming] = useState(false);
     const modalRef = useRef<HTMLDivElement>(null);
@@ -51,16 +51,17 @@ export default function DeleteConfirmModal({
     if (!isOpen) return null;
 
     return (
-        <div 
+        <div
             className="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-confirm-title"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div 
+            <div
                 ref={modalRef}
-                className="bg-white rounded-2xl w-full max-w-md p-6 relative" style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}
+                className="bg-white rounded-2xl w-full max-w-md p-6 relative"
+                style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}
             >
                 <button
                     onClick={onClose}
@@ -83,11 +84,11 @@ export default function DeleteConfirmModal({
                         </p>
                     </div>
                 </div>
-                
+
                 <p className="text-sm text-gray-600 mb-6">
                     This action cannot be undone. Are you sure you want to continue?
                 </p>
-                
+
                 <div className="flex items-center gap-3 justify-end">
                     <button
                         type="button"

@@ -1,3 +1,4 @@
+// src/app/edit/ComponentPanel.tsx
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -199,7 +200,10 @@ export default function ComponentPanel({
     function handleBlockDragEnd() {
         dragBlockIdx.current = null;
         insertIdxRef.current = null;
-        if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+        if (rafRef.current) {
+            cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
+        }
         setDraggingIdx(null);
         setInsertBeforeIdx(null);
     }
@@ -210,15 +214,16 @@ export default function ComponentPanel({
         e.dataTransfer.dropEffect = 'move';
         if (rafRef.current) return;
         const y = e.clientY;
-        const items = Array.from(
-            (e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[data-order-item]')
-        );
-        const rects = items.map(el => el.getBoundingClientRect());
+        const items = Array.from((e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[data-order-item]'));
+        const rects = items.map((el) => el.getBoundingClientRect());
         rafRef.current = requestAnimationFrame(() => {
             rafRef.current = null;
             let pos = items.length; // 기본: 맨 끝
             for (let i = 0; i < rects.length; i++) {
-                if (y < rects[i].top + rects[i].height / 2) { pos = i; break; }
+                if (y < rects[i].top + rects[i].height / 2) {
+                    pos = i;
+                    break;
+                }
             }
             if (insertIdxRef.current !== pos) {
                 insertIdxRef.current = pos;
@@ -234,7 +239,10 @@ export default function ComponentPanel({
         const to = insertIdxRef.current;
         dragBlockIdx.current = null;
         insertIdxRef.current = null;
-        if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+        if (rafRef.current) {
+            cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
+        }
         setDraggingIdx(null);
         setInsertBeforeIdx(null);
         if (from === null || to === null || isNaN(from as number)) return;
@@ -246,451 +254,629 @@ export default function ComponentPanel({
     const COLLAPSED_W = 40;
 
     return (
-    <>
-        <aside
-            style={{
-                position: 'fixed',
-                top: '52px',
-                right: 0,
-                bottom: 0,
-                width: collapsed ? `${COLLAPSED_W}px` : `${PANEL_W}px`,
-                background: '#f9fafb',
-                borderLeft: '1px solid #e5e7eb',
-                display: 'flex',
-                flexDirection: 'column',
-                zIndex: 90,
-                transition: 'width 0.2s ease',
-                overflow: 'hidden',
-            }}
-        >
-            {/* ── 패널 헤더 ── */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 10px',
-                borderBottom: '1px solid #e5e7eb',
-                background: '#ffffff',
-                flexShrink: 0,
-                gap: '6px',
-            }}>
-                {!collapsed && (
-                    /* ── 탭 버튼 (3개) ── */
-                    <div style={{ display: 'flex', gap: '3px', flex: 1 }}>
-                        {([
-                            { key: 'finance', label: '금융' },
-                            { key: 'basic',   label: '기본 블록' },
-                            { key: 'order',   label: `순서${blocks.length > 0 ? ` (${blocks.length})` : ''}` },
-                        ] as { key: Tab; label: string }[]).map(tab => (
-                            <button
-                                key={tab.key}
-                                onClick={() => handleTabChange(tab.key)}
-                                style={{
-                                    flex: 1,
-                                    padding: '4px 2px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    background: activeTab === tab.key ? '#0046A4' : 'transparent',
-                                    color: activeTab === tab.key ? '#ffffff' : '#6b7280',
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                }}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* 접기/펴기 버튼 */}
-                <button
-                    onClick={() => setCollapsed(v => !v)}
-                    title={collapsed ? '패널 펼치기' : '패널 접기'}
+        <>
+            <aside
+                style={{
+                    position: 'fixed',
+                    top: '52px',
+                    right: 0,
+                    bottom: 0,
+                    width: collapsed ? `${COLLAPSED_W}px` : `${PANEL_W}px`,
+                    background: '#f9fafb',
+                    borderLeft: '1px solid #e5e7eb',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    zIndex: 90,
+                    transition: 'width 0.2s ease',
+                    overflow: 'hidden',
+                }}
+            >
+                {/* ── 패널 헤더 ── */}
+                <div
                     style={{
-                        flexShrink: 0,
-                        width: '28px',
-                        height: '28px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                        background: '#ffffff',
-                        cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#6b7280',
+                        justifyContent: 'space-between',
+                        padding: '10px 10px',
+                        borderBottom: '1px solid #e5e7eb',
+                        background: '#ffffff',
+                        flexShrink: 0,
+                        gap: '6px',
                     }}
                 >
-                    <svg
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-                        width={14} height={14}
-                        style={{ transform: collapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-                    >
-                        <path d="m9 18 6-6-6-6" />
-                    </svg>
-                </button>
-            </div>
-
-            {!collapsed && (
-                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                    {/* ══ 탭 1: 금융 컴포넌트 ══ */}
-                    {activeTab === 'finance' && (
-                        <div
-                            ref={el => { scrollRefs.current['finance'] = el; }}
-                            style={{
-                                flex: 1, minHeight: 0, overflowY: 'auto',
-                                padding: '10px',
-                                display: 'flex', flexDirection: 'column', gap: '6px',
-                            }}>
-                            <p style={{ margin: '0 0 4px', fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
-                                드래그하거나 + 클릭하여 캔버스에 추가
-                            </p>
-
-                            {financeComponents.filter(c => c.viewMode === viewMode).map(comp => (
-                                <div
-                                    key={comp.id}
-                                    draggable
-                                    onDragStart={e => handleCompDragStart(e, comp)}
-                                    onDragEnd={() => onDragEnd?.()}
-                                    onMouseEnter={() => setHoveredId(comp.id)}
-                                    onMouseLeave={() => setHoveredId(null)}
-                                    title={comp.description}
+                    {!collapsed && (
+                        /* ── 탭 버튼 (3개) ── */
+                        <div style={{ display: 'flex', gap: '3px', flex: 1 }}>
+                            {(
+                                [
+                                    { key: 'finance', label: '금융' },
+                                    { key: 'basic', label: '기본 블록' },
+                                    { key: 'order', label: `순서${blocks.length > 0 ? ` (${blocks.length})` : ''}` },
+                                ] as { key: Tab; label: string }[]
+                            ).map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => handleTabChange(tab.key)}
                                     style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        padding: '10px 10px',
-                                        background: hoveredId === comp.id ? '#EBF4FF' : '#ffffff',
-                                        border: `1px solid ${hoveredId === comp.id ? '#0046A4' : '#e5e7eb'}`,
-                                        borderRadius: '8px',
-                                        cursor: 'grab',
-                                        userSelect: 'none',
-                                        boxShadow: hoveredId === comp.id
-                                            ? '0 2px 8px rgba(0,70,164,0.10)'
-                                            : '0 1px 2px rgba(0,0,0,0.04)',
-                                        transition: 'background 0.12s, border-color 0.12s, box-shadow 0.12s',
+                                        flex: 1,
+                                        padding: '4px 2px',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        background: activeTab === tab.key ? '#0046A4' : 'transparent',
+                                        color: activeTab === tab.key ? '#ffffff' : '#6b7280',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
                                     }}
                                 >
-                                    {/* 미리보기 썸네일 */}
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={comp.preview}
-                                        alt={comp.label}
-                                        draggable={false}
-                                        style={{
-                                            width: '52px', height: '40px',
-                                            objectFit: 'cover',
-                                            borderRadius: '5px',
-                                            border: '1px solid #e5e7eb',
-                                            background: '#f3f4f6',
-                                            flexShrink: 0,
-                                        }}
-                                    />
-
-                                    {/* 텍스트 */}
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{
-                                            fontSize: '12px', fontWeight: 700,
-                                            color: hoveredId === comp.id ? '#0046A4' : '#111827',
-                                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                                            transition: 'color 0.12s',
-                                        }}>
-                                            {comp.label}
-                                        </div>
-                                        <div style={{
-                                            fontSize: '10px', color: '#6b7280', marginTop: '2px',
-                                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                                        }}>
-                                            {comp.description}
-                                        </div>
-                                    </div>
-
-                                    {/* 편집 버튼 */}
-                                    <button
-                                        onClick={e => { e.stopPropagation(); setEditingComp(comp); }}
-                                        title="컴포넌트 편집"
-                                        style={{
-                                            flexShrink: 0, width: '26px', height: '26px',
-                                            border: `1px solid ${hoveredId === comp.id ? '#9ca3af' : '#d1d5db'}`,
-                                            borderRadius: '50%',
-                                            background: hoveredId === comp.id ? '#f3f4f6' : '#f9fafb',
-                                            color: hoveredId === comp.id ? '#374151' : '#9ca3af',
-                                            cursor: 'pointer', display: 'flex',
-                                            alignItems: 'center', justifyContent: 'center',
-                                            transition: 'all 0.12s', padding: 0,
-                                        }}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}>
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                        </svg>
-                                    </button>
-
-                                    {/* 추가 버튼 */}
-                                    <button
-                                        onClick={e => { e.stopPropagation(); onInsert(comp.html); }}
-                                        title="캔버스 끝에 추가"
-                                        style={{
-                                            flexShrink: 0, width: '26px', height: '26px',
-                                            border: `1px solid ${hoveredId === comp.id ? '#0046A4' : '#d1d5db'}`,
-                                            borderRadius: '50%',
-                                            background: hoveredId === comp.id ? '#0046A4' : '#f9fafb',
-                                            color: hoveredId === comp.id ? '#ffffff' : '#6b7280',
-                                            cursor: 'pointer', display: 'flex',
-                                            alignItems: 'center', justifyContent: 'center',
-                                            transition: 'all 0.12s', padding: 0,
-                                        }}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}>
-                                            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                                        </svg>
-                                    </button>
-                                </div>
+                                    {tab.label}
+                                </button>
                             ))}
                         </div>
                     )}
 
-                    {/* ══ 탭 2: 기본 블록 ══ */}
-                    {activeTab === 'basic' && (
-                        <div
-                            ref={el => { scrollRefs.current['basic'] = el; }}
-                            style={{
-                                flex: 1,
-                                minHeight: 0,
-                                overflowY: 'auto',
-                                padding: '10px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px',
-                            }}>
-                            <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
-                                드래그하거나 + 클릭하여 캔버스에 추가
-                            </p>
-
-                            {basicBlocks.length === 0 ? (
-                                <div style={{
-                                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#9ca3af', fontSize: '12px', padding: '20px', textAlign: 'center',
-                                }}>
-                                    로딩 중...
-                                </div>
-                            ) : (
-                                /* 2열 그리드로 썸네일 표시 */
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '1fr 1fr',
-                                    gap: '6px',
-                                }}>
-                                    {basicBlocks.filter(b => b.viewMode === viewMode).map((block, idx) => (
-                                        <BasicBlockCard
-                                            key={idx}
-                                            block={block}
-                                            onDragStart={handleBasicDragStart}
-                                            onDragEnd={() => onDragEnd?.()}
-                                            onInsert={onInsert}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* ══ 탭 3: 블록 순서 변경 ══ */}
-                    {activeTab === 'order' && (
-                        <div
-                            ref={el => { scrollRefs.current['order'] = el; }}
-                            onDragOver={handleOrderDragOver}
-                            onDrop={handleOrderDrop}
-                            style={{
-                                flex: 1,
-                                minHeight: 0,
-                                overflowY: 'auto',
-                                padding: '10px',
-                                display: 'flex', flexDirection: 'column', gap: '6px',
-                            }}
+                    {/* 접기/펴기 버튼 */}
+                    <button
+                        onClick={() => setCollapsed((v) => !v)}
+                        title={collapsed ? '패널 펼치기' : '패널 접기'}
+                        style={{
+                            flexShrink: 0,
+                            width: '28px',
+                            height: '28px',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '6px',
+                            background: '#ffffff',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#6b7280',
+                        }}
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            width={14}
+                            height={14}
+                            style={{ transform: collapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
                         >
-                            {blocks.length === 0 ? (
-                                <div style={{
-                                    flex: 1, display: 'flex', flexDirection: 'column',
-                                    alignItems: 'center', justifyContent: 'center',
-                                    color: '#9ca3af', fontSize: '12px', textAlign: 'center', gap: '8px',
-                                    padding: '20px',
-                                }}>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} width={32} height={32} style={{ opacity: 0.4 }}>
-                                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                                        <line x1="3" y1="9" x2="21" y2="9" />
-                                        <line x1="3" y1="15" x2="21" y2="15" />
-                                    </svg>
-                                    캔버스에 컴포넌트를 추가하면<br />여기서 순서를 조정할 수 있습니다
-                                </div>
-                            ) : (
-                                <>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                                        <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>
-                                            드래그하여 순서 변경
-                                        </p>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('캔버스의 모든 블록을 삭제하시겠습니까?')) {
-                                                    onDeleteAll();
-                                                }
-                                            }}
-                                            title="전체 블록 삭제"
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+
+                {!collapsed && (
+                    <div
+                        style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+                    >
+                        {/* ══ 탭 1: 금융 컴포넌트 ══ */}
+                        {activeTab === 'finance' && (
+                            <div
+                                ref={(el) => {
+                                    scrollRefs.current['finance'] = el;
+                                }}
+                                style={{
+                                    flex: 1,
+                                    minHeight: 0,
+                                    overflowY: 'auto',
+                                    padding: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px',
+                                }}
+                            >
+                                <p
+                                    style={{
+                                        margin: '0 0 4px',
+                                        fontSize: '11px',
+                                        color: '#9ca3af',
+                                        textAlign: 'center',
+                                    }}
+                                >
+                                    드래그하거나 + 클릭하여 캔버스에 추가
+                                </p>
+
+                                {financeComponents
+                                    .filter((c) => c.viewMode === viewMode)
+                                    .map((comp) => (
+                                        <div
+                                            key={comp.id}
+                                            draggable
+                                            onDragStart={(e) => handleCompDragStart(e, comp)}
+                                            onDragEnd={() => onDragEnd?.()}
+                                            onMouseEnter={() => setHoveredId(comp.id)}
+                                            onMouseLeave={() => setHoveredId(null)}
+                                            title={comp.description}
                                             style={{
-                                                flexShrink: 0,
-                                                padding: '3px 8px',
-                                                border: '1px solid #fca5a5',
-                                                borderRadius: '6px',
-                                                background: '#fff5f5',
-                                                color: '#ef4444',
-                                                fontSize: '11px',
-                                                fontWeight: 600,
-                                                cursor: 'pointer',
-                                                whiteSpace: 'nowrap',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                padding: '10px 10px',
+                                                background: hoveredId === comp.id ? '#EBF4FF' : '#ffffff',
+                                                border: `1px solid ${hoveredId === comp.id ? '#0046A4' : '#e5e7eb'}`,
+                                                borderRadius: '8px',
+                                                cursor: 'grab',
+                                                userSelect: 'none',
+                                                boxShadow:
+                                                    hoveredId === comp.id
+                                                        ? '0 2px 8px rgba(0,70,164,0.10)'
+                                                        : '0 1px 2px rgba(0,0,0,0.04)',
+                                                transition: 'background 0.12s, border-color 0.12s, box-shadow 0.12s',
                                             }}
                                         >
-                                            전체 삭제
-                                        </button>
+                                            {/* 미리보기 썸네일 */}
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={comp.preview}
+                                                alt={comp.label}
+                                                draggable={false}
+                                                style={{
+                                                    width: '52px',
+                                                    height: '40px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '5px',
+                                                    border: '1px solid #e5e7eb',
+                                                    background: '#f3f4f6',
+                                                    flexShrink: 0,
+                                                }}
+                                            />
+
+                                            {/* 텍스트 */}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div
+                                                    style={{
+                                                        fontSize: '12px',
+                                                        fontWeight: 700,
+                                                        color: hoveredId === comp.id ? '#0046A4' : '#111827',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        transition: 'color 0.12s',
+                                                    }}
+                                                >
+                                                    {comp.label}
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: '10px',
+                                                        color: '#6b7280',
+                                                        marginTop: '2px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
+                                                >
+                                                    {comp.description}
+                                                </div>
+                                            </div>
+
+                                            {/* 편집 버튼 */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingComp(comp);
+                                                }}
+                                                title="컴포넌트 편집"
+                                                style={{
+                                                    flexShrink: 0,
+                                                    width: '26px',
+                                                    height: '26px',
+                                                    border: `1px solid ${hoveredId === comp.id ? '#9ca3af' : '#d1d5db'}`,
+                                                    borderRadius: '50%',
+                                                    background: hoveredId === comp.id ? '#f3f4f6' : '#f9fafb',
+                                                    color: hoveredId === comp.id ? '#374151' : '#9ca3af',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.12s',
+                                                    padding: 0,
+                                                }}
+                                            >
+                                                <svg
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth={2}
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    width={12}
+                                                    height={12}
+                                                >
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                </svg>
+                                            </button>
+
+                                            {/* 추가 버튼 */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onInsert(comp.html);
+                                                }}
+                                                title="캔버스 끝에 추가"
+                                                style={{
+                                                    flexShrink: 0,
+                                                    width: '26px',
+                                                    height: '26px',
+                                                    border: `1px solid ${hoveredId === comp.id ? '#0046A4' : '#d1d5db'}`,
+                                                    borderRadius: '50%',
+                                                    background: hoveredId === comp.id ? '#0046A4' : '#f9fafb',
+                                                    color: hoveredId === comp.id ? '#ffffff' : '#6b7280',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.12s',
+                                                    padding: 0,
+                                                }}
+                                            >
+                                                <svg
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth={2.5}
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    width={12}
+                                                    height={12}
+                                                >
+                                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    ))}
+                            </div>
+                        )}
+
+                        {/* ══ 탭 2: 기본 블록 ══ */}
+                        {activeTab === 'basic' && (
+                            <div
+                                ref={(el) => {
+                                    scrollRefs.current['basic'] = el;
+                                }}
+                                style={{
+                                    flex: 1,
+                                    minHeight: 0,
+                                    overflowY: 'auto',
+                                    padding: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px',
+                                }}
+                            >
+                                <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
+                                    드래그하거나 + 클릭하여 캔버스에 추가
+                                </p>
+
+                                {basicBlocks.length === 0 ? (
+                                    <div
+                                        style={{
+                                            flex: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: '#9ca3af',
+                                            fontSize: '12px',
+                                            padding: '20px',
+                                            textAlign: 'center',
+                                        }}
+                                    >
+                                        로딩 중...
                                     </div>
-                                    {blocks.map((block, idx) => {
-                                        const isDragging = draggingIdx === idx;
-                                        // 삽입 구분선: 해당 인덱스 앞에 표시 (no-op 위치 제외)
-                                        const showLine = draggingIdx !== null
-                                            && insertBeforeIdx === idx
-                                            && draggingIdx !== idx
-                                            && draggingIdx !== idx - 1;
-                                        return (
-                                            <React.Fragment key={block.id}>
-                                                {/* 삽입 위치 구분선 */}
-                                                {showLine && (
-                                                    <div style={{
+                                ) : (
+                                    /* 2열 그리드로 썸네일 표시 */
+                                    <div
+                                        style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr',
+                                            gap: '6px',
+                                        }}
+                                    >
+                                        {basicBlocks
+                                            .filter((b) => b.viewMode === viewMode)
+                                            .map((block, idx) => (
+                                                <BasicBlockCard
+                                                    key={idx}
+                                                    block={block}
+                                                    onDragStart={handleBasicDragStart}
+                                                    onDragEnd={() => onDragEnd?.()}
+                                                    onInsert={onInsert}
+                                                />
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ══ 탭 3: 블록 순서 변경 ══ */}
+                        {activeTab === 'order' && (
+                            <div
+                                ref={(el) => {
+                                    scrollRefs.current['order'] = el;
+                                }}
+                                onDragOver={handleOrderDragOver}
+                                onDrop={handleOrderDrop}
+                                style={{
+                                    flex: 1,
+                                    minHeight: 0,
+                                    overflowY: 'auto',
+                                    padding: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px',
+                                }}
+                            >
+                                {blocks.length === 0 ? (
+                                    <div
+                                        style={{
+                                            flex: 1,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: '#9ca3af',
+                                            fontSize: '12px',
+                                            textAlign: 'center',
+                                            gap: '8px',
+                                            padding: '20px',
+                                        }}
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth={1.5}
+                                            width={32}
+                                            height={32}
+                                            style={{ opacity: 0.4 }}
+                                        >
+                                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                                            <line x1="3" y1="9" x2="21" y2="9" />
+                                            <line x1="3" y1="15" x2="21" y2="15" />
+                                        </svg>
+                                        캔버스에 컴포넌트를 추가하면
+                                        <br />
+                                        여기서 순서를 조정할 수 있습니다
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                gap: '6px',
+                                            }}
+                                        >
+                                            <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>
+                                                드래그하여 순서 변경
+                                            </p>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('캔버스의 모든 블록을 삭제하시겠습니까?')) {
+                                                        onDeleteAll();
+                                                    }
+                                                }}
+                                                title="전체 블록 삭제"
+                                                style={{
+                                                    flexShrink: 0,
+                                                    padding: '3px 8px',
+                                                    border: '1px solid #fca5a5',
+                                                    borderRadius: '6px',
+                                                    background: '#fff5f5',
+                                                    color: '#ef4444',
+                                                    fontSize: '11px',
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                전체 삭제
+                                            </button>
+                                        </div>
+                                        {blocks.map((block, idx) => {
+                                            const isDragging = draggingIdx === idx;
+                                            // 삽입 구분선: 해당 인덱스 앞에 표시 (no-op 위치 제외)
+                                            const showLine =
+                                                draggingIdx !== null &&
+                                                insertBeforeIdx === idx &&
+                                                draggingIdx !== idx &&
+                                                draggingIdx !== idx - 1;
+                                            return (
+                                                <React.Fragment key={block.id}>
+                                                    {/* 삽입 위치 구분선 */}
+                                                    {showLine && (
+                                                        <div
+                                                            style={{
+                                                                height: '3px',
+                                                                background: '#0046A4',
+                                                                borderRadius: '2px',
+                                                                flexShrink: 0,
+                                                                margin: '-2px 2px',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <div
+                                                        data-order-item
+                                                        draggable
+                                                        onDragStart={(e) => handleBlockDragStart(e, idx)}
+                                                        onDragEnd={handleBlockDragEnd}
+                                                        onMouseEnter={() => setHoveredOrderIdx(idx)}
+                                                        onMouseLeave={() => setHoveredOrderIdx(null)}
+                                                        onClick={() => onActivate(idx)}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px',
+                                                            padding: '8px 10px',
+                                                            background: isDragging ? '#f0f4ff' : '#ffffff',
+                                                            border: isDragging
+                                                                ? '1.5px dashed #93c5fd'
+                                                                : `1px solid #e5e7eb`,
+                                                            borderRadius: '8px',
+                                                            cursor: 'grab',
+                                                            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                                                            userSelect: 'none',
+                                                            opacity: isDragging ? 0.45 : 1,
+                                                            transition: 'opacity 0.1s',
+                                                        }}
+                                                    >
+                                                        <div
+                                                            style={{
+                                                                flexShrink: 0,
+                                                                color: '#9ca3af',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                            }}
+                                                        >
+                                                            <DragDots />
+                                                        </div>
+
+                                                        {block.preview ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={block.preview}
+                                                                alt={block.label}
+                                                                draggable={false}
+                                                                style={{
+                                                                    width: '36px',
+                                                                    height: '28px',
+                                                                    objectFit: 'contain',
+                                                                    flexShrink: 0,
+                                                                    borderRadius: '3px',
+                                                                    background: '#f3f4f6',
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div
+                                                                style={{
+                                                                    width: '36px',
+                                                                    height: '28px',
+                                                                    flexShrink: 0,
+                                                                    borderRadius: '3px',
+                                                                    background: '#f3f4f6',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                }}
+                                                            >
+                                                                <svg
+                                                                    viewBox="0 0 24 24"
+                                                                    fill="none"
+                                                                    stroke="#9ca3af"
+                                                                    strokeWidth={1.5}
+                                                                    width={14}
+                                                                    height={14}
+                                                                >
+                                                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div
+                                                                style={{
+                                                                    fontSize: '12px',
+                                                                    fontWeight: 600,
+                                                                    color: '#111827',
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                }}
+                                                            >
+                                                                {block.label}
+                                                            </div>
+                                                            <div style={{ fontSize: '10px', color: '#9ca3af' }}>
+                                                                {idx + 1} / {blocks.length}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 삭제 버튼 (호버 시 표시) */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDelete(idx);
+                                                            }}
+                                                            title="블록 삭제"
+                                                            style={{
+                                                                flexShrink: 0,
+                                                                width: '22px',
+                                                                height: '22px',
+                                                                border: '1px solid #fca5a5',
+                                                                borderRadius: '6px',
+                                                                background:
+                                                                    hoveredOrderIdx === idx ? '#fee2e2' : '#ffffff',
+                                                                color: '#ef4444',
+                                                                cursor: 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                padding: 0,
+                                                                opacity: hoveredOrderIdx === idx ? 1 : 0,
+                                                                transition: 'opacity 0.15s, background 0.15s',
+                                                            }}
+                                                        >
+                                                            <svg
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeWidth={2}
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                width={12}
+                                                                height={12}
+                                                            >
+                                                                <polyline points="3 6 5 6 21 6" />
+                                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                                <path d="M10 11v6M14 11v6" />
+                                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                        {/* 맨 끝 삽입 구분선 */}
+                                        {draggingIdx !== null &&
+                                            insertBeforeIdx === blocks.length &&
+                                            draggingIdx !== blocks.length - 1 && (
+                                                <div
+                                                    style={{
                                                         height: '3px',
                                                         background: '#0046A4',
                                                         borderRadius: '2px',
                                                         flexShrink: 0,
                                                         margin: '-2px 2px',
-                                                    }} />
-                                                )}
-                                                <div
-                                                    data-order-item
-                                                    draggable
-                                                    onDragStart={e => handleBlockDragStart(e, idx)}
-                                                    onDragEnd={handleBlockDragEnd}
-                                                    onMouseEnter={() => setHoveredOrderIdx(idx)}
-                                                    onMouseLeave={() => setHoveredOrderIdx(null)}
-                                                    onClick={() => onActivate(idx)}
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        padding: '8px 10px',
-                                                        background: isDragging ? '#f0f4ff' : '#ffffff',
-                                                        border: isDragging
-                                                            ? '1.5px dashed #93c5fd'
-                                                            : `1px solid #e5e7eb`,
-                                                        borderRadius: '8px',
-                                                        cursor: 'grab',
-                                                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                                                        userSelect: 'none',
-                                                        opacity: isDragging ? 0.45 : 1,
-                                                        transition: 'opacity 0.1s',
                                                     }}
-                                                >
-                                                    <div style={{ flexShrink: 0, color: '#9ca3af', display: 'flex', alignItems: 'center' }}>
-                                                        <DragDots />
-                                                    </div>
+                                                />
+                                            )}
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </aside>
 
-                                                    {block.preview ? (
-                                                        // eslint-disable-next-line @next/next/no-img-element
-                                                        <img
-                                                            src={block.preview}
-                                                            alt={block.label}
-                                                            draggable={false}
-                                                            style={{ width: '36px', height: '28px', objectFit: 'contain', flexShrink: 0, borderRadius: '3px', background: '#f3f4f6' }}
-                                                        />
-                                                    ) : (
-                                                        <div style={{ width: '36px', height: '28px', flexShrink: 0, borderRadius: '3px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={1.5} width={14} height={14}>
-                                                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                                            </svg>
-                                                        </div>
-                                                    )}
-
-                                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                            {block.label}
-                                                        </div>
-                                                        <div style={{ fontSize: '10px', color: '#9ca3af' }}>
-                                                            {idx + 1} / {blocks.length}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 삭제 버튼 (호버 시 표시) */}
-                                                    <button
-                                                        onClick={e => { e.stopPropagation(); onDelete(idx); }}
-                                                        title="블록 삭제"
-                                                        style={{
-                                                            flexShrink: 0,
-                                                            width: '22px',
-                                                            height: '22px',
-                                                            border: '1px solid #fca5a5',
-                                                            borderRadius: '6px',
-                                                            background: hoveredOrderIdx === idx ? '#fee2e2' : '#ffffff',
-                                                            color: '#ef4444',
-                                                            cursor: 'pointer',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            padding: 0,
-                                                            opacity: hoveredOrderIdx === idx ? 1 : 0,
-                                                            transition: 'opacity 0.15s, background 0.15s',
-                                                        }}
-                                                    >
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}>
-                                                            <polyline points="3 6 5 6 21 6" />
-                                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                            <path d="M10 11v6M14 11v6" />
-                                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                    {/* 맨 끝 삽입 구분선 */}
-                                    {draggingIdx !== null
-                                        && insertBeforeIdx === blocks.length
-                                        && draggingIdx !== blocks.length - 1 && (
-                                        <div style={{
-                                            height: '3px',
-                                            background: '#0046A4',
-                                            borderRadius: '2px',
-                                            flexShrink: 0,
-                                            margin: '-2px 2px',
-                                        }} />
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
+            {/* ── 컴포넌트 편집 모달 ── */}
+            {editingComp && (
+                <EditCompModal
+                    comp={editingComp}
+                    onClose={() => setEditingComp(null)}
+                    onSaved={() => {
+                        setEditingComp(null);
+                        onComponentUpdate?.();
+                    }}
+                />
             )}
-        </aside>
-
-        {/* ── 컴포넌트 편집 모달 ── */}
-        {editingComp && (
-            <EditCompModal
-                comp={editingComp}
-                onClose={() => setEditingComp(null)}
-                onSaved={() => {
-                    setEditingComp(null);
-                    onComponentUpdate?.();
-                }}
-            />
-        )}
-    </>
+        </>
     );
 }
 
@@ -725,8 +911,8 @@ function EditCompModal({
             } else {
                 onSaved();
             }
-        } catch (err) {
-            console.error('컴포넌트 저장 API 호출 오류:', err);
+        } catch (error) {
+            console.error('컴포넌트 저장 API 호출 오류:', error);
             setError('네트워크 오류가 발생했습니다.');
         } finally {
             setSaving(false);
@@ -749,14 +935,17 @@ function EditCompModal({
         <div
             onClick={onClose}
             style={{
-                position: 'fixed', inset: 0,
+                position: 'fixed',
+                inset: 0,
                 background: 'rgba(0,0,0,0.45)',
                 zIndex: 9999,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
             }}
         >
             <div
-                onClick={e => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                     background: '#ffffff',
                     borderRadius: '12px',
@@ -770,48 +959,68 @@ function EditCompModal({
                 }}
             >
                 {/* 모달 헤더 */}
-                <div style={{
-                    padding: '16px 20px',
-                    borderBottom: '1px solid #e5e7eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexShrink: 0,
-                }}>
-                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>
-                        컴포넌트 편집
-                    </span>
+                <div
+                    style={{
+                        padding: '16px 20px',
+                        borderBottom: '1px solid #e5e7eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexShrink: 0,
+                    }}
+                >
+                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>컴포넌트 편집</span>
                     <button
                         onClick={onClose}
                         style={{
-                            width: '28px', height: '28px',
-                            border: 'none', background: 'transparent',
-                            cursor: 'pointer', color: '#6b7280',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '28px',
+                            height: '28px',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            color: '#6b7280',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             borderRadius: '6px',
                         }}
                     >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}>
-                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            width={16}
+                            height={16}
+                        >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                     </button>
                 </div>
 
                 {/* 모달 본문 */}
-                <div style={{ padding: '20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div
+                    style={{
+                        padding: '20px',
+                        overflowY: 'auto',
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '14px',
+                    }}
+                >
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                         <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>이름 (label)</span>
-                        <input
-                            value={label}
-                            onChange={e => setLabel(e.target.value)}
-                            style={INPUT_STYLE}
-                        />
+                        <input value={label} onChange={(e) => setLabel(e.target.value)} style={INPUT_STYLE} />
                     </label>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                         <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>설명 (description)</span>
                         <input
                             value={description}
-                            onChange={e => setDescription(e.target.value)}
+                            onChange={(e) => setDescription(e.target.value)}
                             style={INPUT_STYLE}
                         />
                     </label>
@@ -819,7 +1028,7 @@ function EditCompModal({
                         <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>HTML</span>
                         <textarea
                             value={html}
-                            onChange={e => setHtml(e.target.value)}
+                            onChange={(e) => setHtml(e.target.value)}
                             spellCheck={false}
                             style={{
                                 ...INPUT_STYLE,
@@ -832,21 +1041,32 @@ function EditCompModal({
                         />
                     </label>
                     {error && (
-                        <div style={{ fontSize: '12px', color: '#ef4444', padding: '8px 10px', background: '#fef2f2', borderRadius: '6px', border: '1px solid #fca5a5' }}>
+                        <div
+                            style={{
+                                fontSize: '12px',
+                                color: '#ef4444',
+                                padding: '8px 10px',
+                                background: '#fef2f2',
+                                borderRadius: '6px',
+                                border: '1px solid #fca5a5',
+                            }}
+                        >
                             {error}
                         </div>
                     )}
                 </div>
 
                 {/* 모달 푸터 */}
-                <div style={{
-                    padding: '14px 20px',
-                    borderTop: '1px solid #e5e7eb',
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: '8px',
-                    flexShrink: 0,
-                }}>
+                <div
+                    style={{
+                        padding: '14px 20px',
+                        borderTop: '1px solid #e5e7eb',
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '8px',
+                        flexShrink: 0,
+                    }}
+                >
                     <button
                         onClick={onClose}
                         disabled={saving}
@@ -904,7 +1124,7 @@ function BasicBlockCard({
     return (
         <div
             draggable
-            onDragStart={e => onDragStart(e, block)}
+            onDragStart={(e) => onDragStart(e, block)}
             onDragEnd={onDragEnd}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
@@ -922,7 +1142,16 @@ function BasicBlockCard({
             }}
         >
             {/* 썸네일 */}
-            <div style={{ height: '64px', background: '#f3f4f6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div
+                style={{
+                    height: '64px',
+                    background: '#f3f4f6',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     src={thumbSrc}
@@ -931,31 +1160,41 @@ function BasicBlockCard({
                     style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
                 />
                 {hovered && (
-                    <div style={{
-                        position: 'absolute', inset: 0,
-                        background: 'rgba(0,70,164,0.06)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }} />
+                    <div
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'rgba(0,70,164,0.06)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    />
                 )}
             </div>
 
             {/* 블록 이름 */}
-            <div style={{
-                padding: '3px 6px',
-                fontSize: '10px',
-                color: '#6b7280',
-                textAlign: 'center',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                lineHeight: 1.3,
-            }}>
+            <div
+                style={{
+                    padding: '3px 6px',
+                    fontSize: '10px',
+                    color: '#6b7280',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.3,
+                }}
+            >
                 {BLOCK_LABELS[block.thumbnail] ?? block.thumbnail}
             </div>
 
             {/* 추가 버튼 */}
             <button
-                onClick={e => { e.stopPropagation(); onInsert(block.html); }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onInsert(block.html);
+                }}
                 title="클릭하여 캔버스 끝에 추가"
                 style={{
                     position: 'absolute',
@@ -976,8 +1215,18 @@ function BasicBlockCard({
                     transition: 'opacity 0.15s, background 0.15s',
                 }}
             >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" width={10} height={10}>
-                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    width={10}
+                    height={10}
+                >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
             </button>
         </div>

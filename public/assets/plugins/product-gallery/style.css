@@ -51,6 +51,19 @@
     box-shadow: 0 4px 20px rgba(0, 70, 164, 0.08);
     position: relative;
     overflow: hidden;
+    --pg-item-accent: var(--pg-accent);
+    --pg-item-accent-light: var(--pg-accent-light);
+}
+
+/* 상품 유형별 기본 색상 (개별 색상 미설정 시 적용) */
+[data-cb-type="product-gallery"] .pg-slide[data-type="loan"] {
+    --pg-item-accent: #FF6600;
+    --pg-item-accent-light: #FFF3EC;
+}
+
+[data-cb-type="product-gallery"] .pg-slide[data-type="fund"] {
+    --pg-item-accent: #059669;
+    --pg-item-accent-light: #F0FFF4;
 }
 
 [data-cb-type="product-gallery"] .pg-slide::before {
@@ -58,7 +71,7 @@
     position: absolute;
     top: 0; right: 0;
     width: 120px; height: 120px;
-    background: linear-gradient(135deg, var(--pg-accent-light) 0%, transparent 70%);
+    background: linear-gradient(135deg, var(--pg-item-accent-light) 0%, transparent 70%);
     border-radius: 0 16px 0 100%;
 }
 
@@ -66,24 +79,14 @@
 [data-cb-type="product-gallery"] .pg-type-badge {
     display: inline-flex;
     align-items: center;
-    background: var(--pg-accent-light);
-    color: var(--pg-accent);
+    background: var(--pg-item-accent-light);
+    color: var(--pg-item-accent);
     font-size: 11px;
     font-weight: 700;
     padding: 4px 10px;
     border-radius: 20px;
     width: fit-content;
     letter-spacing: 0.5px;
-}
-
-[data-cb-type="product-gallery"] .pg-slide[data-type="loan"] .pg-type-badge {
-    background: #FFF3EC;
-    color: #FF6600;
-}
-
-[data-cb-type="product-gallery"] .pg-slide[data-type="fund"] .pg-type-badge {
-    background: #F0FFF4;
-    color: #059669;
 }
 
 /* Product Name */
@@ -106,19 +109,15 @@
 [data-cb-type="product-gallery"] .pg-rate-value {
     font-size: 40px;
     font-weight: 800;
-    color: var(--pg-accent);
+    color: var(--pg-item-accent);
     line-height: 1;
     letter-spacing: -1px;
-}
-
-[data-cb-type="product-gallery"] .pg-slide[data-type="loan"] .pg-rate-value {
-    color: #FF6600;
 }
 
 [data-cb-type="product-gallery"] .pg-rate-unit {
     font-size: 22px;
     font-weight: 700;
-    color: var(--pg-accent);
+    color: var(--pg-item-accent);
 }
 
 [data-cb-type="product-gallery"] .pg-rate-label {
@@ -141,7 +140,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--pg-accent);
+    background: var(--pg-item-accent);
     color: #fff;
     text-decoration: none;
     font-size: 15px;
@@ -152,10 +151,6 @@
     min-height: 48px;
     transition: opacity 0.2s ease;
     -webkit-tap-highlight-color: transparent;
-}
-
-[data-cb-type="product-gallery"] .pg-slide[data-type="loan"] .pg-cta {
-    background: #FF6600;
 }
 
 [data-cb-type="product-gallery"] .pg-cta:active {

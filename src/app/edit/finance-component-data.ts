@@ -6,6 +6,6 @@ export interface FinanceComponent {
     label: string;
     description: string;
     preview: string; // SVG 미리보기 경로
-    html: string;    // ContentBuilder 삽입용 HTML (raw — EditClient에서 row/column으로 래핑)
+    html: string; // ContentBuilder 삽입용 HTML (raw — EditClient에서 row/column으로 래핑)
     viewMode: 'mobile' | 'web' | 'responsive';
 }

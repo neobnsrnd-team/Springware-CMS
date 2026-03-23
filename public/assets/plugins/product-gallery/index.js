@@ -35,6 +35,13 @@ Usage:
 </div>
 */
 
+// 개별 상품 강조 색상 CSS 변수 적용 헬퍼
+const applyItemColor = (slide, color) => {
+    if (!color) return;
+    slide.style.setProperty('--pg-item-accent', color);
+    slide.style.setProperty('--pg-item-accent-light', color + '1A');
+};
+
 export default {
     name: 'product-gallery',
     displayName: '금융 상품 갤러리',
@@ -59,11 +66,6 @@ export default {
             label: '페이지 점 표시',
             default: true
         },
-        accentColor: {
-            type: 'color',
-            label: '강조 색상',
-            default: '#0046A4'
-        },
     },
 
     editor: {
@@ -75,6 +77,7 @@ export default {
             const items = track ? track.querySelectorAll('.pg-slide') : [];
 
             const TYPE_MAP = { deposit: '예금', savings: '적금', loan: '대출', fund: '펀드' };
+            const TYPE_DEFAULT_COLORS = { loan: '#FF6600', fund: '#059669', deposit: '#0046A4', savings: '#0046A4' };
 
             const createItemEditor = (item, index) => {
                 const section = document.createElement('div');
@@ -186,6 +189,19 @@ export default {
                 });
                 body.appendChild(linkInput);
 
+                // 개별 강조 색상
+                body.appendChild(makeLabel('강조 색상 (미설정 시 상품 유형 기본 색상 적용)'));
+                const globalAccent = getComputedStyle(element).getPropertyValue('--pg-accent').trim() || '#0046A4';
+                const currentColor = item.dataset.pgItemColor || TYPE_DEFAULT_COLORS[item.dataset.type] || globalAccent;
+                const colorInput = makeInput('color', currentColor, '');
+                colorInput.style.cssText += 'padding:2px 4px;height:34px;cursor:pointer;';
+                colorInput.addEventListener('input', () => {
+                    item.dataset.pgItemColor = colorInput.value;
+                    applyItemColor(item, colorInput.value);
+                    onChange?.();
+                });
+                body.appendChild(colorInput);
+
                 header.addEventListener('click', (e) => {
                     if (e.target.closest('button')) return;
                     body.style.display = body.style.display === 'block' ? 'none' : 'block';
@@ -236,6 +252,9 @@ export default {
 
         const slides = track.querySelectorAll('.pg-slide');
         if (!slides.length) return {};
+
+        // 개별 상품 색상 적용
+        slides.forEach(slide => applyItemColor(slide, slide.dataset.pgItemColor));
 
         const dotsContainer = element.querySelector('.pg-dots');
         let currentIndex = 0;
