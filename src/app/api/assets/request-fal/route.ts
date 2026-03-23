@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ ok: true, request_id }, { status: 200 });
-    } catch (err: unknown) {
+    } catch (error) {
         return NextResponse.json(
-            { ok: false, error: err instanceof Error ? err.message : "Unknown error" },
+            { ok: false, error: error instanceof Error ? error.message : '알 수 없는 오류' },
             { status: 500 }
         );
     }

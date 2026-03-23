@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
 
         const urlPath = targetPath ? `${targetPath}/${filename}` : filename;
         
-        return Response.json({ 
-            success: true,
+        return Response.json({
+            ok: true,
             file: {
                 name: filename,
                 url: `${UPLOAD_URL}${urlPath}`,

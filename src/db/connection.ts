@@ -24,10 +24,10 @@ async function initPool(): Promise<void> {
       });
 
       console.log('Oracle 커넥션 풀 초기화 완료');
-    } catch (err) {
+    } catch (error) {
       poolInitPromise = null;
-      console.error('Oracle 커넥션 풀 초기화 실패:', err);
-      throw err;
+      console.error('Oracle 커넥션 풀 초기화 실패:', error);
+      throw error;
     }
   })();
 
@@ -61,9 +61,9 @@ export async function withTransaction<T>(
     const result = await task(conn);
     await conn.commit();
     return result;
-  } catch (err) {
+  } catch (error) {
     await conn.rollback();
-    throw err;
+    throw error;
   } finally {
     await conn.close();
   }

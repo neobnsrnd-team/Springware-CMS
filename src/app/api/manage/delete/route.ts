@@ -49,9 +49,9 @@ export async function DELETE(request: NextRequest) {
                 }
 
                 deletedCount++;
-            } catch (err) {
-                console.error(`파일 삭제 실패 - ${file}:`, err);
-                errors.push(`${file}: ${err instanceof Error ? err.message : '삭제 실패'}`);
+            } catch (error) {
+                console.error(`파일 삭제 실패 - ${file}:`, error);
+                errors.push(`${file}: ${error instanceof Error ? error.message : '삭제 실패'}`);
                 failedCount++;
             }
         }
@@ -59,7 +59,7 @@ export async function DELETE(request: NextRequest) {
         // Return results
         if (failedCount === 0) {
             return Response.json({
-                success: true,
+                ok: true,
                 deleted: deletedCount,
                 message: `${deletedCount}개 항목이 삭제되었습니다.`
             });
@@ -72,7 +72,7 @@ export async function DELETE(request: NextRequest) {
             }, { status: 500 });
         } else {
             return Response.json({
-                success: true,
+                ok: true,
                 deleted: deletedCount,
                 failed: failedCount,
                 message: `${deletedCount}개 삭제 완료, ${failedCount}개 실패`,

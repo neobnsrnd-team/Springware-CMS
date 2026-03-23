@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
         // Create directory (recursive)
         fs.mkdirSync(absoluteFolderPath, { recursive: true });
 
-        return Response.json({ 
-            success: true, 
+        return Response.json({
+            ok: true,
             folder: {
                 name: sanitizedName,
                 url: `${UPLOAD_URL}${relativePath ? `${relativePath}/${sanitizedName}` : sanitizedName}`,

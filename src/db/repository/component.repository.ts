@@ -22,8 +22,8 @@ function parseComponentData(row: CmsComponent): CmsComponentParsed {
   if (row.DATA) {
     try {
       parsedData = JSON.parse(row.DATA);
-    } catch (err) {
-      console.error(`COMPONENT_ID ${row.COMPONENT_ID}의 DATA JSON 파싱 오류:`, err);
+    } catch (error) {
+      console.error(`COMPONENT_ID ${row.COMPONENT_ID}의 DATA JSON 파싱 오류:`, error);
     }
   }
   return { ...row, DATA: parsedData };

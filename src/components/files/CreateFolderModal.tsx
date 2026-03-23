@@ -80,8 +80,8 @@ export default function CreateFolderModal({
             const result = await res.json();
             onFolderCreated(result.folder.name);
             onClose();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create folder');
+        } catch (error) {
+            setError(error instanceof Error ? error.message : '폴더 생성에 실패했습니다.');
         } finally {
             setIsCreating(false);
         }

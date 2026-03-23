@@ -13,16 +13,16 @@ export async function POST(
         await cleanup(input);
 
         return NextResponse.json({ ok: true });
-    } catch (err: unknown) {
-        let message = "Unknown error";
+    } catch (error) {
+        let message = '알 수 없는 오류';
 
-        if (err instanceof Error) {
-            message = err.message;
+        if (error instanceof Error) {
+            message = error.message;
         }
 
-        // throw structured errors with `body.detail`
-        if (typeof err === "object" && err !== null && "body" in err) {
-            const body = (err as { body?: { detail?: string } }).body;
+        // FAL AI 구조화 에러 처리 (`body.detail`)
+        if (typeof error === 'object' && error !== null && 'body' in error) {
+            const body = (error as { body?: { detail?: string } }).body;
             if (body?.detail) {
                 message = body.detail;
             }
