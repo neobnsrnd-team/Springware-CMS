@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filename = file.name.replaceAll(' ', '_');
 
     try {
         await writeFile(
