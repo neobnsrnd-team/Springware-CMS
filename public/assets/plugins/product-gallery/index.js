@@ -35,6 +35,13 @@ Usage:
 </div>
 */
 
+// 개별 상품 강조 색상 CSS 변수 적용 헬퍼
+const applyItemColor = (slide, color) => {
+    if (!color) return;
+    slide.style.setProperty('--pg-item-accent', color);
+    slide.style.setProperty('--pg-item-accent-light', color + '1A');
+};
+
 export default {
     name: 'product-gallery',
     displayName: '금융 상품 갤러리',
@@ -184,14 +191,13 @@ export default {
 
                 // 개별 강조 색상
                 body.appendChild(makeLabel('강조 색상 (미설정 시 상품 유형 기본 색상 적용)'));
-                const currentColor = item.dataset.pgItemColor || TYPE_DEFAULT_COLORS[item.dataset.type] || '#0046A4';
+                const globalAccent = getComputedStyle(element).getPropertyValue('--pg-accent').trim() || '#0046A4';
+                const currentColor = item.dataset.pgItemColor || TYPE_DEFAULT_COLORS[item.dataset.type] || globalAccent;
                 const colorInput = makeInput('color', currentColor, '');
                 colorInput.style.cssText += 'padding:2px 4px;height:34px;cursor:pointer;';
                 colorInput.addEventListener('input', () => {
                     item.dataset.pgItemColor = colorInput.value;
-                    item.style.setProperty('--pg-item-accent', colorInput.value);
-                    // 연한 배경색: 해당 색상 10% opacity 레이어
-                    item.style.setProperty('--pg-item-accent-light', colorInput.value + '1A');
+                    applyItemColor(item, colorInput.value);
                     onChange?.();
                 });
                 body.appendChild(colorInput);
@@ -248,13 +254,7 @@ export default {
         if (!slides.length) return {};
 
         // 개별 상품 색상 적용
-        slides.forEach(slide => {
-            const itemColor = slide.dataset.pgItemColor;
-            if (itemColor) {
-                slide.style.setProperty('--pg-item-accent', itemColor);
-                slide.style.setProperty('--pg-item-accent-light', itemColor + '1A');
-            }
-        });
+        slides.forEach(slide => applyItemColor(slide, slide.dataset.pgItemColor));
 
         const dotsContainer = element.querySelector('.pg-dots');
         let currentIndex = 0;
