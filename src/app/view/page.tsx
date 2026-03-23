@@ -1,7 +1,7 @@
 // src/app/view/page.tsx
 
 import { Metadata } from 'next';
-import { getPageById, getLatestHistory } from '@/db/repository/page.repository';
+import { getPageById } from '@/db/repository/page.repository';
 import ViewClient from './ViewClient';
 
 // Override default metadata from layout.tsx for this page
@@ -15,13 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-// DB에서 페이지 로드
+// DB에서 페이지 로드 — PAGE_DESC 직접 읽기 (HISTORY는 승인 이력 전용)
 async function loadPage(bank: string): Promise<string> {
     const page = await getPageById(bank);
     if (!page) return '';
-
-    const history = await getLatestHistory(bank);
-    return history?.RENDERED_HTML ?? page.PAGE_DESC ?? '';
+    return page.PAGE_DESC ?? '';
 }
 
 export default async function View({ searchParams }: { searchParams: Promise<{ bank?: string }> }) {
