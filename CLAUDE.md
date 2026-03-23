@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 필독 문서
+
+코드를 작성하거나 수정하기 전에 반드시 아래 컨벤션 문서를 읽고 준수합니다.
+
+- **[코딩 컨벤션](docs/convention/코딩-컨벤션.md)** — 네이밍, 포매팅, API 응답 형식, 에러 처리, DB 레이어 패턴 등 모든 코딩 규칙
+
+---
+
 ## 개발 언어 및 커뮤니케이션 원칙
 
 - **모든 코드 주석, 변수명(의미 단위), UI 텍스트, 에디터 라벨은 한국어 기반으로 작성**
@@ -193,7 +201,9 @@ docs/                           # 프로젝트 문서
 - **파일 업로드**: `public/uploads/`에 저장, 정적 서빙. 프로덕션에서는 S3 등으로 교체 필요
 - **AI 프록시**: API 키를 서버에 보관, 클라이언트는 `/api/openrouter` 등으로 요청
 - **Function Calling**: `anthropic/claude-3.5-sonnet` 고정 (모델 선택과 무관)
-- **API 에러 응답**: HTTP 200 + JSON body에 error 필드 (ContentBuilder 라이브러리 규약)
+- **API 응답 헬퍼**: `src/lib/api-response.ts` — `successResponse`, `errorResponse`, `contentBuilderErrorResponse`, `getErrorMessage` 사용. 모든 route.ts에서 `Response.json()` / `NextResponse.json()` 직접 사용 금지
+- **API 에러 응답**: 일반 API → `errorResponse(msg, status)` → `{ ok: false, error }` + HTTP 4xx/5xx. ContentBuilder 연동 API → `contentBuilderErrorResponse(msg)` → `{ ok: false, error }` + HTTP 200
+- **에러 처리 패턴**: catch 변수는 `err: unknown` 고정, 메시지 추출은 `getErrorMessage(err)` 사용. `error instanceof Error` 직접 사용 금지
 - **보안**: 파일 관리 API에 디렉토리 트래버설 방지 (`..` 포함 체크), 파일명 새니타이징
 - **플러그인**: `public/assets/plugins/<name>/`에 각각 index.js + style.css, 사용시에만 lazy-load
 - **에디터↔파일 피커 통신**: `window.postMessage` (`ASSET_SELECTED` 이벤트)

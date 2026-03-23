@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { FinanceComponent } from '@/app/edit/finance-component-data';
 import type { ComponentType, ViewMode, CmsComponentParsed } from '@/db/types';
 import { getComponentList, getComponentById, updateComponent } from '@/db/repository/component.repository';
+import { getErrorMessage } from '@/lib/api-response';
 
 const VALID_TYPES = new Set<string>(['finance', 'basic']);
 const VALID_VIEW_MODES = new Set<string>(['mobile', 'web', 'responsive']);
@@ -41,9 +42,9 @@ export async function GET(req: NextRequest) {
         const components = rows.map(toFinanceComponent).filter((c): c is FinanceComponent => c !== null);
 
         return NextResponse.json({ ok: true, components });
-    } catch (error) {
-        console.error('컴포넌트 목록 조회 오류:', error);
-        return NextResponse.json({ error: '컴포넌트 목록 조회에 실패했습니다.' }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('컴포넌트 목록 조회 오류:', err);
+        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
     }
 }
 
@@ -88,8 +89,8 @@ export async function PUT(req: NextRequest) {
         });
 
         return NextResponse.json({ ok: true });
-    } catch (error) {
-        console.error('컴포넌트 수정 오류:', error);
-        return NextResponse.json({ error: '컴포넌트 수정에 실패했습니다.' }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('컴포넌트 수정 오류:', err);
+        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
     }
 }

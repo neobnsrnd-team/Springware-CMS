@@ -2,6 +2,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+
 const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
 
 interface FolderNode {
@@ -40,16 +42,14 @@ export async function GET() {
         const absolutePath = path.join(process.cwd(), UPLOAD_PATH);
 
         if (!fs.existsSync(absolutePath)) {
-            return Response.json({ folders: [] });
+            return successResponse({ folders: [] });
         }
 
         const folderTree = buildFolderTree(absolutePath);
 
-        return Response.json({
-            folders: folderTree,
-        });
-    } catch (error) {
-        console.error('폴더 트리 조회 실패:', error);
-        return Response.json({ error: '폴더 트리 조회에 실패했습니다.' }, { status: 500 });
+        return successResponse({ folders: folderTree });
+    } catch (err: unknown) {
+        console.error('폴더 트리 조회 실패:', err);
+        return errorResponse(getErrorMessage(err));
     }
 }

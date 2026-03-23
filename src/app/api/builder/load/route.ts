@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPageById } from '@/db/repository/page.repository';
 import { isValidBankId } from '@/lib/validators';
 import { readPageHtml } from '@/lib/page-file';
+import { getErrorMessage } from '@/lib/api-response';
 
 // FILE_PATH 기반 파일 로드. 마이그레이션 이전 데이터는 PAGE_DESC 폴백.
 async function loadPage(bank: string): Promise<{ html: string; updated: string | null; fileNotFound?: boolean }> {
@@ -40,8 +41,8 @@ export async function POST(req: NextRequest) {
         const { html, updated, fileNotFound } = await loadPage(bank);
 
         return NextResponse.json({ ok: true, html, updated, fileNotFound });
-    } catch (error) {
-        console.error('페이지 로드 실패:', error);
-        return NextResponse.json({ error: '페이지 로드에 실패했습니다.' }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('페이지 로드 실패:', err);
+        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
     }
 }

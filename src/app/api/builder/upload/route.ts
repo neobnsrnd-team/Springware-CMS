@@ -3,6 +3,7 @@
 import path from 'path';
 import { writeFile } from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
+import { getErrorMessage } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
     // 데모용: 업로드 파일을 public 폴더에 저장
@@ -32,8 +33,8 @@ export async function POST(req: NextRequest) {
         await writeFile(path.join(process.cwd(), uploadPath, filename), buffer);
 
         return NextResponse.json({ ok: true, url: path.join(uploadUrl, filename) }, { status: 201 });
-    } catch (error) {
-        console.error('파일 업로드 실패:', error);
-        return NextResponse.json({ ok: false, error: '파일 저장 중 오류가 발생했습니다.' }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('파일 업로드 실패:', err);
+        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
     }
 }
