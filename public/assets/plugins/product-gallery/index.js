@@ -186,6 +186,19 @@ export default {
                 });
                 body.appendChild(linkInput);
 
+                // 개별 강조 색상
+                body.appendChild(makeLabel('강조 색상 (미설정 시 전체 색상 적용)'));
+                const colorInput = makeInput('color', item.dataset.pgItemColor || '#0046A4', '');
+                colorInput.style.cssText += 'padding:2px 4px;height:34px;cursor:pointer;';
+                colorInput.addEventListener('input', () => {
+                    item.dataset.pgItemColor = colorInput.value;
+                    item.style.setProperty('--pg-item-accent', colorInput.value);
+                    // 연한 배경색: 해당 색상 10% opacity 레이어
+                    item.style.setProperty('--pg-item-accent-light', colorInput.value + '1A');
+                    onChange?.();
+                });
+                body.appendChild(colorInput);
+
                 header.addEventListener('click', (e) => {
                     if (e.target.closest('button')) return;
                     body.style.display = body.style.display === 'block' ? 'none' : 'block';
@@ -236,6 +249,15 @@ export default {
 
         const slides = track.querySelectorAll('.pg-slide');
         if (!slides.length) return {};
+
+        // 개별 상품 색상 적용
+        slides.forEach(slide => {
+            const itemColor = slide.dataset.pgItemColor;
+            if (itemColor) {
+                slide.style.setProperty('--pg-item-accent', itemColor);
+                slide.style.setProperty('--pg-item-accent-light', itemColor + '1A');
+            }
+        });
 
         const dotsContainer = element.querySelector('.pg-dots');
         let currentIndex = 0;
