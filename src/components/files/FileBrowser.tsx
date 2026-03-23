@@ -9,13 +9,9 @@ import CreateFolderModal from '@/components/files/CreateFolderModal';
 import DeleteConfirmModal from '@/components/files/DeleteConfirmModal';
 import UploadProgressList from '@/components/files/UploadProgressList';
 import Breadcrumbs from '@/components/files/Breadcrumbs';
+import type { FileItem } from '@/components/files/types';
 
-interface FileItem {
-    name: string;
-    url: string;
-    isDirectory: boolean;
-    size: number;
-}
+export type { FileItem } from '@/components/files/types';
 
 interface FolderNode {
     name: string;
@@ -84,7 +80,7 @@ export default function FileBrowser({
     const fetchFolderTree = useCallback(async () => {
         try {
             const res = await fetch(endpoints.folders);
-            if (!res.ok) throw new Error('Failed to fetch folders');
+            if (!res.ok) throw new Error('폴더 목록을 불러오지 못했습니다.');
             const data = await res.json();
             setFolderTree(data.folders || []);
         } catch (error) {
@@ -100,7 +96,7 @@ export default function FileBrowser({
             isFetchingRef.current = true;
             const pathParam = path ? `&path=${encodeURIComponent(path)}` : '';
             const res = await fetch(`${endpoints.files}?page=${pageNum}${pathParam}`);
-            if (!res.ok) throw new Error('Failed to fetch files');
+            if (!res.ok) throw new Error('파일 목록을 불러오지 못했습니다.');
             const data = await res.json();
             
             setFiles(prev => pageNum === 1 ? data.files : [...prev, ...data.files]);

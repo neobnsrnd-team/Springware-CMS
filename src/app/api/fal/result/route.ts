@@ -1,17 +1,17 @@
 // src/app/api/fal/result/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fal } from "@fal-ai/client";
-import axios from "axios";
-// import { saveFileToS3 } from "@/features/site-assets";
+import { fal } from '@fal-ai/client';
+import axios from 'axios';
 import path from 'path';
-import fs from "fs";
+import fs from 'fs';
+
+import { normalizeUploadUrl } from '@/lib/upload-utils';
 
 const FAL_API_KEY = process.env.FAL_API_KEY;
-
-const uploadPath = process.env.UPLOAD_PATH || '';   // Physical path (e.g. "/public/uploads/")
-const uploadUrl = process.env.UPLOAD_URL || '';     // URL base (e.g. "/uploads/")
-const localSave = true;
+const UPLOAD_PATH = process.env.UPLOAD_PATH || '';
+const UPLOAD_URL = normalizeUploadUrl(process.env.UPLOAD_URL || 'uploads/');
+const LOCAL_SAVE = true;
 
 interface CustomData {
     folderPath?: string;
@@ -19,9 +19,9 @@ interface CustomData {
 }
 
 type OutputType =
-  | { entries: { url: string; file_url: string }[] }
-  | string
-  | unknown; // covers result.data.output or other dynamic values
+    | { entries: { url: string; fileUrl: string }[] }
+    | string
+    | unknown;
 
 interface PostRequestBody {
     request_id: string;
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const falApiKey = FAL_API_KEY;
     if (!falApiKey) return NextResponse.json({ error: 'FAL API 키를 찾을 수 없습니다.' }, { status: 403 });
 
-    // Configure FAL client with the dynamic key
+    // FAL 클라이언트 초기화
     fal.config({
         credentials: falApiKey
     });
@@ -52,102 +52,89 @@ export async function POST(req: NextRequest) {
         let output: OutputType;
 
         if (result.data.images) {
-            const entries: { url: string; file_url: string }[] = [];
+            const entries: { url: string; fileUrl: string }[] = [];
 
             for (const item of result.data.images) {
-                const file_url = item.url;
+                const fileUrl = item.url;
                 let extension: string;
                 let filename: string;
-                let new_file_url: string;
+                let newFileUrl: string;
 
-                if (file_url.includes("base64")) {
-                    extension = item.content_type === "image/jpeg" ? "jpg" : "png";
+                if (fileUrl.includes('base64')) {
+                    extension = item.content_type === 'image/jpeg' ? 'jpg' : 'png';
                     filename = `${generateRandomFileName()}.${extension}`;
 
-                    const imageData = file_url.split(",")[1];
+                    const imageData = fileUrl.split(',')[1];
 
-                    if(localSave) {
-
-                        const filePath = path.join(process.cwd(), uploadPath, folderPath, filename);
+                    if (LOCAL_SAVE) {
+                        const filePath = path.join(process.cwd(), UPLOAD_PATH, folderPath, filename);
                         fs.writeFileSync(filePath, imageData);
-                        new_file_url = uploadUrl + path.posix.join(folderPath, filename);
-
+                        newFileUrl = UPLOAD_URL + path.posix.join(folderPath, filename);
                     } else {
-
-                        // do nothing for S3
-                        // new_file_url = await saveFileToS3(folderPath, filename, imageData);
-                        new_file_url = '';
-
+                        // S3 저장 시 아래 주석 해제
+                        // newFileUrl = await saveFileToS3(folderPath, filename, imageData);
+                        newFileUrl = '';
                     }
                 } else {
-                    extension = getFileExtension(file_url);
+                    extension = getFileExtension(fileUrl);
                     filename = `${generateRandomFileName()}.${extension}`;
 
-                    const response = await axios.get(file_url, { responseType: "arraybuffer" });
+                    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
 
-                    if(localSave) {
-
+                    if (LOCAL_SAVE) {
                         const fileData = Buffer.from(response.data);
-
-                        const filePath = path.join(process.cwd(), uploadPath, folderPath, filename);
+                        const filePath = path.join(process.cwd(), UPLOAD_PATH, folderPath, filename);
                         fs.writeFileSync(filePath, fileData);
-                        new_file_url = uploadUrl + path.posix.join(folderPath, filename);
-
+                        newFileUrl = UPLOAD_URL + path.posix.join(folderPath, filename);
                     } else {
-
-                        // do nothing for S3
-                        // new_file_url = await saveFileToS3(folderPath, filename, response.data);
-                        new_file_url = '';
-
+                        // S3 저장 시 아래 주석 해제
+                        // newFileUrl = await saveFileToS3(folderPath, filename, response.data);
+                        newFileUrl = '';
                     }
                 }
 
                 entries.push({
-                    url: new_file_url,
-                    file_url,
+                    url: newFileUrl,
+                    fileUrl,
                 });
             }
 
             output = { entries };
 
         } else if (result.data.image || result.data.audio || result.data.audio_file || result.data.video) {
-            let file_url = "";
-            if (result.data.image) file_url = result.data.image.url;
+            let fileUrl = '';
+            if (result.data.image) fileUrl = result.data.image.url;
             if (result.data.audio) {
                 if (Array.isArray(result.data.audio)) {
-                    file_url = result.data.audio[0].url; // take first item
+                    fileUrl = result.data.audio[0].url; // 첫 번째 항목 사용
                 } else {
-                    file_url = result.data.audio.url;
+                    fileUrl = result.data.audio.url;
                 }
             }
-            if (result.data.audio_file) file_url = result.data.audio_file.url;
-            if (result.data.video) file_url = result.data.video.url;
+            if (result.data.audio_file) fileUrl = result.data.audio_file.url;
+            if (result.data.video) fileUrl = result.data.video.url;
 
-            let filename = file_url.split("/").pop() || "file";
+            let filename = fileUrl.split('/').pop() || 'file';
             filename = shortName(filename);
 
-            const response = await axios.get(file_url, { responseType: "arraybuffer" });
+            const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
 
-            let new_file_url: string;
+            let newFileUrl: string;
 
-            if(localSave) {
-
+            if (LOCAL_SAVE) {
                 const fileData = Buffer.from(response.data);
-
-                const filePath = path.join(process.cwd(), uploadPath, folderPath, filename);
+                const filePath = path.join(process.cwd(), UPLOAD_PATH, folderPath, filename);
                 fs.writeFileSync(filePath, fileData);
-                new_file_url = uploadUrl + path.posix.join(folderPath, filename);
-
+                newFileUrl = UPLOAD_URL + path.posix.join(folderPath, filename);
             } else {
-
-                // do nothing for S3
-                // new_file_url = await saveFileToS3(folderPath, filename, response.data);
-                new_file_url = '';
+                // S3 저장 시 아래 주석 해제
+                // newFileUrl = await saveFileToS3(folderPath, filename, response.data);
+                newFileUrl = '';
             }
 
             const entries = [{
-                url: new_file_url,
-                file_url
+                url: newFileUrl,
+                fileUrl,
             }];
             output = { entries };
 
@@ -168,18 +155,18 @@ export async function POST(req: NextRequest) {
 }
 
 function shortName(filename: string): string {
-    const extension = filename.split(".").pop()?.toLowerCase() || "dat";
+    const extension = filename.split(".").pop()?.toLowerCase() || 'dat';
     const randomName = generateRandomFileName();
     return `${randomName}.${extension}`;
 }
 
 function getFileExtension(url: string): string {
     const pathname = new URL(url).pathname;
-    return pathname.split(".").pop()?.toLowerCase() || "dat";
+    return pathname.split(".").pop()?.toLowerCase() || 'dat';
 }
 
 function generateRandomString(length: number): string {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     return Array.from({ length }, () =>
         characters[Math.floor(Math.random() * characters.length)]
     ).join("");

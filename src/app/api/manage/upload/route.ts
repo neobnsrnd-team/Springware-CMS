@@ -4,8 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import { writeFile, mkdir } from 'fs/promises';
 
+import { normalizeUploadUrl } from '@/lib/upload-utils';
+
 const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
-const UPLOAD_URL = normalizeUploadUrl(process.env.UPLOAD_URL || "uploads/");
+const UPLOAD_URL = normalizeUploadUrl(process.env.UPLOAD_URL || 'uploads/');
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 export async function POST(request: NextRequest) {
@@ -18,38 +20,38 @@ export async function POST(request: NextRequest) {
             return Response.json({ error: '파일이 없습니다.' }, { status: 400 });
         }
 
-        // Security: prevent directory traversal
+        // 보안: 디렉토리 트래버설 방지
         if (targetPath.includes('..')) {
             return Response.json({ error: '유효하지 않은 경로입니다.' }, { status: 400 });
         }
 
-        // Check file size
+        // 파일 크기 검증
         if (file.size > MAX_FILE_SIZE) {
             return Response.json({ 
                 error: `파일 크기가 초과되었습니다. 최대 ${MAX_FILE_SIZE / 1024 / 1024}MB까지 업로드 가능합니다.`
             }, { status: 400 });
         }
 
-        // Sanitize filename
+        // 파일명 새니타이징 (특수문자 → _)
         const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        
-        // Build full path
+
+        // 업로드 경로 구성
         const uploadDir = path.join(process.cwd(), UPLOAD_PATH, targetPath);
         const filePath = path.join(uploadDir, filename);
 
-        // Create directory if it doesn't exist
+        // 디렉토리가 없으면 생성
         if (!fs.existsSync(uploadDir)) {
             await mkdir(uploadDir, { recursive: true });
         }
 
-        // Check if file already exists
+        // 동일한 파일 존재 여부 확인
         if (fs.existsSync(filePath)) {
             return Response.json({ 
                 error: '이미 존재하는 파일입니다.'
             }, { status: 409 });
         }
 
-        // Convert file to buffer and write
+        // 파일 버퍼 변환 후 저장
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         await writeFile(filePath, buffer);
@@ -70,25 +72,3 @@ export async function POST(request: NextRequest) {
     }
 }
 
-function normalizeUploadUrl(url: string): string {
-    let safe = url.trim();
-
-    // Case 1: Absolute URL (http/https)
-    if (/^https?:\/\//i.test(safe)) {
-        return safe.endsWith("/") ? safe : safe + "/";
-    }
-
-    // Case 2: Relative server path
-    if (!safe.startsWith("/")) {
-        safe = "/" + safe;
-    }
-
-    if (!safe.endsWith("/")) {
-        safe += "/";
-    }
-
-    // Collapse duplicate slashes (but keep // in http://)
-    safe = safe.replace(/([^:]\/)\/+/g, "$1");
-
-    return safe;
-}

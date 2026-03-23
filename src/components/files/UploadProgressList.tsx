@@ -1,5 +1,7 @@
+// src/components/files/UploadProgressList.tsx
+'use client';
+
 import { Upload, X } from 'lucide-react';
-import React from 'react';
 
 export interface UploadProgress {
     name: string;
@@ -8,12 +10,12 @@ export interface UploadProgress {
     error?: string;
 }
 
-interface Props {
+export interface UploadProgressListProps {
     progressList: UploadProgress[];
     onRemove: (name: string) => void;
 }
 
-export default function UploadProgressList({ progressList, onRemove }: Props) {
+export default function UploadProgressList({ progressList, onRemove }: UploadProgressListProps) {
     return (
         <div className="mb-4 space-y-2">
         {progressList.map((progress, index) => (
@@ -43,7 +45,7 @@ export default function UploadProgressList({ progressList, onRemove }: Props) {
                             <p className="text-xs text-red-600">{progress.error}</p>
                         )}
                         {progress.status === 'success' && !progress.name.includes('deleted') && (
-                            <p className="text-xs text-green-600">Upload complete</p>
+                            <p className="text-xs text-green-600">업로드 완료</p>
                         )}
                         {progress.status === 'uploading' && <p className="text-xs text-[#0046A4]">업로드 중...</p>}
                     </div>

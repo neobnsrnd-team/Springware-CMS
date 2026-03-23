@@ -1,11 +1,14 @@
+// src/components/files/Breadcrumbs.tsx
+'use client';
+
 import { ChevronRight } from 'lucide-react';
 
-interface Props {
+export interface BreadcrumbsProps {
     currentPath: string;
     navigateToBreadcrumb: (index: number) => void;
 }
 
-export default function Breadcrumbs({ currentPath, navigateToBreadcrumb }: Props) {
+export default function Breadcrumbs({ currentPath, navigateToBreadcrumb }: BreadcrumbsProps) {
     const getBreadcrumbs = () => (currentPath ? ['Home', ...currentPath.split('/')] : ['Home']);
 
     return (

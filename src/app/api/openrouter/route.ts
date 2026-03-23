@@ -1,11 +1,12 @@
 // src/app/api/openrouter/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 export async function POST(req: NextRequest) {
     try {
-        const url = "https://openrouter.ai/api/v1/chat/completions";
+        const url = 'https://openrouter.ai/api/v1/chat/completions';
         const DEFAULT_MODEL = 'openai/gpt-4o-mini';
         const DEFAULT_TEMPERATURE = 0.6;
         const DEFAULT_TOP_P = 0.9;
@@ -22,15 +23,15 @@ export async function POST(req: NextRequest) {
 
         try {
             if (functs.length > 0) {
-                // --- Function Calling Branch ---
+                // --- Function Calling 처리 ---
 
                 const tools = [
                     {
-                        type: "function",
+                        type: 'function',
                         function: {
-                            ...functs[0]
-                        }
-                    }
+                            ...functs[0],
+                        },
+                    },
                 ];
 
                 const response = await fetch(url, {
@@ -41,11 +42,9 @@ export async function POST(req: NextRequest) {
                     },
                     body: JSON.stringify({
                         model: 'anthropic/claude-3.5-sonnet',
-                        /*
-                        Models for function calling:
-                        - anthropic/claude-3.5-sonnet
-                        - qwen/qwen-2.5-72b-instruct
-                        */
+                        // Function Calling 지원 모델:
+                        // - anthropic/claude-3.5-sonnet
+                        // - qwen/qwen-2.5-72b-instruct
                         messages,
                         temperature: parseFloat(temperature) || DEFAULT_TEMPERATURE,
                         top_p: parseFloat(topP) || DEFAULT_TOP_P,
@@ -73,7 +72,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ answer, usage });
 
             } else {
-                // --- Content Generation Branch ---
+                // --- 콘텐츠 생성 처리 ---
 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -99,14 +98,15 @@ export async function POST(req: NextRequest) {
 
         } catch (error) {
             return NextResponse.json(
-                { ok: false, status: 500, error: error instanceof Error ? error.message : 'Unknown error' },
+                { ok: false, status: 500, error: error instanceof Error ? error.message : '알 수 없는 오류' },
                 { status: 200 }
             );
         }
 
-    } catch (e) {
+    } catch (error) {
+        console.error('OpenRouter 요청 실패:', error);
         return NextResponse.json(
-            { ok: true, status: 500, error: '서버 오류가 발생했습니다.' },
+            { ok: false, status: 500, error: '서버 오류가 발생했습니다.' },
             { status: 200 }
         );
     }

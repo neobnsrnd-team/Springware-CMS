@@ -9,7 +9,7 @@ interface CreateFolderModalProps {
     onClose: () => void;
     currentPath: string;
     onFolderCreated: (folderName: string) => void;
-    apiEndpoint?: string; // New prop for API endpoint
+    apiEndpoint?: string;
 }
 
 export default function CreateFolderModal({
@@ -17,14 +17,14 @@ export default function CreateFolderModal({
     onClose,
     currentPath,
     onFolderCreated,
-    apiEndpoint = '/api/manage/addfolder' // Default endpoint
+    apiEndpoint = '/api/manage/addfolder'
 }: CreateFolderModalProps) {
     const [folderName, setFolderName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Reset state when modal opens/closes
+    // 모달 열고 닫을 때 상태 초기화
     useEffect(() => {
         if (isOpen) {
         setFolderName('');
@@ -32,14 +32,14 @@ export default function CreateFolderModal({
         }
     }, [isOpen]);
 
-    // Auto-focus input
+    // 모달 열릴 때 입력창 포커스
     useEffect(() => {
         if (isOpen && inputRef.current) {
         inputRef.current.focus();
         }
     }, [isOpen]);
 
-    // Handle Escape key
+    // Escape 키로 모달 닫기
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape' && isOpen) {
@@ -55,7 +55,7 @@ export default function CreateFolderModal({
 
     const handleSubmit = async () => {
         if (!folderName.trim()) {
-            setError('Folder name is required');
+            setError('폴더 이름을 입력해주세요.');
             return;
         }
 
@@ -74,7 +74,7 @@ export default function CreateFolderModal({
 
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.error || 'Failed to create folder');
+                throw new Error(errorData.error || '폴더 생성에 실패했습니다.');
             }
 
             const result = await res.json();
@@ -105,12 +105,12 @@ export default function CreateFolderModal({
         >
             <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl relative" style={{ boxShadow: '0 24px 64px rgba(0,70,164,0.15)' }}>
 
-                <h3 id="create-folder-title" className="text-lg font-semibold text-gray-900">Create New Folder</h3>
+                <h3 id="create-folder-title" className="text-lg font-semibold text-gray-900">새 폴더 만들기</h3>
                             
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-[#0046A4] focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 rounded p-1 cursor-pointer"
-                    aria-label="Close"
+                    aria-label="닫기"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -118,7 +118,7 @@ export default function CreateFolderModal({
                 <div className="mt-6 space-y-4">
                     <div>
                         <label htmlFor="folder-name" className="block text-sm font-medium text-gray-700 mb-1">
-                            Folder name
+                            폴더 이름
                         </label>
                         <input
                             ref={inputRef}
@@ -133,7 +133,7 @@ export default function CreateFolderModal({
                             className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 focus:border-[#0046A4] ${
                                 error ? 'border-red-500 bg-red-50' : 'border-gray-300'
                             }`}
-                            placeholder="Enter folder name"
+                            placeholder="폴더 이름 입력"
                             aria-invalid={!!error}
                             aria-describedby={error ? "folder-error" : undefined}
                         />
@@ -151,7 +151,7 @@ export default function CreateFolderModal({
                             disabled={isCreating}
                             className="px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-xl hover:bg-[#EBF4FF] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#0046A4]/30 cursor-pointer"
                         >
-                            Cancel
+                            취소
                         </button>
                         <button
                             type="button"
@@ -162,10 +162,10 @@ export default function CreateFolderModal({
                         {isCreating ? (
                             <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Creating...
+                            생성 중...
                             </>
                         ) : (
-                            'Create'
+                            '만들기'
                         )}
                         </button>
                     </div>

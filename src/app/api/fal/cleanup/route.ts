@@ -1,10 +1,10 @@
 // src/app/api/fal/cleanup/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as fs from "fs/promises";
-import * as path from "path";
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
-const uploadPath = process.env.UPLOAD_PATH || '';
+const UPLOAD_PATH = process.env.UPLOAD_PATH || '';
 
 export async function POST(
     request: NextRequest) {
@@ -38,13 +38,13 @@ async function cleanup(input: Record<string, unknown>): Promise<void> {
     for (const name in input) {
         const value = input[name];
 
-        if (typeof value === "string" && value.includes("amazonaws.com")) {
+        if (typeof value === 'string' && value.includes('amazonaws.com')) {
 
-            // do nothing for S3 URLs
+            // S3 URL은 삭제하지 않음
 
-        } else if (typeof value === "string") {
+        } else if (typeof value === 'string') {
             const filename = path.basename(value);
-            const inputFilePath = path.join(uploadPath, filename);
+            const inputFilePath = path.join(UPLOAD_PATH, filename);
 
             await fs.access(inputFilePath);
             await fs.unlink(inputFilePath);

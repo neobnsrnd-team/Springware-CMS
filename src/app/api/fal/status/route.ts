@@ -1,7 +1,7 @@
 // src/app/api/fal/status/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fal } from "@fal-ai/client";
+import { fal } from '@fal-ai/client';
 
 const FAL_API_KEY = process.env.FAL_API_KEY;
 
@@ -17,7 +17,7 @@ export async function POST(
     const falApiKey = FAL_API_KEY;
     if (!falApiKey) return NextResponse.json({ error: 'FAL API 키를 찾을 수 없습니다.' }, { status: 403 });
 
-    // Configure FAL client with the dynamic key
+    // FAL 클라이언트 초기화
     fal.config({
         credentials: falApiKey
     });
