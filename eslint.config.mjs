@@ -10,15 +10,29 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),
   {
     ignores: [
       "node_modules/**",
       ".next/**",
       "out/**",
       "build/**",
+      "public/**",
       "next-env.d.ts",
     ],
+  },
+  {
+    rules: {
+      // console.log 커밋 금지 (error/warn은 허용)
+      "no-console": ["warn", { allow: ["error", "warn"] }],
+    },
+  },
+  {
+    // seed 스크립트는 CLI 실행용이므로 console.log 허용
+    files: ["src/db/seed/**", "scripts/**"],
+    rules: {
+      "no-console": "off",
+    },
   },
 ];
 

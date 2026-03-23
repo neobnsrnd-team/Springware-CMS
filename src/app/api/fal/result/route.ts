@@ -18,10 +18,7 @@ interface CustomData {
     [key: string]: unknown; // allow additional fields
 }
 
-type OutputType =
-    | { entries: { url: string; fileUrl: string }[] }
-    | string
-    | unknown;
+type OutputType = { entries: { url: string; fileUrl: string }[] } | string | unknown;
 
 interface PostRequestBody {
     request_id: string;
@@ -30,13 +27,12 @@ interface PostRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-
     const falApiKey = FAL_API_KEY;
     if (!falApiKey) return NextResponse.json({ error: 'FAL API 키를 찾을 수 없습니다.' }, { status: 403 });
 
     // FAL 클라이언트 초기화
     fal.config({
-        credentials: falApiKey
+        credentials: falApiKey,
     });
 
     const { request_id, model, customData }: PostRequestBody = await req.json();
@@ -100,7 +96,6 @@ export async function POST(req: NextRequest) {
             }
 
             output = { entries };
-
         } else if (result.data.image || result.data.audio || result.data.audio_file || result.data.video) {
             let fileUrl = '';
             if (result.data.image) fileUrl = result.data.image.url;
@@ -132,44 +127,42 @@ export async function POST(req: NextRequest) {
                 newFileUrl = '';
             }
 
-            const entries = [{
-                url: newFileUrl,
-                fileUrl,
-            }];
+            const entries = [
+                {
+                    url: newFileUrl,
+                    fileUrl,
+                },
+            ];
             output = { entries };
-
         } else if (result.data.output) {
             output = result.data.output;
         } else {
-            output = Object.values(result.data)[0] || "";
+            output = Object.values(result.data)[0] || '';
         }
 
         return NextResponse.json({ ok: true, data: output, result }, { status: 200 });
-
     } catch (error) {
         return NextResponse.json(
             { ok: false, error: error instanceof Error ? error.message : '알 수 없는 오류' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
 
 function shortName(filename: string): string {
-    const extension = filename.split(".").pop()?.toLowerCase() || 'dat';
+    const extension = filename.split('.').pop()?.toLowerCase() || 'dat';
     const randomName = generateRandomFileName();
     return `${randomName}.${extension}`;
 }
 
 function getFileExtension(url: string): string {
     const pathname = new URL(url).pathname;
-    return pathname.split(".").pop()?.toLowerCase() || 'dat';
+    return pathname.split('.').pop()?.toLowerCase() || 'dat';
 }
 
 function generateRandomString(length: number): string {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () =>
-        characters[Math.floor(Math.random() * characters.length)]
-    ).join("");
+    return Array.from({ length }, () => characters[Math.floor(Math.random() * characters.length)]).join('');
 }
 
 function generateRandomFileName(s?: string): string {

@@ -82,7 +82,7 @@ Usage:
                     <input type="number" inputmode="decimal" class="lc-input" data-key="rate" value="4.0" min="0.1" max="20" step="0.1"/>
                     <span class="lc-unit">%</span>
                 </div>
-                <input type="range" class="lc-range" data-key="range" min="0.1" max="20" step="0.1" value="4.0"/>
+                <input type="range" class="lc-range" data-key="rate" min="0.1" max="20" step="0.1" value="4.0"/>
                 <div class="lc-range-labels"><span>0.1%</span><span>20%</span></div>
             </div>
             <div class="lc-field">

@@ -1,7 +1,7 @@
 // src/app/view/page.tsx
 
 import { Metadata } from 'next';
-import { getPageById, getLatestHistory } from '@/db/repository/page.repository';
+import { getPageById } from '@/db/repository/page.repository';
 import ViewClient from './ViewClient';
 
 // Override default metadata from layout.tsx for this page
@@ -15,20 +15,14 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-// DB에서 페이지 로드
+// DB에서 페이지 로드 — PAGE_DESC 직접 읽기 (HISTORY는 승인 이력 전용)
 async function loadPage(bank: string): Promise<string> {
     const page = await getPageById(bank);
     if (!page) return '';
-
-    const history = await getLatestHistory(bank);
-    return history?.RENDERED_HTML ?? page.PAGE_DESC ?? '';
+    return page.PAGE_DESC ?? '';
 }
 
-export default async function View({
-    searchParams,
-}: {
-    searchParams: Promise<{ bank?: string }>;
-}) {
+export default async function View({ searchParams }: { searchParams: Promise<{ bank?: string }> }) {
     const params = await searchParams;
     // 경로 순회 방지: 영문·숫자·하이픈만 허용 (커스텀 탭 ID 포함)
     const rawBank = params.bank ?? '';
@@ -42,7 +36,5 @@ export default async function View({
         html = '<p style="color:red;">저장된 콘텐츠가 없습니다. 에디터에서 저장 후 다시 시도하세요.</p>';
     }
 
-    return (
-        <ViewClient html={html} />
-    );
+    return <ViewClient html={html} />;
 }
