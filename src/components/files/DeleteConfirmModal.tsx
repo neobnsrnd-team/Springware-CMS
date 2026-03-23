@@ -83,7 +83,11 @@ export default function DeleteConfirmModal({
                 <div
                     ref={handleRef}
                     className="flex items-center gap-3 mb-4"
-                    style={{ cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}
+                    style={{
+                        cursor: isDragging ? 'grabbing' : 'grab',
+                        userSelect: 'none',
+                        WebkitTapHighlightColor: 'transparent',
+                    }}
                 >
                     <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
                         <Trash2 className="w-6 h-6 text-red-600" />
@@ -92,15 +96,11 @@ export default function DeleteConfirmModal({
                         <h3 id="delete-confirm-title" className="text-lg font-semibold text-gray-900">
                             파일 삭제
                         </h3>
-                        <p className="text-sm text-gray-600">
-                            {itemCount}개 항목이 영구 삭제됩니다
-                        </p>
+                        <p className="text-sm text-gray-600">{itemCount}개 항목이 영구 삭제됩니다</p>
                     </div>
                 </div>
 
-                <p className="text-sm text-gray-600 mb-6">
-                    이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?
-                </p>
+                <p className="text-sm text-gray-600 mb-6">이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?</p>
 
                 <div className="flex items-center gap-3 justify-end">
                     <button
