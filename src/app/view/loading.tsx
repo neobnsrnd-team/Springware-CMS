@@ -16,9 +16,8 @@ export default function ViewLoading() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    background: '#dde1e7',
+                    background: '#ffffff',
                     overflowY: 'auto',
-                    padding: '40px 0 80px',
                 }}
             >
                 <div
