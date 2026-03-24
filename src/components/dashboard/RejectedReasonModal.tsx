@@ -52,14 +52,14 @@ export default function RejectedReasonModal({ page, onClose }: RejectedReasonMod
                         }}
                     >
                         {!page.thumbnail && (
-                            <span className="text-[40px] opacity-40">{VIEW_MODE_ICON[page.viewMode] ?? '🔄'}</span>
+                            <span className="text-[40px] opacity-40">{VIEW_MODE_ICON[page.viewMode]}</span>
                         )}
                     </div>
 
                     <p className="m-0 text-sm font-semibold text-[#111827] truncate mb-1" title={page.label}>
                         {page.label}
                     </p>
-                    <p className="m-0 text-xs text-[#9ca3af]">{VIEW_MODE_LABEL[page.viewMode] ?? page.viewMode}</p>
+                    <p className="m-0 text-xs text-[#9ca3af]">{VIEW_MODE_LABEL[page.viewMode]}</p>
                 </div>
 
                 {/* 반려 사유 */}
