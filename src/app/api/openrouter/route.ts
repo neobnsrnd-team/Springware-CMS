@@ -1,7 +1,7 @@
 // src/app/api/openrouter/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getErrorMessage } from '@/lib/api-response';
+import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 import { OPENROUTER_API_KEY } from '@/lib/env';
 
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
                 const data = await response.json();
 
                 if (data && data.error && data.error.message) {
-                    return NextResponse.json({ ok: false, status: 404, error: data.error.message }, { status: 200 });
+                    return contentBuilderErrorResponse(data.error.message);
                 }
 
                 const answer =
@@ -94,10 +94,10 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ answer, usage });
             }
         } catch (err: unknown) {
-            return NextResponse.json({ ok: false, status: 500, error: getErrorMessage(err) }, { status: 200 });
+            return contentBuilderErrorResponse(getErrorMessage(err));
         }
     } catch (err: unknown) {
         console.error('OpenRouter 요청 실패:', err);
-        return NextResponse.json({ ok: false, status: 500, error: getErrorMessage(err) }, { status: 200 });
+        return contentBuilderErrorResponse(getErrorMessage(err));
     }
 }
