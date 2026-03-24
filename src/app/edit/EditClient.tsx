@@ -127,7 +127,7 @@ const CMS_COLORS = [
     '#FF00FF',
     '#FF0080',
 ];
-if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>).__cmsColors = CMS_COLORS;
+if (typeof window !== 'undefined') window.__cmsColors = CMS_COLORS;
 
 interface TabData {
     id: string;
@@ -228,8 +228,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             }, 300);
         };
         // 툴바의 이동/복제/삭제 후 ContentBuilder 재연결을 위해 전역 노출
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).builderReinit = debouncedReinit;
+        window.builderReinit = debouncedReinit;
 
         const upload = async (file: File) => {
             const formData = new FormData();
@@ -246,7 +245,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             // 삽입 HTML 앞뒤 공백 제거 — ContentBuilder 'row' 모드에서
             // 선행 개행이 childNodes[0]을 텍스트 노드로 만들어
             // element.tagName.toLowerCase() 크래시가 발생하는 버그 방지
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder onAdd 타입이 (html: string) => string을 허용하지 않아 불가피하게 사용
             onAdd: ((html: string) => html.trim()) as any,
             upload,
 
@@ -327,7 +326,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             // 블록 추가/변경 시 플러그인 CSS·JS 재적용 (디바운스)
             onChange: debouncedReinit,
             onSnippetAdd: debouncedReinit,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder 생성자 옵션 타입이 불완전하여 불가피하게 사용
         } as any);
 
         // ContentBuilder 기본 피커는 사용하지 않습니다.
@@ -489,8 +488,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 },
             });
             // Make runtime available globally for ContentBuilder editor
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).builderRuntime = runtimeRef.current;
+            window.builderRuntime = runtimeRef.current;
         } catch (error) {
             console.error('런타임 초기화 오류:', error);
         }
@@ -991,10 +989,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             builderRef.current = null;
             runtimeRef.current?.destroy();
             runtimeRef.current = null;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            delete (window as any).builderRuntime;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            delete (window as any).builderReinit;
+            window.builderRuntime = undefined;
+            window.builderReinit = undefined;
         };
     }, []);
 
@@ -1048,12 +1044,10 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         let loaded = 0;
 
         const mergeAll = () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const w = window as any;
             const raw: BasicBlock[] = [
-                ...(w.data_basic?.snippets ?? []),
-                ...(w.data_basic_mobile?.snippets ?? []),
-                ...(w.data_basic_responsive?.snippets ?? []),
+                ...(window.data_basic?.snippets ?? []),
+                ...(window.data_basic_mobile?.snippets ?? []),
+                ...(window.data_basic_responsive?.snippets ?? []),
             ];
             // 상대경로 → 절대경로 변환 (캔버스에서 /edit 기준으로 해석되는 문제 방지)
             const fixed = raw.map((s: BasicBlock) => ({

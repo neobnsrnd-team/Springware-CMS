@@ -55,14 +55,14 @@ export async function POST(req: NextRequest) {
 
         if (useResponsesEndpoint) {
             // Normalize v1/responses format to match v1/chat/completions
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const messageOutput = data.output.find((item: any) => item.type === 'message');
+            type ResponseOutputItem = { type: string; role: string; content: { text: string }[] };
+            const messageOutput = (data.output as ResponseOutputItem[]).find((item) => item.type === 'message');
             answer = {
                 choices: [
                     {
                         message: {
-                            role: messageOutput.role,
-                            content: messageOutput.content[0].text,
+                            role: messageOutput?.role,
+                            content: messageOutput?.content[0]?.text,
                         },
                     },
                 ],
