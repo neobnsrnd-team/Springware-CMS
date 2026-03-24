@@ -4,6 +4,8 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
+import ApprovalRequestModal from './ApprovalRequestModal';
+
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
     { value: 'date', label: '최신 수정순' },
@@ -83,6 +85,9 @@ export default function DashboardClient({
         setPages(initialPages);
         setLocalTotalCount(totalCount);
     }, [initialPages, totalCount]);
+
+    // 승인 요청 모달
+    const [approvalTarget, setApprovalTarget] = useState<PageCard | null>(null);
 
     // 새 페이지 생성 모달
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -171,6 +176,35 @@ export default function DashboardClient({
         } catch (err: unknown) {
             console.error('페이지 생성 실패:', err);
             setCreating(false);
+        }
+    }
+
+    // 승인 요청 — 낙관적 업데이트 후 API 호출
+    async function handleApprovalRequest(approverId: string, approverName: string) {
+        if (!approvalTarget) return;
+
+        const { id: targetId, approveState: originalApproveState } = approvalTarget;
+
+        // 낙관적 업데이트
+        setPages((prev) => prev.map((p) => (p.id === targetId ? { ...p, approveState: 'PENDING' } : p)));
+        setApprovalTarget(null);
+
+        try {
+            const res = await fetch(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ approverId, approverName }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                // 실패 시 해당 카드만 원래 상태로 롤백
+                setPages((prev) =>
+                    prev.map((p) => (p.id === targetId ? { ...p, approveState: originalApproveState } : p)),
+                );
+            }
+        } catch (err: unknown) {
+            console.error('승인 요청 실패:', err);
+            setPages((prev) => prev.map((p) => (p.id === targetId ? { ...p, approveState: originalApproveState } : p)));
         }
     }
 
@@ -418,11 +452,19 @@ export default function DashboardClient({
                                         </p>
                                     </div>
 
-                                    {/* 카드 푸터: 삭제 버튼 */}
+                                    {/* 카드 푸터: 승인 요청 + 삭제 버튼 */}
                                     <div
-                                        className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end"
+                                        className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-1.5"
                                         onClick={(e) => e.stopPropagation()}
                                     >
+                                        {(page.approveState === 'WORK' || page.approveState === 'REJECTED') && (
+                                            <button
+                                                onClick={() => setApprovalTarget(page)}
+                                                className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                            >
+                                                승인 요청
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => handleDeletePage(page.id, page.label)}
                                             className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
@@ -485,6 +527,15 @@ export default function DashboardClient({
                     </div>
                 )}
             </main>
+
+            {/* ── 승인 요청 모달 ── */}
+            {approvalTarget && (
+                <ApprovalRequestModal
+                    page={approvalTarget}
+                    onClose={() => setApprovalTarget(null)}
+                    onSubmit={handleApprovalRequest}
+                />
+            )}
 
             {/* ── 새 페이지 생성 모달 ── */}
             {showCreateModal && (
