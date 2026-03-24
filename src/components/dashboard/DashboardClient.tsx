@@ -442,26 +442,12 @@ export default function DashboardClient({
                                             >
                                                 {vmStyle.label}
                                             </span>
-                                            {page.approveState === 'REJECTED' ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setRejectedTarget(page);
-                                                    }}
-                                                    className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold cursor-pointer border-0 underline decoration-dotted"
-                                                    style={{ background: apStyle.bg, color: apStyle.color }}
-                                                    title="반려 사유 확인"
-                                                >
-                                                    {apStyle.label}
-                                                </button>
-                                            ) : (
-                                                <span
-                                                    className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
-                                                    style={{ background: apStyle.bg, color: apStyle.color }}
-                                                >
-                                                    {apStyle.label}
-                                                </span>
-                                            )}
+                                            <span
+                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
+                                                style={{ background: apStyle.bg, color: apStyle.color }}
+                                            >
+                                                {apStyle.label}
+                                            </span>
                                         </div>
 
                                         <p className="m-0 text-[11px] text-[#9ca3af]">
@@ -474,6 +460,14 @@ export default function DashboardClient({
                                         className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-1.5"
                                         onClick={(e) => e.stopPropagation()}
                                     >
+                                        {page.approveState === 'REJECTED' && (
+                                            <button
+                                                onClick={() => setRejectedTarget(page)}
+                                                className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                            >
+                                                반려 사유 확인
+                                            </button>
+                                        )}
                                         {(page.approveState === 'WORK' || page.approveState === 'REJECTED') && (
                                             <button
                                                 onClick={() => setApprovalTarget(page)}
