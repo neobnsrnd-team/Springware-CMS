@@ -1,4 +1,4 @@
-// src/app/api/assets/delete/route.ts
+// src/app/api/manage/delete/route.ts
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
@@ -12,13 +12,13 @@ export async function DELETE(request: NextRequest) {
         const { files } = body;
 
         if (!files || !Array.isArray(files) || files.length === 0) {
-            return Response.json({ error: 'No files provided' }, { status: 400 });
+            return Response.json({ error: '삭제할 파일이 없습니다.' }, { status: 400 });
         }
 
         // Security: prevent directory traversal
         for (const file of files) {
             if (file.includes('..')) {
-                return Response.json({ error: 'Invalid file path' }, { status: 400 });
+                return Response.json({ error: '유효하지 않은 파일 경로입니다.' }, { status: 400 });
             }
         }
 
@@ -32,7 +32,7 @@ export async function DELETE(request: NextRequest) {
 
                 // Check if file/directory exists
                 if (!fs.existsSync(absolutePath)) {
-                    errors.push(`${file}: Not found`);
+                    errors.push(`${file}: 파일을 찾을 수 없음`);
                     failedCount++;
                     continue;
                 }
@@ -49,9 +49,9 @@ export async function DELETE(request: NextRequest) {
                 }
 
                 deletedCount++;
-            } catch (err) {
-                console.error(`Failed to delete ${file}:`, err);
-                errors.push(`${file}: ${err instanceof Error ? err.message : 'Delete failed'}`);
+            } catch (error) {
+                console.error(`파일 삭제 실패 - ${file}:`, error);
+                errors.push(`${file}: ${error instanceof Error ? error.message : '삭제 실패'}`);
                 failedCount++;
             }
         }
@@ -59,28 +59,31 @@ export async function DELETE(request: NextRequest) {
         // Return results
         if (failedCount === 0) {
             return Response.json({
-                success: true,
+                ok: true,
                 deleted: deletedCount,
-                message: `Successfully deleted ${deletedCount} item(s)`
+                message: `${deletedCount}개 항목이 삭제되었습니다.`,
             });
         } else if (deletedCount === 0) {
-            return Response.json({
-                error: 'Failed to delete all items',
-                deleted: 0,
-                failed: failedCount,
-                errors
-            }, { status: 500 });
+            return Response.json(
+                {
+                    error: '모든 항목 삭제에 실패했습니다.',
+                    deleted: 0,
+                    failed: failedCount,
+                    errors,
+                },
+                { status: 500 },
+            );
         } else {
             return Response.json({
-                success: true,
+                ok: true,
                 deleted: deletedCount,
                 failed: failedCount,
-                message: `Deleted ${deletedCount} item(s), ${failedCount} failed`,
-                errors
+                message: `${deletedCount}개 삭제 완료, ${failedCount}개 실패`,
+                errors,
             });
         }
     } catch (error) {
-        console.error('Delete error:', error);
-        return Response.json({ error: 'Failed to delete files' }, { status: 500 });
+        console.error('삭제 오류:', error);
+        return Response.json({ error: '파일 삭제에 실패했습니다.' }, { status: 500 });
     }
 }

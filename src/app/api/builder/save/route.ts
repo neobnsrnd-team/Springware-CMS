@@ -3,23 +3,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updatePage, createPage, getPageById } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
+import { isValidBankId } from '@/lib/validators';
+import { writePageHtml } from '@/lib/page-file';
 
-// bank id 검증: 영문 소문자·숫자·하이픈만 허용, 1~64자 (디렉토리 트래버설 방지)
-function isValidBankId(id: unknown): id is string {
-    return typeof id === 'string' && /^[a-z0-9-]{1,64}$/.test(id);
-}
-
-// DB에 페이지 저장
+// 페이지 저장: 파일 먼저 쓰기 → 성공 시 DB에 FILE_PATH 기록
+// PAGE_DESC에 HTML 저장하지 않음 (파일만 저장 정책)
 async function savePage(bank: string, html: string, pageName?: string, viewMode?: string): Promise<void> {
     const { userId, userName } = getCurrentUser();
+
+    // 1. 파일 먼저 저장 (실패 시 예외 → DB 호출 안 함)
+    const filePath = await writePageHtml(bank, html);
+
+    // 2. DB 업데이트 (FILE_PATH만 기록)
     const existing = await getPageById(bank);
 
     if (existing) {
         await updatePage({
             pageId: bank,
             pageName: pageName,
-            pageDesc: html,
-            renderedHtml: html,
+            viewMode: viewMode as 'mobile' | 'web' | 'responsive' | undefined,
+            filePath,
             lastModifierId: userId,
             lastModifierName: userName,
         });
@@ -27,11 +30,10 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
         await createPage({
             pageId: bank,
             pageName: pageName ?? bank,
+            viewMode: (viewMode as 'mobile' | 'web' | 'responsive') ?? 'mobile',
+            filePath,
             createUserId: userId,
             createUserName: userName,
-            pageDesc: html,
-            renderedHtml: html,
-            viewMode: viewMode ?? 'mobile',
         });
     }
 }
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
         const bank = isValidBankId(body.bank) ? body.bank : 'ibk';
 
         if (html === undefined || html === null) {
-            return NextResponse.json({ error: 'Missing html content' }, { status: 400 });
+            return NextResponse.json({ error: 'HTML 콘텐츠가 없습니다.' }, { status: 400 });
         }
 
         await savePage(
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ ok: true });
     } catch (error) {
-        console.error('Failed to save page:', error);
-        return NextResponse.json({ error: 'Failed to save page' }, { status: 500 });
+        console.error('페이지 저장 실패:', error);
+        return NextResponse.json({ error: '페이지 저장에 실패했습니다.' }, { status: 500 });
     }
 }

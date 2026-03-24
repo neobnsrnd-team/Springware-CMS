@@ -11,52 +11,50 @@ import { SERVER_SELECT_BY_ID, SERVER_SELECT_LIST, SERVER_INSERT, SERVER_UPDATE_S
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
-
 // ═══════════════════════════════════════════════
 // 파일 전송 이력
 // ═══════════════════════════════════════════════
 
 /** 파일 전송 이력 단건 조회 */
 export async function getFileSendById(instanceId: string, fileId: string): Promise<FileSendHistory | null> {
-  const conn = await getConnection();
-  try {
-    const result = await conn.execute<FileSendHistory>(FILE_SEND_SELECT_BY_ID, { instanceId, fileId }, OBJ);
-    return result.rows?.[0] ?? null;
-  } finally {
-    await conn.close();
-  }
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<FileSendHistory>(FILE_SEND_SELECT_BY_ID, { instanceId, fileId }, OBJ);
+        return result.rows?.[0] ?? null;
+    } finally {
+        await conn.close();
+    }
 }
 
 /** 파일 전송 이력 등록 */
 export async function createFileSend(input: {
-  instanceId: string;
-  fileId: string;
-  fileSize?: number;
-  fileCrcValue?: string;
-  lastModifierId: string;
+    instanceId: string;
+    fileId: string;
+    fileSize?: number;
+    fileCrcValue?: string;
+    lastModifierId: string;
 }): Promise<void> {
-  await withTransaction(async (conn) => {
-    await conn.execute(FILE_SEND_INSERT, {
-      instanceId: input.instanceId,
-      fileId: input.fileId,
-      fileSize: input.fileSize ?? null,
-      fileCrcValue: input.fileCrcValue ?? null,
-      lastModifierId: input.lastModifierId,
+    await withTransaction(async (conn) => {
+        await conn.execute(FILE_SEND_INSERT, {
+            instanceId: input.instanceId,
+            fileId: input.fileId,
+            fileSize: input.fileSize ?? null,
+            fileCrcValue: input.fileCrcValue ?? null,
+            lastModifierId: input.lastModifierId,
+        });
     });
-  });
 }
 
 /** 인스턴스별 전송 이력 목록 */
 export async function getFileSendByInstance(instanceId: string): Promise<FileSendHistory[]> {
-  const conn = await getConnection();
-  try {
-    const result = await conn.execute<FileSendHistory>(FILE_SEND_SELECT_BY_INSTANCE, { instanceId }, OBJ);
-    return result.rows ?? [];
-  } finally {
-    await conn.close();
-  }
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<FileSendHistory>(FILE_SEND_SELECT_BY_INSTANCE, { instanceId }, OBJ);
+        return result.rows ?? [];
+    } finally {
+        await conn.close();
+    }
 }
-
 
 // ═══════════════════════════════════════════════
 // 서버 인스턴스
@@ -64,52 +62,52 @@ export async function getFileSendByInstance(instanceId: string): Promise<FileSen
 
 /** 서버 인스턴스 단건 조회 */
 export async function getServerById(instanceId: string): Promise<ServerInstance | null> {
-  const conn = await getConnection();
-  try {
-    const result = await conn.execute<ServerInstance>(SERVER_SELECT_BY_ID, { instanceId }, OBJ);
-    return result.rows?.[0] ?? null;
-  } finally {
-    await conn.close();
-  }
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<ServerInstance>(SERVER_SELECT_BY_ID, { instanceId }, OBJ);
+        return result.rows?.[0] ?? null;
+    } finally {
+        await conn.close();
+    }
 }
 
 /** 서버 인스턴스 목록 조회 */
 export async function getServerList(aliveYn?: UseYn): Promise<ServerInstance[]> {
-  const conn = await getConnection();
-  try {
-    const result = await conn.execute<ServerInstance>(SERVER_SELECT_LIST, { aliveYn: aliveYn ?? null }, OBJ);
-    return result.rows ?? [];
-  } finally {
-    await conn.close();
-  }
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<ServerInstance>(SERVER_SELECT_LIST, { aliveYn: aliveYn ?? null }, OBJ);
+        return result.rows ?? [];
+    } finally {
+        await conn.close();
+    }
 }
 
 /** 서버 인스턴스 등록 */
 export async function createServer(input: {
-  instanceId: string;
-  instanceName: string;
-  instanceDesc?: string;
-  instanceIp?: string;
-  instancePort?: number;
-  serverType?: string;
-  lastModifierId: string;
+    instanceId: string;
+    instanceName: string;
+    instanceDesc?: string;
+    instanceIp?: string;
+    instancePort?: number;
+    serverType?: string;
+    lastModifierId: string;
 }): Promise<void> {
-  await withTransaction(async (conn) => {
-    await conn.execute(SERVER_INSERT, {
-      instanceId: input.instanceId,
-      instanceName: input.instanceName,
-      instanceDesc: input.instanceDesc ?? null,
-      instanceIp: input.instanceIp ?? null,
-      instancePort: input.instancePort ?? null,
-      serverType: input.serverType ?? null,
-      lastModifierId: input.lastModifierId,
+    await withTransaction(async (conn) => {
+        await conn.execute(SERVER_INSERT, {
+            instanceId: input.instanceId,
+            instanceName: input.instanceName,
+            instanceDesc: input.instanceDesc ?? null,
+            instanceIp: input.instanceIp ?? null,
+            instancePort: input.instancePort ?? null,
+            serverType: input.serverType ?? null,
+            lastModifierId: input.lastModifierId,
+        });
     });
-  });
 }
 
 /** 서버 상태 갱신 (생존 확인) */
 export async function updateServerStatus(instanceId: string, aliveYn: UseYn, lastModifierId: string): Promise<void> {
-  await withTransaction(async (conn) => {
-    await conn.execute(SERVER_UPDATE_STATUS, { instanceId, aliveYn, lastModifierId });
-  });
+    await withTransaction(async (conn) => {
+        await conn.execute(SERVER_UPDATE_STATUS, { instanceId, aliveYn, lastModifierId });
+    });
 }

@@ -23,66 +23,66 @@ export default function FolderTree({
     onFolderClick,
     expandedFolders,
     onToggleFolder,
-    level = 0
+    level = 0,
 }: FolderTreeProps) {
     return (
         <>
-        {nodes.map(node => {
-            const isExpanded = expandedFolders.has(node.path);
-            const isActive = currentPath === node.path;
+            {nodes.map((node) => {
+                const isExpanded = expandedFolders.has(node.path);
+                const isActive = currentPath === node.path;
 
-            return (
-            <div key={node.path}>
-                <div
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
-                        isActive
-                        ? 'bg-[#EBF4FF] text-[#0046A4] font-medium'
-                        : 'hover:bg-[#EBF4FF] hover:text-[#0046A4] text-gray-700'
-                    }`}
-                    style={{ paddingLeft: `${level * 12 + 12}px` }}
-                >
-                    <button
-                        onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleFolder(node.path);
-                        }}
-                        className="p-0.5 hover:bg-[#C7D8F4] rounded flex-shrink-0 cursor-pointer"
-                    >
-                        {node.children?.length ? (
-                        isExpanded ? (
-                            <ChevronDown className="w-4 h-4" />
-                        ) : (
-                            <ChevronRight className="w-4 h-4" />
-                        )
-                        ) : (
-                        <div className="w-4 h-4" />
+                return (
+                    <div key={node.path}>
+                        <div
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
+                                isActive
+                                    ? 'bg-[#EBF4FF] text-[#0046A4] font-medium'
+                                    : 'hover:bg-[#EBF4FF] hover:text-[#0046A4] text-gray-700'
+                            }`}
+                            style={{ paddingLeft: `${level * 12 + 12}px` }}
+                        >
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleFolder(node.path);
+                                }}
+                                className="p-0.5 hover:bg-[#C7D8F4] rounded flex-shrink-0 cursor-pointer"
+                            >
+                                {node.children?.length ? (
+                                    isExpanded ? (
+                                        <ChevronDown className="w-4 h-4" />
+                                    ) : (
+                                        <ChevronRight className="w-4 h-4" />
+                                    )
+                                ) : (
+                                    <div className="w-4 h-4" />
+                                )}
+                            </button>
+                            <div
+                                onClick={() => onFolderClick(node.path)}
+                                className="flex items-center gap-2 flex-1 min-w-0"
+                            >
+                                {isExpanded ? (
+                                    <FolderOpen className="w-4 h-4 flex-shrink-0" />
+                                ) : (
+                                    <Folder className="w-4 h-4 flex-shrink-0" />
+                                )}
+                                <span className="text-sm truncate">{node.name}</span>
+                            </div>
+                        </div>
+                        {isExpanded && node.children && (
+                            <FolderTree
+                                nodes={node.children}
+                                currentPath={currentPath}
+                                onFolderClick={onFolderClick}
+                                expandedFolders={expandedFolders}
+                                onToggleFolder={onToggleFolder}
+                                level={level + 1}
+                            />
                         )}
-                    </button>
-                    <div
-                        onClick={() => onFolderClick(node.path)}
-                        className="flex items-center gap-2 flex-1 min-w-0"
-                    >
-                        {isExpanded ? (
-                            <FolderOpen className="w-4 h-4 flex-shrink-0" />
-                        ) : (
-                            <Folder className="w-4 h-4 flex-shrink-0" />
-                        )}
-                        <span className="text-sm truncate">{node.name}</span>
                     </div>
-                </div>
-                {isExpanded && node.children && (
-                <FolderTree
-                    nodes={node.children}
-                    currentPath={currentPath}
-                    onFolderClick={onFolderClick}
-                    expandedFolders={expandedFolders}
-                    onToggleFolder={onToggleFolder}
-                    level={level + 1}
-                />
-                )}
-            </div>
-            );
-        })}
+                );
+            })}
         </>
     );
 }

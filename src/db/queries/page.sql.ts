@@ -37,30 +37,31 @@ export const PAGE_COUNT = `
     AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
 `;
 
-/** 페이지 신규 생성 */
+/** 페이지 신규 생성 (W-3: VIEW_MODE 바인딩 추가) */
 export const PAGE_INSERT = `
   INSERT INTO SPW_CMS_PAGE (
-    PAGE_ID, PAGE_NAME, OWNER_DEPT_CODE, FILE_PATH,
+    PAGE_ID, PAGE_NAME, VIEW_MODE, OWNER_DEPT_CODE, FILE_PATH,
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
     APPROVE_STATE, PAGE_DESC, PAGE_DESC_DETAIL,
-    TEMPLATE_ID, THUMBNAIL, VIEW_MODE, USE_YN, IS_PUBLIC
+    TEMPLATE_ID, THUMBNAIL, TARGET_CD, USE_YN, IS_PUBLIC
   ) VALUES (
-    :pageId, :pageName, :ownerDeptCode, :filePath,
+    :pageId, :pageName, NVL(:viewMode, 'mobile'), :ownerDeptCode, :filePath,
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName,
     'WORK', :pageDesc, :pageDescDetail,
-    :templateId, :thumbnail, :viewMode, 'Y', 'Y'
+    :templateId, :thumbnail, :targetCd, 'Y', 'Y'
   )
 `;
 
-/** 페이지 내용 수정 (에디터 저장 시) */
+/** 페이지 내용 수정 (에디터 저장 시, W-3: VIEW_MODE 추가) */
 export const PAGE_UPDATE = `
   UPDATE SPW_CMS_PAGE
   SET PAGE_NAME = NVL(:pageName, PAGE_NAME),
+      VIEW_MODE = NVL(:viewMode, VIEW_MODE),
       PAGE_DESC = :pageDesc,
       PAGE_DESC_DETAIL = :pageDescDetail,
-      FILE_PATH = :filePath,
+      FILE_PATH = NVL(:filePath, FILE_PATH),
       THUMBNAIL = :thumbnail,
       LAST_MODIFIER_ID = :lastModifierId,
       LAST_MODIFIER_NAME = :lastModifierName
@@ -80,10 +81,22 @@ export const PAGE_UPDATE_APPROVE_STATE = `
   WHERE PAGE_ID = :pageId
 `;
 
-/** 논리 삭제 (USE_YN = 'N') */
-export const PAGE_DELETE = `
+/** 소프트 삭제 — 승인된 페이지 (USE_YN = 'N', HISTORY 보존) */
+export const PAGE_SOFT_DELETE = `
   UPDATE SPW_CMS_PAGE
   SET USE_YN = 'N',
       LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+`;
+
+/** 하드 삭제 — 미승인 페이지 (레코드 물리적 삭제) */
+export const PAGE_HARD_DELETE = `
+  DELETE FROM SPW_CMS_PAGE
+  WHERE PAGE_ID = :pageId
+`;
+
+/** COMP_PAGE_MAP 전체 삭제 (페이지 하드 삭제 시 연관 매핑 정리) */
+export const COMP_MAP_DELETE_BY_PAGE = `
+  DELETE FROM SPW_CMS_COMP_PAGE_MAP
   WHERE PAGE_ID = :pageId
 `;

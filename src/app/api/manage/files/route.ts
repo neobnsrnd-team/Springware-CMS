@@ -1,85 +1,69 @@
-// src/app/api/assets/files/route.ts
+// src/app/api/manage/files/route.ts
 import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
-const UPLOAD_URL = normalizeUploadUrl(process.env.UPLOAD_URL || "uploads/");
-const PAGE_SIZE = 10; // Files per page
+import { UPLOAD_PATH, UPLOAD_URL } from '@/lib/upload';
+const PAGE_SIZE = 10; // 페이지당 파일 수
 
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
         const relativePath = searchParams.get('path') || '';
-        
-        // Security: prevent directory traversal
+
+        // 보안: 디렉토리 트래버설 방지
         if (relativePath.includes('..')) {
-            return Response.json({ error: 'Invalid path' }, { status: 400 });
+            return Response.json({ error: '유효하지 않은 경로입니다.' }, { status: 400 });
         }
-        
-        const absolutePath = path.join(process.cwd(), UPLOAD_PATH, relativePath);
-        
+
+        const absoluteBasePath = path.join(process.cwd(), UPLOAD_PATH);
+        const absolutePath = path.join(absoluteBasePath, relativePath);
+
+        // 보안: uploads 디렉토리 범위 이탈 방지
+        if (!absolutePath.startsWith(absoluteBasePath)) {
+            return Response.json({ error: '유효하지 않은 경로입니다.' }, { status: 400 });
+        }
+
         if (!fs.existsSync(absolutePath)) {
-            return Response.json({ error: 'Directory not found' }, { status: 404 });
+            return Response.json({ error: '디렉토리를 찾을 수 없습니다.' }, { status: 404 });
         }
 
-        const allFiles = fs.readdirSync(absolutePath).map(file => {
-            const filePath = path.join(absolutePath, file);
-            const stats = fs.statSync(filePath);
-            const urlPath = relativePath ? `${relativePath}/${file}` : file;
-            
-            return {
-                name: file,
-                size: stats.size,
-                isDirectory: stats.isDirectory(),
-                url: `${UPLOAD_URL}${urlPath}`, // must start with "/"
-                modified: stats.mtime.getTime(),
-            };
-        })
-        // Sort: directories first, then by newest
-        .sort((a, b) => {
-        if (a.isDirectory && !b.isDirectory) return -1;
-        if (!a.isDirectory && b.isDirectory) return 1;
-        return b.modified - a.modified;
-        });
+        const allFiles = fs
+            .readdirSync(absolutePath)
+            .map((file) => {
+                const filePath = path.join(absolutePath, file);
+                const stats = fs.statSync(filePath);
+                const urlPath = relativePath ? `${relativePath}/${file}` : file;
 
-        // Simple offset-based pagination
+                return {
+                    name: file,
+                    size: stats.size,
+                    isDirectory: stats.isDirectory(),
+                    url: `${UPLOAD_URL}${urlPath}`,
+                    modified: stats.mtime.getTime(),
+                };
+            })
+            // 디렉토리 우선, 이후 최신순 정렬
+            .sort((a, b) => {
+                if (a.isDirectory && !b.isDirectory) return -1;
+                if (!a.isDirectory && b.isDirectory) return 1;
+                return b.modified - a.modified;
+            });
+
+        // offset 기반 페이지네이션
         const startIndex = (page - 1) * PAGE_SIZE;
         const paginatedFiles = allFiles.slice(startIndex, startIndex + PAGE_SIZE);
         const hasMore = startIndex + PAGE_SIZE < allFiles.length;
-        
-        return Response.json({ 
+
+        return Response.json({
             files: paginatedFiles,
             hasMore,
             nextPage: hasMore ? page + 1 : null,
-            currentPath: relativePath
+            currentPath: relativePath,
         });
     } catch (error) {
-        console.error('File listing error:', error);
-        return Response.json({ error: 'Failed to list files' }, { status: 500 });
+        console.error('파일 목록 조회 실패:', error);
+        return Response.json({ error: '파일 목록 조회에 실패했습니다.' }, { status: 500 });
     }
-}
-
-function normalizeUploadUrl(url: string): string {
-    let safe = url.trim();
-
-    // Case 1: Absolute URL (http/https)
-    if (/^https?:\/\//i.test(safe)) {
-        return safe.endsWith("/") ? safe : safe + "/";
-    }
-
-    // Case 2: Relative server path
-    if (!safe.startsWith("/")) {
-        safe = "/" + safe;
-    }
-
-    if (!safe.endsWith("/")) {
-        safe += "/";
-    }
-
-    // Collapse duplicate slashes (but keep // in http://)
-    safe = safe.replace(/([^:]\/)\/+/g, "$1");
-
-    return safe;
 }

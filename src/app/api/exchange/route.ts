@@ -1,3 +1,4 @@
+// src/app/api/exchange/route.ts
 import { NextResponse } from 'next/server';
 
 /**
@@ -13,22 +14,18 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
     // TODO: 실제 환율 API로 교체
-    // const res = await fetch(`https://www.koreaexim.go.kr/site/program/financial/exchangeJSON?authkey=${process.env.EXIM_API_KEY}&data=AP01`);
-    // const data = await res.json();
-    // return NextResponse.json(transformExchangeData(data));
-
     const rates = {
-        USD: { buy: 1325.50, sell: 1296.50, change: 3.50 },
-        EUR: { buy: 1445.20, sell: 1408.30, change: -5.20 },
+        USD: { buy: 1325.5, sell: 1296.5, change: 3.5 },
+        EUR: { buy: 1445.2, sell: 1408.3, change: -5.2 },
         JPY: { buy: 944.85, sell: 923.25, change: 1.15 },
-        CNY: { buy: 184.60, sell: 179.80, change: -0.80 },
-        GBP: { buy: 1685.40, sell: 1642.30, change: 8.90 },
-        HKD: { buy: 170.50, sell: 166.20, change: 0.30 },
+        CNY: { buy: 184.6, sell: 179.8, change: -0.8 },
+        GBP: { buy: 1685.4, sell: 1642.3, change: 8.9 },
+        HKD: { buy: 170.5, sell: 166.2, change: 0.3 },
     };
 
     return NextResponse.json(rates, {
         headers: {
-            'Cache-Control': 'public, max-age=300, stale-while-revalidate=600'
-        }
+            'Cache-Control': 'public, max-age=300, stale-while-revalidate=600',
+        },
     });
 }

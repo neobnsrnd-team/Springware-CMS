@@ -1,28 +1,35 @@
 // src/app/api/builder/load/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getPageById, getLatestHistory } from '@/db/repository/page.repository';
+import { getPageById } from '@/db/repository/page.repository';
+import { isValidBankId } from '@/lib/validators';
+import { readPageHtml } from '@/lib/page-file';
 
-// bank id 검증: 영문 소문자·숫자·하이픈만 허용, 1~64자 (디렉토리 트래버설 방지)
-function isValidBankId(id: unknown): id is string {
-    return typeof id === 'string' && /^[a-z0-9-]{1,64}$/.test(id);
-}
-
-// DB에서 페이지 로드
-async function loadPage(bank: string): Promise<{ html: string; updated: string | null }> {
+// FILE_PATH 기반 파일 로드. 마이그레이션 이전 데이터는 PAGE_DESC 폴백.
+async function loadPage(bank: string): Promise<{ html: string; updated: string | null; fileNotFound?: boolean }> {
     const page = await getPageById(bank);
     if (!page) {
         return { html: '', updated: null };
     }
 
-    // 최신 이력에서 RENDERED_HTML 조회, 없으면 PAGE_DESC 폴백
-    const history = await getLatestHistory(bank);
-    const html = history?.RENDERED_HTML ?? page.PAGE_DESC ?? '';
-    const updated = page.LAST_MODIFIED_DTIME
-        ? new Date(page.LAST_MODIFIED_DTIME).toISOString()
-        : null;
+    let html = '';
+    let fileNotFound = false;
 
-    return { html, updated };
+    if (page.FILE_PATH) {
+        const content = await readPageHtml(page.FILE_PATH);
+        if (content !== null) {
+            html = content;
+        } else {
+            fileNotFound = true; // 파일 경로는 있는데 로컬에 파일 없음
+        }
+    } else {
+        // 마이그레이션 이전 데이터: PAGE_DESC 폴백
+        html = page.PAGE_DESC ?? '';
+    }
+
+    const updated = page.LAST_MODIFIED_DTIME ? new Date(page.LAST_MODIFIED_DTIME).toISOString() : null;
+
+    return { html, updated, fileNotFound };
 }
 
 export async function POST(req: NextRequest) {
@@ -30,11 +37,11 @@ export async function POST(req: NextRequest) {
         const body = await req.json().catch(() => ({}));
         const bank = isValidBankId(body.bank) ? body.bank : 'ibk';
 
-        const { html, updated } = await loadPage(bank);
+        const { html, updated, fileNotFound } = await loadPage(bank);
 
-        return NextResponse.json({ ok: true, html, updated });
+        return NextResponse.json({ ok: true, html, updated, fileNotFound });
     } catch (error) {
-        console.error('Load error:', error);
-        return NextResponse.json({ error: 'Failed to load page.' }, { status: 500 });
+        console.error('페이지 로드 실패:', error);
+        return NextResponse.json({ error: '페이지 로드에 실패했습니다.' }, { status: 500 });
     }
 }

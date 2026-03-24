@@ -1,8 +1,8 @@
-// src/app/api/assets/folders/route.ts
+// src/app/api/manage/folders/route.ts
 import fs from 'fs';
 import path from 'path';
 
-const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
+import { UPLOAD_PATH } from '@/lib/upload';
 
 interface FolderNode {
     name: string;
@@ -20,15 +20,15 @@ function buildFolderTree(dirPath: string, basePath: string = '', relativePath: s
         const stats = fs.statSync(fullPath);
 
         if (stats.isDirectory()) {
-        const itemRelativePath = relativePath ? `${relativePath}/${item}` : item;
-        const children = buildFolderTree(fullPath, basePath, itemRelativePath);
-        
-        folders.push({
-            name: item,
-            path: itemRelativePath,
-            children: children.length > 0 ? children : undefined,
-            isExpanded: false
-        });
+            const itemRelativePath = relativePath ? `${relativePath}/${item}` : item;
+            const children = buildFolderTree(fullPath, basePath, itemRelativePath);
+
+            folders.push({
+                name: item,
+                path: itemRelativePath,
+                children: children.length > 0 ? children : undefined,
+                isExpanded: false,
+            });
         }
     }
 
@@ -38,18 +38,18 @@ function buildFolderTree(dirPath: string, basePath: string = '', relativePath: s
 export async function GET() {
     try {
         const absolutePath = path.join(process.cwd(), UPLOAD_PATH);
-        
+
         if (!fs.existsSync(absolutePath)) {
             return Response.json({ folders: [] });
         }
 
         const folderTree = buildFolderTree(absolutePath);
-        
-        return Response.json({ 
-            folders: folderTree
+
+        return Response.json({
+            folders: folderTree,
         });
     } catch (error) {
-        console.error('Folder tree error:', error);
-        return Response.json({ error: 'Failed to build folder tree' }, { status: 500 });
+        console.error('폴더 트리 조회 실패:', error);
+        return Response.json({ error: '폴더 트리 조회에 실패했습니다.' }, { status: 500 });
     }
 }

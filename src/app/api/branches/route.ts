@@ -1,3 +1,5 @@
+// src/app/api/branches/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -33,7 +35,7 @@ const PLACEHOLDER_BRANCHES: BranchInfo[] = [
         hours: '평일 09:00~16:00',
         phone: '1566-2566',
         lat: 37.5012,
-        lng: 127.0396
+        lng: 127.0396,
     },
     {
         id: 'atm-001',
@@ -43,7 +45,7 @@ const PLACEHOLDER_BRANCHES: BranchInfo[] = [
         hours: '24시간 운영',
         phone: '1566-2566',
         lat: 37.4979,
-        lng: 127.0276
+        lng: 127.0276,
     },
     {
         id: 'branch-002',
@@ -53,7 +55,7 @@ const PLACEHOLDER_BRANCHES: BranchInfo[] = [
         hours: '평일 09:00~16:00',
         phone: '1566-2566',
         lat: 37.4887,
-        lng: 127.0128
+        lng: 127.0128,
     },
     {
         id: 'atm-002',
@@ -63,7 +65,7 @@ const PLACEHOLDER_BRANCHES: BranchInfo[] = [
         hours: '평일 07:00~23:00 / 주말 08:00~22:00',
         phone: '1566-2566',
         lat: 37.4932,
-        lng: 127.0137
+        lng: 127.0137,
     },
     {
         id: 'branch-003',
@@ -73,7 +75,7 @@ const PLACEHOLDER_BRANCHES: BranchInfo[] = [
         hours: '평일 09:00~16:00',
         phone: '1566-2566',
         lat: 37.5008,
-        lng: 127.0367
+        lng: 127.0367,
     },
 ];
 
@@ -89,20 +91,17 @@ export async function GET(request: NextRequest) {
     let result = PLACEHOLDER_BRANCHES;
 
     if (type !== 'all') {
-        result = result.filter(b => b.type === type);
+        result = result.filter((b) => b.type === type);
     }
 
     if (q) {
         const query = q.toLowerCase();
-        result = result.filter(b =>
-            b.name.includes(q) ||
-            b.address.includes(q)
-        );
+        result = result.filter((b) => b.name.includes(q) || b.address.includes(q));
     }
 
     return NextResponse.json(result, {
         headers: {
-            'Cache-Control': 'public, max-age=3600'
-        }
+            'Cache-Control': 'public, max-age=3600',
+        },
     });
 }

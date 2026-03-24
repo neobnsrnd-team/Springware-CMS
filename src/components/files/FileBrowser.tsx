@@ -9,13 +9,9 @@ import CreateFolderModal from '@/components/files/CreateFolderModal';
 import DeleteConfirmModal from '@/components/files/DeleteConfirmModal';
 import UploadProgressList from '@/components/files/UploadProgressList';
 import Breadcrumbs from '@/components/files/Breadcrumbs';
+import type { FileItem } from '@/components/files/types';
 
-interface FileItem {
-    name: string;
-    url: string;
-    isDirectory: boolean;
-    size: number;
-}
+export type { FileItem } from '@/components/files/types';
 
 interface FolderNode {
     name: string;
@@ -52,10 +48,7 @@ const DEFAULT_ENDPOINTS: ApiEndpoints = {
     addFolder: '/api/manage/addfolder',
 };
 
-export default function FileBrowser({ 
-    apiEndpoints = {}, 
-    className = '' 
-}: FileBrowserProps) {
+export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileBrowserProps) {
     const endpoints = { ...DEFAULT_ENDPOINTS, ...apiEndpoints };
 
     const [files, setFiles] = useState<FileItem[]>([]);
@@ -74,7 +67,7 @@ export default function FileBrowser({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
-  
+
     const loaderRef = useRef<HTMLDivElement>(null);
     const isFetchingRef = useRef(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,45 +77,48 @@ export default function FileBrowser({
     const fetchFolderTree = useCallback(async () => {
         try {
             const res = await fetch(endpoints.folders);
-            if (!res.ok) throw new Error('Failed to fetch folders');
+            if (!res.ok) throw new Error('폴더 목록을 불러오지 못했습니다.');
             const data = await res.json();
             setFolderTree(data.folders || []);
-        } catch (err) {
-            console.error('Failed to load folder tree:', err);
+        } catch (error) {
+            console.error('폴더 트리 로드 실패:', error);
         }
     }, [endpoints.folders]);
 
     // Fetch files function
-    const fetchFiles = useCallback(async (pageNum: number, path: string) => {
-        if (isFetchingRef.current) return;
-        
-        try {
-            isFetchingRef.current = true;
-            const pathParam = path ? `&path=${encodeURIComponent(path)}` : '';
-            const res = await fetch(`${endpoints.files}?page=${pageNum}${pathParam}`);
-            if (!res.ok) throw new Error('Failed to fetch files');
-            const data = await res.json();
-            
-            setFiles(prev => pageNum === 1 ? data.files : [...prev, ...data.files]);
-            setHasMore(data.hasMore);
-            setPage(pageNum);
-        } catch (err) {
-            setError('Failed to load files');
-            console.error(err);
-        } finally {
-            isFetchingRef.current = false;
-            setLoading(false);
-        }
-    }, [endpoints.files]);
+    const fetchFiles = useCallback(
+        async (pageNum: number, path: string) => {
+            if (isFetchingRef.current) return;
+
+            try {
+                isFetchingRef.current = true;
+                const pathParam = path ? `&path=${encodeURIComponent(path)}` : '';
+                const res = await fetch(`${endpoints.files}?page=${pageNum}${pathParam}`);
+                if (!res.ok) throw new Error('파일 목록을 불러오지 못했습니다.');
+                const data = await res.json();
+
+                setFiles((prev) => (pageNum === 1 ? data.files : [...prev, ...data.files]));
+                setHasMore(data.hasMore);
+                setPage(pageNum);
+            } catch (error) {
+                setError('파일 로드 실패');
+                console.error('파일 로드 오류:', error);
+            } finally {
+                isFetchingRef.current = false;
+                setLoading(false);
+            }
+        },
+        [endpoints.files],
+    );
 
     // Upload files
     const uploadFiles = async (filesToUpload: File[]) => {
-        const newProgress: UploadProgress[] = filesToUpload.map(file => ({
+        const newProgress: UploadProgress[] = filesToUpload.map((file) => ({
             name: file.name,
             progress: 0,
-            status: 'uploading' as const
+            status: 'uploading' as const,
         }));
-        setUploadProgress(prev => [...prev, ...newProgress]);
+        setUploadProgress((prev) => [...prev, ...newProgress]);
 
         for (let i = 0; i < filesToUpload.length; i++) {
             const file = filesToUpload[i];
@@ -136,48 +132,42 @@ export default function FileBrowser({
                     body: formData,
                 });
 
-                // if (!res.ok) {
-                //     const errorData = await res.json();
-                //     throw new Error(errorData.error || 'Upload failed');
-                // }
                 if (!res.ok) {
                     const errorData = await res.json();
-                    setUploadProgress(prev =>
-                        prev.map(p =>
+                    setUploadProgress((prev) =>
+                        prev.map((p) =>
                             p.name === file.name
                                 ? { ...p, status: 'error', error: errorData.error || 'Upload failed' }
-                                : p
-                        )
+                                : p,
+                        ),
                     );
                     continue; // skip to next file in the loop
                 }
 
-                setUploadProgress(prev => 
-                    prev.map(p => 
-                        p.name === file.name 
-                        ? { ...p, progress: 100, status: 'success' as const }
-                        : p
-                    )
+                setUploadProgress((prev) =>
+                    prev.map((p) => (p.name === file.name ? { ...p, progress: 100, status: 'success' as const } : p)),
                 );
 
                 await fetchFiles(1, currentPath);
                 await fetchFolderTree();
-            } catch (err) {
-                console.error('Upload error:', err);
-                setUploadProgress(prev => 
-                    prev.map(p => 
-                        p.name === file.name 
-                        ? { ...p, status: 'error' as const, error: err instanceof Error ? err.message : 'Upload failed' }
-                        : p
-                    )
+            } catch (error) {
+                console.error('업로드 오류:', error);
+                setUploadProgress((prev) =>
+                    prev.map((p) =>
+                        p.name === file.name
+                            ? {
+                                  ...p,
+                                  status: 'error' as const,
+                                  error: error instanceof Error ? error.message : '업로드에 실패했습니다.',
+                              }
+                            : p,
+                    ),
                 );
             }
         }
 
         setTimeout(() => {
-            setUploadProgress(prev => 
-                prev.filter(p => p.status === 'uploading')
-            );
+            setUploadProgress((prev) => prev.filter((p) => p.status === 'uploading'));
         }, 3000);
     };
 
@@ -185,7 +175,7 @@ export default function FileBrowser({
     const deleteSelectedFiles = async () => {
         setIsDeleting(true);
         try {
-            const filesToDelete = Array.from(selectedFiles).map(url => {
+            const filesToDelete = Array.from(selectedFiles).map((url) => {
                 const relativePath = url.replace('/uploads/', '');
                 return relativePath;
             });
@@ -197,38 +187,24 @@ export default function FileBrowser({
                 },
                 body: JSON.stringify({
                     files: filesToDelete,
-                    path: currentPath
+                    path: currentPath,
                 }),
             });
 
-            // if (!res.ok) {
-            //     const errorData = await res.json();
-            //     throw new Error(errorData.error || 'Delete failed');
-            // }
             if (!res.ok) {
                 const errorData = await res.json();
-                console.error('Delete error:', errorData);
-                setUploadProgress(prev => [...prev, {
-                    name: 'Failed to delete files',
-                    progress: 0,
-                    status: 'error',
-                    error: errorData.error || 'Delete failed'
-                }]);
+                console.error('삭제 오류:', errorData);
+                setUploadProgress((prev) => [
+                    ...prev,
+                    {
+                        name: 'Failed to delete files',
+                        progress: 0,
+                        status: 'error',
+                        error: errorData.error || 'Delete failed',
+                    },
+                ]);
                 return; // exit early, don’t continue
             }
-
-            // const result = await res.json();
-            
-            // Show success message
-            /*
-            if (result.deleted > 0) {
-                setUploadProgress(prev => [...prev, {
-                    name: `${result.deleted} item(s) deleted successfully`,
-                    progress: 100,
-                    status: 'success'
-                }]);
-            }
-            */
 
             // Refresh file list and folder tree
             await fetchFiles(1, currentPath);
@@ -238,52 +214,23 @@ export default function FileBrowser({
             setSelectedFiles(new Set());
             setSelectionMode(false);
             setShowDeleteConfirm(false);
-
-            // Clear success message after 3 seconds
-            /*
-            setTimeout(() => {
-                setUploadProgress(prev => 
-                    prev.filter(p => !p.name.includes('deleted successfully'))
-                );
-            }, 3000);
-            */
-        } catch (err) {
-            console.error('Delete error:', err);
-            setUploadProgress(prev => [...prev, {
-                name: 'Failed to delete files',
-                progress: 0,
-                status: 'error',
-                error: err instanceof Error ? err.message : 'Delete failed'
-            }]);
+        } catch (error) {
+            console.error('삭제 오류:', error);
+            setUploadProgress((prev) => [
+                ...prev,
+                {
+                    name: 'Failed to delete files',
+                    progress: 0,
+                    status: 'error',
+                    error: error instanceof Error ? error.message : '삭제에 실패했습니다.',
+                },
+            ]);
         } finally {
             setIsDeleting(false);
         }
     };
 
-    /*
-    const handleFolderCreated = (folderName: string) => {
-        // Show success message
-        setUploadProgress(prev => [...prev, {
-            name: `Folder "${folderName}" created`,
-            progress: 100,
-            status: 'success'
-        }]);
-
-        // Refresh data
-        fetchFiles(1, currentPath);
-        fetchFolderTree();
-
-        // Clear success message after 3s
-        setTimeout(() => {
-            setUploadProgress(prev => 
-                prev.filter(p => p.name !== `Folder "${folderName}" created`)
-            );
-        }, 3000);
-    };
-    */
-
     const handleFolderCreated = () => {
-
         // Refresh data
         fetchFiles(1, currentPath);
         fetchFolderTree();
@@ -297,20 +244,20 @@ export default function FileBrowser({
 
     // Toggle file selection
     const toggleFileSelection = (fileUrl: string) => {
-        setSelectedFiles(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(fileUrl)) {
-            newSet.delete(fileUrl);
-        } else {
-            newSet.add(fileUrl);
-        }
-        return newSet;
+        setSelectedFiles((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(fileUrl)) {
+                newSet.delete(fileUrl);
+            } else {
+                newSet.add(fileUrl);
+            }
+            return newSet;
         });
     };
 
     // Select all files
     const selectAllFiles = () => {
-        const allFileUrls = new Set(files.map(f => f.url));
+        const allFileUrls = new Set(files.map((f) => f.url));
         setSelectedFiles(allFileUrls);
     };
 
@@ -361,7 +308,7 @@ export default function FileBrowser({
     };
 
     const removeUploadProgress = (name: string) => {
-        setUploadProgress(prev => prev.filter(p => p.name !== name));
+        setUploadProgress((prev) => prev.filter((p) => p.name !== name));
     };
 
     // Initial load
@@ -389,18 +336,18 @@ export default function FileBrowser({
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting && !isFetchingRef.current) {
-                fetchFiles(page + 1, currentPath);
+                    fetchFiles(page + 1, currentPath);
                 }
             },
-            { threshold: 0.1 }
+            { threshold: 0.1 },
         );
 
         observer.observe(currentLoader);
 
         return () => {
-        if (currentLoader) {
-            observer.unobserve(currentLoader);
-        }
+            if (currentLoader) {
+                observer.unobserve(currentLoader);
+            }
         };
     }, [page, hasMore, loading, currentPath, fetchFiles]);
 
@@ -415,9 +362,7 @@ export default function FileBrowser({
             const urlPath = file.url.replace('/uploads/', '');
             setCurrentPath(urlPath);
         } else {
-            // console.log('Selected file URL:', file.url);
-            // window.open(file.url, '_blank');
-            if(window.parent) window.parent.postMessage({ type: "ASSET_SELECTED", url: file.url }, "*");
+            if (window.parent) window.parent.postMessage({ type: 'ASSET_SELECTED', url: file.url }, '*');
         }
     };
 
@@ -458,230 +403,234 @@ export default function FileBrowser({
 
     return (
         <div className={`h-screen bg-gray-50 flex ${className}`}>
-        {/* Sidebar */}
-        <div
-            className={`h-full w-64 bg-white shadow transform transition-transform duration-300 ease-in-out ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
-        >
-            <Sidebar
-                folderTree={folderTree}
-                currentPath={currentPath}
-                onFolderClick={setCurrentPath}
-                expandedFolders={expandedFolders}
-                onToggleFolder={(path) => {
-                setExpandedFolders(prev => {
-                    const newSet = new Set(prev);
-                    if (newSet.has(path)) {
-                    newSet.delete(path);
-                    } else {
-                    newSet.add(path);
-                    }
-                    return newSet;
-                });
-                }}
-            />
-       </div>
+            {/* Sidebar */}
+            <div
+                className={`h-full w-64 bg-white shadow transform transition-transform duration-300 ease-in-out ${
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
+            >
+                <Sidebar
+                    folderTree={folderTree}
+                    currentPath={currentPath}
+                    onFolderClick={setCurrentPath}
+                    expandedFolders={expandedFolders}
+                    onToggleFolder={(path) => {
+                        setExpandedFolders((prev) => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(path)) {
+                                newSet.delete(path);
+                            } else {
+                                newSet.add(path);
+                            }
+                            return newSet;
+                        });
+                    }}
+                />
+            </div>
 
-        {/* Main content */} 
-        <div
-            className={`flex flex-col flex-1 transition-all duration-300`}
-            style={{ marginLeft: sidebarOpen ? 0 : -256 }} // -256px moves main left when sidebar hidden
-        >
-            {/* Fixed header (non-scrolling) */}
-            <div className="shrink-0 pt-4 pb-2 px-4 md:pt-8 md:pb-4 md:px-8">
-                {/* Header with breadcrumbs and actions */}
-                <div className="flex items-center justify-between mb-6">
-                    <Breadcrumbs currentPath={currentPath} navigateToBreadcrumb={navigateToBreadcrumb} />
+            {/* Main content */}
+            <div
+                className={`flex flex-col flex-1 transition-all duration-300`}
+                style={{ marginLeft: sidebarOpen ? 0 : -256 }} // -256px moves main left when sidebar hidden
+            >
+                {/* Fixed header (non-scrolling) */}
+                <div className="shrink-0 pt-4 pb-2 px-4 md:pt-8 md:pb-4 md:px-8">
+                    {/* Header with breadcrumbs and actions */}
+                    <div className="flex items-center justify-between mb-6">
+                        <Breadcrumbs currentPath={currentPath} navigateToBreadcrumb={navigateToBreadcrumb} />
 
-                    <div className="flex items-center gap-2">
-                        {!selectionMode ? (
-                        <>
+                        <div className="flex items-center gap-2">
+                            {!selectionMode ? (
+                                <>
+                                    <button
+                                        onClick={handleRefresh}
+                                        className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
+                                        title="Refresh files"
+                                    >
+                                        <RefreshCw className="w-4 h-4" />
+                                        <span className="text-sm">Refresh</span>
+                                    </button>
+                                    <button
+                                        onClick={toggleSelectionMode}
+                                        className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
+                                    >
+                                        <Check className="w-4 h-4" />
+                                        <span className="text-sm">Select</span>
+                                    </button>
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="flex items-center gap-2 px-4 py-2 bg-[#0046A4] text-white rounded-lg hover:bg-[#003399] transition-colors cursor-pointer"
+                                    >
+                                        <Upload className="w-4 h-4" />
+                                        <span className="text-sm">Upload</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowCreateFolderModal(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
+                                    >
+                                        <FolderPlus className="w-4 h-4" />
+                                        <span className="text-sm">New Folder</span>
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={toggleSelectionMode}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
+                                >
+                                    <X className="w-4 h-4" />
+                                    <span className="text-sm">Cancel</span>
+                                </button>
+                            )}
                             <button
-                                onClick={handleRefresh}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
-                                title="Refresh files"
+                                onClick={() => setSidebarOpen(!sidebarOpen)}
+                                className="text-gray-600 hover:text-gray-900 p-2 cursor-pointer"
                             >
-                                <RefreshCw className="w-4 h-4" />
-                                <span className="text-sm">Refresh</span>
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Scrollable files area */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                    <div>
+                        {' '}
+                        {/* className="max-w-6xl mx-auto" */}
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={handleFileInputChange}
+                        />
+                        {/* Upload progress notifications */}
+                        {uploadProgress.length > 0 && (
+                            <UploadProgressList progressList={uploadProgress} onRemove={removeUploadProgress} />
+                        )}
+                        {/* Drop zone overlay */}
+                        <div
+                            onDragEnter={handleDragEnter}
+                            onDragLeave={handleDragLeave}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                            className="relative"
+                        >
+                            {isDragging && (
+                                <div className="absolute inset-0 z-10 bg-[#EBF4FF] border-4 border-dashed border-[#0046A4] rounded-lg flex items-center justify-center">
+                                    <div className="text-center">
+                                        <Upload className="w-16 h-16 text-[#0046A4] mx-auto mb-4" />
+                                        <p className="text-lg font-medium text-[#0046A4]">
+                                            파일을 여기에 드롭하여 업로드
+                                        </p>
+                                        <p className="text-sm text-[#2563EB] mt-1">
+                                            Files will be uploaded to: {currentPath || 'Home'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {files.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                    <p className="font-medium">No files found in this directory</p>
+                                    <p className="text-sm mt-1">Drag & drop files here or click Upload button</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
+                                        {files.map((file, index) => {
+                                            return (
+                                                <FileCard
+                                                    key={`${file.url}-${index}`}
+                                                    file={file}
+                                                    isSelected={selectedFiles.has(file.url)}
+                                                    selectionMode={selectionMode}
+                                                    onClick={handleFileClick}
+                                                    priority={index < 5}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Loading trigger element */}
+                                    {hasMore && (
+                                        <div ref={loaderRef} className="flex justify-center py-8">
+                                            <div className="text-gray-500 text-sm">Loading more...</div>
+                                        </div>
+                                    )}
+
+                                    {/* End of results */}
+                                    {!hasMore && files.length > 0 && (
+                                        <div className="flex justify-center py-8 text-gray-400 text-sm">
+                                            All files loaded
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Selection action bar */}
+            {selectionMode && selectedFiles.size > 0 && (
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4 z-20">
+                    <div className="max-w-6xl mx-auto flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-medium text-gray-900">
+                                {selectedFiles.size} item{selectedFiles.size !== 1 ? 's' : ''} selected
+                            </span>
+                            {selectedFiles.size < files.length && (
+                                <button
+                                    onClick={selectAllFiles}
+                                    className="text-sm text-[#0046A4] hover:text-[#003399] cursor-pointer"
+                                >
+                                    Select all
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="text-sm">Delete</span>
                             </button>
                             <button
                                 onClick={toggleSelectionMode}
                                 className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
                             >
-                                <Check className="w-4 h-4" />
-                                <span className="text-sm">Select</span>
+                                <span className="text-sm">Cancel</span>
                             </button>
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#0046A4] text-white rounded-lg hover:bg-[#003399] transition-colors cursor-pointer"
-                            >
-                                <Upload className="w-4 h-4" />
-                                <span className="text-sm">Upload</span>
-                            </button>
-                            <button
-                                onClick={() => setShowCreateFolderModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
-                            >
-                                <FolderPlus className="w-4 h-4" />
-                                <span className="text-sm">New Folder</span>
-                            </button>
-                        </>
-                        ) : (
-                        <button
-                            onClick={toggleSelectionMode}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
-                        >
-                            <X className="w-4 h-4" />
-                            <span className="text-sm">Cancel</span>
-                        </button>
-                        )}
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="text-gray-600 hover:text-gray-900 p-2 cursor-pointer"
-                        >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            {/* Scrollable files area */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-8">
-                <div> {/* className="max-w-6xl mx-auto" */}
+            )}
 
-                    {/* Hidden file input */}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={handleFileInputChange}
-                    />
+            <CreateFolderModal
+                isOpen={showCreateFolderModal}
+                onClose={() => setShowCreateFolderModal(false)}
+                currentPath={currentPath}
+                onFolderCreated={handleFolderCreated}
+                apiEndpoint={endpoints.addFolder}
+            />
 
-                    {/* Upload progress notifications */}
-                    {uploadProgress.length > 0 && (
-                    <UploadProgressList progressList={uploadProgress} onRemove={removeUploadProgress} />
-                    )}
-                    
-                    {/* Drop zone overlay */}
-                    <div
-                        onDragEnter={handleDragEnter}
-                        onDragLeave={handleDragLeave}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                        className="relative"
-                    >
-                    {isDragging && (
-                        <div className="absolute inset-0 z-10 bg-[#EBF4FF] border-4 border-dashed border-[#0046A4] rounded-lg flex items-center justify-center">
-                        <div className="text-center">
-                            <Upload className="w-16 h-16 text-[#0046A4] mx-auto mb-4" />
-                            <p className="text-lg font-medium text-[#0046A4]">파일을 여기에 드롭하여 업로드</p>
-                            <p className="text-sm text-[#2563EB] mt-1">
-                                Files will be uploaded to: {currentPath || 'Home'}
-                            </p>
-                        </div>
-                        </div>
-                    )}
-
-                    {files.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
-                        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="font-medium">No files found in this directory</p>
-                        <p className="text-sm mt-1">Drag & drop files here or click Upload button</p>
-                        </div>
-                    ) : (
-                        <>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
-                            {files.map((file, index) => {
-                            // const isSelected = selectedFiles.has(file.url);
-                            return (
-                                <FileCard
-                                    key={`${file.url}-${index}`}
-                                    file={file}
-                                    isSelected={selectedFiles.has(file.url)}
-                                    selectionMode={selectionMode}
-                                    onClick={handleFileClick}
-                                    priority={index < 5}
-                                />
-                            );
-                            })
-                            }
-                        </div>
-                        
-                        {/* Loading trigger element */}
-                        {hasMore && (
-                            <div ref={loaderRef} className="flex justify-center py-8">
-                            <div className="text-gray-500 text-sm">Loading more...</div>
-                            </div>
-                        )}
-                        
-                        {/* End of results */}
-                        {!hasMore && files.length > 0 && (
-                            <div className="flex justify-center py-8 text-gray-400 text-sm">
-                            All files loaded
-                            </div>
-                        )}
-                        </>
-                    )}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {/* Selection action bar */}
-        {selectionMode && selectedFiles.size > 0 && (
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4 z-20">
-                <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium text-gray-900">
-                            {selectedFiles.size} item{selectedFiles.size !== 1 ? 's' : ''} selected
-                        </span>
-                        {selectedFiles.size < files.length && (
-                            <button
-                            onClick={selectAllFiles}
-                            className="text-sm text-[#0046A4] hover:text-[#003399] cursor-pointer"
-                            >
-                            Select all
-                            </button>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowDeleteConfirm(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="text-sm">Delete</span>
-                        </button>
-                        <button
-                            onClick={toggleSelectionMode}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
-                        >
-                            <span className="text-sm">Cancel</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        <CreateFolderModal
-            isOpen={showCreateFolderModal}
-            onClose={() => setShowCreateFolderModal(false)}
-            currentPath={currentPath}
-            onFolderCreated={handleFolderCreated}
-            apiEndpoint={endpoints.addFolder}
-        />
-        
-        <DeleteConfirmModal
-            isOpen={showDeleteConfirm}
-            onClose={() => setShowDeleteConfirm(false)}
-            onConfirm={deleteSelectedFiles}
-            itemCount={selectedFiles.size}
-            isDeleting={isDeleting}
-        />
+            <DeleteConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={deleteSelectedFiles}
+                itemCount={selectedFiles.size}
+                isDeleting={isDeleting}
+            />
         </div>
     );
 }
