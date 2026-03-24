@@ -45,8 +45,8 @@ export default async function View({ searchParams }: { searchParams: Promise<{ b
     let html = '';
     try {
         html = await loadPage(bank);
-    } catch (error) {
-        console.error('페이지 콘텐츠 로드 실패:', error);
+    } catch (err: unknown) {
+        console.error('페이지 콘텐츠 로드 실패:', err);
         html = '<p style="color:red;">저장된 콘텐츠가 없습니다. 에디터에서 저장 후 다시 시도하세요.</p>';
     }
 

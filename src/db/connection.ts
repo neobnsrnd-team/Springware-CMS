@@ -25,13 +25,15 @@ async function initPool(): Promise<void> {
                 poolMin: 0, // 공유 Oracle XE 세션 제한 고려 (최대 20개)
                 poolMax: 5,
                 poolIncrement: 1,
+                poolTimeout: 300, // 5분: 유휴 커넥션 정리
+                queueTimeout: 10000, // 10초: 커넥션 대기 타임아웃
             });
 
             console.warn('Oracle 커넥션 풀 초기화 완료');
-        } catch (error) {
+        } catch (err: unknown) {
             poolInitPromise = null;
-            console.error('Oracle 커넥션 풀 초기화 실패:', error);
-            throw error;
+            console.error('Oracle 커넥션 풀 초기화 실패:', err);
+            throw err;
         }
     })();
 
@@ -69,9 +71,9 @@ export async function withTransaction<T>(task: (conn: oracledb.Connection) => Pr
         const result = await task(conn);
         await conn.commit();
         return result;
-    } catch (error) {
+    } catch (err: unknown) {
         await conn.rollback();
-        throw error;
+        throw err;
     } finally {
         await conn.close();
     }

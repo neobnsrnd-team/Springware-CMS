@@ -23,6 +23,8 @@ declare module 'oracledb' {
         poolMin?: number;
         poolMax?: number;
         poolIncrement?: number;
+        poolTimeout?: number;
+        queueTimeout?: number;
     }
 
     namespace oracledb {
