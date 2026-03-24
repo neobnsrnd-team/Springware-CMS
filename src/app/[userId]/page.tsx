@@ -39,6 +39,7 @@ export default async function DashboardPage({
         thumbnail: p.THUMBNAIL ?? null,
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
         approveState: p.APPROVE_STATE,
+        rejectedReason: p.REJECTED_REASON ?? null,
     }));
 
     return (

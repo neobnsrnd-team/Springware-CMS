@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import ApprovalRequestModal from './ApprovalRequestModal';
+import RejectedReasonModal from './RejectedReasonModal';
 
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -22,6 +23,7 @@ export interface PageCard {
     thumbnail: string | null;
     lastModifiedDtime: string | null;
     approveState: string;
+    rejectedReason: string | null;
 }
 
 export interface DashboardClientProps {
@@ -88,6 +90,7 @@ export default function DashboardClient({
 
     // 승인 요청 모달
     const [approvalTarget, setApprovalTarget] = useState<PageCard | null>(null);
+    const [rejectedTarget, setRejectedTarget] = useState<PageCard | null>(null);
 
     // 새 페이지 생성 모달
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -457,6 +460,14 @@ export default function DashboardClient({
                                         className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-1.5"
                                         onClick={(e) => e.stopPropagation()}
                                     >
+                                        {page.approveState === 'REJECTED' && (
+                                            <button
+                                                onClick={() => setRejectedTarget(page)}
+                                                className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                            >
+                                                반려 사유
+                                            </button>
+                                        )}
                                         {(page.approveState === 'WORK' || page.approveState === 'REJECTED') && (
                                             <button
                                                 onClick={() => setApprovalTarget(page)}
@@ -536,6 +547,9 @@ export default function DashboardClient({
                     onSubmit={handleApprovalRequest}
                 />
             )}
+
+            {/* ── 반려 사유 확인 모달 ── */}
+            {rejectedTarget && <RejectedReasonModal page={rejectedTarget} onClose={() => setRejectedTarget(null)} />}
 
             {/* ── 새 페이지 생성 모달 ── */}
             {showCreateModal && (
