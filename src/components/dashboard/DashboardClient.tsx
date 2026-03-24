@@ -183,7 +183,7 @@ export default function DashboardClient({
     async function handleApprovalRequest(approverId: string, approverName: string) {
         if (!approvalTarget) return;
 
-        const targetId = approvalTarget.id;
+        const { id: targetId, approveState: originalApproveState } = approvalTarget;
 
         // 낙관적 업데이트
         setPages((prev) => prev.map((p) => (p.id === targetId ? { ...p, approveState: 'PENDING' } : p)));
@@ -197,12 +197,14 @@ export default function DashboardClient({
             });
             const data = await res.json();
             if (!data.ok) {
-                // 실패 시 원래 상태로 롤백
-                setPages(initialPages);
+                // 실패 시 해당 카드만 원래 상태로 롤백
+                setPages((prev) =>
+                    prev.map((p) => (p.id === targetId ? { ...p, approveState: originalApproveState } : p)),
+                );
             }
         } catch (err: unknown) {
             console.error('승인 요청 실패:', err);
-            setPages(initialPages);
+            setPages((prev) => prev.map((p) => (p.id === targetId ? { ...p, approveState: originalApproveState } : p)));
         }
     }
 

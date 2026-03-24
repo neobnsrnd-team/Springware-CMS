@@ -5,9 +5,9 @@ import { NextRequest } from 'next/server';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
 import { requestApproval } from '@/db/repository/page.repository';
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
+export async function PATCH(req: NextRequest, { params }: { params: { pageId: string } }) {
     try {
-        const { pageId } = await params;
+        const { pageId } = params;
 
         if (!pageId || pageId.includes('..')) {
             return errorResponse('유효하지 않은 페이지 ID입니다.', 400);
