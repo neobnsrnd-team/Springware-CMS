@@ -157,9 +157,24 @@ export default function ApproveClient({
         navigate({ page, search, sortBy });
     }
 
-    // 승인/반려 플레이스홀더
-    function handleApprove(pageId: string) {
-        alert(`승인 기능은 후속 이슈에서 구현 예정입니다.\n페이지: ${pageId}`);
+    // 승인 처리 — 확인 후 API 호출
+    async function handleApprove(pageId: string) {
+        if (!confirm('이 페이지를 승인하시겠습니까?')) return;
+
+        try {
+            const res = await fetch(`/api/builder/pages/${pageId}/approve`, {
+                method: 'PATCH',
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                alert(data.error ?? '승인 처리에 실패했습니다.');
+                return;
+            }
+            router.refresh();
+        } catch (err: unknown) {
+            console.error('승인 처리 오류:', err);
+            alert('승인 처리에 실패했습니다.');
+        }
     }
 
     function handleReject(pageId: string) {
