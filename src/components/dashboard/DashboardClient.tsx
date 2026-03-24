@@ -465,7 +465,7 @@ export default function DashboardClient({
                                                 onClick={() => setRejectedTarget(page)}
                                                 className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
                                             >
-                                                반려 사유 확인
+                                                반려 사유
                                             </button>
                                         )}
                                         {(page.approveState === 'WORK' || page.approveState === 'REJECTED') && (
