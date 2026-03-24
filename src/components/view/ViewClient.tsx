@@ -1,7 +1,7 @@
 // src/components/view/ViewClient.tsx
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Runtime library for rendering ContentBuilder-generated content
 import ContentBuilderRuntime from '@innovastudio/contentbuilder-runtime';
@@ -39,10 +39,10 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         }
     }, [viewMode, embed]);
 
-    function applyWidth(width: number) {
+    const applyWidth = useCallback((width: number) => {
         setResponsiveWidth(width);
         if (iframeWrapperRef.current) iframeWrapperRef.current.style.width = `${width}px`;
-    }
+    }, []);
 
     useEffect(() => {
         // 반응형 모드에서 툴바 쪽(비embed)은 iframe을 사용하므로 런타임 초기화 불필요
@@ -204,7 +204,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         runtime.init();
 
         return () => runtime.destroy();
-    }, []);
+    }, [viewMode, embed]);
 
     // ── 반응형 모드: 툴바 + iframe ─────────────────────────────────────────
     if (viewMode === 'responsive' && !embed) {
@@ -292,11 +292,11 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                             }}
                             // iframe 높이를 내용에 맞게 자동 조정
                             onLoad={(e) => {
+                                const iframe = e.target as HTMLIFrameElement;
                                 try {
-                                    const doc = (e.target as HTMLIFrameElement).contentDocument;
+                                    const doc = iframe.contentDocument;
                                     if (doc) {
-                                        (e.target as HTMLIFrameElement).style.height =
-                                            doc.documentElement.scrollHeight + 'px';
+                                        iframe.style.height = `${doc.documentElement.scrollHeight}px`;
                                     }
                                 } catch {
                                     // cross-origin 등으로 접근 불가한 경우 무시
