@@ -82,7 +82,7 @@ Usage:
                     <input type="number" inputmode="decimal" class="lc-input" data-key="rate" value="4.0" min="0.1" max="20" step="0.1"/>
                     <span class="lc-unit">%</span>
                 </div>
-                <input type="range" class="lc-range" data-key="range" min="0.1" max="20" step="0.1" value="4.0"/>
+                <input type="range" class="lc-range" data-key="rate" min="0.1" max="20" step="0.1" value="4.0"/>
                 <div class="lc-range-labels"><span>0.1%</span><span>20%</span></div>
             </div>
             <div class="lc-field">
@@ -199,9 +199,16 @@ export default {
         }
 
         const formatWon = (n) => {
+            if (!isFinite(n) || isNaN(n)) return '계산 불가';
             if (n >= 100000000) return `${(n / 100000000).toFixed(1)}억원`;
             if (n >= 10000) return `${Math.round(n / 10000).toLocaleString()}만원`;
             return `${Math.round(n).toLocaleString()}원`;
+        };
+
+        // debounce 유틸
+        const debounce = (fn, ms) => {
+            let timer;
+            return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
         };
 
         // Calculate
@@ -238,6 +245,7 @@ export default {
                 const P = getVal('principal') * 10000;
                 const r = getVal('rate') / 100;
                 const n = getVal('period') / 12;
+                if (P <= 0 || n <= 0) return;
                 const interestAmt = P * r * n;
                 const totalAmt = P + interestAmt;
                 if (monthly) monthly.textContent = formatWon(interestAmt);
@@ -249,6 +257,7 @@ export default {
                 const m = getVal('monthly') * 10000;
                 const r = getVal('rate') / 100 / 12;
                 const n = getVal('period');
+                if (m <= 0 || n <= 0) return;
                 const principal = m * n;
                 let totalAmt = 0;
                 if (r === 0) { totalAmt = principal; }
@@ -261,13 +270,43 @@ export default {
         };
 
         // Sync range <-> number input within each panel
+        const debouncedCalculate = debounce(calculate, 300);
+
         panels.forEach(panel => {
             const syncPair = (inputEl, rangeEl) => {
                 if (!inputEl || !rangeEl) return;
+
+                // number input: debounce로 타이핑 중 깜빡임 방지
                 inputEl.addEventListener('input', () => {
+                    // 빈 값이면 계산하지 않고 대기
+                    if (inputEl.value === '' || inputEl.value === '-') return;
+                    rangeEl.value = inputEl.value;
+                    debouncedCalculate();
+                });
+
+                // blur 시 min/max 클램핑 + 빈 값 복원
+                inputEl.addEventListener('blur', () => {
+                    const v = parseFloat(inputEl.value);
+                    const min = parseFloat(inputEl.min);
+                    const max = parseFloat(inputEl.max);
+                    if (isNaN(v) || inputEl.value === '') {
+                        inputEl.value = inputEl.defaultValue;
+                    } else {
+                        inputEl.value = Math.min(Math.max(v, min), max);
+                    }
                     rangeEl.value = inputEl.value;
                     calculate();
                 });
+
+                // Enter 키로 즉시 확정
+                inputEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        inputEl.blur();
+                    }
+                });
+
+                // range 슬라이더: 즉시 반영 (debounce 불필요)
                 rangeEl.addEventListener('input', () => {
                     inputEl.value = rangeEl.value;
                     calculate();
