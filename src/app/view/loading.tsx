@@ -24,7 +24,7 @@ export default function ViewLoading() {
                             width: '48px',
                             height: '48px',
                             border: '2px solid transparent',
-                            borderBottomColor: '#2563eb',
+                            borderBottomColor: '#0046A4',
                             borderRadius: '50%',
                             animation: 'spin 1s linear infinite',
                             margin: '0 auto',
