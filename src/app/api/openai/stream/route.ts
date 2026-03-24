@@ -1,6 +1,8 @@
 // src/app/api/openai/stream/route.ts
 import { NextRequest } from 'next/server';
 
+import { errorResponse, getErrorMessage } from '@/lib/api-response';
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export async function POST(req: NextRequest) {
@@ -33,11 +35,7 @@ export async function POST(req: NextRequest) {
         });
 
         if (!openAiResponse.ok) {
-            const errorData = await openAiResponse.json();
-            return new Response(JSON.stringify({ error: errorData }), {
-                status: openAiResponse.status,
-                headers: { 'Content-Type': 'application/json' },
-            });
+            return errorResponse('OpenAI API 오류가 발생했습니다.', openAiResponse.status);
         }
 
         // Create a ReadableStream to forward the OpenAI stream to the client
@@ -89,9 +87,6 @@ export async function POST(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('OpenAI 데이터 요청 오류:', err);
-        return new Response(JSON.stringify({ error: 'OpenAI 데이터 요청에 실패했습니다.' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' },
-        });
+        return errorResponse(getErrorMessage(err), 500);
     }
 }
