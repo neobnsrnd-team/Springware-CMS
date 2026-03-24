@@ -3,7 +3,7 @@
 import path from 'path';
 import { writeFile } from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
-import { getErrorMessage } from '@/lib/api-response';
+import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
     // 데모용: 업로드 파일을 public 폴더에 저장
@@ -13,17 +13,14 @@ export async function POST(req: NextRequest) {
     const uploadUrl = process.env.UPLOAD_URL; // URL 기본 경로 (예: "/uploads/")
 
     if (!uploadPath || !uploadUrl) {
-        return NextResponse.json(
-            { ok: false, error: 'UPLOAD_PATH 또는 UPLOAD_URL이 설정되지 않았습니다.' },
-            { status: 500 },
-        );
+        return contentBuilderErrorResponse('UPLOAD_PATH 또는 UPLOAD_URL이 설정되지 않았습니다.');
     }
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
     if (!file) {
-        return NextResponse.json({ ok: false, error: '파일이 없습니다.' }, { status: 400 });
+        return contentBuilderErrorResponse('파일이 없습니다.');
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -35,6 +32,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, url: path.join(uploadUrl, filename) }, { status: 201 });
     } catch (err: unknown) {
         console.error('파일 업로드 실패:', err);
-        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
+        return contentBuilderErrorResponse(getErrorMessage(err));
     }
 }

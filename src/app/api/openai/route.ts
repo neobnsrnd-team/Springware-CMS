@@ -1,6 +1,6 @@
 // src/app/api/openai/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getErrorMessage } from '@/lib/api-response';
+import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 import { OPENAI_API_KEY } from '@/lib/env';
 
@@ -81,6 +81,6 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ answer, usage });
     } catch (err: unknown) {
-        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
+        return contentBuilderErrorResponse(getErrorMessage(err));
     }
 }

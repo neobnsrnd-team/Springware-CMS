@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { FinanceComponent } from '@/app/edit/finance-component-data';
 import type { ComponentType, ViewMode, CmsComponentParsed } from '@/db/types';
 import { getComponentList, getComponentById, updateComponent } from '@/db/repository/component.repository';
-import { getErrorMessage } from '@/lib/api-response';
+import { errorResponse, getErrorMessage } from '@/lib/api-response';
 
 const VALID_TYPES = new Set<string>(['finance', 'basic']);
 const VALID_VIEW_MODES = new Set<string>(['mobile', 'web', 'responsive']);
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ ok: true, components });
     } catch (err: unknown) {
         console.error('컴포넌트 목록 조회 오류:', err);
-        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
+        return errorResponse(getErrorMessage(err));
     }
 }
 
@@ -52,13 +52,13 @@ export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
         if (typeof body !== 'object' || body === null) {
-            return NextResponse.json({ error: '잘못된 요청 본문입니다.' }, { status: 400 });
+            return errorResponse('잘못된 요청 본문입니다.', 400);
         }
 
         const { componentId, viewMode, label, description, html } = body as Record<string, unknown>;
 
         if (typeof componentId !== 'string' || typeof viewMode !== 'string') {
-            return NextResponse.json({ error: 'componentId와 viewMode는 필수 문자열입니다.' }, { status: 400 });
+            return errorResponse('componentId와 viewMode는 필수 문자열입니다.', 400);
         }
 
         // DB COMPONENT_ID는 "{id}-{viewMode}" 형식으로 저장됨
@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest) {
         // 기존 컴포넌트 조회 (COMPONENT_TYPE, VIEW_MODE 보존용)
         const existing = await getComponentById(dbComponentId);
         if (!existing) {
-            return NextResponse.json({ error: '컴포넌트를 찾을 수 없습니다.' }, { status: 404 });
+            return errorResponse('컴포넌트를 찾을 수 없습니다.', 404);
         }
 
         // 기존 DATA에 label / description / html 만 덮어씀
@@ -91,6 +91,6 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ ok: true });
     } catch (err: unknown) {
         console.error('컴포넌트 수정 오류:', err);
-        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
+        return errorResponse(getErrorMessage(err));
     }
 }

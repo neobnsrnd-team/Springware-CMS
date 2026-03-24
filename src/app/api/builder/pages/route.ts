@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPageList, getPageById, deletePage } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
 import { deletePageHtml } from '@/lib/page-file';
-import { getErrorMessage } from '@/lib/api-response';
+import { errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /** GET /api/builder/pages — USE_YN='Y'인 전체 페이지 목록 반환 */
 export async function GET() {
@@ -23,7 +23,7 @@ export async function GET() {
         return NextResponse.json({ pages, currentUserId: userId });
     } catch (err: unknown) {
         console.error('페이지 목록 조회 실패:', err);
-        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
+        return errorResponse(getErrorMessage(err));
     }
 }
 
@@ -37,13 +37,13 @@ export async function DELETE(req: NextRequest) {
     try {
         const pageId = req.nextUrl.searchParams.get('pageId');
         if (!pageId) {
-            return NextResponse.json({ ok: false, error: 'pageId가 필요합니다' }, { status: 400 });
+            return errorResponse('pageId가 필요합니다', 400);
         }
 
         // 페이지 조회 — FILE_PATH 확인 (삭제 전 경로 보존)
         const page = await getPageById(pageId);
         if (!page) {
-            return NextResponse.json({ ok: false, error: '페이지를 찾을 수 없습니다' }, { status: 404 });
+            return errorResponse('페이지를 찾을 수 없습니다', 404);
         }
 
         const { userId } = getCurrentUser();
@@ -59,6 +59,6 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ ok: true, deleteType });
     } catch (err: unknown) {
         console.error('페이지 삭제 실패:', err);
-        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
+        return errorResponse(getErrorMessage(err));
     }
 }
