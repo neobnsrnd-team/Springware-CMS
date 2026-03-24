@@ -36,7 +36,8 @@
 /data/ibk.json
 
 # ── Claude Code 설정 ──
-/.claude/
+.claude/settings.json
+.claude/settings.local.json
 
 # ── TypeScript ──
 *.tsbuildinfo

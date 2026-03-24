@@ -1,6 +1,8 @@
 // src/app/api/openrouter/stream/route.ts
 import { NextRequest } from 'next/server';
 
+import { errorResponse, getErrorMessage } from '@/lib/api-response';
+
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 export async function POST(req: NextRequest) {
@@ -38,11 +40,7 @@ export async function POST(req: NextRequest) {
         });
 
         if (!openRouterResponse.ok) {
-            const errorData = await openRouterResponse.json();
-            return new Response(JSON.stringify({ error: errorData }), {
-                status: openRouterResponse.status,
-                headers: { 'Content-Type': 'application/json' },
-            });
+            return errorResponse('OpenRouter API 오류가 발생했습니다.', openRouterResponse.status);
         }
 
         // Create a ReadableStream to forward the OpenRouter stream to the client
@@ -77,9 +75,9 @@ export async function POST(req: NextRequest) {
                             }
                         });
                     }
-                } catch (error) {
-                    console.error('스트리밍 응답 실패:', error);
-                    controller.error(error);
+                } catch (err: unknown) {
+                    console.error('스트리밍 응답 실패:', err);
+                    controller.error(err);
                 }
             },
         });
@@ -92,11 +90,8 @@ export async function POST(req: NextRequest) {
                 Connection: 'keep-alive',
             },
         });
-    } catch (error) {
-        console.error('OpenRouter 데이터 요청 오류:', error);
-        return new Response(JSON.stringify({ error: 'OpenRouter 데이터 요청에 실패했습니다.' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' },
-        });
+    } catch (err: unknown) {
+        console.error('OpenRouter 데이터 요청 오류:', err);
+        return errorResponse(getErrorMessage(err), 500);
     }
 }

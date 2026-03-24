@@ -30,11 +30,11 @@ export async function deletePageHtml(filePath: string): Promise<void> {
     const fullPath = path.join(process.cwd(), 'public', filePath);
     try {
         await fs.unlink(fullPath);
-    } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+    } catch (err: unknown) {
+        if (err instanceof Error && 'code' in err && (err as NodeJS.ErrnoException).code === 'ENOENT') {
             return; // 파일이 이미 없으면 무시
         }
-        throw error;
+        throw err;
     }
 }
 

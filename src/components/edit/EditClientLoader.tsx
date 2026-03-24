@@ -1,4 +1,4 @@
-// src/app/edit/EditClientLoader.tsx
+// src/components/edit/EditClientLoader.tsx
 'use client';
 
 import dynamic from 'next/dynamic';

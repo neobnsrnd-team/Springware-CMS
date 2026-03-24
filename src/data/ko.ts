@@ -1,4 +1,4 @@
-// src/app/edit/ko.ts
+// src/data/ko.ts
 
 /**
  * ContentBuilder 한국어 번역

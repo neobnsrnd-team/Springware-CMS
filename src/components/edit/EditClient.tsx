@@ -494,8 +494,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             });
             // Make runtime available globally for ContentBuilder editor
             window.builderRuntime = runtimeRef.current;
-        } catch (error) {
-            console.error('런타임 초기화 오류:', error);
+        } catch (err: unknown) {
+            console.error('런타임 초기화 오류:', err);
         }
 
         // ── RTE 툴바 위치 보정 ────────────────────────────────────────────
@@ -1418,7 +1418,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         });
         const result = await response.json();
         if (result.error) {
-            console.error('저장 오류:', result.error);
+            throw new Error(result.error);
         }
     };
 
@@ -1433,7 +1433,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             alert('저장이 완료되었습니다.');
         } catch (err: unknown) {
             console.error('저장 실패:', err);
-            alert('썸네일 생성에 실패하여 저장이 중단되었습니다.\n다시 시도해 주세요.');
+            alert('저장에 실패했습니다.\n다시 시도해 주세요.');
         }
     }
 
@@ -1448,7 +1448,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             window.open(`/view?bank=${bank}`, '_blank');
         } catch (err: unknown) {
             console.error('저장 실패:', err);
-            alert('썸네일 생성에 실패하여 저장이 중단되었습니다.\n다시 시도해 주세요.');
+            alert('저장에 실패했습니다.\n다시 시도해 주세요.');
         }
     }
 
