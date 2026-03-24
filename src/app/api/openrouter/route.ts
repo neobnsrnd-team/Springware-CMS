@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getErrorMessage } from '@/lib/api-response';
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+import { OPENROUTER_API_KEY } from '@/lib/env';
 
 export async function POST(req: NextRequest) {
     try {

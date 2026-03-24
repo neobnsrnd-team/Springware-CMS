@@ -4,11 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { writeFile, mkdir } from 'fs/promises';
 
-import { normalizeUploadUrl } from '@/lib/upload-utils';
+import { UPLOAD_PATH, UPLOAD_URL } from '@/lib/upload';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
-
-const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
-const UPLOAD_URL = normalizeUploadUrl(process.env.UPLOAD_URL || 'uploads/');
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 export async function POST(request: NextRequest) {

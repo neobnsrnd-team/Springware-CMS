@@ -3,11 +3,8 @@ import { NextRequest } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-import { normalizeUploadUrl } from '@/lib/upload-utils';
+import { UPLOAD_PATH, UPLOAD_URL } from '@/lib/upload';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
-
-const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
-const UPLOAD_URL = normalizeUploadUrl(process.env.UPLOAD_URL || 'uploads/');
 const PAGE_SIZE = 10; // 페이지당 파일 수
 
 export async function GET(request: NextRequest) {

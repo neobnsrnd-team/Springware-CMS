@@ -2,9 +2,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { UPLOAD_PATH } from '@/lib/upload';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
-
-const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
 
 interface FolderNode {
     name: string;
