@@ -80,8 +80,8 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
             if (!res.ok) throw new Error('폴더 목록을 불러오지 못했습니다.');
             const data = await res.json();
             setFolderTree(data.folders || []);
-        } catch (error) {
-            console.error('폴더 트리 로드 실패:', error);
+        } catch (err: unknown) {
+            console.error('폴더 트리 로드 실패:', err);
         }
     }, [endpoints.folders]);
 
@@ -100,9 +100,9 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
                 setFiles((prev) => (pageNum === 1 ? data.files : [...prev, ...data.files]));
                 setHasMore(data.hasMore);
                 setPage(pageNum);
-            } catch (error) {
+            } catch (err: unknown) {
                 setError('파일 로드 실패');
-                console.error('파일 로드 오류:', error);
+                console.error('파일 로드 오류:', err);
             } finally {
                 isFetchingRef.current = false;
                 setLoading(false);
@@ -150,15 +150,15 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
 
                 await fetchFiles(1, currentPath);
                 await fetchFolderTree();
-            } catch (error) {
-                console.error('업로드 오류:', error);
+            } catch (err: unknown) {
+                console.error('업로드 오류:', err);
                 setUploadProgress((prev) =>
                     prev.map((p) =>
                         p.name === file.name
                             ? {
                                   ...p,
                                   status: 'error' as const,
-                                  error: error instanceof Error ? error.message : '업로드에 실패했습니다.',
+                                  error: '업로드에 실패했습니다.',
                               }
                             : p,
                     ),
@@ -214,15 +214,15 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
             setSelectedFiles(new Set());
             setSelectionMode(false);
             setShowDeleteConfirm(false);
-        } catch (error) {
-            console.error('삭제 오류:', error);
+        } catch (err: unknown) {
+            console.error('삭제 오류:', err);
             setUploadProgress((prev) => [
                 ...prev,
                 {
                     name: 'Failed to delete files',
                     progress: 0,
                     status: 'error',
-                    error: error instanceof Error ? error.message : '삭제에 실패했습니다.',
+                    error: '삭제에 실패했습니다.',
                 },
             ]);
         } finally {

@@ -85,8 +85,8 @@ export default function CreateFolderModal({
             const result = await res.json();
             onFolderCreated(result.folder.name);
             onClose();
-        } catch (error) {
-            setError(error instanceof Error ? error.message : '폴더 생성에 실패했습니다.');
+        } catch (err: unknown) {
+            setError('폴더 생성에 실패했습니다.');
         } finally {
             setIsCreating(false);
         }

@@ -491,8 +491,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             });
             // Make runtime available globally for ContentBuilder editor
             window.builderRuntime = runtimeRef.current;
-        } catch (error) {
-            console.error('런타임 초기화 오류:', error);
+        } catch (err: unknown) {
+            console.error('런타임 초기화 오류:', err);
         }
 
         // ── RTE 툴바 위치 보정 ────────────────────────────────────────────
