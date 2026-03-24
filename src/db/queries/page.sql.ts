@@ -10,7 +10,7 @@ export const PAGE_SELECT_BY_ID = `
     AND USE_YN = 'Y'
 `;
 
-/** 페이지 목록 조회 (결재상태 + 생성자 필터, 페이지네이션) */
+/** 페이지 목록 조회 (결재상태 + 생성자 필터 + 검색 + 정렬, 페이지네이션) */
 export const PAGE_SELECT_LIST = `
   SELECT *
   FROM (
@@ -21,7 +21,10 @@ export const PAGE_SELECT_LIST = `
       WHERE USE_YN = 'Y'
         AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
         AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
-      ORDER BY LAST_MODIFIED_DTIME DESC
+        AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%')
+      ORDER BY
+        CASE WHEN :sortBy = 'name' THEN PAGE_NAME END ASC,
+        CASE WHEN :sortBy != 'name' THEN LAST_MODIFIED_DTIME END DESC NULLS LAST
     ) p
     WHERE ROWNUM <= :endRow
   )
@@ -35,6 +38,7 @@ export const PAGE_COUNT = `
   WHERE USE_YN = 'Y'
     AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
     AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
+    AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%')
 `;
 
 /** 페이지 신규 생성 (W-3: VIEW_MODE 바인딩 추가) */
