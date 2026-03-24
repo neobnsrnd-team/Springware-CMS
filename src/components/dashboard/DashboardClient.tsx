@@ -168,7 +168,7 @@ export default function DashboardClient({
                 headers: { 'Content-Type': 'application/json' },
             });
             window.location.href = `/edit?bank=${id}`;
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('페이지 생성 실패:', err);
             setCreating(false);
         }
@@ -192,7 +192,7 @@ export default function DashboardClient({
                 setPages(initialPages);
                 setLocalTotalCount(totalCount);
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('페이지 삭제 실패:', err);
             setPages(initialPages);
             setLocalTotalCount(totalCount);
@@ -220,99 +220,47 @@ export default function DashboardClient({
     const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
 
     return (
-        <div style={{ minHeight: '100vh', background: '#f8faff', fontFamily: 'inherit' }}>
+        <div className="min-h-screen bg-[#f8faff]">
             {/* ── 헤더 ── */}
-            <header
-                style={{
-                    background: '#ffffff',
-                    borderBottom: '1px solid #e5e7eb',
-                    padding: '0 32px',
-                    height: '60px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 100,
-                }}
-            >
-                <span style={{ fontWeight: 700, fontSize: '16px', color: '#0046A4', letterSpacing: '-0.3px' }}>
-                    Springware CMS
-                </span>
-                <span style={{ color: '#d1d5db', fontSize: '14px' }}>/</span>
-                <span style={{ fontSize: '14px', color: '#374151' }}>대시보드</span>
+            <header className="bg-white border-b border-[#e5e7eb] px-8 h-[60px] flex items-center gap-3 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky top-0 z-[100]">
+                <span className="font-bold text-base text-[#0046A4] tracking-[-0.3px]">Springware CMS</span>
+                <span className="text-[#d1d5db] text-sm">/</span>
+                <span className="text-sm text-[#374151]">대시보드</span>
             </header>
 
             {/* ── 본문 ── */}
             <main
-                style={{
-                    maxWidth: '1280px',
-                    margin: '0 auto',
-                    padding: '32px 32px 64px',
-                    opacity: isPending ? 0.6 : 1,
-                    transition: 'opacity 0.2s',
-                }}
+                className={`max-w-[1280px] mx-auto px-8 pt-8 pb-16 transition-opacity duration-200 ${isPending ? 'opacity-60' : 'opacity-100'}`}
             >
-                {/* ── 툴바: 타이틀 / 검색 / 정렬 / 새 페이지 ── */}
-                <div style={{ marginBottom: '28px' }}>
+                {/* ── 툴바: 타이틀 / 뷰모드 필터 / 검색 / 정렬 ── */}
+                <div className="mb-7">
                     {/* 타이틀 행 */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '20px',
-                            gap: '12px',
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111827' }}>대시보드</h1>
-                            <span style={{ fontSize: '13px', color: '#9ca3af' }}>
-                                {localTotalCount.toLocaleString()}개
-                            </span>
+                    <div className="flex items-center justify-between mb-5 gap-3">
+                        <div className="flex items-baseline gap-2.5">
+                            <h1 className="m-0 text-[22px] font-bold text-[#111827]">대시보드</h1>
+                            <span className="text-[13px] text-[#9ca3af]">{localTotalCount.toLocaleString()}개</span>
                         </div>
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '9px 18px',
-                                borderRadius: '8px',
-                                background: '#0046A4',
-                                color: '#ffffff',
-                                border: 'none',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0,
-                            }}
+                            className="inline-flex items-center gap-1.5 px-[18px] py-[9px] rounded-lg bg-[#0046A4] text-white border-0 text-[13px] font-semibold cursor-pointer whitespace-nowrap shrink-0"
                         >
                             + 새 페이지
                         </button>
                     </div>
 
                     {/* 뷰 모드 필터 버튼 */}
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                    <div className="flex gap-1.5 mb-3">
                         {VIEW_MODE_FILTERS.map((f) => {
                             const active = viewModeFilter === f.value;
                             return (
                                 <button
                                     key={String(f.value)}
                                     onClick={() => handleViewModeChange(f.value)}
-                                    style={{
-                                        padding: '5px 14px',
-                                        borderRadius: '20px',
-                                        border: `1px solid ${active ? '#0046A4' : '#e5e7eb'}`,
-                                        background: active ? '#0046A4' : '#ffffff',
-                                        color: active ? '#ffffff' : '#6b7280',
-                                        fontSize: '12px',
-                                        fontWeight: active ? 600 : 400,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s',
-                                    }}
+                                    className={`px-[14px] py-[5px] rounded-full border text-[12px] cursor-pointer transition-all duration-150 ${
+                                        active
+                                            ? 'border-[#0046A4] bg-[#0046A4] text-white font-semibold'
+                                            : 'border-[#e5e7eb] bg-white text-[#6b7280] font-normal'
+                                    }`}
                                 >
                                     {f.label}
                                 </button>
@@ -321,20 +269,10 @@ export default function DashboardClient({
                     </div>
 
                     {/* 검색 + 정렬 행 */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div className="flex gap-2 items-center">
                         {/* 검색 인풋 */}
-                        <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-                            <span
-                                style={{
-                                    position: 'absolute',
-                                    left: '12px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    fontSize: '14px',
-                                    color: '#9ca3af',
-                                    pointerEvents: 'none',
-                                }}
-                            >
+                        <div className="relative flex-1 max-w-[400px]">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#9ca3af] pointer-events-none">
                                 🔍
                             </span>
                             <input
@@ -342,39 +280,19 @@ export default function DashboardClient({
                                 placeholder="페이지 이름 검색"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    boxSizing: 'border-box',
-                                    padding: '9px 14px 9px 36px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #e5e7eb',
-                                    fontSize: '13px',
-                                    outline: 'none',
-                                    background: '#ffffff',
-                                    color: '#111827',
-                                }}
+                                className="w-full box-border py-[9px] pr-[14px] pl-9 rounded-lg border border-[#e5e7eb] text-[13px] outline-none bg-white text-[#111827]"
                             />
                         </div>
 
                         {/* 정렬 드롭다운 */}
-                        <div ref={sortDropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
+                        <div ref={sortDropdownRef} className="relative shrink-0">
                             <button
                                 onClick={() => setSortDropdownOpen((v) => !v)}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '9px 14px',
-                                    borderRadius: '8px',
-                                    border: `1px solid ${sortDropdownOpen ? '#0046A4' : '#e5e7eb'}`,
-                                    background: sortDropdownOpen ? '#f0f4ff' : '#ffffff',
-                                    fontSize: '13px',
-                                    color: sortDropdownOpen ? '#0046A4' : '#374151',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'all 0.15s',
-                                    fontWeight: 500,
-                                }}
+                                className={`inline-flex items-center gap-1.5 px-[14px] py-[9px] rounded-lg border text-[13px] cursor-pointer whitespace-nowrap transition-all duration-150 font-medium ${
+                                    sortDropdownOpen
+                                        ? 'border-[#0046A4] bg-[#f0f4ff] text-[#0046A4]'
+                                        : 'border-[#e5e7eb] bg-white text-[#374151]'
+                                }`}
                             >
                                 {SORT_OPTIONS.find((o) => o.value === sortBy)?.label}
                                 <svg
@@ -382,11 +300,7 @@ export default function DashboardClient({
                                     height="12"
                                     viewBox="0 0 12 12"
                                     fill="none"
-                                    style={{
-                                        transform: sortDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                        transition: 'transform 0.15s',
-                                        flexShrink: 0,
-                                    }}
+                                    className={`transition-transform duration-150 shrink-0 ${sortDropdownOpen ? 'rotate-180' : 'rotate-0'}`}
                                 >
                                     <path
                                         d="M2 4l4 4 4-4"
@@ -399,20 +313,7 @@ export default function DashboardClient({
                             </button>
 
                             {sortDropdownOpen && (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: 'calc(100% + 4px)',
-                                        right: 0,
-                                        minWidth: '140px',
-                                        background: '#ffffff',
-                                        borderRadius: '8px',
-                                        border: '1px solid #e5e7eb',
-                                        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                                        overflow: 'hidden',
-                                        zIndex: 50,
-                                    }}
-                                >
+                                <div className="absolute top-[calc(100%+4px)] right-0 min-w-[140px] bg-white rounded-lg border border-[#e5e7eb] shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden z-50">
                                     {SORT_OPTIONS.map((opt) => (
                                         <button
                                             key={opt.value}
@@ -420,20 +321,11 @@ export default function DashboardClient({
                                                 handleSortChange(opt.value);
                                                 setSortDropdownOpen(false);
                                             }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                width: '100%',
-                                                padding: '9px 14px',
-                                                border: 'none',
-                                                background: '#ffffff',
-                                                color: sortBy === opt.value ? '#0046A4' : '#374151',
-                                                fontSize: '13px',
-                                                fontWeight: sortBy === opt.value ? 600 : 400,
-                                                cursor: 'pointer',
-                                                textAlign: 'left',
-                                            }}
+                                            className={`flex items-center justify-between w-full px-[14px] py-[9px] border-0 bg-white text-[13px] cursor-pointer text-left ${
+                                                sortBy === opt.value
+                                                    ? 'text-[#0046A4] font-semibold'
+                                                    : 'text-[#374151] font-normal'
+                                            }`}
                                         >
                                             {opt.label}
                                             {sortBy === opt.value && (
@@ -457,20 +349,13 @@ export default function DashboardClient({
 
                 {/* 카드 그리드 */}
                 {pages.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '80px 0', color: '#9ca3af', fontSize: '14px' }}>
+                    <div className="text-center py-20 text-[#9ca3af] text-sm">
                         {search
                             ? `'${search}'에 대한 검색 결과가 없습니다.`
                             : '아직 페이지가 없습니다. 새 페이지를 만들어 보세요.'}
                     </div>
                 ) : (
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                            gap: '20px',
-                            marginBottom: '32px',
-                        }}
-                    >
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 mb-8">
                         {pages.map((page) => {
                             const vmStyle = VIEW_MODE_STYLE[page.viewMode] ?? VIEW_MODE_STYLE.mobile;
                             const apStyle = APPROVE_STYLE[page.approveState] ?? APPROVE_STYLE.WORK;
@@ -478,47 +363,22 @@ export default function DashboardClient({
                             return (
                                 <div
                                     key={page.id}
-                                    style={{
-                                        background: '#ffffff',
-                                        borderRadius: '12px',
-                                        border: '1px solid #e5e7eb',
-                                        overflow: 'hidden',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                                        transition: 'box-shadow 0.15s, transform 0.15s',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        (e.currentTarget as HTMLDivElement).style.boxShadow =
-                                            '0 8px 24px rgba(0,70,164,0.12)';
-                                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        (e.currentTarget as HTMLDivElement).style.boxShadow =
-                                            '0 2px 8px rgba(0,0,0,0.06)';
-                                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                                    }}
+                                    className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-all duration-150 cursor-pointer flex flex-col hover:shadow-[0_8px_24px_rgba(0,70,164,0.12)] hover:-translate-y-0.5"
                                     onClick={() => {
                                         window.location.href = `/edit?bank=${page.id}`;
                                     }}
                                 >
                                     {/* 썸네일 영역 */}
                                     <div
+                                        className="h-[140px] flex items-center justify-center shrink-0 border-b border-[#f3f4f6]"
                                         style={{
-                                            height: '140px',
                                             background: page.thumbnail
                                                 ? `url(${page.thumbnail}) center/cover no-repeat`
                                                 : '#f0f4ff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                            borderBottom: '1px solid #f3f4f6',
                                         }}
                                     >
                                         {!page.thumbnail && (
-                                            <span style={{ fontSize: '36px', opacity: 0.4 }}>
+                                            <span className="text-[36px] opacity-40">
                                                 {page.viewMode === 'mobile'
                                                     ? '📱'
                                                     : page.viewMode === 'web'
@@ -529,84 +389,43 @@ export default function DashboardClient({
                                     </div>
 
                                     {/* 카드 본문 */}
-                                    <div
-                                        style={{
-                                            padding: '14px 16px 12px',
-                                            flex: 1,
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '8px',
-                                        }}
-                                    >
+                                    <div className="px-4 pt-3.5 pb-3 flex-1 flex flex-col gap-2">
                                         <p
-                                            style={{
-                                                margin: 0,
-                                                fontSize: '14px',
-                                                fontWeight: 600,
-                                                color: '#111827',
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                            }}
+                                            className="m-0 text-sm font-semibold text-[#111827] truncate"
                                             title={page.label}
                                         >
                                             {page.label}
                                         </p>
 
                                         {/* 뱃지 행 */}
-                                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                        <div className="flex gap-1.5 flex-wrap">
                                             <span
-                                                style={{
-                                                    padding: '2px 8px',
-                                                    borderRadius: '10px',
-                                                    background: vmStyle.bg,
-                                                    color: vmStyle.color,
-                                                    fontSize: '11px',
-                                                    fontWeight: 600,
-                                                }}
+                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
+                                                style={{ background: vmStyle.bg, color: vmStyle.color }}
                                             >
                                                 {vmStyle.label}
                                             </span>
                                             <span
-                                                style={{
-                                                    padding: '2px 8px',
-                                                    borderRadius: '10px',
-                                                    background: apStyle.bg,
-                                                    color: apStyle.color,
-                                                    fontSize: '11px',
-                                                    fontWeight: 600,
-                                                }}
+                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
+                                                style={{ background: apStyle.bg, color: apStyle.color }}
                                             >
                                                 {apStyle.label}
                                             </span>
                                         </div>
 
-                                        <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>
+                                        <p className="m-0 text-[11px] text-[#9ca3af]">
                                             {formatDate(page.lastModifiedDtime)}
                                         </p>
                                     </div>
 
                                     {/* 카드 푸터: 삭제 버튼 */}
                                     <div
-                                        style={{
-                                            padding: '8px 16px',
-                                            borderTop: '1px solid #f3f4f6',
-                                            display: 'flex',
-                                            justifyContent: 'flex-end',
-                                        }}
+                                        className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <button
                                             onClick={() => handleDeletePage(page.id, page.label)}
-                                            style={{
-                                                padding: '4px 10px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #fca5a5',
-                                                background: 'transparent',
-                                                color: '#dc2626',
-                                                fontSize: '12px',
-                                                cursor: 'pointer',
-                                            }}
+                                            className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
                                         >
                                             삭제
                                         </button>
@@ -619,19 +438,15 @@ export default function DashboardClient({
 
                 {/* 페이지네이션 */}
                 {totalPages > 1 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
+                    <div className="flex justify-center gap-1">
                         <button
                             onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
-                            style={{
-                                padding: '6px 14px',
-                                borderRadius: '6px',
-                                border: '1px solid #e5e7eb',
-                                background: currentPage === 1 ? '#f9fafb' : '#ffffff',
-                                color: currentPage === 1 ? '#d1d5db' : '#374151',
-                                fontSize: '13px',
-                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                            }}
+                            className={`px-3.5 py-1.5 rounded-md border border-[#e5e7eb] text-[13px] ${
+                                currentPage === 1
+                                    ? 'bg-[#f9fafb] text-[#d1d5db] cursor-not-allowed'
+                                    : 'bg-white text-[#374151] cursor-pointer'
+                            }`}
                         >
                             이전
                         </button>
@@ -646,17 +461,11 @@ export default function DashboardClient({
                             <button
                                 key={p}
                                 onClick={() => handlePageChange(p)}
-                                style={{
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    border: '1px solid',
-                                    borderColor: currentPage === p ? '#0046A4' : '#e5e7eb',
-                                    background: currentPage === p ? '#0046A4' : '#ffffff',
-                                    color: currentPage === p ? '#ffffff' : '#374151',
-                                    fontSize: '13px',
-                                    fontWeight: currentPage === p ? 600 : 400,
-                                    cursor: 'pointer',
-                                }}
+                                className={`px-3 py-1.5 rounded-md border text-[13px] cursor-pointer ${
+                                    currentPage === p
+                                        ? 'border-[#0046A4] bg-[#0046A4] text-white font-semibold'
+                                        : 'border-[#e5e7eb] bg-white text-[#374151] font-normal'
+                                }`}
                             >
                                 {p}
                             </button>
@@ -665,15 +474,11 @@ export default function DashboardClient({
                         <button
                             onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage === totalPages}
-                            style={{
-                                padding: '6px 14px',
-                                borderRadius: '6px',
-                                border: '1px solid #e5e7eb',
-                                background: currentPage === totalPages ? '#f9fafb' : '#ffffff',
-                                color: currentPage === totalPages ? '#d1d5db' : '#374151',
-                                fontSize: '13px',
-                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                            }}
+                            className={`px-3.5 py-1.5 rounded-md border border-[#e5e7eb] text-[13px] ${
+                                currentPage === totalPages
+                                    ? 'bg-[#f9fafb] text-[#d1d5db] cursor-not-allowed'
+                                    : 'bg-white text-[#374151] cursor-pointer'
+                            }`}
                         >
                             다음
                         </button>
@@ -685,43 +490,15 @@ export default function DashboardClient({
             {showCreateModal && (
                 <div
                     onClick={handleModalClose}
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        zIndex: 200,
-                        background: 'rgba(0,0,0,0.4)',
-                        backdropFilter: 'blur(2px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
+                    className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '32px',
-                            width: '480px',
-                            maxWidth: '90vw',
-                            boxShadow: '0 24px 64px rgba(0,70,164,0.15)',
-                        }}
+                        className="bg-white rounded-[20px] p-8 w-[480px] max-w-[90vw] shadow-[0_24px_64px_rgba(0,70,164,0.15)]"
                     >
-                        <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>
-                            새 페이지 만들기
-                        </h3>
+                        <h3 className="m-0 mb-6 text-lg font-bold text-[#111827]">새 페이지 만들기</h3>
 
-                        <label
-                            style={{
-                                display: 'block',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: '#374151',
-                                marginBottom: '6px',
-                            }}
-                        >
-                            페이지 이름
-                        </label>
+                        <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">페이지 이름</label>
                         <input
                             autoFocus
                             value={newPageName}
@@ -731,89 +508,47 @@ export default function DashboardClient({
                                 if (e.key === 'Escape') handleModalClose();
                             }}
                             placeholder="예: 메인 페이지"
-                            style={{
-                                width: '100%',
-                                boxSizing: 'border-box',
-                                padding: '10px 14px',
-                                borderRadius: '8px',
-                                border: '1px solid #d1d5db',
-                                fontSize: '14px',
-                                marginBottom: '20px',
-                                outline: 'none',
-                            }}
+                            className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm mb-5 outline-none"
                         />
 
-                        <label
-                            style={{
-                                display: 'block',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: '#374151',
-                                marginBottom: '8px',
-                            }}
-                        >
-                            화면 유형
-                        </label>
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '28px' }}>
+                        <label className="block text-[13px] font-semibold text-[#374151] mb-2">화면 유형</label>
+                        <div className="flex gap-2.5 mb-7">
                             {(['mobile', 'web', 'responsive'] as ViewMode[]).map((vm) => {
                                 const icon = vm === 'mobile' ? '📱' : vm === 'web' ? '🖥️' : '🔄';
                                 const vmLabel = vm === 'mobile' ? '모바일' : vm === 'web' ? '웹' : '반응형';
+                                const selected = newPageViewMode === vm;
                                 return (
                                     <button
                                         key={vm}
                                         onClick={() => setNewPageViewMode(vm)}
-                                        style={{
-                                            flex: 1,
-                                            padding: '10px 6px',
-                                            borderRadius: '8px',
-                                            border: '2px solid',
-                                            borderColor: newPageViewMode === vm ? '#0046A4' : '#e5e7eb',
-                                            background: newPageViewMode === vm ? '#f0f4ff' : '#ffffff',
-                                            color: newPageViewMode === vm ? '#0046A4' : '#6b7280',
-                                            fontSize: '13px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                        }}
+                                        className={`flex-1 py-2.5 px-1.5 rounded-lg border-2 text-[13px] font-semibold cursor-pointer flex flex-col items-center gap-1 ${
+                                            selected
+                                                ? 'border-[#0046A4] bg-[#f0f4ff] text-[#0046A4]'
+                                                : 'border-[#e5e7eb] bg-white text-[#6b7280]'
+                                        }`}
                                     >
-                                        <span style={{ fontSize: '20px' }}>{icon}</span>
+                                        <span className="text-[20px]">{icon}</span>
                                         {vmLabel}
                                     </button>
                                 );
                             })}
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <div className="flex justify-end gap-2">
                             <button
                                 onClick={handleModalClose}
-                                style={{
-                                    padding: '10px 20px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #e5e7eb',
-                                    background: '#ffffff',
-                                    color: '#374151',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                }}
+                                className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
                             >
                                 취소
                             </button>
                             <button
                                 onClick={handleCreatePage}
                                 disabled={!newPageName.trim() || creating}
-                                style={{
-                                    padding: '10px 20px',
-                                    borderRadius: '8px',
-                                    border: 'none',
-                                    background: !newPageName.trim() || creating ? '#d1d5db' : '#0046A4',
-                                    color: '#ffffff',
-                                    fontSize: '14px',
-                                    fontWeight: 600,
-                                    cursor: !newPageName.trim() || creating ? 'not-allowed' : 'pointer',
-                                }}
+                                className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
+                                    !newPageName.trim() || creating
+                                        ? 'bg-[#d1d5db] cursor-not-allowed'
+                                        : 'bg-[#0046A4] cursor-pointer'
+                                }`}
                             >
                                 {creating ? '생성 중...' : '만들기'}
                             </button>
