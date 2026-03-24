@@ -211,12 +211,20 @@ export default {
             return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
         };
 
-        // Calculate
+        // Calculate — getVal은 min/max 범위로 클램핑하여 극단값 계산 방지
         const calculate = () => {
             const panel = element.querySelector(`.lc-panel[data-type="${currentType}"]`);
             if (!panel) return;
 
-            const getVal = (key) => parseFloat(panel.querySelector(`[data-key="${key}"]`)?.value) || 0;
+            const getVal = (key) => {
+                const el = panel.querySelector(`.lc-input[data-key="${key}"]`);
+                if (!el) return 0;
+                const v = parseFloat(el.value);
+                if (isNaN(v)) return 0;
+                const min = parseFloat(el.min);
+                const max = parseFloat(el.max);
+                return Math.min(Math.max(v, min), max);
+            };
 
             const monthly = element.querySelector('.lc-val-monthly');
             const interest = element.querySelector('.lc-val-interest');
@@ -272,29 +280,48 @@ export default {
         // Sync range <-> number input within each panel
         const debouncedCalculate = debounce(calculate, 300);
 
+        // 범위 초과 시 테두리 색상 변경용 스타일 (한 번만 주입, DOM 추가 없음)
+        if (!document.getElementById('lc-overrange-style')) {
+            const style = document.createElement('style');
+            style.id = 'lc-overrange-style';
+            style.textContent = '.lc-input-wrap.lc-out-of-range{border-color:#e0a030!important;background:#fffbf5!important}';
+            document.head.appendChild(style);
+        }
+
         panels.forEach(panel => {
             const syncPair = (inputEl, rangeEl) => {
                 if (!inputEl || !rangeEl) return;
 
+                const min = parseFloat(inputEl.min);
+                const max = parseFloat(inputEl.max);
+                // 마지막 유효 값 저장 (브라우저가 .value를 빈 문자열로 반환할 때 복원용)
+                let lastValidValue = inputEl.value;
+
                 // number input: debounce로 타이핑 중 깜빡임 방지
                 inputEl.addEventListener('input', () => {
+                    const raw = inputEl.value;
                     // 빈 값이면 계산하지 않고 대기
-                    if (inputEl.value === '' || inputEl.value === '-') return;
-                    rangeEl.value = inputEl.value;
+                    if (raw === '' || raw === '-') return;
+                    const v = parseFloat(raw);
+                    if (isNaN(v)) return;
+                    lastValidValue = raw;
+                    inputEl.closest('.lc-input-wrap')?.classList.toggle('lc-out-of-range', v < min || v > max);
+                    rangeEl.value = Math.min(Math.max(v, min), max);
                     debouncedCalculate();
                 });
 
-                // blur 시 min/max 클램핑 + 빈 값 복원
+                // blur 시 min/max 클램핑
                 inputEl.addEventListener('blur', () => {
-                    const v = parseFloat(inputEl.value);
-                    const min = parseFloat(inputEl.min);
-                    const max = parseFloat(inputEl.max);
-                    if (isNaN(v) || inputEl.value === '') {
-                        inputEl.value = inputEl.defaultValue;
-                    } else {
-                        inputEl.value = Math.min(Math.max(v, min), max);
+                    // 브라우저가 무효 입력 시 .value를 빈 문자열로 반환 → lastValidValue로 복원
+                    if (inputEl.value === '') {
+                        inputEl.value = lastValidValue;
                     }
+                    const v = parseFloat(inputEl.value);
+                    const clamped = isNaN(v) ? parseFloat(inputEl.defaultValue) : Math.min(Math.max(v, min), max);
+                    inputEl.value = clamped;
+                    lastValidValue = String(clamped);
                     rangeEl.value = inputEl.value;
+                    inputEl.closest('.lc-input-wrap')?.classList.remove('lc-out-of-range');
                     calculate();
                 });
 
@@ -309,6 +336,7 @@ export default {
                 // range 슬라이더: 즉시 반영 (debounce 불필요)
                 rangeEl.addEventListener('input', () => {
                     inputEl.value = rangeEl.value;
+                    lastValidValue = rangeEl.value;
                     calculate();
                 });
             };
