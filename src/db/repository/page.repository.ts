@@ -45,11 +45,14 @@ export async function getPageById(pageId: string): Promise<CmsPage | null> {
     }
 }
 
-/** 페이지 목록 조회 (페이지네이션) */
+/** 페이지 목록 조회 (페이지네이션 + 검색 + 정렬) */
 export async function getPageList(
     options: {
         approveState?: ApproveState;
         createUserId?: string;
+        search?: string; // PAGE_NAME LIKE 검색어
+        sortBy?: 'name' | 'date'; // 'name': 이름순, 'date'(기본): 최신 수정순
+        viewMode?: ViewMode; // 뷰 모드 필터
         page?: number;
         pageSize?: number;
     } = {},
@@ -62,6 +65,9 @@ export async function getPageList(
     const binds = {
         approveState: options.approveState ?? null,
         createUserId: options.createUserId ?? null,
+        search: options.search ?? null,
+        sortBy: options.sortBy === 'name' ? 'name' : 'date',
+        viewMode: options.viewMode ?? null,
         startRow,
         endRow,
     };
@@ -75,6 +81,8 @@ export async function getPageList(
                 {
                     approveState: binds.approveState,
                     createUserId: binds.createUserId,
+                    search: binds.search,
+                    viewMode: binds.viewMode,
                 },
                 OBJ,
             ),
