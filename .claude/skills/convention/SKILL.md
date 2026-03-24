@@ -24,20 +24,18 @@ return NextResponse.json({ success: true }); // ❌ 금지
 에러 응답은 상황에 따라 구분:
 
 - ContentBuilder 연결 API → `{ ok: false, error: "..." }` HTTP **200**
-- 일반 API → `{ error: "..." }` HTTP 400/500
+- 일반 API → `{ ok: false, error: "..." }` HTTP 400/500
 
 에러 메시지는 한국어, 스택 트레이스·파일 경로 등 내부 정보 노출 금지.
 
 ### catch 블록
 
 ```ts
-} catch (error) {                          // ✅ error로 통일
-    console.error('한국어 설명:', error);
-    return NextResponse.json({
-        error: error instanceof Error ? error.message : '알 수 없는 오류'
-    }, { status: 500 });
+} catch (err: unknown) {                   // ✅ err: unknown으로 통일
+    console.error('한국어 설명:', err);
+    return errorResponse(getErrorMessage(err)); // getErrorMessage 헬퍼 필수
 }
-// ❌ 금지: catch (err), catch (error: any), catch (error: unknown)
+// ❌ 금지: catch (error), catch (error: any), instanceof Error 직접 사용
 ```
 
 ### DB 레이어
@@ -54,12 +52,13 @@ API route → repository → queries (SQL 상수) → DB
 
 ### 공통 유틸 — 중복 구현 금지
 
-| 기능        | import 경로                                                        |
-| ----------- | ------------------------------------------------------------------ |
-| DB 커넥션   | `@/db/connection` → `getConnection`, `withTransaction`, `clobBind` |
-| 현재 사용자 | `@/lib/current-user` → `getCurrentUser`                            |
-| ID 검증     | `@/lib/validators` → `isValidBankId`                               |
-| 업로드 URL  | `@/lib/upload-utils` → `normalizeUploadUrl`                        |
+| 기능        | import 경로                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| API 응답    | `@/lib/api-response` → `successResponse`, `errorResponse`, `contentBuilderErrorResponse`, `getErrorMessage` |
+| DB 커넥션   | `@/db/connection` → `getConnection`, `withTransaction`, `clobBind`                                          |
+| 현재 사용자 | `@/lib/current-user` → `getCurrentUser`                                                                      |
+| ID 검증     | `@/lib/validators` → `isValidBankId`                                                                         |
+| 업로드 URL  | `@/lib/upload-utils` → `normalizeUploadUrl`                                                                  |
 
 ### 보안
 
