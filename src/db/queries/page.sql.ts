@@ -22,6 +22,7 @@ export const PAGE_SELECT_LIST = `
         AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
         AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
         AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%')
+        AND (:viewMode IS NULL OR VIEW_MODE = :viewMode)
       ORDER BY
         CASE WHEN :sortBy = 'name' THEN PAGE_NAME END ASC,
         CASE WHEN :sortBy != 'name' THEN LAST_MODIFIED_DTIME END DESC NULLS LAST
@@ -39,6 +40,7 @@ export const PAGE_COUNT = `
     AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
     AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
     AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%')
+    AND (:viewMode IS NULL OR VIEW_MODE = :viewMode)
 `;
 
 /** 페이지 신규 생성 (W-3: VIEW_MODE 바인딩 추가) */

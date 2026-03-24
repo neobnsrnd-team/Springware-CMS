@@ -29,6 +29,7 @@ export interface DashboardClientProps {
     currentPage: number;
     search: string;
     sortBy: SortBy;
+    viewMode: ViewMode | null;
 }
 
 // 뷰 모드 뱃지 색상
@@ -48,6 +49,14 @@ const APPROVE_STYLE: Record<string, { bg: string; color: string; label: string }
 
 const PAGE_SIZE = 12;
 
+// 뷰 모드 필터 옵션
+const VIEW_MODE_FILTERS: { value: ViewMode | null; label: string }[] = [
+    { value: null, label: '전체' },
+    { value: 'mobile', label: '모바일' },
+    { value: 'web', label: '웹' },
+    { value: 'responsive', label: '반응형' },
+];
+
 export default function DashboardClient({
     userId,
     initialPages,
@@ -55,13 +64,15 @@ export default function DashboardClient({
     currentPage,
     search: initialSearch,
     sortBy: initialSortBy,
+    viewMode: initialViewMode,
 }: DashboardClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
-    // 검색·정렬은 로컬 상태로 관리 후 URL 반영
+    // 검색·정렬·필터는 로컬 상태로 관리 후 URL 반영
     const [search, setSearch] = useState(initialSearch);
     const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
+    const [viewModeFilter, setViewModeFilter] = useState<ViewMode | null>(initialViewMode);
 
     // 삭제 후 낙관적 업데이트용 로컬 페이지 목록
     const [pages, setPages] = useState<PageCard[]>(initialPages);
@@ -95,15 +106,17 @@ export default function DashboardClient({
     }, []);
 
     // URL 업데이트 헬퍼 — searchParams 변경 시 서버 컴포넌트 재렌더링 유도
-    function navigate(params: { page?: number; search?: string; sortBy?: SortBy }) {
+    function navigate(params: { page?: number; search?: string; sortBy?: SortBy; viewMode?: ViewMode | null }) {
         const sp = new URLSearchParams();
         const nextPage = params.page ?? 1;
         const nextSearch = params.search ?? search;
         const nextSortBy = params.sortBy ?? sortBy;
+        const nextViewMode = 'viewMode' in params ? params.viewMode : viewModeFilter;
 
         if (nextPage > 1) sp.set('page', String(nextPage));
         if (nextSearch) sp.set('search', nextSearch);
         if (nextSortBy !== 'date') sp.set('sortBy', nextSortBy);
+        if (nextViewMode) sp.set('viewMode', nextViewMode);
 
         const query = sp.toString();
         startTransition(() => {
@@ -127,6 +140,12 @@ export default function DashboardClient({
     function handleSortChange(value: SortBy) {
         setSortBy(value);
         navigate({ page: 1, search, sortBy: value });
+    }
+
+    // 뷰 모드 필터 변경 → URL 반영
+    function handleViewModeChange(value: ViewMode | null) {
+        setViewModeFilter(value);
+        navigate({ page: 1, search, sortBy, viewMode: value });
     }
 
     // 페이지 이동 → URL 반영
@@ -273,6 +292,32 @@ export default function DashboardClient({
                         >
                             + 새 페이지
                         </button>
+                    </div>
+
+                    {/* 뷰 모드 필터 버튼 */}
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                        {VIEW_MODE_FILTERS.map((f) => {
+                            const active = viewModeFilter === f.value;
+                            return (
+                                <button
+                                    key={String(f.value)}
+                                    onClick={() => handleViewModeChange(f.value)}
+                                    style={{
+                                        padding: '5px 14px',
+                                        borderRadius: '20px',
+                                        border: `1px solid ${active ? '#0046A4' : '#e5e7eb'}`,
+                                        background: active ? '#0046A4' : '#ffffff',
+                                        color: active ? '#ffffff' : '#6b7280',
+                                        fontSize: '12px',
+                                        fontWeight: active ? 600 : 400,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s',
+                                    }}
+                                >
+                                    {f.label}
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {/* 검색 + 정렬 행 */}
