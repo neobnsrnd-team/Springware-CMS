@@ -14,6 +14,7 @@ import {
     PAGE_COUNT,
     PAGE_INSERT,
     PAGE_UPDATE,
+    PAGE_REQUEST_APPROVAL,
     PAGE_UPDATE_APPROVE_STATE,
     PAGE_SOFT_DELETE,
     PAGE_HARD_DELETE,
@@ -160,6 +161,13 @@ export async function updatePage(input: {
             lastModifierId: input.lastModifierId,
             lastModifierName: input.lastModifierName,
         });
+    });
+}
+
+/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자 지정 */
+export async function requestApproval(pageId: string, approverId: string, approverName: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName });
     });
 }
 

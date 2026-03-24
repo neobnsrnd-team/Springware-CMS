@@ -75,6 +75,17 @@ export const PAGE_UPDATE = `
     AND USE_YN = 'Y'
 `;
 
+/** 승인 요청 — APPROVE_STATE를 PENDING으로, 결재자 지정, 요청 시각 기록 */
+export const PAGE_REQUEST_APPROVAL = `
+  UPDATE SPW_CMS_PAGE
+  SET APPROVE_STATE = 'PENDING',
+      APPROVER_ID   = :approverId,
+      APPROVER_NAME = :approverName,
+      CONFIRM_DTIME = SYSTIMESTAMP
+  WHERE PAGE_ID     = :pageId
+    AND APPROVE_STATE IN ('WORK', 'REJECTED')
+`;
+
 /** 결재 상태 변경 */
 export const PAGE_UPDATE_APPROVE_STATE = `
   UPDATE SPW_CMS_PAGE
