@@ -1,4 +1,4 @@
-// src/app/edit/ComponentPanel.tsx
+// src/components/edit/ComponentPanel.tsx
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';

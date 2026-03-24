@@ -1,4 +1,4 @@
-// src/app/view/ViewClient.tsx
+// src/components/view/ViewClient.tsx
 'use client';
 
 import { useEffect } from 'react';
