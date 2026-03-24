@@ -27,7 +27,7 @@ async function saveThumbnailFile(pageId: string, buffer: Buffer): Promise<string
 
 export async function POST(req: NextRequest) {
     try {
-        getCurrentUser(); // 사용자 인증 확인
+        await getCurrentUser(); // 사용자 인증 확인
 
         const formData = await req.formData();
         const fileValue = formData.get('file');

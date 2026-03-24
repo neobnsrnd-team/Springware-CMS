@@ -17,7 +17,7 @@ async function savePage(
     viewMode?: string,
     thumbnail?: string,
 ): Promise<void> {
-    const { userId, userName } = getCurrentUser();
+    const { userId, userName } = await getCurrentUser();
 
     // 1. 파일 먼저 저장 (실패 시 예외 → DB 호출 안 함)
     const filePath = await writePageHtml(bank, html);

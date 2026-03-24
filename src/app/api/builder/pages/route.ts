@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
             approveState: p.APPROVE_STATE,
         }));
 
-        const { userId } = getCurrentUser();
+        const { userId } = await getCurrentUser();
         return successResponse({ pages, totalCount, currentUserId: userId });
     } catch (err: unknown) {
         console.error('페이지 목록 조회 실패:', err);
@@ -65,7 +65,7 @@ export async function DELETE(req: NextRequest) {
             return errorResponse('페이지를 찾을 수 없습니다', 404);
         }
 
-        const { userId } = getCurrentUser();
+        const { userId } = await getCurrentUser();
 
         // DB 삭제 (미승인: 하드, 승인: 소프트)
         const { deleteType } = await deletePage(pageId, userId);
