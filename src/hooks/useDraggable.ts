@@ -1,4 +1,4 @@
-// src/lib/useDraggable.ts
+// src/hooks/useDraggable.ts
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
