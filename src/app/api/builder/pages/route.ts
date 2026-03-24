@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server';
 
 import { getPageList, getPageById, deletePage } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
-import { deletePageHtml } from '@/lib/page-file';
+import { deletePageHtml, deletePageThumbnail } from '@/lib/page-file';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /**
@@ -74,6 +74,9 @@ export async function DELETE(req: NextRequest) {
         if (page.FILE_PATH) {
             await deletePageHtml(page.FILE_PATH);
         }
+
+        // 썸네일 파일 삭제 (없으면 무시)
+        await deletePageThumbnail(pageId);
 
         return successResponse({ deleteType });
     } catch (err: unknown) {
