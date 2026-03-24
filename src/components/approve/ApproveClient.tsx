@@ -78,6 +78,11 @@ export default function ApproveClient({
     const [pages, setPages] = useState<ApprovePageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
 
+    // 반려 모달 상태
+    const [rejectModalPageId, setRejectModalPageId] = useState<string | null>(null);
+    const [rejectReason, setRejectReason] = useState('');
+    const [rejecting, setRejecting] = useState(false);
+
     // 서버에서 새 데이터가 내려올 때 동기화
     useEffect(() => {
         setPages(initialPages);
@@ -158,7 +163,35 @@ export default function ApproveClient({
     }
 
     function handleReject(pageId: string) {
-        alert(`반려 기능은 후속 이슈에서 구현 예정입니다.\n페이지: ${pageId}`);
+        setRejectModalPageId(pageId);
+        setRejectReason('');
+    }
+
+    // 반려 확정 — API 호출 후 페이지 새로고침
+    async function handleRejectConfirm() {
+        if (!rejectModalPageId || !rejectReason.trim() || rejecting) return;
+
+        setRejecting(true);
+        try {
+            const res = await fetch(`/api/builder/pages/${rejectModalPageId}/reject`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rejectedReason: rejectReason.trim() }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                alert(data.error ?? '반려 처리에 실패했습니다.');
+                return;
+            }
+            // 성공 → 모달 닫기 + 페이지 새로고침
+            setRejectModalPageId(null);
+            router.refresh();
+        } catch (err: unknown) {
+            console.error('반려 처리 오류:', err);
+            alert('반려 처리에 실패했습니다.');
+        } finally {
+            setRejecting(false);
+        }
     }
 
     // 날짜 포맷 (YYYY.MM.DD HH:MM)
@@ -444,6 +477,53 @@ export default function ApproveClient({
                     </div>
                 )}
             </main>
+
+            {/* ── 반려 사유 입력 모달 ── */}
+            {rejectModalPageId && (
+                <div
+                    onClick={() => setRejectModalPageId(null)}
+                    className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white rounded-[20px] p-8 w-[480px] max-w-[90vw] shadow-[0_24px_64px_rgba(0,70,164,0.15)]"
+                    >
+                        <h3 className="m-0 mb-6 text-lg font-bold text-[#111827]">반려 사유 입력</h3>
+
+                        <textarea
+                            autoFocus
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') setRejectModalPageId(null);
+                            }}
+                            placeholder="반려 사유를 입력해 주세요."
+                            rows={4}
+                            className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm mb-5 outline-none resize-y"
+                        />
+
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setRejectModalPageId(null)}
+                                className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleRejectConfirm}
+                                disabled={!rejectReason.trim() || rejecting}
+                                className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
+                                    !rejectReason.trim() || rejecting
+                                        ? 'bg-[#d1d5db] cursor-not-allowed'
+                                        : 'bg-[#dc2626] cursor-pointer'
+                                }`}
+                            >
+                                {rejecting ? '처리 중...' : '반려 확정'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
