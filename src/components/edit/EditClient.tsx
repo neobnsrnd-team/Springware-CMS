@@ -1476,7 +1476,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
                 }}
             >
-                {/* 로고 + 대시보드 이동 */}
+                {/* 대시보드 이동 버튼 */}
                 <a
                     href={`/${currentUserId}`}
                     title="대시보드로 돌아가기"
@@ -1485,20 +1485,28 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                         alignItems: 'center',
                         gap: '6px',
                         textDecoration: 'none',
-                        color: '#0046A4',
-                        fontWeight: 700,
-                        fontSize: '15px',
+                        color: '#374151',
+                        fontSize: '13px',
+                        fontWeight: 500,
                         whiteSpace: 'nowrap',
-                        letterSpacing: '-0.3px',
-                        marginRight: '16px',
-                        padding: '4px 8px',
+                        marginRight: '4px',
+                        padding: '5px 10px',
                         borderRadius: '6px',
-                        transition: 'background 0.15s',
+                        border: '1px solid #e5e7eb',
+                        background: '#f9fafb',
+                        transition: 'background 0.15s, border-color 0.15s',
+                        flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = '#f0f4ff')}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = 'transparent')}
+                    onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.background = '#f0f4ff';
+                        (e.currentTarget as HTMLAnchorElement).style.borderColor = '#c7d8f4';
+                    }}
+                    onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.background = '#f9fafb';
+                        (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e5e7eb';
+                    }}
                 >
-                    ← Springware CMS
+                    ← 대시보드
                 </a>
 
                 {/* 페이지 탭 */}

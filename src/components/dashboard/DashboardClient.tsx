@@ -1,12 +1,19 @@
 // src/components/dashboard/DashboardClient.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+
+// 정렬 옵션 목록
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+    { value: 'date', label: '최신 수정순' },
+    { value: 'name', label: '이름순' },
+];
 
 type ViewMode = 'mobile' | 'web' | 'responsive';
 type SortBy = 'date' | 'name';
 
-interface PageCard {
+export interface PageCard {
     id: string;
     label: string;
     viewMode: ViewMode;
@@ -17,6 +24,11 @@ interface PageCard {
 
 export interface DashboardClientProps {
     userId: string;
+    initialPages: PageCard[];
+    totalCount: number;
+    currentPage: number;
+    search: string;
+    sortBy: SortBy;
 }
 
 // 뷰 모드 뱃지 색상
@@ -36,14 +48,30 @@ const APPROVE_STYLE: Record<string, { bg: string; color: string; label: string }
 
 const PAGE_SIZE = 12;
 
-export default function DashboardClient({ userId }: DashboardClientProps) {
-    const [pages, setPages] = useState<PageCard[]>([]);
-    const [totalCount, setTotalCount] = useState(0);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [search, setSearch] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [sortBy, setSortBy] = useState<SortBy>('date');
-    const [loading, setLoading] = useState(true);
+export default function DashboardClient({
+    userId,
+    initialPages,
+    totalCount,
+    currentPage,
+    search: initialSearch,
+    sortBy: initialSortBy,
+}: DashboardClientProps) {
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
+
+    // 검색·정렬은 로컬 상태로 관리 후 URL 반영
+    const [search, setSearch] = useState(initialSearch);
+    const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
+
+    // 삭제 후 낙관적 업데이트용 로컬 페이지 목록
+    const [pages, setPages] = useState<PageCard[]>(initialPages);
+    const [localTotalCount, setLocalTotalCount] = useState(totalCount);
+
+    // 서버에서 새 데이터가 내려올 때 동기화
+    useEffect(() => {
+        setPages(initialPages);
+        setLocalTotalCount(totalCount);
+    }, [initialPages, totalCount]);
 
     // 새 페이지 생성 모달
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -51,47 +79,60 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     const [newPageViewMode, setNewPageViewMode] = useState<ViewMode>('mobile');
     const [creating, setCreating] = useState(false);
 
+    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const sortDropdownRef = useRef<HTMLDivElement>(null);
     const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // 검색어 디바운스 (300ms)
+    // 드롭다운 외부 클릭 시 닫기
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target as Node)) {
+                setSortDropdownOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // URL 업데이트 헬퍼 — searchParams 변경 시 서버 컴포넌트 재렌더링 유도
+    function navigate(params: { page?: number; search?: string; sortBy?: SortBy }) {
+        const sp = new URLSearchParams();
+        const nextPage = params.page ?? 1;
+        const nextSearch = params.search ?? search;
+        const nextSortBy = params.sortBy ?? sortBy;
+
+        if (nextPage > 1) sp.set('page', String(nextPage));
+        if (nextSearch) sp.set('search', nextSearch);
+        if (nextSortBy !== 'date') sp.set('sortBy', nextSortBy);
+
+        const query = sp.toString();
+        startTransition(() => {
+            router.push(`/${userId}${query ? `?${query}` : ''}`);
+        });
+    }
+
+    // 검색어 디바운스 (300ms) → URL 반영
     useEffect(() => {
         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         searchDebounceRef.current = setTimeout(() => {
-            setDebouncedSearch(search);
-            setCurrentPage(1); // 검색 시 첫 페이지로 이동
+            navigate({ page: 1, search, sortBy });
         }, 300);
         return () => {
             if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
 
-    // 페이지 목록 로드
-    const loadPages = useCallback(async () => {
-        setLoading(true);
-        try {
-            const params = new URLSearchParams({
-                page: String(currentPage),
-                pageSize: String(PAGE_SIZE),
-                sortBy,
-            });
-            if (debouncedSearch) params.set('search', debouncedSearch);
+    // 정렬 변경 → URL 반영
+    function handleSortChange(value: SortBy) {
+        setSortBy(value);
+        navigate({ page: 1, search, sortBy: value });
+    }
 
-            const res = await fetch(`/api/builder/pages?${params.toString()}`);
-            const data = await res.json();
-            if (data.ok) {
-                setPages(data.pages);
-                setTotalCount(data.totalCount);
-            }
-        } catch (err) {
-            console.error('페이지 목록 로드 실패:', err);
-        } finally {
-            setLoading(false);
-        }
-    }, [currentPage, debouncedSearch, sortBy]);
-
-    useEffect(() => {
-        loadPages();
-    }, [loadPages]);
+    // 페이지 이동 → URL 반영
+    function handlePageChange(page: number) {
+        navigate({ page, search, sortBy });
+    }
 
     // 새 페이지 생성
     async function handleCreatePage() {
@@ -114,21 +155,28 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         }
     }
 
-    // 페이지 삭제
+    // 페이지 삭제 — 낙관적 업데이트 후 API 호출
     async function handleDeletePage(pageId: string, label: string) {
         if (!confirm(`'${label}' 페이지를 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
+
+        // 낙관적 업데이트
+        setPages((prev) => prev.filter((p) => p.id !== pageId));
+        setLocalTotalCount((prev) => prev - 1);
 
         try {
             const res = await fetch(`/api/builder/pages?pageId=${encodeURIComponent(pageId)}`, {
                 method: 'DELETE',
             });
             const data = await res.json();
-            if (data.ok) {
-                setPages((prev) => prev.filter((p) => p.id !== pageId));
-                setTotalCount((prev) => prev - 1);
+            if (!data.ok) {
+                // 실패 시 서버 데이터로 복구
+                setPages(initialPages);
+                setLocalTotalCount(totalCount);
             }
         } catch (err) {
             console.error('페이지 삭제 실패:', err);
+            setPages(initialPages);
+            setLocalTotalCount(totalCount);
         }
     }
 
@@ -150,7 +198,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         return `${yyyy}.${mm}.${dd} ${hh}:${min}`;
     }
 
-    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
 
     return (
         <div style={{ minHeight: '100vh', background: '#f8faff', fontFamily: 'inherit' }}>
@@ -174,114 +222,199 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                     Springware CMS
                 </span>
                 <span style={{ color: '#d1d5db', fontSize: '14px' }}>/</span>
-                <span style={{ fontSize: '14px', color: '#374151' }}>내 페이지</span>
+                <span style={{ fontSize: '14px', color: '#374151' }}>대시보드</span>
             </header>
 
             {/* ── 본문 ── */}
-            <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 32px 64px' }}>
-                {/* 타이틀 + 새 페이지 버튼 */}
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        justifyContent: 'space-between',
-                        marginBottom: '24px',
-                        gap: '16px',
-                        flexWrap: 'wrap',
-                    }}
-                >
-                    <div>
-                        <h1 style={{ margin: '0 0 4px', fontSize: '24px', fontWeight: 700, color: '#111827' }}>
-                            내 페이지
-                        </h1>
-                        <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
-                            {loading ? '로딩 중...' : `총 ${totalCount.toLocaleString()}개`}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
+            <main
+                style={{
+                    maxWidth: '1280px',
+                    margin: '0 auto',
+                    padding: '32px 32px 64px',
+                    opacity: isPending ? 0.6 : 1,
+                    transition: 'opacity 0.2s',
+                }}
+            >
+                {/* ── 툴바: 타이틀 / 검색 / 정렬 / 새 페이지 ── */}
+                <div style={{ marginBottom: '28px' }}>
+                    {/* 타이틀 행 */}
+                    <div
                         style={{
-                            display: 'inline-flex',
+                            display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            padding: '10px 20px',
-                            borderRadius: '10px',
-                            background: '#0046A4',
-                            color: '#ffffff',
-                            border: 'none',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
+                            justifyContent: 'space-between',
+                            marginBottom: '20px',
+                            gap: '12px',
                         }}
                     >
-                        + 새 페이지 만들기
-                    </button>
-                </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111827' }}>대시보드</h1>
+                            <span style={{ fontSize: '13px', color: '#9ca3af' }}>
+                                {localTotalCount.toLocaleString()}개
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '9px 18px',
+                                borderRadius: '8px',
+                                background: '#0046A4',
+                                color: '#ffffff',
+                                border: 'none',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0,
+                            }}
+                        >
+                            + 새 페이지
+                        </button>
+                    </div>
 
-                {/* 검색 + 정렬 */}
-                <div
-                    style={{
-                        display: 'flex',
-                        gap: '12px',
-                        marginBottom: '24px',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                    }}
-                >
-                    <input
-                        type="text"
-                        placeholder="페이지 이름으로 검색..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        style={{
-                            flex: 1,
-                            minWidth: '200px',
-                            maxWidth: '400px',
-                            padding: '9px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid #d1d5db',
-                            fontSize: '14px',
-                            outline: 'none',
-                            background: '#ffffff',
-                        }}
-                    />
-                    <select
-                        value={sortBy}
-                        onChange={(e) => {
-                            setSortBy(e.target.value as SortBy);
-                            setCurrentPage(1);
-                        }}
-                        style={{
-                            padding: '9px 12px',
-                            borderRadius: '8px',
-                            border: '1px solid #d1d5db',
-                            fontSize: '14px',
-                            background: '#ffffff',
-                            cursor: 'pointer',
-                        }}
-                    >
-                        <option value="date">최신 수정순</option>
-                        <option value="name">이름순</option>
-                    </select>
+                    {/* 검색 + 정렬 행 */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {/* 검색 인풋 */}
+                        <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+                            <span
+                                style={{
+                                    position: 'absolute',
+                                    left: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    fontSize: '14px',
+                                    color: '#9ca3af',
+                                    pointerEvents: 'none',
+                                }}
+                            >
+                                🔍
+                            </span>
+                            <input
+                                type="text"
+                                placeholder="페이지 이름 검색"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    boxSizing: 'border-box',
+                                    padding: '9px 14px 9px 36px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '13px',
+                                    outline: 'none',
+                                    background: '#ffffff',
+                                    color: '#111827',
+                                }}
+                            />
+                        </div>
+
+                        {/* 정렬 드롭다운 */}
+                        <div ref={sortDropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
+                            <button
+                                onClick={() => setSortDropdownOpen((v) => !v)}
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '9px 14px',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${sortDropdownOpen ? '#0046A4' : '#e5e7eb'}`,
+                                    background: sortDropdownOpen ? '#f0f4ff' : '#ffffff',
+                                    fontSize: '13px',
+                                    color: sortDropdownOpen ? '#0046A4' : '#374151',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'all 0.15s',
+                                    fontWeight: 500,
+                                }}
+                            >
+                                {SORT_OPTIONS.find((o) => o.value === sortBy)?.label}
+                                <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 12 12"
+                                    fill="none"
+                                    style={{
+                                        transform: sortDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                        transition: 'transform 0.15s',
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    <path
+                                        d="M2 4l4 4 4-4"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            </button>
+
+                            {sortDropdownOpen && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 4px)',
+                                        right: 0,
+                                        minWidth: '140px',
+                                        background: '#ffffff',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e5e7eb',
+                                        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                                        overflow: 'hidden',
+                                        zIndex: 50,
+                                    }}
+                                >
+                                    {SORT_OPTIONS.map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => {
+                                                handleSortChange(opt.value);
+                                                setSortDropdownOpen(false);
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                width: '100%',
+                                                padding: '9px 14px',
+                                                border: 'none',
+                                                background: '#ffffff',
+                                                color: sortBy === opt.value ? '#0046A4' : '#374151',
+                                                fontSize: '13px',
+                                                fontWeight: sortBy === opt.value ? 600 : 400,
+                                                cursor: 'pointer',
+                                                textAlign: 'left',
+                                            }}
+                                        >
+                                            {opt.label}
+                                            {sortBy === opt.value && (
+                                                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                                                    <path
+                                                        d="M2 6.5l3 3 6-6"
+                                                        stroke="#0046A4"
+                                                        strokeWidth="1.8"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    />
+                                                </svg>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* 카드 그리드 */}
-                {loading ? (
+                {pages.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '80px 0', color: '#9ca3af', fontSize: '14px' }}>
-                        로딩 중...
-                    </div>
-                ) : pages.length === 0 ? (
-                    <div
-                        style={{
-                            textAlign: 'center',
-                            padding: '80px 0',
-                            color: '#9ca3af',
-                            fontSize: '14px',
-                        }}
-                    >
-                        {debouncedSearch
-                            ? `'${debouncedSearch}'에 대한 검색 결과가 없습니다.`
+                        {search
+                            ? `'${search}'에 대한 검색 결과가 없습니다.`
                             : '아직 페이지가 없습니다. 새 페이지를 만들어 보세요.'}
                     </div>
                 ) : (
@@ -416,7 +549,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                             display: 'flex',
                                             justifyContent: 'flex-end',
                                         }}
-                                        onClick={(e) => e.stopPropagation()} // 카드 클릭 이벤트 버블링 방지
+                                        onClick={(e) => e.stopPropagation()}
                                     >
                                         <button
                                             onClick={() => handleDeletePage(page.id, page.label)}
@@ -443,7 +576,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 {totalPages > 1 && (
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
                         <button
-                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
                             style={{
                                 padding: '6px 14px',
@@ -459,7 +592,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                         </button>
 
                         {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                            // 현재 페이지 기준으로 최대 7개 페이지 버튼 표시
                             const half = 3;
                             let start = Math.max(1, currentPage - half);
                             const end = Math.min(totalPages, start + 6);
@@ -468,7 +600,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                         }).map((p) => (
                             <button
                                 key={p}
-                                onClick={() => setCurrentPage(p)}
+                                onClick={() => handlePageChange(p)}
                                 style={{
                                     padding: '6px 12px',
                                     borderRadius: '6px',
@@ -486,7 +618,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                         ))}
 
                         <button
-                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage === totalPages}
                             style={{
                                 padding: '6px 14px',
@@ -534,7 +666,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                             새 페이지 만들기
                         </h3>
 
-                        {/* 페이지 이름 */}
                         <label
                             style={{
                                 display: 'block',
@@ -567,7 +698,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                             }}
                         />
 
-                        {/* 뷰 모드 */}
                         <label
                             style={{
                                 display: 'block',
@@ -582,7 +712,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                         <div style={{ display: 'flex', gap: '10px', marginBottom: '28px' }}>
                             {(['mobile', 'web', 'responsive'] as ViewMode[]).map((vm) => {
                                 const icon = vm === 'mobile' ? '📱' : vm === 'web' ? '🖥️' : '🔄';
-                                const label = vm === 'mobile' ? '모바일' : vm === 'web' ? '웹' : '반응형';
+                                const vmLabel = vm === 'mobile' ? '모바일' : vm === 'web' ? '웹' : '반응형';
                                 return (
                                     <button
                                         key={vm}
@@ -605,7 +735,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                         }}
                                     >
                                         <span style={{ fontSize: '20px' }}>{icon}</span>
-                                        {label}
+                                        {vmLabel}
                                     </button>
                                 );
                             })}
