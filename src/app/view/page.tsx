@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 import { getPageById } from '@/db/repository/page.repository';
 import { readPageHtml } from '@/lib/page-file';
 import ViewClient from '@/components/view/ViewClient';
+import type { ViewMode } from '@/db/types';
 
 // Override default metadata from layout.tsx for this page
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,38 +18,45 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // FILE_PATH 기반 파일 로드. 마이그레이션 이전 데이터는 PAGE_DESC 폴백.
-async function loadPage(bank: string): Promise<string> {
+async function loadPage(bank: string): Promise<{ html: string; viewMode: ViewMode }> {
     const page = await getPageById(bank);
-    if (!page) return '';
+    const viewMode: ViewMode = page?.VIEW_MODE ?? 'mobile';
+
+    if (!page) return { html: '', viewMode };
 
     if (page.FILE_PATH) {
         const content = await readPageHtml(page.FILE_PATH);
-        if (content !== null) return content;
+        if (content !== null) return { html: content, viewMode };
         // 파일 경로는 있는데 로컬에 파일 없음 → 안내 메시지
-        return (
-            '<div style="padding:40px;text-align:center;color:#6b7280;">' +
-            '<p style="font-size:18px;font-weight:600;">페이지 파일이 로컬에 존재하지 않습니다.</p>' +
-            '<p style="margin-top:8px;">git pull 후 다시 시도하거나, 에디터에서 저장해 주세요.</p>' +
-            '</div>'
-        );
+        return {
+            html:
+                '<div style="padding:40px;text-align:center;color:#6b7280;">' +
+                '<p style="font-size:18px;font-weight:600;">페이지 파일이 로컬에 존재하지 않습니다.</p>' +
+                '<p style="margin-top:8px;">git pull 후 다시 시도하거나, 에디터에서 저장해 주세요.</p>' +
+                '</div>',
+            viewMode,
+        };
     }
     // 마이그레이션 이전 데이터: PAGE_DESC 폴백
-    return page.PAGE_DESC ?? '';
+    return { html: page.PAGE_DESC ?? '', viewMode };
 }
 
-export default async function View({ searchParams }: { searchParams: Promise<{ bank?: string }> }) {
+export default async function View({ searchParams }: { searchParams: Promise<{ bank?: string; embed?: string }> }) {
     const params = await searchParams;
     // 경로 순회 방지: 영문·숫자·하이픈만 허용 (커스텀 탭 ID 포함)
     const rawBank = params.bank ?? '';
     const bank = /^[a-z0-9-]+$/i.test(rawBank) ? rawBank : 'ibk';
+    // embed=1 이면 iframe 내부 렌더링 — 툴바 없이 콘텐츠만 표시
+    const embed = params.embed === '1';
 
     let html = '';
+    let viewMode: ViewMode = 'mobile';
     try {
-        html = await loadPage(bank);
+        ({ html, viewMode } = await loadPage(bank));
     } catch (err: unknown) {
         console.error('페이지 콘텐츠 로드 실패:', err);
         html = '<p style="color:red;">저장된 콘텐츠가 없습니다. 에디터에서 저장 후 다시 시도하세요.</p>';
     }
 
-    return <ViewClient html={html} />;
+    return <ViewClient html={html} viewMode={viewMode} bank={bank} embed={embed} />;
 }

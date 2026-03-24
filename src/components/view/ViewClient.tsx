@@ -1,18 +1,53 @@
 // src/components/view/ViewClient.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Runtime library for rendering ContentBuilder-generated content
 import ContentBuilderRuntime from '@innovastudio/contentbuilder-runtime';
 import '@innovastudio/contentbuilder-runtime/dist/contentbuilder-runtime.css';
 
+// 반응형 미리보기 슬라이더 프리셋
+const RESPONSIVE_PRESETS = [
+    { label: '모바일', width: 390 },
+    { label: '태블릿', width: 768 },
+    { label: '데스크탑', width: 1280 },
+];
+
+const RESPONSIVE_MIN = 320;
+const RESPONSIVE_MAX = 1440;
+
 type Props = {
     html: string;
+    viewMode: 'mobile' | 'web' | 'responsive';
+    /** 반응형 iframe src 생성에 필요한 페이지 ID */
+    bank?: string;
+    /** true이면 iframe 내부 렌더링 — 툴바 없이 콘텐츠만 표시 */
+    embed?: boolean;
 };
 
-export default function ViewClient({ html }: Props) {
+export default function ViewClient({ html, viewMode, bank, embed }: Props) {
+    // 반응형 모드 툴바용 너비 상태
+    const [responsiveWidth, setResponsiveWidth] = useState<number>(RESPONSIVE_MAX);
+    const iframeWrapperRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
+        if (viewMode === 'responsive' && !embed) {
+            const initial = Math.min(window.innerWidth, RESPONSIVE_MAX);
+            setResponsiveWidth(initial);
+            if (iframeWrapperRef.current) iframeWrapperRef.current.style.width = `${initial}px`;
+        }
+    }, [viewMode, embed]);
+
+    function applyWidth(width: number) {
+        setResponsiveWidth(width);
+        if (iframeWrapperRef.current) iframeWrapperRef.current.style.width = `${width}px`;
+    }
+
+    useEffect(() => {
+        // 반응형 모드에서 툴바 쪽(비embed)은 iframe을 사용하므로 런타임 초기화 불필요
+        if (viewMode === 'responsive' && !embed) return;
+
         const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 
         // Initialize runtime
@@ -171,19 +206,128 @@ export default function ViewClient({ html }: Props) {
         return () => runtime.destroy();
     }, []);
 
+    // ── 반응형 모드: 툴바 + iframe ─────────────────────────────────────────
+    if (viewMode === 'responsive' && !embed) {
+        const iframeSrc = `/view?bank=${bank ?? 'ibk'}&embed=1`;
+
+        return (
+            <div style={{ background: '#dde1e7', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                {/* 툴바 */}
+                <div
+                    style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 50,
+                        background: '#ffffff',
+                        borderBottom: '1px solid #e5e7eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        padding: '10px 24px',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                    }}
+                >
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                        {RESPONSIVE_PRESETS.map(({ label, width }) => (
+                            <button
+                                key={width}
+                                onClick={() => applyWidth(width)}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '5px',
+                                    border: '1px solid',
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    fontWeight: 500,
+                                    borderColor: responsiveWidth === width ? '#0046A4' : '#e5e7eb',
+                                    background: responsiveWidth === width ? '#EEF4FF' : '#ffffff',
+                                    color: responsiveWidth === width ? '#0046A4' : '#6b7280',
+                                }}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    <input
+                        type="range"
+                        min={RESPONSIVE_MIN}
+                        max={RESPONSIVE_MAX}
+                        value={responsiveWidth}
+                        onChange={(e) => applyWidth(Number(e.target.value))}
+                        style={{ width: '200px', accentColor: '#0046A4' }}
+                    />
+                    <span
+                        style={{
+                            fontSize: '13px',
+                            color: '#374151',
+                            fontVariantNumeric: 'tabular-nums',
+                            minWidth: '60px',
+                        }}
+                    >
+                        {responsiveWidth}px
+                    </span>
+                </div>
+
+                {/* iframe 래퍼 — 너비만 직접 조작, iframe 자체는 100% */}
+                <div style={{ padding: '32px 0 80px', flex: 1 }}>
+                    <div
+                        ref={iframeWrapperRef}
+                        style={{
+                            width: `${RESPONSIVE_MAX}px`, // useEffect에서 window.innerWidth로 교정
+                            maxWidth: '100%',
+                            margin: '0 auto',
+                            transition: 'width 0.1s ease',
+                            boxShadow: '0 8px 48px rgba(0,70,164,0.10)',
+                            background: '#ffffff',
+                        }}
+                    >
+                        <iframe
+                            src={iframeSrc}
+                            style={{
+                                width: '100%',
+                                minHeight: '700px',
+                                border: 'none',
+                                display: 'block',
+                            }}
+                            // iframe 높이를 내용에 맞게 자동 조정
+                            onLoad={(e) => {
+                                try {
+                                    const doc = (e.target as HTMLIFrameElement).contentDocument;
+                                    if (doc) {
+                                        (e.target as HTMLIFrameElement).style.height =
+                                            doc.documentElement.scrollHeight + 'px';
+                                    }
+                                } catch {
+                                    // cross-origin 등으로 접근 불가한 경우 무시
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ── mobile / web 모드: 직접 렌더링 ───────────────────────────────────
     return (
-        <div style={{ background: '#dde1e7', minHeight: '100vh', padding: '40px 0 80px' }}>
-            {/* 모바일 앱 화면 미리보기 — 390px 폰 크기 */}
+        <div
+            style={{
+                background: embed ? 'transparent' : '#dde1e7',
+                minHeight: '100vh',
+                padding: viewMode === 'web' || embed ? '0' : '32px 0 80px',
+            }}
+        >
             <div
                 suppressHydrationWarning
                 className="is-container"
                 style={{
-                    maxWidth: '390px',
-                    margin: '0 auto',
+                    maxWidth: viewMode === 'mobile' ? '390px' : '100%',
+                    margin: viewMode === 'mobile' ? '0 auto' : '0',
                     width: '100%',
                     background: '#ffffff',
-                    minHeight: '700px',
-                    boxShadow: '0 8px 48px rgba(0,70,164,0.10)',
+                    minHeight: '100vh',
+                    boxShadow: viewMode === 'mobile' ? '0 8px 48px rgba(0,70,164,0.10)' : 'none',
                     padding: 0,
                 }}
                 dangerouslySetInnerHTML={{ __html: html || '' }}
