@@ -963,18 +963,19 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 if (response.html && builderRef.current) {
                     builderRef.current.loadHtml(response.html);
                 }
-                // 로드 응답에서 탭 정보 등록 (세션에 없는 경우 추가)
+                // 로드 응답에서 탭 정보 등록 — 최근 접근 순(왼쪽), 최대 10개
                 if (response.pageName) {
                     setTabs((prev) => {
-                        if (prev.some((t) => t.id === bank)) return prev;
-                        return [
-                            ...prev,
+                        const filtered = prev.filter((t) => t.id !== bank);
+                        const updated = [
                             {
                                 id: bank,
                                 label: response.pageName,
                                 viewMode: (response.viewMode as ViewMode) ?? 'mobile',
                             },
+                            ...filtered,
                         ];
+                        return updated.slice(0, 10);
                     });
                 }
                 // 플러그인 CSS·JS 로드 및 mount() 실행 + ContentBuilder 핸들러 재연결
@@ -1357,6 +1358,30 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         }
     }
 
+    // ── 페이지 삭제 ──────────────────────────────────────────────────────
+    async function handleDeletePage() {
+        const currentLabel = tabs.find((t) => t.id === bank)?.label ?? bank;
+        if (!confirm(`'${currentLabel}' 페이지를 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
+
+        try {
+            const res = await fetch(`/api/builder/pages?pageId=${encodeURIComponent(bank)}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!data.ok) {
+                alert('페이지 삭제에 실패했습니다.');
+                return;
+            }
+        } catch (err: unknown) {
+            console.error('페이지 삭제 실패:', err);
+            alert('페이지 삭제 중 오류가 발생했습니다.');
+            return;
+        }
+
+        // 삭제 후 탭 제거 후 이동
+        const remaining = tabs.filter((t) => t.id !== bank);
+        setTabs(remaining);
+        window.location.href = remaining.length > 0 ? `/edit?bank=${remaining[0].id}` : `/${currentUserId}`;
+    }
+
     // ── 저장 / 미리보기 / HTML 보기 ──────────────────────────────────────
     /** 캔버스 썸네일 캡처 → 리사이즈 → JPG 업로드 */
     const THUMBNAIL_CAPTURE_WIDTH = 390; // 모바일 뷰포트 기준 캡처 너비
@@ -1483,31 +1508,34 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '6px',
+                        gap: '5px',
                         textDecoration: 'none',
-                        color: '#374151',
+                        color: '#0046A4',
                         fontSize: '13px',
-                        fontWeight: 500,
+                        fontWeight: 600,
                         whiteSpace: 'nowrap',
-                        marginRight: '4px',
-                        padding: '5px 10px',
+                        padding: '5px 12px 5px 8px',
                         borderRadius: '6px',
-                        border: '1px solid #e5e7eb',
-                        background: '#f9fafb',
-                        transition: 'background 0.15s, border-color 0.15s',
+                        border: '1px solid #c7d8f4',
+                        background: '#EBF4FF',
                         flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.background = '#f0f4ff';
-                        (e.currentTarget as HTMLAnchorElement).style.borderColor = '#c7d8f4';
-                    }}
-                    onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.background = '#f9fafb';
-                        (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e5e7eb';
-                    }}
+                    className="nav-btn"
                 >
-                    ← 대시보드
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path
+                            d="M9 2L4 7l5 5"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                    대시보드
                 </a>
+
+                {/* 버튼 / 탭 구분선 */}
+                <div style={{ width: '1px', height: '20px', background: '#e5e7eb', flexShrink: 0, margin: '0 6px' }} />
 
                 {/* 페이지 탭 */}
                 <div style={{ display: 'flex', gap: '2px', flex: 1, overflowX: 'auto', alignItems: 'center' }}>
@@ -1600,9 +1628,20 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                             color: '#6b7280',
                             borderColor: '#e5e7eb',
                         }}
-                        title="탭 목록에서 제거 (대시보드에서 삭제 가능)"
+                        title="탭 목록에서 제거 (페이지는 대시보드에서 확인 가능)"
                     >
                         탭 닫기
+                    </button>
+                    <button
+                        onClick={handleDeletePage}
+                        style={{
+                            ...btnStyle,
+                            color: '#dc2626',
+                            borderColor: '#fca5a5',
+                        }}
+                        title="현재 페이지 삭제"
+                    >
+                        삭제
                     </button>
                     <button
                         onClick={handleSave}
