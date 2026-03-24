@@ -37,3 +37,16 @@ export async function deletePageHtml(filePath: string): Promise<void> {
         throw error;
     }
 }
+
+/** 썸네일 파일 삭제. 파일 없으면(ENOENT) 무시, 그 외 에러는 rethrow. */
+export async function deletePageThumbnail(pageId: string): Promise<void> {
+    const fullPath = path.join(PAGES_DIR, 'thumbnails', `${pageId}_thumb.jpg`);
+    try {
+        await fs.unlink(fullPath);
+    } catch (err: unknown) {
+        if (err instanceof Error && 'code' in err && (err as NodeJS.ErrnoException).code === 'ENOENT') {
+            return; // 파일이 이미 없으면 무시
+        }
+        throw err;
+    }
+}

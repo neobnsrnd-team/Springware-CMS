@@ -1,15 +1,22 @@
 // src/app/api/builder/save/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
 import { updatePage, createPage, getPageById } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
 import { isValidBankId } from '@/lib/validators';
 import { writePageHtml } from '@/lib/page-file';
-import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
+import { successResponse, contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 // 페이지 저장: 파일 먼저 쓰기 → 성공 시 DB에 FILE_PATH 기록
 // PAGE_DESC에 HTML 저장하지 않음 (파일만 저장 정책)
-async function savePage(bank: string, html: string, pageName?: string, viewMode?: string): Promise<void> {
+async function savePage(
+    bank: string,
+    html: string,
+    pageName?: string,
+    viewMode?: string,
+    thumbnail?: string,
+): Promise<void> {
     const { userId, userName } = getCurrentUser();
 
     // 1. 파일 먼저 저장 (실패 시 예외 → DB 호출 안 함)
@@ -24,6 +31,7 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
             pageName: pageName,
             viewMode: viewMode as 'mobile' | 'web' | 'responsive' | undefined,
             filePath,
+            thumbnail,
             lastModifierId: userId,
             lastModifierName: userName,
         });
@@ -33,6 +41,7 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
             pageName: pageName ?? bank,
             viewMode: (viewMode as 'mobile' | 'web' | 'responsive') ?? 'mobile',
             filePath,
+            thumbnail,
             createUserId: userId,
             createUserName: userName,
         });
@@ -42,7 +51,7 @@ async function savePage(bank: string, html: string, pageName?: string, viewMode?
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { html, pageName, viewMode } = body;
+        const { html, pageName, viewMode, thumbnail } = body;
         const bank = isValidBankId(body.bank) ? body.bank : 'ibk';
 
         if (html === undefined || html === null) {
@@ -54,9 +63,10 @@ export async function POST(req: NextRequest) {
             html,
             typeof pageName === 'string' ? pageName : undefined,
             typeof viewMode === 'string' ? viewMode : undefined,
+            typeof thumbnail === 'string' ? thumbnail : undefined,
         );
 
-        return NextResponse.json({ ok: true });
+        return successResponse();
     } catch (err: unknown) {
         console.error('페이지 저장 실패:', err);
         return contentBuilderErrorResponse(getErrorMessage(err));
