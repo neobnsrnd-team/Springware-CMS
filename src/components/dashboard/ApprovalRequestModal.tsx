@@ -17,6 +17,13 @@ const VIEW_MODE_LABEL: Record<string, string> = {
     responsive: '반응형',
 };
 
+// 뷰 모드 아이콘
+const VIEW_MODE_ICON: Record<string, string> = {
+    mobile: '📱',
+    web: '🖥️',
+    responsive: '🔄',
+};
+
 interface ApprovalRequestModalProps {
     page: PageCard;
     onClose: () => void;
@@ -68,9 +75,7 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                         }}
                     >
                         {!page.thumbnail && (
-                            <span className="text-[40px] opacity-40">
-                                {page.viewMode === 'mobile' ? '📱' : page.viewMode === 'web' ? '🖥️' : '🔄'}
-                            </span>
+                            <span className="text-[40px] opacity-40">{VIEW_MODE_ICON[page.viewMode] ?? '🔄'}</span>
                         )}
                     </div>
 
