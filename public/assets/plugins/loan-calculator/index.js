@@ -199,17 +199,32 @@ export default {
         }
 
         const formatWon = (n) => {
+            if (!isFinite(n) || isNaN(n)) return '계산 불가';
             if (n >= 100000000) return `${(n / 100000000).toFixed(1)}억원`;
             if (n >= 10000) return `${Math.round(n / 10000).toLocaleString()}만원`;
             return `${Math.round(n).toLocaleString()}원`;
         };
 
-        // Calculate
+        // debounce 유틸
+        const debounce = (fn, ms) => {
+            let timer;
+            return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+        };
+
+        // Calculate — getVal은 min/max 범위로 클램핑하여 극단값 계산 방지
         const calculate = () => {
             const panel = element.querySelector(`.lc-panel[data-type="${currentType}"]`);
             if (!panel) return;
 
-            const getVal = (key) => parseFloat(panel.querySelector(`[data-key="${key}"]`)?.value) || 0;
+            const getVal = (key) => {
+                const el = panel.querySelector(`.lc-input[data-key="${key}"]`);
+                if (!el) return 0;
+                const v = parseFloat(el.value);
+                if (isNaN(v)) return 0;
+                const min = parseFloat(el.min);
+                const max = parseFloat(el.max);
+                return Math.min(Math.max(v, min), max);
+            };
 
             const monthly = element.querySelector('.lc-val-monthly');
             const interest = element.querySelector('.lc-val-interest');
@@ -238,6 +253,7 @@ export default {
                 const P = getVal('principal') * 10000;
                 const r = getVal('rate') / 100;
                 const n = getVal('period') / 12;
+                if (P <= 0 || n <= 0) return;
                 const interestAmt = P * r * n;
                 const totalAmt = P + interestAmt;
                 if (monthly) monthly.textContent = formatWon(interestAmt);
@@ -249,6 +265,7 @@ export default {
                 const m = getVal('monthly') * 10000;
                 const r = getVal('rate') / 100 / 12;
                 const n = getVal('period');
+                if (m <= 0 || n <= 0) return;
                 const principal = m * n;
                 let totalAmt = 0;
                 if (r === 0) { totalAmt = principal; }
@@ -261,15 +278,65 @@ export default {
         };
 
         // Sync range <-> number input within each panel
+        const debouncedCalculate = debounce(calculate, 300);
+
+        // 범위 초과 시 테두리 색상 변경용 스타일 (한 번만 주입, DOM 추가 없음)
+        if (!document.getElementById('lc-overrange-style')) {
+            const style = document.createElement('style');
+            style.id = 'lc-overrange-style';
+            style.textContent = '.lc-input-wrap.lc-out-of-range{border-color:#e0a030!important;background:#fffbf5!important}';
+            document.head.appendChild(style);
+        }
+
         panels.forEach(panel => {
             const syncPair = (inputEl, rangeEl) => {
                 if (!inputEl || !rangeEl) return;
+
+                const min = parseFloat(inputEl.min);
+                const max = parseFloat(inputEl.max);
+                // 마지막 유효 값 저장 (브라우저가 .value를 빈 문자열로 반환할 때 복원용)
+                let lastValidValue = inputEl.value;
+
+                // number input: debounce로 타이핑 중 깜빡임 방지
                 inputEl.addEventListener('input', () => {
+                    const raw = inputEl.value;
+                    // 빈 값이면 계산하지 않고 대기
+                    if (raw === '' || raw === '-') return;
+                    const v = parseFloat(raw);
+                    if (isNaN(v)) return;
+                    lastValidValue = raw;
+                    inputEl.closest('.lc-input-wrap')?.classList.toggle('lc-out-of-range', v < min || v > max);
+                    rangeEl.value = Math.min(Math.max(v, min), max);
+                    debouncedCalculate();
+                });
+
+                // blur 시 min/max 클램핑
+                inputEl.addEventListener('blur', () => {
+                    // 브라우저가 무효 입력 시 .value를 빈 문자열로 반환 → lastValidValue로 복원
+                    if (inputEl.value === '') {
+                        inputEl.value = lastValidValue;
+                    }
+                    const v = parseFloat(inputEl.value);
+                    const clamped = isNaN(v) ? parseFloat(inputEl.defaultValue) : Math.min(Math.max(v, min), max);
+                    inputEl.value = clamped;
+                    lastValidValue = String(clamped);
                     rangeEl.value = inputEl.value;
+                    inputEl.closest('.lc-input-wrap')?.classList.remove('lc-out-of-range');
                     calculate();
                 });
+
+                // Enter 키로 즉시 확정
+                inputEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        inputEl.blur();
+                    }
+                });
+
+                // range 슬라이더: 즉시 반영 (debounce 불필요)
                 rangeEl.addEventListener('input', () => {
                     inputEl.value = rangeEl.value;
+                    lastValidValue = rangeEl.value;
                     calculate();
                 });
             };
