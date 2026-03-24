@@ -2,7 +2,7 @@
 // 컴포넌트 목록 조회 / 수정 API — DB 전용
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { FinanceComponent } from '@/app/edit/finance-component-data';
+import type { FinanceComponent } from '@/data/finance-component-data';
 import type { ComponentType, ViewMode, CmsComponentParsed } from '@/db/types';
 import { getComponentList, getComponentById, updateComponent } from '@/db/repository/component.repository';
 import { errorResponse, getErrorMessage } from '@/lib/api-response';

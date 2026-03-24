@@ -7,7 +7,7 @@
 // 재시드가 필요하면 DB 덤프 또는 별도 마이그레이션 스크립트를 사용할 것.
 
 import { createComponent, getComponentById } from '@/db/repository/component.repository';
-import type { FinanceComponent } from '@/app/edit/finance-component-data';
+import type { FinanceComponent } from '@/data/finance-component-data';
 import type { ComponentType, ViewMode } from '@/db/types';
 
 /**

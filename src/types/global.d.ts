@@ -2,7 +2,7 @@
 
 import type ContentBuilderRuntime from '@innovastudio/contentbuilder-runtime';
 
-import type { BasicBlock } from '@/app/edit/EditClient';
+import type { BasicBlock } from '@/components/edit/EditClient';
 
 declare global {
     interface Window {
