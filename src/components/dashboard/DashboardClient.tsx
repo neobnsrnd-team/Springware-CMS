@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import ApprovalRequestModal from './ApprovalRequestModal';
+import RejectedReasonModal from './RejectedReasonModal';
 
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -22,6 +23,7 @@ export interface PageCard {
     thumbnail: string | null;
     lastModifiedDtime: string | null;
     approveState: string;
+    rejectedReason: string | null;
 }
 
 export interface DashboardClientProps {
@@ -88,6 +90,7 @@ export default function DashboardClient({
 
     // 승인 요청 모달
     const [approvalTarget, setApprovalTarget] = useState<PageCard | null>(null);
+    const [rejectedTarget, setRejectedTarget] = useState<PageCard | null>(null);
 
     // 새 페이지 생성 모달
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -439,12 +442,26 @@ export default function DashboardClient({
                                             >
                                                 {vmStyle.label}
                                             </span>
-                                            <span
-                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
-                                                style={{ background: apStyle.bg, color: apStyle.color }}
-                                            >
-                                                {apStyle.label}
-                                            </span>
+                                            {page.approveState === 'REJECTED' ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setRejectedTarget(page);
+                                                    }}
+                                                    className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold cursor-pointer border-0 underline decoration-dotted"
+                                                    style={{ background: apStyle.bg, color: apStyle.color }}
+                                                    title="반려 사유 확인"
+                                                >
+                                                    {apStyle.label}
+                                                </button>
+                                            ) : (
+                                                <span
+                                                    className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
+                                                    style={{ background: apStyle.bg, color: apStyle.color }}
+                                                >
+                                                    {apStyle.label}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <p className="m-0 text-[11px] text-[#9ca3af]">
@@ -536,6 +553,9 @@ export default function DashboardClient({
                     onSubmit={handleApprovalRequest}
                 />
             )}
+
+            {/* ── 반려 사유 확인 모달 ── */}
+            {rejectedTarget && <RejectedReasonModal page={rejectedTarget} onClose={() => setRejectedTarget(null)} />}
 
             {/* ── 새 페이지 생성 모달 ── */}
             {showCreateModal && (
