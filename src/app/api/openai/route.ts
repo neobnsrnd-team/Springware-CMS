@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
                 choices: [
                     {
                         message: {
-                            role: messageOutput.role,
-                            content: messageOutput.content[0].text,
+                            role: messageOutput?.role,
+                            content: messageOutput?.content[0]?.text,
                         },
                     },
                 ],
