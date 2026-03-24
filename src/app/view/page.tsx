@@ -3,7 +3,7 @@
 import { Metadata } from 'next';
 import { getPageById } from '@/db/repository/page.repository';
 import { readPageHtml } from '@/lib/page-file';
-import ViewClient from './ViewClient';
+import ViewClient from '@/components/view/ViewClient';
 
 // Override default metadata from layout.tsx for this page
 export async function generateMetadata(): Promise<Metadata> {

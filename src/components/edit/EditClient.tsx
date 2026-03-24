@@ -11,9 +11,9 @@ import '@innovastudio/contentbuilder-runtime/dist/contentbuilder-runtime.css';
 import ContentBuilder from '@innovastudio/contentbuilder';
 import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css';
 
-import ComponentPanel from './ComponentPanel';
-import type { FinanceComponent } from './finance-component-data';
-import ko from './ko';
+import ComponentPanel from '@/components/edit/ComponentPanel';
+import type { FinanceComponent } from '@/data/finance-component-data';
+import ko from '@/data/ko';
 
 // content-plugins.js data_basic 스니펫 타입
 export interface BasicBlock {

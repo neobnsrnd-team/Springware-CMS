@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import type { FinanceComponent } from './finance-component-data';
+import type { FinanceComponent } from '@/data/finance-component-data';
 import type { ParsedBlock, BasicBlock } from './EditClient';
 
 interface Props {

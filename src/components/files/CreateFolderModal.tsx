@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
-import { useDraggable } from '@/lib/useDraggable';
+import { useDraggable } from '@/hooks/useDraggable';
 
 interface CreateFolderModalProps {
     isOpen: boolean;

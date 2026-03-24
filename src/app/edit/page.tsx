@@ -1,7 +1,7 @@
 // src/app/edit/page.tsx
 
 import { Suspense } from 'react';
-import EditClientLoader from './EditClientLoader';
+import EditClientLoader from '@/components/edit/EditClientLoader';
 
 export default async function Edit({ searchParams }: { searchParams: Promise<{ bank?: string }> }) {
     const params = await searchParams;
