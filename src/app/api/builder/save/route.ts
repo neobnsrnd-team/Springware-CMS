@@ -5,6 +5,7 @@ import { updatePage, createPage, getPageById } from '@/db/repository/page.reposi
 import { getCurrentUser } from '@/lib/current-user';
 import { isValidBankId } from '@/lib/validators';
 import { writePageHtml } from '@/lib/page-file';
+import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 // 페이지 저장: 파일 먼저 쓰기 → 성공 시 DB에 FILE_PATH 기록
 // PAGE_DESC에 HTML 저장하지 않음 (파일만 저장 정책)
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
         const bank = isValidBankId(body.bank) ? body.bank : 'ibk';
 
         if (html === undefined || html === null) {
-            return NextResponse.json({ error: 'HTML 콘텐츠가 없습니다.' }, { status: 400 });
+            return contentBuilderErrorResponse('HTML 콘텐츠가 없습니다.');
         }
 
         await savePage(
@@ -56,8 +57,8 @@ export async function POST(req: NextRequest) {
         );
 
         return NextResponse.json({ ok: true });
-    } catch (error) {
-        console.error('페이지 저장 실패:', error);
-        return NextResponse.json({ error: '페이지 저장에 실패했습니다.' }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('페이지 저장 실패:', err);
+        return contentBuilderErrorResponse(getErrorMessage(err));
     }
 }

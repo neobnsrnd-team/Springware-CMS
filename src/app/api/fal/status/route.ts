@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
+import { getErrorMessage } from '@/lib/api-response';
 
 const FAL_API_KEY = process.env.FAL_API_KEY;
 
@@ -29,16 +30,12 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ ok: true, result, status: result.status });
-    } catch (error) {
-        let message = '알 수 없는 오류';
-
-        if (error instanceof Error) {
-            message = error.message;
-        }
+    } catch (err: unknown) {
+        let message = getErrorMessage(err);
 
         // FAL AI 구조화 에러 처리 (`body.detail`)
-        if (typeof error === 'object' && error !== null && 'body' in error) {
-            const body = (error as { body?: { detail?: string } }).body;
+        if (typeof err === 'object' && err !== null && 'body' in err) {
+            const body = (err as { body?: { detail?: string } }).body;
             if (body?.detail) {
                 message = body.detail;
             }

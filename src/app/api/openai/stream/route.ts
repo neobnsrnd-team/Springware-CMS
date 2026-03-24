@@ -72,9 +72,9 @@ export async function POST(req: NextRequest) {
                             }
                         });
                     }
-                } catch (error) {
-                    console.error('스트리밍 응답 실패:', error);
-                    controller.error(error);
+                } catch (err: unknown) {
+                    console.error('스트리밍 응답 실패:', err);
+                    controller.error(err);
                 }
             },
         });
@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
                 Connection: 'keep-alive',
             },
         });
-    } catch (error) {
-        console.error('OpenAI 데이터 요청 오류:', error);
+    } catch (err: unknown) {
+        console.error('OpenAI 데이터 요청 오류:', err);
         return new Response(JSON.stringify({ error: 'OpenAI 데이터 요청에 실패했습니다.' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' },

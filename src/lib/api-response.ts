@@ -17,7 +17,7 @@ export function successResponse<T extends Record<string, unknown>>(data?: T, sta
  * ContentBuilder와 무관한 일반 Next.js API에서 사용합니다.
  */
 export function errorResponse(message: string, status = 500): NextResponse {
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ ok: false, error: message }, { status });
 }
 
 /**

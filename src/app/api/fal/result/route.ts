@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { normalizeUploadUrl } from '@/lib/upload-utils';
+import { getErrorMessage } from '@/lib/api-response';
 
 const FAL_API_KEY = process.env.FAL_API_KEY;
 const UPLOAD_PATH = process.env.UPLOAD_PATH || '';
@@ -141,11 +142,8 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ ok: true, data: output, result }, { status: 200 });
-    } catch (error) {
-        return NextResponse.json(
-            { ok: false, error: error instanceof Error ? error.message : '알 수 없는 오류' },
-            { status: 500 },
-        );
+    } catch (err: unknown) {
+        return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
     }
 }
 

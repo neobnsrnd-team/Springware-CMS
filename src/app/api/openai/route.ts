@@ -1,5 +1,6 @@
 // src/app/api/openai/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 import { OPENAI_API_KEY } from '@/lib/env';
 
@@ -79,10 +80,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ answer, usage });
-    } catch (error) {
-        return NextResponse.json(
-            { ok: false, error: error instanceof Error ? error.message : '알 수 없는 오류' },
-            { status: 500 },
-        );
+    } catch (err: unknown) {
+        return contentBuilderErrorResponse(getErrorMessage(err));
     }
 }
