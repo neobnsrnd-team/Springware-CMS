@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { X, Trash2 } from 'lucide-react';
 
-import { useDraggable } from '@/lib/useDraggable';
+import { useDraggable } from '@/hooks/useDraggable';
 
 interface DeleteConfirmModalProps {
     isOpen: boolean;
