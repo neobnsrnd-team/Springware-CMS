@@ -451,9 +451,6 @@ export default function ApproveClient({
                                             {page.label}
                                         </p>
 
-                                        {/* 작성자 */}
-                                        <p className="m-0 text-[11px] text-[#6b7280]">작성자: {page.createUserName}</p>
-
                                         {/* 뱃지 행 */}
                                         <div className="flex gap-1.5 flex-wrap">
                                             <span
@@ -470,9 +467,36 @@ export default function ApproveClient({
                                             </span>
                                         </div>
 
-                                        <p className="m-0 text-[11px] text-[#9ca3af]">
-                                            {formatDate(page.lastModifiedDtime)}
-                                        </p>
+                                        {/* 작성자 + 날짜 */}
+                                        <div className="flex items-center justify-between gap-1">
+                                            <span className="flex items-center gap-1 text-[11px] text-[#6b7280] min-w-0">
+                                                <svg
+                                                    width="11"
+                                                    height="11"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    className="shrink-0 text-[#9ca3af]"
+                                                >
+                                                    <circle
+                                                        cx="12"
+                                                        cy="8"
+                                                        r="4"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    />
+                                                    <path
+                                                        d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                    />
+                                                </svg>
+                                                <span className="truncate">{page.createUserName}</span>
+                                            </span>
+                                            <span className="text-[11px] text-[#9ca3af] shrink-0">
+                                                {formatDate(page.lastModifiedDtime)}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* 카드 푸터: 승인/반려 버튼 (PENDING 상태일 때만) */}
