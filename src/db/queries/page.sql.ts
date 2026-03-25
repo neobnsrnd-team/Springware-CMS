@@ -94,6 +94,7 @@ export const PAGE_UPDATE_APPROVE_STATE = `
       APPROVER_NAME = :approverName,
       APPROVE_DATE = SYSTIMESTAMP,
       REJECTED_REASON = :rejectedReason,
+      EXPIRED_DATE = TO_DATE(:expiredDate, 'YYYY-MM-DD'),
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
 `;

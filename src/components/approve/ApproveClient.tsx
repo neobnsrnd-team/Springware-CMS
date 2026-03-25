@@ -85,6 +85,11 @@ export default function ApproveClient({
     const [rejectReason, setRejectReason] = useState('');
     const [rejecting, setRejecting] = useState(false);
 
+    // 승인 모달 상태
+    const [approveModalPageId, setApproveModalPageId] = useState<string | null>(null);
+    const [expiredDate, setExpiredDate] = useState('');
+    const [approving, setApproving] = useState(false);
+
     // 서버에서 새 데이터가 내려올 때 동기화
     useEffect(() => {
         setPages(initialPages);
@@ -159,23 +164,37 @@ export default function ApproveClient({
         navigate({ page, search, sortBy });
     }
 
-    // 승인 처리 — 확인 후 API 호출
-    async function handleApprove(pageId: string) {
-        if (!confirm('이 페이지를 승인하시겠습니까?')) return;
+    // 승인 모달 열기
+    function handleApprove(pageId: string) {
+        setApproveModalPageId(pageId);
+        setExpiredDate('');
+    }
 
+    // 승인 확정 — API 호출 후 페이지 새로고침
+    async function handleApproveConfirm() {
+        if (!approveModalPageId || approving) return;
+
+        setApproving(true);
         try {
-            const res = await fetch(`/api/builder/pages/${pageId}/approve`, {
+            const res = await fetch(`/api/builder/pages/${approveModalPageId}/approve`, {
                 method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    expiredDate: expiredDate || null,
+                }),
             });
             const data = await res.json();
             if (!data.ok) {
                 alert(data.error ?? '승인 처리에 실패했습니다.');
                 return;
             }
+            setApproveModalPageId(null);
             router.refresh();
         } catch (err: unknown) {
             console.error('승인 처리 오류:', err);
             alert('승인 처리에 실패했습니다.');
+        } finally {
+            setApproving(false);
         }
     }
 
@@ -520,7 +539,7 @@ export default function ApproveClient({
                                             </button>
                                             <button
                                                 onClick={() => handleApprove(page.id)}
-                                                className="px-2.5 py-1 rounded-md border border-[#0046A4] bg-[#0046A4] text-white text-xs cursor-pointer"
+                                                className="px-2.5 py-1 rounded-md border border-[#1e3a5f] bg-[#1e3a5f] text-white text-xs cursor-pointer"
                                             >
                                                 승인
                                             </button>
@@ -621,6 +640,107 @@ export default function ApproveClient({
                     </div>
                 </Modal>
             )}
+
+            {/* ── 승인 확인 모달 ── */}
+            {approveModalPageId &&
+                (() => {
+                    const targetPage = pages.find((p) => p.id === approveModalPageId);
+                    return (
+                        <Modal
+                            title="페이지 승인"
+                            onClose={() => setApproveModalPageId(null)}
+                            showCloseButton={false}
+                            width="480px"
+                            className="p-8"
+                        >
+                            {/* 페이지 정보 요약 */}
+                            {targetPage && (
+                                <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-[#f9fafb] border border-[#e5e7eb]">
+                                    <div
+                                        className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center"
+                                        style={{
+                                            background: targetPage.thumbnail
+                                                ? `url(${targetPage.thumbnail}) center/cover no-repeat`
+                                                : '#e8f0fd',
+                                        }}
+                                    >
+                                        {!targetPage.thumbnail && (
+                                            <span className="text-lg opacity-40">
+                                                {targetPage.viewMode === 'mobile'
+                                                    ? '📱'
+                                                    : targetPage.viewMode === 'web'
+                                                      ? '🖥️'
+                                                      : '🔄'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="m-0 text-sm font-semibold text-[#111827] truncate">
+                                            {targetPage.label}
+                                        </p>
+                                        <span
+                                            className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
+                                            style={{
+                                                background: VIEW_MODE_STYLE[targetPage.viewMode]?.bg,
+                                                color: VIEW_MODE_STYLE[targetPage.viewMode]?.color,
+                                            }}
+                                        >
+                                            {VIEW_MODE_STYLE[targetPage.viewMode]?.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 만료일 입력 */}
+                            <div className="mb-5">
+                                <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                                    만료일 <span className="text-[#9ca3af] font-normal">(선택)</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        value={expiredDate}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        onChange={(e) => setExpiredDate(e.target.value)}
+                                        onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none pr-9 cursor-pointer"
+                                    />
+                                    {expiredDate && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setExpiredDate('')}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full border-0 bg-transparent text-[#9ca3af] text-sm cursor-pointer hover:bg-[#f3f4f6] hover:text-[#374151]"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">
+                                    설정하지 않으면 만료일 없이 승인됩니다.
+                                </p>
+                            </div>
+
+                            {/* 버튼 */}
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    onClick={() => setApproveModalPageId(null)}
+                                    className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    onClick={handleApproveConfirm}
+                                    disabled={approving}
+                                    className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
+                                        approving ? 'bg-[#d1d5db] cursor-not-allowed' : 'bg-[#1e3a5f] cursor-pointer'
+                                    }`}
+                                >
+                                    {approving ? '처리 중...' : '승인 확정'}
+                                </button>
+                            </div>
+                        </Modal>
+                    );
+                })()}
         </div>
     );
 }

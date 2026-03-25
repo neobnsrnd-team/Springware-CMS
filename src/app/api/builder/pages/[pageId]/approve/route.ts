@@ -7,7 +7,7 @@ import { updateApproveState } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
-export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
     try {
         const { pageId } = await params;
 
@@ -21,11 +21,16 @@ export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ p
             return errorResponse('이 작업을 수행할 권한이 없습니다.', 403);
         }
 
+        // 요청 본문에서 선택적 만료일 추출
+        const body = await req.json().catch(() => ({}));
+        const expiredDate: string | null = body.expiredDate ?? null;
+
         const { version } = await updateApproveState({
             pageId,
             approveState: 'APPROVED',
             approverId: userId,
             approverName: userName,
+            expiredDate,
             lastModifierId: userId,
         });
 

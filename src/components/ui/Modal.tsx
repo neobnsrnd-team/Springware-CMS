@@ -51,11 +51,11 @@ export default function Modal({
         <div
             role="dialog"
             aria-modal="true"
-            onClick={onClose}
+            onMouseDown={onClose}
             className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"
         >
             <div
-                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
                 style={{ width }}
                 className={`bg-white rounded-[20px] max-w-[90vw] shadow-[0_24px_64px_rgba(0,70,164,0.15)] ${
                     showCloseButton ? 'overflow-hidden' : ''
