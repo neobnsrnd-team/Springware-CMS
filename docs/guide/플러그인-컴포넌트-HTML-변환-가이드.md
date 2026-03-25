@@ -85,3 +85,27 @@ npx tsx scripts/migrate-<name>-to-html.ts
 - `/view` 렌더링 정상 여부
 
 > 기존 저장 페이지의 블록은 마이그레이션 대상이 아니다. 해당 블록은 삭제 후 새로 추가해야 한다.
+
+---
+
+## SVG 아이콘 등 구조화 콘텐츠가 있는 컴포넌트
+
+ContentBuilder 인라인 편집(더블클릭)만으로는 수정이 불가능한 구조화 콘텐츠(예: 인라인 SVG 아이콘)가 있는 경우, 커스텀 편집 모달을 추가로 구현한다.
+
+**완성 예시**: `product-menu` — `src/components/edit/ProductMenuIconEditor.tsx`
+
+### 구현 패턴
+
+1. **커스텀 편집 모달** (`src/components/edit/<Name>Editor.tsx`)
+   - DOM을 직접 수정하는 방식 (ContentBuilder가 저장 시 DOM을 읽음)
+   - `blockEl: HTMLElement` prop으로 대상 블록을 받아 직접 조작
+
+2. **ContentBuilder 툴바 버튼 주입** (`EditClient.tsx`)
+   - `<a>` 태그 클릭 시 ContentBuilder가 띄우는 `#divLinkTool`에 버튼을 주입
+   - `MutationObserver`로 `#divLinkTool` 추가 감지 → 버튼 1회 주입
+   - `.icon-active` / `.elm-active` 클래스 변화로 표시/숨김 제어
+   - 버튼 스타일: `width:37px; height:37px; background:transparent; fill:#111` (`#divLinkTool` 기존 버튼과 통일)
+
+3. **SVG stroke 색상 교체**
+   - 피커의 SVG는 `stroke="currentColor"`로 작성하고, 저장 HTML에는 실제 색상값을 명시
+   - `buildIconHtml(key, color)` 패턴: `stroke="currentColor"` → `stroke="${color}"` 치환

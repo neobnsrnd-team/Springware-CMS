@@ -56,7 +56,7 @@ function parseBuilderBlocks(html: string, componentsMap?: Record<string, Finance
     return rows.map((row, i) => {
         const rowEl = row as HTMLElement;
 
-        // 금융 컴포넌트 row 확인
+        // 플러그인 기반 금융 컴포넌트 (data-cb-type 존재)
         const pluginEl = rowEl.querySelector('[data-cb-type]');
         if (pluginEl) {
             const cbType = pluginEl.getAttribute('data-cb-type') ?? '';
@@ -65,6 +65,20 @@ function parseBuilderBlocks(html: string, componentsMap?: Record<string, Finance
                 id: `block-${i}-${cbType}`,
                 cbType,
                 label: comp?.label ?? (cbType || `컴포넌트 ${i + 1}`),
+                preview: comp?.preview ?? '',
+                outerHtml: rowEl.outerHTML,
+            };
+        }
+
+        // 순수 HTML 변환 금융 컴포넌트 (data-component-id 존재)
+        const htmlCompEl = rowEl.querySelector('[data-component-id]');
+        if (htmlCompEl) {
+            const compId = htmlCompEl.getAttribute('data-component-id') ?? '';
+            const comp = componentsMap?.[compId];
+            return {
+                id: `block-${i}-${compId}`,
+                cbType: compId,
+                label: comp?.label ?? (compId || `컴포넌트 ${i + 1}`),
                 preview: comp?.preview ?? '',
                 outerHtml: rowEl.outerHTML,
             };
@@ -471,29 +485,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                         url: basePath + '/assets/plugins/promo-banner/index.js',
                         css: basePath + '/assets/plugins/promo-banner/style.css',
                     },
-                    'media-video': {
-                        url: basePath + '/assets/plugins/media-video/index.js',
-                        css: basePath + '/assets/plugins/media-video/style.css',
-                    },
+                    // 순수 HTML 변환 완료 — 런타임 재개입 방지를 위해 등록 제거
+                    // (app-header, product-menu, auth-center, media-video, site-footer)
                     'loan-calculator': {
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
                         css: basePath + '/assets/plugins/loan-calculator/style.css',
-                    },
-                    'auth-center': {
-                        url: basePath + '/assets/plugins/auth-center/index.js',
-                        css: basePath + '/assets/plugins/auth-center/style.css',
-                    },
-                    'app-header': {
-                        url: basePath + '/assets/plugins/app-header/index.js',
-                        css: basePath + '/assets/plugins/app-header/style.css',
-                    },
-                    'product-menu': {
-                        url: basePath + '/assets/plugins/product-menu/index.js',
-                        css: basePath + '/assets/plugins/product-menu/style.css',
-                    },
-                    'site-footer': {
-                        url: basePath + '/assets/plugins/site-footer/index.js',
-                        css: basePath + '/assets/plugins/site-footer/style.css',
                     },
                 },
             });
