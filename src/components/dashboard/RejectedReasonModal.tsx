@@ -3,7 +3,7 @@
 
 import Modal from '@/components/ui/Modal';
 
-import type { PageCard } from './DashboardClient';
+import type { DashboardPageCard } from './DashboardClient';
 
 // 뷰 모드 한국어 라벨
 const VIEW_MODE_LABEL: Record<string, string> = {
@@ -20,7 +20,7 @@ const VIEW_MODE_ICON: Record<string, string> = {
 };
 
 interface RejectedReasonModalProps {
-    page: PageCard;
+    page: DashboardPageCard;
     onClose: () => void;
 }
 

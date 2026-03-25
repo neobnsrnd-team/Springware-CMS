@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { DEMO_USERS } from '@/data/demo-users';
 import Modal from '@/components/ui/Modal';
 
-import type { PageCard } from './DashboardClient';
+import type { DashboardPageCard } from './DashboardClient';
 
 // 결재자 목록 — admin 역할만 노출
 const APPROVER_LIST = DEMO_USERS.filter((u) => u.role === 'admin');
@@ -26,7 +26,7 @@ const VIEW_MODE_ICON: Record<string, string> = {
 };
 
 interface ApprovalRequestModalProps {
-    page: PageCard;
+    page: DashboardPageCard;
     onClose: () => void;
     onSubmit: (approverId: string, approverName: string) => Promise<void>;
 }

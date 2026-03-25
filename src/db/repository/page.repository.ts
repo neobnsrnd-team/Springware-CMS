@@ -52,6 +52,7 @@ export async function getPageList(
     options: {
         approveState?: ApproveState;
         createUserId?: string;
+        createUserName?: string; // CREATE_USER_NAME 필터
         search?: string; // PAGE_NAME LIKE 검색어
         sortBy?: 'name' | 'date'; // 'name': 이름순, 'date'(기본): 최신 수정순
         viewMode?: ViewMode; // 뷰 모드 필터
@@ -67,6 +68,7 @@ export async function getPageList(
     const binds = {
         approveState: options.approveState ?? null,
         createUserId: options.createUserId ?? null,
+        createUserName: options.createUserName ?? null,
         search: options.search ?? null,
         sortBy: options.sortBy === 'name' ? 'name' : 'date',
         viewMode: options.viewMode ?? null,
@@ -83,6 +85,7 @@ export async function getPageList(
                 {
                     approveState: binds.approveState,
                     createUserId: binds.createUserId,
+                    createUserName: binds.createUserName,
                     search: binds.search,
                     viewMode: binds.viewMode,
                 },

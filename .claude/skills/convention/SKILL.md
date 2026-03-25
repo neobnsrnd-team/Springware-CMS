@@ -60,6 +60,7 @@ API route → repository → queries (SQL 상수) → DB
 | ID 검증     | `@/lib/validators` → `isValidBankId`                                                                         |
 | 업로드 URL  | `@/lib/upload-utils` → `normalizeUploadUrl`                                                                  |
 | 공통 모달 셸 | `@/components/ui/Modal` → `Modal` (default), `ModalProps`                                                   |
+| 공통 페이지 카드 | `@/components/ui/PageCard` → `PageCard` (default), `VIEW_MODE_STYLE`, `APPROVE_STYLE`, `formatDate`, `ViewMode` |
 
 ### 보안
 

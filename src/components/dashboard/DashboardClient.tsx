@@ -5,6 +5,8 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
+import PageCard from '@/components/ui/PageCard';
+import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
 
 import ApprovalRequestModal from './ApprovalRequestModal';
 import RejectedReasonModal from './RejectedReasonModal';
@@ -15,43 +17,27 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
     { value: 'name', label: '이름순' },
 ];
 
-type ViewMode = 'mobile' | 'web' | 'responsive';
 type SortBy = 'date' | 'name';
 
-export interface PageCard {
+export interface DashboardPageCard {
     id: string;
     label: string;
     viewMode: ViewMode;
     thumbnail: string | null;
     lastModifiedDtime: string | null;
-    approveState: string;
+    approveState: ApproveStateValue;
     rejectedReason: string | null;
 }
 
 export interface DashboardClientProps {
     userId: string;
-    initialPages: PageCard[];
+    initialPages: DashboardPageCard[];
     totalCount: number;
     currentPage: number;
     search: string;
     sortBy: SortBy;
     viewMode: ViewMode | null;
 }
-
-// 뷰 모드 뱃지 색상
-const VIEW_MODE_STYLE: Record<ViewMode, { bg: string; color: string; label: string }> = {
-    mobile: { bg: '#e8f0fd', color: '#0046A4', label: '모바일' },
-    web: { bg: '#e6f4ef', color: '#008C6A', label: '웹' },
-    responsive: { bg: '#f0eaf9', color: '#6d28d9', label: '반응형' },
-};
-
-// 결재 상태 뱃지 색상
-const APPROVE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-    WORK: { bg: '#f3f4f6', color: '#6b7280', label: '작업중' },
-    PENDING: { bg: '#fefce8', color: '#b45309', label: '승인대기' },
-    APPROVED: { bg: '#e6f4ef', color: '#008C6A', label: '승인' },
-    REJECTED: { bg: '#fef2f2', color: '#dc2626', label: '반려' },
-};
 
 const PAGE_SIZE = 12;
 
@@ -81,7 +67,7 @@ export default function DashboardClient({
     const [viewModeFilter, setViewModeFilter] = useState<ViewMode | null>(initialViewMode);
 
     // 삭제 후 낙관적 업데이트용 로컬 페이지 목록
-    const [pages, setPages] = useState<PageCard[]>(initialPages);
+    const [pages, setPages] = useState<DashboardPageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
 
     // 서버에서 새 데이터가 내려올 때 동기화
@@ -91,8 +77,8 @@ export default function DashboardClient({
     }, [initialPages, totalCount]);
 
     // 승인 요청 모달
-    const [approvalTarget, setApprovalTarget] = useState<PageCard | null>(null);
-    const [rejectedTarget, setRejectedTarget] = useState<PageCard | null>(null);
+    const [approvalTarget, setApprovalTarget] = useState<DashboardPageCard | null>(null);
+    const [rejectedTarget, setRejectedTarget] = useState<DashboardPageCard | null>(null);
 
     // 새 페이지 생성 모달
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -152,10 +138,11 @@ export default function DashboardClient({
         navigate({ page: 1, search, sortBy: value });
     }
 
-    // 뷰 모드 필터 변경 → URL 반영
+    // 뷰 모드 필터 변경 (동일 값 재클릭 시 해제 → 전체)
     function handleViewModeChange(value: ViewMode | null) {
-        setViewModeFilter(value);
-        navigate({ page: 1, search, sortBy, viewMode: value });
+        const next = viewModeFilter === value ? null : value;
+        setViewModeFilter(next);
+        navigate({ page: 1, search, sortBy, viewMode: next });
     }
 
     // 페이지 이동 → URL 반영
@@ -242,18 +229,6 @@ export default function DashboardClient({
         setShowCreateModal(false);
         setNewPageName('');
         setNewPageViewMode('mobile');
-    }
-
-    // 날짜 포맷 (YYYY.MM.DD HH:MM)
-    function formatDate(isoStr: string | null): string {
-        if (!isoStr) return '—';
-        const d = new Date(isoStr);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const hh = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        return `${yyyy}.${mm}.${dd} ${hh}:${min}`;
     }
 
     const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
@@ -396,96 +371,44 @@ export default function DashboardClient({
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 mb-8">
                         {pages.map((page) => {
-                            const vmStyle = VIEW_MODE_STYLE[page.viewMode] ?? VIEW_MODE_STYLE.mobile;
-                            const apStyle = APPROVE_STYLE[page.approveState] ?? APPROVE_STYLE.WORK;
-
                             return (
-                                <div
+                                <PageCard
                                     key={page.id}
-                                    className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-all duration-150 cursor-pointer flex flex-col hover:shadow-[0_8px_24px_rgba(0,70,164,0.12)] hover:-translate-y-0.5"
+                                    page={page}
                                     onClick={() => {
                                         window.location.href = `/edit?bank=${page.id}`;
                                     }}
-                                >
-                                    {/* 썸네일 영역 */}
-                                    <div
-                                        className="h-[140px] flex items-center justify-center shrink-0 border-b border-[#f3f4f6]"
-                                        style={{
-                                            background: page.thumbnail
-                                                ? `url(${page.thumbnail}) center/cover no-repeat`
-                                                : '#f0f4ff',
-                                        }}
-                                    >
-                                        {!page.thumbnail && (
-                                            <span className="text-[36px] opacity-40">
-                                                {page.viewMode === 'mobile'
-                                                    ? '📱'
-                                                    : page.viewMode === 'web'
-                                                      ? '🖥️'
-                                                      : '🔄'}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* 카드 본문 */}
-                                    <div className="px-4 pt-3.5 pb-3 flex-1 flex flex-col gap-2">
-                                        <p
-                                            className="m-0 text-sm font-semibold text-[#111827] truncate"
-                                            title={page.label}
+                                    overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}
+                                    footerSlot={
+                                        <div
+                                            className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-1.5"
+                                            onClick={(e) => e.stopPropagation()}
                                         >
-                                            {page.label}
-                                        </p>
-
-                                        {/* 뱃지 행 */}
-                                        <div className="flex gap-1.5 flex-wrap">
-                                            <span
-                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
-                                                style={{ background: vmStyle.bg, color: vmStyle.color }}
-                                            >
-                                                {vmStyle.label}
-                                            </span>
-                                            <span
-                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
-                                                style={{ background: apStyle.bg, color: apStyle.color }}
-                                            >
-                                                {apStyle.label}
-                                            </span>
-                                        </div>
-
-                                        <p className="m-0 text-[11px] text-[#9ca3af]">
-                                            {formatDate(page.lastModifiedDtime)}
-                                        </p>
-                                    </div>
-
-                                    {/* 카드 푸터: 승인 요청 + 삭제 버튼 */}
-                                    <div
-                                        className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-1.5"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        {page.approveState === 'REJECTED' && (
+                                            {page.approveState === 'REJECTED' && (
+                                                <button
+                                                    onClick={() => setRejectedTarget(page)}
+                                                    className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                                >
+                                                    반려 사유
+                                                </button>
+                                            )}
+                                            {(page.approveState === 'WORK' || page.approveState === 'REJECTED') && (
+                                                <button
+                                                    onClick={() => setApprovalTarget(page)}
+                                                    className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                >
+                                                    승인 요청
+                                                </button>
+                                            )}
                                             <button
-                                                onClick={() => setRejectedTarget(page)}
+                                                onClick={() => handleDeletePage(page.id, page.label)}
                                                 className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
                                             >
-                                                반려 사유
+                                                삭제
                                             </button>
-                                        )}
-                                        {(page.approveState === 'WORK' || page.approveState === 'REJECTED') && (
-                                            <button
-                                                onClick={() => setApprovalTarget(page)}
-                                                className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
-                                            >
-                                                승인 요청
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => handleDeletePage(page.id, page.label)}
-                                            className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
-                                        >
-                                            삭제
-                                        </button>
-                                    </div>
-                                </div>
+                                        </div>
+                                    }
+                                />
                             );
                         })}
                     </div>

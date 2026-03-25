@@ -307,6 +307,22 @@ font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothi
 - TOP 버튼: `36px × 36px`, 원형, 호버 시 배경 `#0046A4`
 - SNS 아이콘: `28px × 28px`, `border-radius: 6px`
 
+### 6.11 페이지 카드 (`page-card`)
+
+> 공통 컴포넌트: `src/components/ui/PageCard.tsx`
+> 사용처: 사용자 대시보드(`/[userId]`), 관리자 대시보드(`/approve`)
+
+- 배경: `#fff`, `border-radius: 12px` (rounded-xl), `border: 1px solid #E5E7EB`
+- 그림자 기본: `0 2px 8px rgba(0,0,0,0.06)`
+- 그림자 호버: `0 8px 24px rgba(0,70,164,0.12)`, `translateY(-2px)`
+- 썸네일 영역: `height: 140px`, 폴백 배경 `#f0f4ff`, 이모지 `36px` (뷰 모드별)
+- 호버 오버레이: 눈 아이콘(`22px`) + 라벨, `opacity 0→1` 트랜지션
+  - 사용자: `rgba(0,70,164,0.45)` + "편집하기"
+  - 관리자: `rgba(30,58,95,0.45)` + "미리보기"
+- 제목: `14px`, `font-weight: 600`, `truncate` 1줄
+- 뱃지: 뷰 모드 + 승인상태 (공유 스타일 상수 `VIEW_MODE_STYLE`, `APPROVE_STYLE`)
+- 푸터: `border-top: 1px solid #F3F4F6`, 패딩 `8px 16px`, 우측 정렬 버튼
+
 ---
 
 ## 7. 인터랙션 & 애니메이션
