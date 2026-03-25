@@ -80,7 +80,7 @@ const SLIDER_SCRIPT =
             `slides.forEach(function(_,i){` +
                 `var d=document.createElement('button');` +
                 `d.setAttribute('aria-label','슬라이드 '+(i+1));` +
-                `d.style.cssText='width:6px;height:6px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 3px;flex-shrink:0;background:'+(i===0?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.4)')+';';` +
+                `d.style.cssText='width:6px;height:6px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 3px;flex-shrink:0;display:block;line-height:0;font-size:0;background:'+(i===0?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.4)')+';';` +
                 `d.addEventListener('click',function(){goTo(i);});` +
                 `dotsEl.appendChild(d);` +
             `});` +
@@ -103,12 +103,13 @@ const PROMO_BANNER_MOBILE_HTML =
     `<div data-component-id="promo-banner-mobile" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;position:relative;">` +
         `<div data-pb-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:12px 12px 4px;">` +
             SLIDES.map(slide =>
-                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;">${buildSlide(slide)}</div>`,
+                // box-sizing:border-box + padding으로 배너 간 시각적 간격 확보 (슬라이드 너비는 100% 유지)
+                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        `<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 12px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;line-height:1;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;gap:0;"></div>` +
+            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
@@ -118,12 +119,13 @@ const PROMO_BANNER_WEB_HTML =
     `<div data-component-id="promo-banner-web" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;max-width:960px;margin:0 auto;position:relative;">` +
         `<div data-pb-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:12px 12px 4px;">` +
             SLIDES.map(slide =>
-                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;">${buildSlide(slide)}</div>`,
+                // box-sizing:border-box + padding으로 배너 간 시각적 간격 확보 (슬라이드 너비는 100% 유지)
+                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        `<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 12px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;line-height:1;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;gap:0;"></div>` +
+            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
@@ -133,12 +135,13 @@ const PROMO_BANNER_RESPONSIVE_HTML =
     `<div data-component-id="promo-banner-responsive" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;width:100%;box-sizing:border-box;position:relative;">` +
         `<div data-pb-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:12px 12px 4px;">` +
             SLIDES.map(slide =>
-                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;">${buildSlide(slide)}</div>`,
+                // box-sizing:border-box + padding으로 배너 간 시각적 간격 확보 (슬라이드 너비는 100% 유지)
+                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        `<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 12px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;line-height:1;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;gap:0;"></div>` +
+            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
