@@ -12,10 +12,7 @@
 ## 실행 방법
 
 ```bash
-# 패키지 설치
 npm install
-
-# 개발 서버 실행
 npm run dev
 ```
 
@@ -62,54 +59,61 @@ UPLOAD_URL=           # 업로드 URL (기본: uploads/)
 ## 금융 컴포넌트
 
 우측 패널 "금융 컴포넌트" 탭에서 드래그하거나 + 클릭으로 캔버스에 추가합니다.
+추가 후 더블클릭으로 텍스트·이미지를 인라인 편집할 수 있습니다.
 
-| 컴포넌트 | 설명 |
-|----------|------|
-| 앱 헤더 (`app-header`) | 로고·메뉴·햄버거 헤더 |
-| 퀵뱅킹 메뉴 (`product-menu`) | 아이콘 그리드 (조회·이체·카드 등) |
-| 상품 갤러리 (`product-gallery`) | 스와이프 카드 (예금·적금·대출 금리) |
-| 환율 보드 (`exchange-board`) | USD·EUR·JPY·CNY 환율 + 환전 신청 |
-| 영업점/ATM (`branch-locator`) | 지도 + 영업점 목록 바텀시트 |
-| 홍보 배너 (`promo-banner`) | 스와이프 배너 + 유튜브 임베드 |
-| 금융 계산기 (`loan-calculator`) | 대출·예금·적금 탭 전환 계산기 |
-| 보안인증센터 (`auth-center`) | 공동인증서·금융인증서·OTP·보안카드 |
+| 컴포넌트 | 설명 | 방식 |
+|----------|------|------|
+| 앱 헤더 (`app-header`) | 로고·은행명 헤더 | 순수 HTML |
+| 퀵뱅킹 메뉴 (`product-menu`) | 아이콘 그리드 (조회·이체·카드 등) | 순수 HTML |
+| 보안인증센터 (`auth-center`) | 공동인증서·금융인증서·OTP·보안카드 | 순수 HTML |
+| 미디어 (`media-video`) | YouTube 임베드 | 순수 HTML |
+| 사이트 푸터 (`site-footer`) | 약관·연락처·TOP 버튼 | 순수 HTML |
+| 상품 갤러리 (`product-gallery`) | 카드형 예금·적금·대출 금리 | 플러그인 |
+| 홍보 배너 (`promo-banner`) | 슬라이드 배너 | 플러그인 |
+| 환율 보드 (`exchange-board`) | USD·EUR·JPY·CNY 환율 + 환전 신청 | 플러그인 |
+| 영업점/ATM (`branch-locator`) | 지도 + 영업점 목록 바텀시트 | 플러그인 |
+| 금융 계산기 (`loan-calculator`) | 대출·예금·적금 탭 전환 계산기 | 플러그인 |
 
-> 모든 금융 컴포넌트는 우측 패널에서 색상 편집 가능 (은행 브랜드 대표색 팔레트 포함)
+> **순수 HTML**: ContentBuilder 인라인 편집(더블클릭) 지원
+> **플러그인**: JS 런타임 의존 (실시간 데이터·지도·계산 등)
 
 ## API 구조
 
 ```
 /api/builder/load       탭 콘텐츠 불러오기
 /api/builder/save       탭 콘텐츠 저장
-/api/builder/upload     이미지 업로드
+/api/builder/upload     에디터 내 파일 업로드
 /api/manage/*           파일 브라우저 (목록·폴더·삭제)
 /api/openrouter         AI 코드 생성 프록시
-/api/openai             AI 대안 프록시
 /api/fal/*              FAL AI 이미지 생성 (request → status → result)
 /api/exchange           환율 데이터
 /api/branches           지점 데이터
+/api/components         금융 컴포넌트 목록·수정 (DB)
 ```
 
 ## 프로젝트 구조
 
 ```
 src/
-├── app/
-│   ├── edit/EditClient.tsx     # 에디터 핵심 — ContentBuilder 초기화, 탭 관리
-│   ├── view/ViewClient.tsx     # 저장된 HTML 렌더링
-│   ├── files/                  # 파일 브라우저
-│   └── api/                    # 서버 API 라우트
-├── components/files/           # 파일 브라우저 UI 컴포넌트
+├── app/                        # 라우팅 전용 (page.tsx, route.ts)
+│   ├── edit/, view/, files/
+│   └── api/
+├── components/
+│   ├── edit/                   # 에디터 UI (EditClient, ComponentPanel, 커스텀 편집기)
+│   ├── view/                   # 뷰어 UI (ViewClient)
+│   ├── files/                  # 파일 브라우저 UI
+│   └── ui/                     # 공통 UI (Modal 등)
+├── data/                       # 컴포넌트 타입 정의, 번역 파일
+├── lib/                        # 유틸리티·헬퍼 (api-response, validators 등)
 ├── db/                         # Oracle DB 레이어
 │   ├── connection.ts           # 커넥션 풀, withTransaction, clobBind
 │   ├── queries/                # SQL 상수
-│   └── repository/             # 데이터 접근 레이어 (page, component, file-send)
-└── types/                      # 타입 선언 (contentbuilder-runtime, oracledb)
+│   └── repository/             # 데이터 접근 레이어
+└── types/                      # 타입 선언
 public/
-├── assets/plugins/             # 금융·범용 컴포넌트 플러그인 (lazy-load)
+├── assets/plugins/             # 플러그인 컴포넌트 (lazy-load)
 ├── runtime/                    # ContentBuilder 런타임 라이브러리
 └── uploads/                    # 업로드된 파일
-docs/                           # 기술 문서
 ```
 
-자세한 기술 내용은 [docs/technical-overview.md](docs/technical-overview.md) 참고.
+자세한 기술 내용은 [docs/reference/기술-개요.md](docs/reference/기술-개요.md) 참고.

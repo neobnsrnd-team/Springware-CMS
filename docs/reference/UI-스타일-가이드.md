@@ -305,7 +305,6 @@ font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothi
 - 배경: `#F9FAFB`, 패딩 `16px 16px 20px`
 - 링크: `11px`, 기본 `#374151`, 호버 `#0046A4`
 - TOP 버튼: `36px × 36px`, 원형, 호버 시 배경 `#0046A4`
-- SNS 아이콘: `28px × 28px`, `border-radius: 6px`
 
 ### 6.11 페이지 카드 (`page-card`)
 
