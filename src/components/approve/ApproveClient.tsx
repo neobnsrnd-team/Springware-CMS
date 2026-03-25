@@ -225,13 +225,29 @@ export default function ApproveClient({
 
     const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
 
+    // 빈 상태 메시지 결정
+    function getEmptyMessage() {
+        if (search) return `'${search}'에 대한 검색 결과가 없습니다.`;
+        switch (approveStateFilter) {
+            case 'PENDING':
+                return '현재 승인 대기 중인 페이지가 없습니다.';
+            case null:
+                return '등록된 페이지가 없습니다.';
+            default:
+                return '조건에 맞는 페이지가 없습니다.';
+        }
+    }
+
     return (
-        <div className="min-h-screen bg-[#f8faff]">
+        <div className="min-h-screen bg-[#eaedf0]">
             {/* ── 헤더 ── */}
-            <header className="bg-white border-b border-[#e5e7eb] px-8 h-[60px] flex items-center gap-3 shadow-[0_1px_4px_rgba(0,0,0,0.06)] sticky top-0 z-[100]">
-                <span className="font-bold text-base text-[#0046A4] tracking-[-0.3px]">Springware CMS</span>
-                <span className="text-[#d1d5db] text-sm">/</span>
-                <span className="text-sm text-[#374151]">승인 관리</span>
+            <header className="bg-[#1e3a5f] px-8 h-[60px] flex items-center gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.18)] sticky top-0 z-[100]">
+                <span className="font-bold text-base text-white tracking-[-0.3px]">Springware CMS</span>
+                <span className="text-[#4e7aad] text-sm">/</span>
+                <span className="text-sm text-[#c8dff5]">승인 관리</span>
+                <span className="ml-auto px-2.5 py-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold tracking-wide">
+                    관리자
+                </span>
             </header>
 
             {/* ── 본문 ── */}
@@ -242,9 +258,38 @@ export default function ApproveClient({
                 <div className="mb-7">
                     {/* 타이틀 행 */}
                     <div className="flex items-center justify-between mb-5 gap-3">
-                        <div className="flex items-baseline gap-2.5">
-                            <h1 className="m-0 text-[22px] font-bold text-[#111827]">승인 관리</h1>
-                            <span className="text-[13px] text-[#9ca3af]">{localTotalCount.toLocaleString()}개</span>
+                        <div className="flex items-center gap-3">
+                            <div className="w-1 h-7 rounded-full bg-[#1e3a5f] shrink-0" />
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <svg
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        className="text-[#1e3a5f] shrink-0"
+                                    >
+                                        <path
+                                            d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.5C16.5 22.15 20 17.25 20 12V6l-8-4z"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        <path
+                                            d="M9 12l2 2 4-4"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <h1 className="m-0 text-[22px] font-bold text-[#1e3a5f]">승인 관리</h1>
+                                    <span className="text-[13px] text-[#9ca3af]">
+                                        {localTotalCount.toLocaleString()}개
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -258,7 +303,7 @@ export default function ApproveClient({
                                     onClick={() => handleApproveStateChange(f.value)}
                                     className={`px-[14px] py-[5px] rounded-full border text-[12px] cursor-pointer transition-all duration-150 ${
                                         active
-                                            ? 'border-[#0046A4] bg-[#0046A4] text-white font-semibold'
+                                            ? 'border-[#1e3a5f] bg-[#1e3a5f] text-white font-semibold'
                                             : 'border-[#e5e7eb] bg-white text-[#6b7280] font-normal'
                                     }`}
                                 >
@@ -349,9 +394,7 @@ export default function ApproveClient({
 
                 {/* 카드 그리드 */}
                 {pages.length === 0 ? (
-                    <div className="text-center py-20 text-[#9ca3af] text-sm">
-                        {search ? `'${search}'에 대한 검색 결과가 없습니다.` : '조건에 맞는 페이지가 없습니다.'}
-                    </div>
+                    <div className="text-center py-20 text-[#9ca3af] text-sm">{getEmptyMessage()}</div>
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 mb-8">
                         {pages.map((page) => {
@@ -368,7 +411,7 @@ export default function ApproveClient({
                                 >
                                     {/* 썸네일 영역 */}
                                     <div
-                                        className="h-[140px] flex items-center justify-center shrink-0 border-b border-[#f3f4f6]"
+                                        className="relative h-[140px] flex items-center justify-center shrink-0 border-b border-[#f3f4f6] group/thumb overflow-hidden"
                                         style={{
                                             background: page.thumbnail
                                                 ? `url(${page.thumbnail}) center/cover no-repeat`
@@ -384,6 +427,26 @@ export default function ApproveClient({
                                                       : '🔄'}
                                             </span>
                                         )}
+                                        {/* 미리보기 호버 오버레이 */}
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-[rgba(30,58,95,0.45)] opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-150">
+                                            <svg
+                                                width="22"
+                                                height="22"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                className="text-white"
+                                            >
+                                                <path
+                                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+                                                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                                            </svg>
+                                            <span className="text-white text-[12px] font-semibold">미리보기</span>
+                                        </div>
                                     </div>
 
                                     {/* 카드 본문 */}
@@ -394,9 +457,6 @@ export default function ApproveClient({
                                         >
                                             {page.label}
                                         </p>
-
-                                        {/* 작성자 */}
-                                        <p className="m-0 text-[11px] text-[#6b7280]">작성자: {page.createUserName}</p>
 
                                         {/* 뱃지 행 */}
                                         <div className="flex gap-1.5 flex-wrap">
@@ -414,9 +474,36 @@ export default function ApproveClient({
                                             </span>
                                         </div>
 
-                                        <p className="m-0 text-[11px] text-[#9ca3af]">
-                                            {formatDate(page.lastModifiedDtime)}
-                                        </p>
+                                        {/* 작성자 + 날짜 */}
+                                        <div className="flex items-center justify-between gap-1">
+                                            <span className="flex items-center gap-1 text-[11px] text-[#6b7280] min-w-0">
+                                                <svg
+                                                    width="11"
+                                                    height="11"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    className="shrink-0 text-[#9ca3af]"
+                                                >
+                                                    <circle
+                                                        cx="12"
+                                                        cy="8"
+                                                        r="4"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    />
+                                                    <path
+                                                        d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                    />
+                                                </svg>
+                                                <span className="truncate">{page.createUserName}</span>
+                                            </span>
+                                            <span className="text-[11px] text-[#9ca3af] shrink-0">
+                                                {formatDate(page.lastModifiedDtime)}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* 카드 푸터: 승인/반려 버튼 (PENDING 상태일 때만) */}
@@ -472,7 +559,7 @@ export default function ApproveClient({
                                 onClick={() => handlePageChange(p)}
                                 className={`px-3 py-1.5 rounded-md border text-[13px] cursor-pointer ${
                                     currentPage === p
-                                        ? 'border-[#0046A4] bg-[#0046A4] text-white font-semibold'
+                                        ? 'border-[#1e3a5f] bg-[#1e3a5f] text-white font-semibold'
                                         : 'border-[#e5e7eb] bg-white text-[#374151] font-normal'
                                 }`}
                             >
