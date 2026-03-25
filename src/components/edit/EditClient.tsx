@@ -16,6 +16,7 @@ import html2canvas from 'html2canvas';
 import ComponentPanel from '@/components/edit/ComponentPanel';
 import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
+import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
 
@@ -230,6 +231,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [productMenuBlock, setProductMenuBlock] = useState<HTMLElement | null>(null);
     // media-video 영상 URL 편집 모달
     const [mediaVideoBlock, setMediaVideoBlock] = useState<HTMLElement | null>(null);
+    // site-footer 드롭다운 편집 패널
+    const [siteFooterBlock, setSiteFooterBlock] = useState<HTMLElement | null>(null);
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
     const currentTab = tabs.find((t) => t.id === bank);
@@ -630,10 +633,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // [적용 컴포넌트]
         //   - product-menu  : .pm-item(<a>) 클릭 → 아이콘 편집 버튼 표시
         //   - media-video   : 제목 <a> 클릭   → 영상 URL 변경 버튼 표시
+        //   - site-footer   : 링크 <a> 클릭   → 드롭다운 편집 버튼 표시
         //
         // [요구사항] 버튼을 추가하려는 컴포넌트 블록 안에 <a> 태그가 반드시 있어야 한다.
         const SPW_PM_BTN_CLASS = 'spw-pm-icon-edit-btn';
         const SPW_MV_BTN_CLASS = 'spw-mv-url-edit-btn';
+        const SPW_SF_BTN_CLASS = 'spw-sf-select-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -687,12 +692,37 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 });
                 linkTool.appendChild(btn);
             }
+
+            // ③ site-footer 드롭다운 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_SF_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_SF_BTN_CLASS;
+                btn.title = '드롭다운 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke="#111" stroke-width="2" stroke-linecap="round"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="site-footer"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="site-footer"]');
+                    if (block) setSiteFooterBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
         };
 
         // 활성 요소 위치에 따라 각 버튼 가시성 갱신
         const updateLinkToolBtnVisibility = () => {
             const pmBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PM_BTN_CLASS}`);
             const mvBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_MV_BTN_CLASS}`);
+            const sfBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_SF_BTN_CLASS}`);
             const iconActive = document.querySelector('.icon-active');
             const elmActive = document.querySelector('.elm-active');
 
@@ -707,6 +737,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     !!iconActive?.closest('[data-component-id^="media-video"]') ||
                     !!elmActive?.closest('[data-component-id^="media-video"]');
                 mvBtn.style.display = isInMv ? 'flex' : 'none';
+            }
+            if (sfBtn) {
+                const isInSf =
+                    !!iconActive?.closest('[data-component-id^="site-footer"]') ||
+                    !!elmActive?.closest('[data-component-id^="site-footer"]');
+                sfBtn.style.display = isInSf ? 'flex' : 'none';
             }
         };
 
@@ -1929,6 +1965,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
             {/* ── media-video 영상 URL 편집 모달 ── */}
             {mediaVideoBlock && <MediaVideoEditor blockEl={mediaVideoBlock} onClose={() => setMediaVideoBlock(null)} />}
+
+            {/* ── site-footer 드롭다운 편집 패널 ── */}
+            {siteFooterBlock && (
+                <SiteFooterSelectEditor blockEl={siteFooterBlock} onClose={() => setSiteFooterBlock(null)} />
+            )}
 
             {/* ── 새 페이지 추가 모달 ── */}
             {showAddTab && (
