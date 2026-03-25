@@ -1,6 +1,7 @@
 // scripts/migrate-product-gallery-to-html.ts
 // product-gallery 컴포넌트를 data-cb-type 플러그인 구조에서 순수 HTML로 변환
-// 슬라이더: CSS scroll-snap + 인라인 IIFE 스크립트로 구현 (data-cb-type 의존 없음)
+// 기본 레이아웃: flex-direction:column (에디터에서 전체 카드 표시)
+// 뷰어(/view): 인라인 스크립트가 가로 scroll-snap 슬라이더로 변환
 // DB SPW_CMS_COMPONENT의 product-gallery-mobile / web / responsive DATA.html 필드 업데이트
 // 실행: npx tsx scripts/migrate-product-gallery-to-html.ts
 
@@ -52,7 +53,7 @@ const CARDS = [
 function buildCard(card: (typeof CARDS)[number], itemId: string): string {
     const { accent, accentLight } = CARD_COLORS[card.type];
     return (
-        `<div data-type="${card.type}" data-item-id="${itemId}" style="background:#fff;border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 20px rgba(0,70,164,0.08);position:relative;overflow:hidden;height:100%;box-sizing:border-box;">` +
+        `<div data-type="${card.type}" data-item-id="${itemId}" style="background:#fff;border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 20px rgba(0,70,164,0.08);position:relative;overflow:hidden;">` +
             `<div style="position:absolute;top:0;right:0;width:120px;height:120px;background:linear-gradient(135deg,${accentLight} 0%,transparent 70%);border-radius:0 16px 0 100%;pointer-events:none;"></div>` +
             `<div style="display:inline-flex;align-items:center;background:${accentLight};color:${accent};font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;width:fit-content;letter-spacing:0.5px;">${card.badge}</div>` +
             `<div style="font-size:20px;font-weight:700;color:#1A1A2E;line-height:1.3;margin-top:4px;">${card.productName}</div>` +
@@ -67,9 +68,10 @@ function buildCard(card: (typeof CARDS)[number], itemId: string): string {
     );
 }
 
-// 슬라이더 초기화 인라인 스크립트 — IIFE로 스코프 격리, data-cb-type 의존 없음
+// 슬라이더 초기화 인라인 스크립트
 // window.builderRuntime: EditClient.tsx에서 에디터 활성 시 전역 등록 → 에디터 감지에 사용
-// → 에디터에서는 정적 카드 나열, 뷰어(/view)에서만 슬라이드 동작
+// 에디터: 기본 column 레이아웃 유지 (전체 카드 표시)
+// 뷰어: 트랙/슬라이드 CSS를 가로 scroll-snap 슬라이더로 변환 후 dots·autoplay 초기화
 const SLIDER_SCRIPT =
     `<script>` +
     `(function(){` +
@@ -79,10 +81,13 @@ const SLIDER_SCRIPT =
         `var track=r.querySelector('[data-pg-track]');` +
         `var dotsEl=r.querySelector('[data-pg-dots]');` +
         `if(!track)return;` +
+        // 트랙을 가로 슬라이더로 변환
+        `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:4px 0 8px;gap:0;';` +
         `var slides=Array.from(track.querySelectorAll('[data-pg-slide]'));` +
         `if(!slides.length)return;` +
+        // 슬라이드 아이템을 스냅 레이아웃으로 변환
+        `slides.forEach(function(s){s.style.cssText='flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 20px;box-sizing:border-box;';});` +
         `var cur=0;` +
-        `function dot(i){return dotsEl&&dotsEl.children[i];}` +
         `function updateDots(i){` +
             `if(!dotsEl)return;` +
             `Array.from(dotsEl.children).forEach(function(d,j){` +
@@ -98,7 +103,7 @@ const SLIDER_SCRIPT =
             `slides.forEach(function(_,i){` +
                 `var d=document.createElement('button');` +
                 `d.setAttribute('aria-label','슬라이드 '+(i+1));` +
-                `d.style.cssText='width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 4px;flex-shrink:0;background:'+(i===0?'#0046A4':'rgba(0,70,164,0.25)')+';';` +
+                `d.style.cssText='width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 4px;display:block;line-height:0;font-size:0;overflow:hidden;flex-shrink:0;background:'+(i===0?'#0046A4':'rgba(0,70,164,0.25)')+';';` +
                 `d.addEventListener('click',function(){goTo(i);});` +
                 `dotsEl.appendChild(d);` +
             `});` +
@@ -117,18 +122,19 @@ const SLIDER_SCRIPT =
     `<\/script>`;
 
 // ── mobile variant ──────────────────────────────────────────────────────────
-// 390px 기준 모바일: 가로 scroll-snap 슬라이더 (1장씩)
+// 기본: column 나열 (에디터에서 전체 카드 표시)
+// 뷰어: 스크립트가 가로 scroll-snap 슬라이더로 변환
 const PRODUCT_GALLERY_MOBILE_HTML =
     `<div data-component-id="product-gallery-mobile" data-spw-block style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;position:relative;">` +
         `<div style="padding:20px 20px 12px;">` +
             `<h3 style="font-size:18px;font-weight:700;color:#1A1A2E;margin:0;">주요 금융상품</h3>` +
         `</div>` +
-        `<div data-pg-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:4px 0 8px;">` +
+        `<div data-pg-track style="display:flex;flex-direction:column;gap:12px;padding:4px 20px 20px;">` +
             CARDS.map((card, i) =>
-                `<div data-pg-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 20px;box-sizing:border-box;">${buildCard(card, `pg-${i + 1}`)}</div>`,
+                `<div data-pg-slide style="width:100%;">${buildCard(card, `pg-${i + 1}`)}</div>`,
             ).join('') +
         `</div>` +
-        `<div data-pg-dots style="display:flex;justify-content:center;align-items:center;padding:12px 0 16px;"></div>` +
+        `<div data-pg-dots style="display:flex;justify-content:center;align-items:center;height:32px;"></div>` +
         SLIDER_SCRIPT +
     `</div>`;
 
@@ -147,18 +153,19 @@ const PRODUCT_GALLERY_WEB_HTML =
     `</div>`;
 
 // ── responsive variant ──────────────────────────────────────────────────────
-// 모바일·웹 공용: 가로 scroll-snap 슬라이더 (1장씩), 100% 너비
+// 기본: column 나열 (에디터에서 전체 카드 표시)
+// 뷰어: 스크립트가 가로 scroll-snap 슬라이더로 변환
 const PRODUCT_GALLERY_RESPONSIVE_HTML =
     `<div data-component-id="product-gallery-responsive" data-spw-block style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;position:relative;width:100%;box-sizing:border-box;">` +
         `<div style="padding:20px 20px 12px;">` +
             `<h3 style="font-size:18px;font-weight:700;color:#1A1A2E;margin:0;">주요 금융상품</h3>` +
         `</div>` +
-        `<div data-pg-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:4px 0 8px;">` +
+        `<div data-pg-track style="display:flex;flex-direction:column;gap:12px;padding:4px 20px 20px;">` +
             CARDS.map((card, i) =>
-                `<div data-pg-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 20px;box-sizing:border-box;">${buildCard(card, `pg-${i + 1}`)}</div>`,
+                `<div data-pg-slide style="width:100%;">${buildCard(card, `pg-${i + 1}`)}</div>`,
             ).join('') +
         `</div>` +
-        `<div data-pg-dots style="display:flex;justify-content:center;align-items:center;padding:12px 0 16px;"></div>` +
+        `<div data-pg-dots style="display:flex;justify-content:center;align-items:center;height:32px;"></div>` +
         SLIDER_SCRIPT +
     `</div>`;
 

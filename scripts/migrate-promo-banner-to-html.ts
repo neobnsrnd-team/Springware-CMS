@@ -1,6 +1,7 @@
 // scripts/migrate-promo-banner-to-html.ts
 // promo-banner 컴포넌트를 data-cb-type 플러그인 구조에서 순수 HTML로 변환
-// 슬라이더: CSS scroll-snap + 인라인 IIFE 스크립트로 구현 (data-cb-type 의존 없음)
+// 기본 레이아웃: flex-direction:column (에디터에서 전체 배너 표시)
+// 뷰어(/view): 인라인 스크립트가 가로 scroll-snap 슬라이더로 변환
 // DB SPW_CMS_COMPONENT의 promo-banner-mobile / web / responsive DATA.html 필드 업데이트
 // 실행: npx tsx scripts/migrate-promo-banner-to-html.ts
 
@@ -47,9 +48,10 @@ function buildSlide(slide: (typeof SLIDES)[number]): string {
     );
 }
 
-// 슬라이더 초기화 인라인 스크립트 — IIFE로 스코프 격리, data-cb-type 의존 없음
+// 슬라이더 초기화 인라인 스크립트
 // window.builderRuntime: EditClient.tsx에서 에디터 활성 시 전역 등록 → 에디터 감지에 사용
-// → 에디터에서는 정적 배너 나열, 뷰어(/view)에서만 슬라이드 동작
+// 에디터: 기본 column 레이아웃 유지 (전체 배너 표시)
+// 뷰어: 트랙/슬라이드 CSS를 가로 scroll-snap 슬라이더로 변환 후 dots·autoplay 초기화
 const SLIDER_SCRIPT =
     `<script>` +
     `(function(){` +
@@ -60,8 +62,12 @@ const SLIDER_SCRIPT =
         `var dotsEl=r.querySelector('[data-pb-dots]');` +
         `var counterCur=r.querySelector('[data-pb-cur]');` +
         `if(!track)return;` +
+        // 트랙을 가로 슬라이더로 변환
+        `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:12px 12px 4px;';` +
         `var slides=Array.from(track.querySelectorAll('[data-pb-slide]'));` +
         `if(!slides.length)return;` +
+        // 슬라이드 아이템을 스냅 레이아웃으로 변환
+        `slides.forEach(function(s){s.style.cssText='flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;';});` +
         `var cur=0;` +
         `if(counterCur)counterCur.textContent='1';` +
         `function updateDots(i){` +
@@ -98,57 +104,48 @@ const SLIDER_SCRIPT =
     `})();` +
     `<\/script>`;
 
+// 하단 dots + counter 바 (3개 variant 공통)
+const BOTTOM_BAR =
+    `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;">` +
+        `<div data-pb-dots style="display:flex;align-items:center;height:11px;gap:6px;"></div>` +
+        `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+    `</div>`;
+
 // ── mobile variant ──────────────────────────────────────────────────────────
+// 기본: column 나열 (에디터에서 전체 배너 표시)
+// 뷰어: 스크립트가 가로 scroll-snap 슬라이더로 변환
 const PROMO_BANNER_MOBILE_HTML =
     `<div data-component-id="promo-banner-mobile" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;position:relative;">` +
-        `<div data-pb-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:12px 12px 4px;">` +
+        `<div data-pb-track style="display:flex;flex-direction:column;gap:12px;padding:12px;">` +
             SLIDES.map(slide =>
-                // box-sizing:border-box + padding으로 배너 간 시각적 간격 확보 (슬라이드 너비는 100% 유지)
-                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
+                `<div data-pb-slide style="width:100%;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        // [● ●  1/2] — dots + counter 한 행 가운데 정렬
-        // dots 컨테이너 height:11px 고정 → 버튼(6px)과 텍스트(11px) 세로 중앙 기준 통일
-        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;height:11px;gap:6px;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
-        `</div>` +
+        BOTTOM_BAR +
         SLIDER_SCRIPT +
     `</div>`;
 
 // ── web variant ─────────────────────────────────────────────────────────────
 const PROMO_BANNER_WEB_HTML =
     `<div data-component-id="promo-banner-web" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;max-width:960px;margin:0 auto;position:relative;">` +
-        `<div data-pb-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:12px 12px 4px;">` +
+        `<div data-pb-track style="display:flex;flex-direction:column;gap:12px;padding:12px;">` +
             SLIDES.map(slide =>
-                // box-sizing:border-box + padding으로 배너 간 시각적 간격 확보 (슬라이드 너비는 100% 유지)
-                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
+                `<div data-pb-slide style="width:100%;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        // [● ●  1/2] — dots + counter 한 행 가운데 정렬
-        // dots 컨테이너 height:11px 고정 → 버튼(6px)과 텍스트(11px) 세로 중앙 기준 통일
-        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;height:11px;gap:6px;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
-        `</div>` +
+        BOTTOM_BAR +
         SLIDER_SCRIPT +
     `</div>`;
 
 // ── responsive variant ──────────────────────────────────────────────────────
 const PROMO_BANNER_RESPONSIVE_HTML =
     `<div data-component-id="promo-banner-responsive" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;width:100%;box-sizing:border-box;position:relative;">` +
-        `<div data-pb-track style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:12px 12px 4px;">` +
+        `<div data-pb-track style="display:flex;flex-direction:column;gap:12px;padding:12px;">` +
             SLIDES.map(slide =>
-                // box-sizing:border-box + padding으로 배너 간 시각적 간격 확보 (슬라이드 너비는 100% 유지)
-                `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
+                `<div data-pb-slide style="width:100%;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        // [● ●  1/2] — dots + counter 한 행 가운데 정렬
-        // dots 컨테이너 height:11px 고정 → 버튼(6px)과 텍스트(11px) 세로 중앙 기준 통일
-        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;height:11px;gap:6px;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
-        `</div>` +
+        BOTTOM_BAR +
         SLIDER_SCRIPT +
     `</div>`;
 
