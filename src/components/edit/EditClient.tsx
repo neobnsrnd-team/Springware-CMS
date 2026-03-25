@@ -1139,7 +1139,14 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
         const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
         // 금융 컴포넌트(data-spw-block)는 컬럼 패딩 없이 캔버스 전체 너비를 채워야 함
-        const colClass = html.includes('data-spw-block') ? 'column spw-finance-col' : 'column';
+        // 루트 요소의 속성만 확인 — 텍스트 내용에 문자열이 포함되어도 오작동하지 않도록 파싱
+        const isSpwBlock = (() => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html.trim();
+            const root = tempDiv.firstElementChild;
+            return root?.hasAttribute('data-spw-block') ?? false;
+        })();
+        const colClass = isSpwBlock ? 'column spw-finance-col' : 'column';
         const wrappedHtml = `<div class="row"><div class="${colClass}">\n${html}\n</div></div>`;
         const blockHtmls = liveBlocks.map((b) => b.outerHtml);
 
