@@ -107,9 +107,10 @@ const PROMO_BANNER_MOBILE_HTML =
                 `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;line-height:1;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;gap:0;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        // dots: 절대 가운데, counter: 우측 끝 — 각각 독립 배치
+        `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:36px;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;gap:6px;"></div>` +
+            `<span style="position:absolute;right:20px;font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
@@ -123,9 +124,10 @@ const PROMO_BANNER_WEB_HTML =
                 `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;line-height:1;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;gap:0;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        // dots: 절대 가운데, counter: 우측 끝 — 각각 독립 배치
+        `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:36px;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;gap:6px;"></div>` +
+            `<span style="position:absolute;right:20px;font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
@@ -139,9 +141,10 @@ const PROMO_BANNER_RESPONSIVE_HTML =
                 `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;line-height:1;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;gap:0;"></div>` +
-            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        // dots: 절대 가운데, counter: 우측 끝 — 각각 독립 배치
+        `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:36px;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;gap:6px;"></div>` +
+            `<span style="position:absolute;right:20px;font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
