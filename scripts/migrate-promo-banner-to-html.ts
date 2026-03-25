@@ -48,12 +48,12 @@ function buildSlide(slide: (typeof SLIDES)[number]): string {
 }
 
 // 슬라이더 초기화 인라인 스크립트 — IIFE로 스코프 격리, data-cb-type 의존 없음
-// ContentBuilder 에디터 컨텍스트(window.ContentBuilder 존재)에서는 슬라이더 비활성화
+// window.builderRuntime: EditClient.tsx에서 에디터 활성 시 전역 등록 → 에디터 감지에 사용
 // → 에디터에서는 정적 배너 나열, 뷰어(/view)에서만 슬라이드 동작
 const SLIDER_SCRIPT =
     `<script>` +
     `(function(){` +
-        `if(window.ContentBuilder)return;` +
+        `if(window.builderRuntime)return;` +
         `var r=document.currentScript&&document.currentScript.parentElement;` +
         `if(!r)return;` +
         `var track=r.querySelector('[data-pb-track]');` +
@@ -80,7 +80,7 @@ const SLIDER_SCRIPT =
             `slides.forEach(function(_,i){` +
                 `var d=document.createElement('button');` +
                 `d.setAttribute('aria-label','슬라이드 '+(i+1));` +
-                `d.style.cssText='width:6px;height:6px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 3px;flex-shrink:0;display:block;line-height:0;font-size:0;background:'+(i===0?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.4)')+';';` +
+                `d.style.cssText='width:6px;height:6px;border-radius:50%;border:none;padding:0;cursor:pointer;flex-shrink:0;display:block;line-height:0;font-size:0;overflow:hidden;background:'+(i===0?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.4)')+';';` +
                 `d.addEventListener('click',function(){goTo(i);});` +
                 `dotsEl.appendChild(d);` +
             `});` +
@@ -107,10 +107,11 @@ const PROMO_BANNER_MOBILE_HTML =
                 `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        // dots: 절대 가운데, counter: 우측 끝 — 각각 독립 배치
-        `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:36px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;gap:6px;"></div>` +
-            `<span style="position:absolute;right:20px;font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        // [● ●  1/2] — dots + counter 한 행 가운데 정렬
+        // dots 컨테이너 height:11px 고정 → 버튼(6px)과 텍스트(11px) 세로 중앙 기준 통일
+        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;height:11px;gap:6px;"></div>` +
+            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
@@ -124,10 +125,11 @@ const PROMO_BANNER_WEB_HTML =
                 `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        // dots: 절대 가운데, counter: 우측 끝 — 각각 독립 배치
-        `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:36px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;gap:6px;"></div>` +
-            `<span style="position:absolute;right:20px;font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        // [● ●  1/2] — dots + counter 한 행 가운데 정렬
+        // dots 컨테이너 height:11px 고정 → 버튼(6px)과 텍스트(11px) 세로 중앙 기준 통일
+        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;height:11px;gap:6px;"></div>` +
+            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
@@ -141,10 +143,11 @@ const PROMO_BANNER_RESPONSIVE_HTML =
                 `<div data-pb-slide style="flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">${buildSlide(slide)}</div>`,
             ).join('') +
         `</div>` +
-        // dots: 절대 가운데, counter: 우측 끝 — 각각 독립 배치
-        `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:36px;">` +
-            `<div data-pb-dots style="display:flex;align-items:center;gap:6px;"></div>` +
-            `<span style="position:absolute;right:20px;font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
+        // [● ●  1/2] — dots + counter 한 행 가운데 정렬
+        // dots 컨테이너 height:11px 고정 → 버튼(6px)과 텍스트(11px) 세로 중앙 기준 통일
+        `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 12px;">` +
+            `<div data-pb-dots style="display:flex;align-items:center;height:11px;gap:6px;"></div>` +
+            `<span style="font-size:11px;color:#9CA3AF;line-height:1;"><span data-pb-cur>1</span> / ${SLIDES.length}</span>` +
         `</div>` +
         SLIDER_SCRIPT +
     `</div>`;
