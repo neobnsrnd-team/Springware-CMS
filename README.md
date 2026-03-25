@@ -68,11 +68,11 @@ UPLOAD_URL=           # 업로드 URL (기본: uploads/)
 | 보안인증센터 (`auth-center`) | 공동인증서·금융인증서·OTP·보안카드 | 순수 HTML |
 | 미디어 (`media-video`) | YouTube 임베드 | 순수 HTML |
 | 사이트 푸터 (`site-footer`) | 약관·연락처·TOP 버튼 | 순수 HTML |
-| 상품 갤러리 (`product-gallery`) | 카드형 예금·적금·대출 금리 | 플러그인 |
-| 홍보 배너 (`promo-banner`) | 슬라이드 배너 | 플러그인 |
-| 환율 보드 (`exchange-board`) | USD·EUR·JPY·CNY 환율 + 환전 신청 | 플러그인 |
-| 영업점/ATM (`branch-locator`) | 지도 + 영업점 목록 바텀시트 | 플러그인 |
-| 금융 계산기 (`loan-calculator`) | 대출·예금·적금 탭 전환 계산기 | 플러그인 |
+| 상품 갤러리 (`product-gallery`) | 카드형 예금·적금·대출 금리 | 플러그인 (순수 HTML 변경 예정) |
+| 홍보 배너 (`promo-banner`) | 슬라이드 배너 | 플러그인 (순수 HTML 변경 예정) |
+| 환율 보드 (`exchange-board`) | USD·EUR·JPY·CNY 환율 + 환전 신청 | 플러그인 (순수 HTML 변경 예정) |
+| 영업점/ATM (`branch-locator`) | 지도 + 영업점 목록 바텀시트 | 플러그인 (순수 HTML 변경 예정) |
+| 금융 계산기 (`loan-calculator`) | 대출·예금·적금 탭 전환 계산기 | 플러그인 (순수 HTML 변경 예정) |
 
 > **순수 HTML**: ContentBuilder 인라인 편집(더블클릭) 지원
 > **플러그인**: JS 런타임 의존 (실시간 데이터·지도·계산 등)
