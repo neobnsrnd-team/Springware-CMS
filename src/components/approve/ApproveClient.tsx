@@ -274,9 +274,6 @@ export default function ApproveClient({
                                         {localTotalCount.toLocaleString()}개
                                     </span>
                                 </div>
-                                <p className="m-0 text-[12px] text-[#6b7280] mt-0.5">
-                                    승인 대기 중인 페이지를 검토하고 처리합니다.
-                                </p>
                             </div>
                         </div>
                     </div>
