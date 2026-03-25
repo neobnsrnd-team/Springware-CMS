@@ -57,10 +57,13 @@ a {
     box-sizing: border-box;
 }
 
-/* ContentBuilder 행/열 패딩 제거 — 플러그인이 있는 경우 가로 패딩 없이 꽉 채움 */
+/* ContentBuilder 행/열 패딩 제거
+ * [data-cb-type]  : 플러그인 방식 컴포넌트 (loan-calculator 등 JS 의존)
+ * .spw-finance-col: 순수 HTML 변환 금융 컴포넌트 — handleInsertComponent에서 주입 */
 .container .is-col:has(> [data-cb-type]),
 .container .column:has(> [data-cb-type]),
-.container [class*="col"]:has(> [data-cb-type]) {
+.container [class*="col"]:has(> [data-cb-type]),
+.container .column.spw-finance-col {
     padding-left: 0 !important;
     padding-right: 0 !important;
     width: 100% !important;
@@ -74,7 +77,7 @@ a {
     margin-right: 0 !important;
 }
 
-/* ── 미리보기 페이지(.is-container)도 동일하게 플러그인 꽉 채움 ── */
+/* ── 미리보기 페이지(.is-container)도 동일하게 꽉 채움 ── */
 .is-container [data-cb-type] {
     display: block;
     width: 100%;
@@ -83,7 +86,8 @@ a {
 }
 .is-container .is-col:has(> [data-cb-type]),
 .is-container .column:has(> [data-cb-type]),
-.is-container [class*="col"]:has(> [data-cb-type]) {
+.is-container [class*="col"]:has(> [data-cb-type]),
+.is-container .column.spw-finance-col {
     padding-left: 0 !important;
     padding-right: 0 !important;
     width: 100% !important;

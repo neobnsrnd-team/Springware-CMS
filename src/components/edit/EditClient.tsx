@@ -247,6 +247,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             container: '.container',
             previewURL: 'preview-with-plugins.html',
             lang: ko,
+            sidePanel: 'left', // 설정 패널을 왼쪽에서 슬라이드 (오른쪽 컴포넌트 패널과 겹치지 않도록)
             // 삽입 HTML 앞뒤 공백 제거 — ContentBuilder 'row' 모드에서
             // 선행 개행이 childNodes[0]을 텍스트 노드로 만들어
             // element.tagName.toLowerCase() 크래시가 발생하는 버그 방지
@@ -1137,7 +1138,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
         //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
         const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
-        const wrappedHtml = `<div class="row"><div class="column">\n${html}\n</div></div>`;
+        // 금융 컴포넌트(data-spw-block)는 컬럼 패딩 없이 캔버스 전체 너비를 채워야 함
+        const colClass = html.includes('data-spw-block') ? 'column spw-finance-col' : 'column';
+        const wrappedHtml = `<div class="row"><div class="${colClass}">\n${html}\n</div></div>`;
         const blockHtmls = liveBlocks.map((b) => b.outerHtml);
 
         // insertIdx가 유효하면 해당 위치에, 아니면 끝에 추가
