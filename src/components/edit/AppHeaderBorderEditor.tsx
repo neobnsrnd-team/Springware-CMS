@@ -22,7 +22,10 @@ const COLOR_PRESETS = [
 const WIDTH_PRESETS = [0, 1, 1.5, 2, 2.5, 3, 4];
 
 function parseBorderBottom(el: HTMLElement): { color: string; width: number } {
-    // 인라인 스타일에서 직접 읽기
+    // border-bottom: none 인 경우 먼저 처리
+    if (el.style.borderBottomStyle === 'none' || el.style.borderBottom === 'none') {
+        return { color: '#0046A4', width: 0 };
+    }
     const colorRaw =
         el.style.borderBottomColor || el.style.borderBottom.match(/#[0-9a-fA-F]{3,8}|rgb[^)]+\)/)?.[0] || '#0046A4';
     const widthRaw = parseFloat(el.style.borderBottomWidth || '2.5');
