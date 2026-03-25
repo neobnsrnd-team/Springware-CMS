@@ -42,13 +42,13 @@ function buildInner(innerPadding: string): string {
             `<div style="display:flex;align-items:center;gap:8px;">` +
                 `<div style="display:flex;gap:6px;flex:1;">` +
                     `<select style="flex:1;padding:7px 10px;border:1px solid #E5E7EB;border-radius:4px;font-size:11px;color:#374151;background:#fff ${SELECT_ARROW_URI};-webkit-appearance:none;appearance:none;cursor:pointer;font-family:inherit;">` +
-                        `<option>계열사 바로가기</option>` +
+                        `<option>선택 1</option>` +
                         `<option>계열사1</option>` +
                         `<option>계열사2</option>` +
                         `<option>계열사3</option>` +
                     `</select>` +
                     `<select style="flex:1;padding:7px 10px;border:1px solid #E5E7EB;border-radius:4px;font-size:11px;color:#374151;background:#fff ${SELECT_ARROW_URI};-webkit-appearance:none;appearance:none;cursor:pointer;font-family:inherit;">` +
-                        `<option>패밀리사이트</option>` +
+                        `<option>선택 2</option>` +
                         `<option>패밀리사이트1</option>` +
                         `<option>패밀리사이트2</option>` +
                     `</select>` +

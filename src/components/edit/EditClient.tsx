@@ -633,12 +633,10 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // [적용 컴포넌트]
         //   - product-menu  : .pm-item(<a>) 클릭 → 아이콘 편집 버튼 표시
         //   - media-video   : 제목 <a> 클릭   → 영상 URL 변경 버튼 표시
-        //   - site-footer   : 링크 <a> 클릭   → 드롭다운 편집 버튼 표시
         //
         // [요구사항] 버튼을 추가하려는 컴포넌트 블록 안에 <a> 태그가 반드시 있어야 한다.
         const SPW_PM_BTN_CLASS = 'spw-pm-icon-edit-btn';
         const SPW_MV_BTN_CLASS = 'spw-mv-url-edit-btn';
-        const SPW_SF_BTN_CLASS = 'spw-sf-select-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -692,37 +690,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 });
                 linkTool.appendChild(btn);
             }
-
-            // ③ site-footer 드롭다운 편집 버튼
-            if (!linkTool.querySelector(`.${SPW_SF_BTN_CLASS}`)) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = SPW_SF_BTN_CLASS;
-                btn.title = '드롭다운 편집';
-                btn.style.cssText =
-                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
-                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke="#111" stroke-width="2" stroke-linecap="round"/></svg>`;
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    const block =
-                        document
-                            .querySelector<HTMLElement>('.icon-active')
-                            ?.closest<HTMLElement>('[data-component-id^="site-footer"]') ??
-                        document
-                            .querySelector<HTMLElement>('.elm-active')
-                            ?.closest<HTMLElement>('[data-component-id^="site-footer"]');
-                    if (block) setSiteFooterBlock(block);
-                });
-                linkTool.appendChild(btn);
-            }
         };
 
         // 활성 요소 위치에 따라 각 버튼 가시성 갱신
         const updateLinkToolBtnVisibility = () => {
             const pmBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PM_BTN_CLASS}`);
             const mvBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_MV_BTN_CLASS}`);
-            const sfBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_SF_BTN_CLASS}`);
             const iconActive = document.querySelector('.icon-active');
             const elmActive = document.querySelector('.elm-active');
 
@@ -737,12 +710,6 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     !!iconActive?.closest('[data-component-id^="media-video"]') ||
                     !!elmActive?.closest('[data-component-id^="media-video"]');
                 mvBtn.style.display = isInMv ? 'flex' : 'none';
-            }
-            if (sfBtn) {
-                const isInSf =
-                    !!iconActive?.closest('[data-component-id^="site-footer"]') ||
-                    !!elmActive?.closest('[data-component-id^="site-footer"]');
-                sfBtn.style.display = isInSf ? 'flex' : 'none';
             }
         };
 
@@ -1101,6 +1068,20 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const containerEl = document.querySelector('.container');
         if (containerEl) koObserver.observe(containerEl, { childList: true });
 
+        // ── site-footer select 클릭 감지 → 드롭다운 편집 패널 오픈 ──────────────
+        // <select>는 ContentBuilder가 #divLinkTool을 열지 않으므로,
+        // 캡처 단계에서 직접 클릭을 감지하여 SiteFooterSelectEditor를 띄웁니다.
+        const handleSiteFooterSelectClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const select = target.closest<HTMLSelectElement>('[data-component-id^="site-footer"] select');
+            if (!select) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const block = select.closest<HTMLElement>('[data-component-id^="site-footer"]');
+            if (block) setSiteFooterBlock(block);
+        };
+        document.addEventListener('click', handleSiteFooterSelectClick, true);
+
         // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
         const loadController = new AbortController();
         fetch('/api/builder/load', {
@@ -1160,6 +1141,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
             document.removeEventListener('click', redirectCellAddToRowAdd, true);
             document.removeEventListener('click', markKorean, true);
+            document.removeEventListener('click', handleSiteFooterSelectClick, true);
             koObserver.disconnect();
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
             if (reinitTimer) clearTimeout(reinitTimer);
