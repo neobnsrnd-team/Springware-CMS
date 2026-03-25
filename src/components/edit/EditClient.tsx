@@ -14,6 +14,7 @@ import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css';
 import html2canvas from 'html2canvas';
 
 import ComponentPanel from '@/components/edit/ComponentPanel';
+import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
 
@@ -209,6 +210,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [newTabName, setNewTabName] = useState('');
     // 새 탭 생성 시 선택할 뷰 모드
     const [newTabViewMode, setNewTabViewMode] = useState<ViewMode>('mobile');
+
+    // product-menu 아이콘 편집 모달
+    const [productMenuBlock, setProductMenuBlock] = useState<HTMLElement | null>(null);
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
     const currentTab = tabs.find((t) => t.id === bank);
@@ -620,6 +624,79 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // 이미 존재하는 모달에 즉시 적용
         document.querySelectorAll<HTMLElement>('.is-modal').forEach(makeModalDraggable);
 
+        // ── product-menu 아이콘 편집 버튼 — #divLinkTool 주입 ────────────────
+        // <a> 태그(.pm-item) 클릭 시 ContentBuilder는 #divLinkTool을 보여준다.
+        // 이 툴에 버튼을 한 번 주입하고, .icon-active 요소가 .pm-item 안이면 보이고 아니면 숨긴다.
+        const SPW_BTN_CLASS = 'spw-pm-icon-edit-btn';
+
+        const injectIconEditToLinkTool = (linkTool: HTMLElement) => {
+            if (linkTool.querySelector(`.${SPW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_BTN_CLASS;
+            btn.title = '아이콘 편집';
+            // #divLinkTool 버튼 스타일 통일: width:37px height:37px transparent, fill:#111
+            btn.style.cssText =
+                'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                // pm-item 클릭: .icon-active → 상위 product-menu 탐색
+                // 외부 블록 클릭: .elm-active → 상위 product-menu 탐색
+                const anchor =
+                    document
+                        .querySelector<HTMLElement>('.icon-active')
+                        ?.closest<HTMLElement>('[data-component-id^="product-menu"]') ??
+                    document
+                        .querySelector<HTMLElement>('.elm-active')
+                        ?.closest<HTMLElement>('[data-component-id^="product-menu"]');
+                if (anchor) setProductMenuBlock(anchor);
+            });
+            linkTool.appendChild(btn);
+        };
+
+        // 버튼 가시성 갱신 — .icon-active(pm-item 클릭) 또는 .elm-active(외부 블록 클릭) 모두 처리
+        const updateLinkToolBtnVisibility = () => {
+            const btn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_BTN_CLASS}`);
+            if (!btn) return;
+            const isInPm =
+                !!document.querySelector('.icon-active')?.closest('[data-component-id^="product-menu"]') ||
+                !!document.querySelector('.elm-active')?.closest('[data-component-id^="product-menu"]');
+            btn.style.display = isInPm ? 'flex' : 'none';
+        };
+
+        const colToolObserver = new MutationObserver((mutations) => {
+            let needsVisibilityUpdate = false;
+            mutations.forEach((mutation) => {
+                // #divLinkTool 추가 감지 → 버튼 주입
+                mutation.addedNodes.forEach((node) => {
+                    if (!(node instanceof HTMLElement)) return;
+                    if (node.id === 'divLinkTool') injectIconEditToLinkTool(node);
+                    node.querySelectorAll<HTMLElement>('#divLinkTool').forEach(injectIconEditToLinkTool);
+                });
+                // .icon-active 또는 .elm-active 클래스 변화 → 가시성 갱신
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const cl = (mutation.target as HTMLElement).classList;
+                    if (cl.contains('icon-active') || cl.contains('elm-active')) {
+                        needsVisibilityUpdate = true;
+                    }
+                }
+            });
+            if (needsVisibilityUpdate) updateLinkToolBtnVisibility();
+        });
+        colToolObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        // 이미 DOM에 있는 #divLinkTool에 즉시 적용
+        const existingLinkTool = document.querySelector<HTMLElement>('#divLinkTool');
+        if (existingLinkTool) injectIconEditToLinkTool(existingLinkTool);
+
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
         // .is-pop.quickadd는 DOM에 항상 존재하며 ContentBuilder가 display만 토글함.
         // style 변경을 감지하여 표시될 때 position:fixed로 전환 + 드래그 핸들 등록.
@@ -1000,6 +1077,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             loadController.abort();
             rteObserver.disconnect();
             modalObserver.disconnect();
+            colToolObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
             document.removeEventListener('click', redirectCellAddToRowAdd, true);
             document.removeEventListener('click', markKorean, true);
@@ -1800,6 +1878,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                         .catch((err) => console.error('금융 컴포넌트 재로드 오류:', err));
                 }}
             />
+
+            {/* ── product-menu 아이콘 편집 모달 ── */}
+            {productMenuBlock && (
+                <ProductMenuIconEditor blockEl={productMenuBlock} onClose={() => setProductMenuBlock(null)} />
+            )}
 
             {/* ── 새 페이지 추가 모달 ── */}
             {showAddTab && (

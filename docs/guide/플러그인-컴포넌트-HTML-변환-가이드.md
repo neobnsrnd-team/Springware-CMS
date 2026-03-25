@@ -14,7 +14,9 @@
 ### 2. 순수 HTML 작성 (3개 variant)
 
 - `data-cb-type="<name>"` 속성 **제거**
-- outer div에 `data-spw-block` 속성 **추가** — `EditClient.tsx`의 `handleInsertComponent`가 이 속성을 감지해 컬럼에 `spw-finance-col` 클래스를 주입하고, `globals.css`가 해당 컬럼의 패딩을 제거해 캔버스 전체 너비를 채운다
+- outer div에 아래 두 속성 **추가**:
+  - `data-component-id="<name>-<viewmode>"` — DB `COMPONENT_ID`와 1:1 매핑, 승인 시 `PAGE_COMP_MAP` 추적에 사용 (예: `data-component-id="product-menu-mobile"`)
+  - `data-spw-block` — `handleInsertComponent`가 감지해 컬럼에 `spw-finance-col` 클래스를 주입, 캔버스 전체 너비를 채운다
 - CSS 클래스 스타일 전부 → inline `style=""` 로 이식
 - `mount()`에서 동적 주입하던 스타일도 inline에 포함
 - 기본 이미지·색상 상수는 HTML에 하드코딩
