@@ -106,7 +106,12 @@ src/
 │   ├── edit/                         # 에디터 UI 컴포넌트
 │   │   ├── EditClient.tsx
 │   │   ├── EditClientLoader.tsx
-│   │   └── ComponentPanel.tsx
+│   │   ├── ComponentPanel.tsx
+│   │   ├── AppHeaderBorderEditor.tsx  # app-header 구분선 색상·굵기 편집
+│   │   ├── ProductMenuIconEditor.tsx  # product-menu 아이콘 편집
+│   │   ├── AuthCenterIconEditor.tsx   # auth-center 아이콘 편집
+│   │   ├── MediaVideoEditor.tsx       # media-video YouTube URL 변경
+│   │   └── SiteFooterSelectEditor.tsx # site-footer 드롭다운 편집
 │   ├── view/                         # 뷰어 UI 컴포넌트
 │   │   └── ViewClient.tsx
 │   ├── files/                        # 파일 브라우저 컴포넌트

@@ -38,22 +38,21 @@ src/
 │   ├── globals.css             # Tailwind + .btns 에디터 버튼 스타일
 │   ├── page.tsx                # / — 랜딩 페이지 (Link → /edit)
 │   ├── edit/
-│   │   ├── page.tsx            # 서버 컴포넌트 (단순 래퍼)
-│   │   ├── EditClient.tsx      # ★ 핵심 — ContentBuilder 인스턴스 생성, 플러그인 등록, AI 모델 설정, 저장/미리보기
-│   │   ├── EditClientLoader.tsx # EditClient 동적 로더 (SSR 방지용 dynamic import 래퍼)
-│   │   ├── ComponentPanel.tsx  # 우측 패널 — 금융 컴포넌트 탭 UI
-│   │   ├── finance-component-data.ts # 금융 컴포넌트 데이터 (IBK 데모 포함)
-│   │   └── ko.ts               # ContentBuilder 한국어 로컬라이제이션
+│   │   └── page.tsx            # 서버 컴포넌트 (단순 래퍼)
 │   ├── view/
-│   │   ├── page.tsx            # 서버 컴포넌트 — DB에서 html 읽어서 prop 전달
-│   │   └── ViewClient.tsx      # ContentBuilderRuntime으로 저장된 HTML 렌더링 (dangerouslySetInnerHTML)
+│   │   └── page.tsx            # 서버 컴포넌트 — DB에서 html 읽어서 prop 전달
 │   ├── files/
 │   │   └── page.tsx            # FileBrowser에 API 엔드포인트 주입
 │   └── api/
 │       ├── builder/
 │       │   ├── load/route.ts   # POST — DB에서 HTML 로드
-│       │   ├── save/route.ts   # POST — HTML을 DB에 저장 ({content, updated})
-│       │   └── upload/route.ts # POST — FormData 파일 → public/uploads/ 저장, URL 반환
+│       │   ├── save/route.ts   # POST — HTML을 DB에 저장
+│       │   ├── upload/route.ts # POST — FormData 파일 → public/uploads/ 저장, URL 반환
+│       │   ├── pages/route.ts  # GET/DELETE — 페이지 목록 조회·삭제
+│       │   ├── pages/[pageId]/approve/route.ts        # POST — 페이지 승인
+│       │   ├── pages/[pageId]/approve-request/route.ts # POST — 승인 요청
+│       │   ├── pages/[pageId]/reject/route.ts         # POST — 승인 반려
+│       │   └── thumbnail/route.ts # POST — 페이지 썸네일 생성
 │       ├── manage/
 │       │   ├── files/route.ts  # GET — 파일 목록 (페이지네이션 10개/페이지, 디렉토리 우선 정렬)
 │       │   ├── folders/route.ts# GET — 재귀 폴더 트리 구조 반환
@@ -76,15 +75,37 @@ src/
 │       ├── components/route.ts # GET — 등록된 컴포넌트 목록
 │       └── health/route.ts     # GET — 헬스 체크
 ├── components/
-│   └── files/                  # 파일 브라우저 컴포넌트 (모두 'use client')
-│       ├── FileBrowser.tsx     # ★ 메인 — 상태 관리, 업로드, 삭제, 무한스크롤, postMessage 통신
-│       ├── Sidebar.tsx         # 좌측 사이드바 (폴더 트리 래퍼)
-│       ├── FolderTree.tsx      # 재귀 폴더 트리 렌더링 (level prop으로 들여쓰기)
-│       ├── FileCard.tsx        # 파일/폴더 카드 (이미지 프리뷰, 선택 체크박스)
-│       ├── Breadcrumbs.tsx     # 경로 탐색 (path 세그먼트 클릭)
-│       ├── CreateFolderModal.tsx    # 폴더 생성 모달
-│       ├── DeleteConfirmModal.tsx   # 삭제 확인 모달
-│       └── UploadProgressList.tsx   # 업로드 진행률 표시
+│   ├── edit/                   # 에디터 UI 컴포넌트 (모두 'use client')
+│   │   ├── EditClient.tsx      # ★ 핵심 — ContentBuilder 인스턴스 생성, 플러그인 등록, AI 모델 설정
+│   │   ├── EditClientLoader.tsx # EditClient 동적 로더 (SSR 방지용 dynamic import 래퍼)
+│   │   ├── ComponentPanel.tsx  # 우측 패널 — 금융 컴포넌트 탭 UI
+│   │   ├── AppHeaderBorderEditor.tsx  # app-header 구분선 색상·굵기 편집
+│   │   ├── ProductMenuIconEditor.tsx  # product-menu 아이콘 편집
+│   │   ├── AuthCenterIconEditor.tsx   # auth-center 아이콘 편집
+│   │   ├── MediaVideoEditor.tsx       # media-video YouTube URL 변경
+│   │   └── SiteFooterSelectEditor.tsx # site-footer 드롭다운 편집
+│   ├── view/
+│   │   └── ViewClient.tsx      # ContentBuilderRuntime으로 저장된 HTML 렌더링
+│   ├── files/                  # 파일 브라우저 컴포넌트 (모두 'use client')
+│   │   ├── FileBrowser.tsx     # ★ 메인 — 상태 관리, 업로드, 삭제, 무한스크롤, postMessage 통신
+│   │   ├── Sidebar.tsx         # 좌측 사이드바 (폴더 트리 래퍼)
+│   │   ├── FolderTree.tsx      # 재귀 폴더 트리 렌더링 (level prop으로 들여쓰기)
+│   │   ├── FileCard.tsx        # 파일/폴더 카드 (이미지 프리뷰, 선택 체크박스)
+│   │   ├── Breadcrumbs.tsx     # 경로 탐색 (path 세그먼트 클릭)
+│   │   ├── CreateFolderModal.tsx    # 폴더 생성 모달
+│   │   ├── DeleteConfirmModal.tsx   # 삭제 확인 모달
+│   │   └── UploadProgressList.tsx   # 업로드 진행률 표시
+│   └── ui/                     # 공통 UI 컴포넌트
+│       ├── Modal.tsx           # 공통 모달 셸 (오버레이 + ESC/바깥클릭 닫기)
+│       └── PageCard.tsx        # 페이지 카드 (대시보드·승인 화면 공용)
+├── data/
+│   ├── finance-component-data.ts # 금융 컴포넌트 타입 정의 (데이터는 DB 관리)
+│   └── ko.ts                   # ContentBuilder 한국어 로컬라이제이션
+├── lib/                        # 유틸리티·헬퍼
+│   ├── api-response.ts         # successResponse, errorResponse, contentBuilderErrorResponse
+│   ├── current-user.ts         # getCurrentUser
+│   ├── validators.ts           # isValidBankId
+│   └── upload-utils.ts         # normalizeUploadUrl
 ├── db/                         # Oracle DB 레이어
 │   ├── connection.ts           # Oracle DB 커넥션 풀 관리
 │   ├── types.ts                # DB 타입 정의
