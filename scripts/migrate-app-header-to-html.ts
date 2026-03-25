@@ -1,5 +1,5 @@
 // scripts/migrate-app-header-to-html.ts
-// app-header 컴포넌트를 data-cb-type 플러그인 구조에서 순수 HTML로 변환
+// app-header 컴포넌트 순수 HTML 변환 + data-component-id retrofit
 // DB SPW_CMS_COMPONENT의 app-header-mobile / web / responsive DATA.html 필드 업데이트
 // 실행: npx tsx scripts/migrate-app-header-to-html.ts
 
@@ -20,7 +20,7 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 // ── mobile variant ──────────────────────────────────────────────────────────
 // 375px 기준 모바일 헤더: 54px 높이, 좌우 패딩 14px
 const APP_HEADER_MOBILE_HTML =
-    `<div data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;">` +
+    `<div data-component-id="app-header-mobile" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;">` +
         `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:54px;padding:0 14px;">` +
             `<a href="#" style="display:flex;align-items:center;gap:8px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:34px;height:34px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
@@ -32,7 +32,7 @@ const APP_HEADER_MOBILE_HTML =
 // ── web variant ─────────────────────────────────────────────────────────────
 // 데스크탑 기준: 60px 높이, 좌우 패딩 24px, 최대 너비 1200px 중앙 정렬
 const APP_HEADER_WEB_HTML =
-    `<div data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;">` +
+    `<div data-component-id="app-header-web" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;">` +
         `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:60px;padding:0 24px;max-width:1200px;margin:0 auto;">` +
             `<a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:38px;height:38px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
@@ -44,7 +44,7 @@ const APP_HEADER_WEB_HTML =
 // ── responsive variant ──────────────────────────────────────────────────────
 // 모바일·웹 공용: 54px 높이, box-sizing border-box, 100% 너비
 const APP_HEADER_RESPONSIVE_HTML =
-    `<div data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;width:100%;box-sizing:border-box;">` +
+    `<div data-component-id="app-header-responsive" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;width:100%;box-sizing:border-box;">` +
         `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:54px;padding:0 14px;">` +
             `<a href="#" style="display:flex;align-items:center;gap:8px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:34px;height:34px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
@@ -60,7 +60,7 @@ const VARIANTS: Array<{ id: string; html: string }> = [
 ];
 
 async function main() {
-    console.log('app-header 컴포넌트 순수 HTML 변환 마이그레이션 시작...\n');
+    console.log('app-header 컴포넌트 data-component-id retrofit 마이그레이션 시작...\n');
 
     for (const variant of VARIANTS) {
         const existing = await getComponentById(variant.id);
