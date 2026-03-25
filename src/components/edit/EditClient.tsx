@@ -14,6 +14,7 @@ import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css';
 import html2canvas from 'html2canvas';
 
 import ComponentPanel from '@/components/edit/ComponentPanel';
+import AppHeaderBorderEditor from '@/components/edit/AppHeaderBorderEditor';
 import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
 import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
@@ -236,6 +237,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [siteFooterBlock, setSiteFooterBlock] = useState<HTMLElement | null>(null);
     // auth-center 아이콘 편집 패널
     const [authCenterBlock, setAuthCenterBlock] = useState<HTMLElement | null>(null);
+    // app-header 구분선 편집 패널
+    const [appHeaderBlock, setAppHeaderBlock] = useState<HTMLElement | null>(null);
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
     const currentTab = tabs.find((t) => t.id === bank);
@@ -641,6 +644,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const SPW_PM_BTN_CLASS = 'spw-pm-icon-edit-btn';
         const SPW_MV_BTN_CLASS = 'spw-mv-url-edit-btn';
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
+        const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -671,7 +675,31 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 linkTool.appendChild(btn);
             }
 
-            // ② auth-center 아이콘 편집 버튼
+            // ② app-header 구분선 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_AH_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_AH_BTN_CLASS;
+                btn.title = '구분선 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6" stroke-width="3"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="app-header"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="app-header"]');
+                    if (block) setAppHeaderBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
+
+            // ③ auth-center 아이콘 편집 버튼
             if (!linkTool.querySelector(`.${SPW_AC_BTN_CLASS}`)) {
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -724,6 +752,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const updateLinkToolBtnVisibility = () => {
             const pmBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PM_BTN_CLASS}`);
             const acBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_AC_BTN_CLASS}`);
+            const ahBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_AH_BTN_CLASS}`);
             const mvBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_MV_BTN_CLASS}`);
             const iconActive = document.querySelector('.icon-active');
             const elmActive = document.querySelector('.elm-active');
@@ -739,6 +768,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                     !!iconActive?.closest('[data-component-id^="auth-center"]') ||
                     !!elmActive?.closest('[data-component-id^="auth-center"]');
                 acBtn.style.display = isInAc ? 'flex' : 'none';
+            }
+            if (ahBtn) {
+                const isInAh =
+                    !!iconActive?.closest('[data-component-id^="app-header"]') ||
+                    !!elmActive?.closest('[data-component-id^="app-header"]');
+                ahBtn.style.display = isInAh ? 'flex' : 'none';
             }
             if (mvBtn) {
                 const isInMv =
@@ -1991,6 +2026,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             {/* ── auth-center 아이콘 편집 패널 ── */}
             {authCenterBlock && (
                 <AuthCenterIconEditor blockEl={authCenterBlock} onClose={() => setAuthCenterBlock(null)} />
+            )}
+
+            {/* ── app-header 구분선 편집 패널 ── */}
+            {appHeaderBlock && (
+                <AppHeaderBorderEditor blockEl={appHeaderBlock} onClose={() => setAppHeaderBlock(null)} />
             )}
 
             {/* ── 새 페이지 추가 모달 ── */}
