@@ -223,6 +223,19 @@ export default function ApproveClient({
 
     const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
 
+    // 빈 상태 메시지 결정
+    function getEmptyMessage() {
+        if (search) return `'${search}'에 대한 검색 결과가 없습니다.`;
+        switch (approveStateFilter) {
+            case 'PENDING':
+                return '현재 승인 대기 중인 페이지가 없습니다.';
+            case null:
+                return '등록된 페이지가 없습니다.';
+            default:
+                return '조건에 맞는 페이지가 없습니다.';
+        }
+    }
+
     return (
         <div className="min-h-screen bg-[#eaedf0]">
             {/* ── 헤더 ── */}
@@ -379,15 +392,7 @@ export default function ApproveClient({
 
                 {/* 카드 그리드 */}
                 {pages.length === 0 ? (
-                    <div className="text-center py-20 text-[#9ca3af] text-sm">
-                        {search
-                            ? `'${search}'에 대한 검색 결과가 없습니다.`
-                            : approveStateFilter === 'PENDING'
-                              ? '현재 승인 대기 중인 페이지가 없습니다.'
-                              : approveStateFilter === null
-                                ? '등록된 페이지가 없습니다.'
-                                : '조건에 맞는 페이지가 없습니다.'}
-                    </div>
+                    <div className="text-center py-20 text-[#9ca3af] text-sm">{getEmptyMessage()}</div>
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 mb-8">
                         {pages.map((page) => {
