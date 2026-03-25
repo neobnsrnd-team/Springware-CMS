@@ -48,9 +48,12 @@ function buildSlide(slide: (typeof SLIDES)[number]): string {
 }
 
 // 슬라이더 초기화 인라인 스크립트 — IIFE로 스코프 격리, data-cb-type 의존 없음
+// ContentBuilder 에디터 컨텍스트(window.ContentBuilder 존재)에서는 슬라이더 비활성화
+// → 에디터에서는 정적 배너 나열, 뷰어(/view)에서만 슬라이드 동작
 const SLIDER_SCRIPT =
     `<script>` +
     `(function(){` +
+        `if(window.ContentBuilder)return;` +
         `var r=document.currentScript&&document.currentScript.parentElement;` +
         `if(!r)return;` +
         `var track=r.querySelector('[data-pb-track]');` +
