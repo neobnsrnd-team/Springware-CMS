@@ -224,7 +224,7 @@ export default function ApproveClient({
     const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
 
     return (
-        <div className="min-h-screen bg-[#eff2f7]">
+        <div className="min-h-screen bg-[#edf0f5]">
             {/* ── 헤더 ── */}
             <header className="bg-[#1e3a5f] px-8 h-[60px] flex items-center gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.18)] sticky top-0 z-[100]">
                 <span className="font-bold text-base text-white tracking-[-0.3px]">Springware CMS</span>
