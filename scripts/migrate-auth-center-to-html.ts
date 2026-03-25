@@ -41,8 +41,8 @@ function buildCard(card: CardData): string {
     const iconStyle = CARD_ICON_STYLE[card.type] ?? CARD_ICON_STYLE['cert'];
     const borderBottom = card.isLast ? 'none' : '1px solid #F9FAFB';
     return (
-        `<a href="${card.href ?? '#'}" style="display:flex;align-items:center;gap:14px;padding:14px 20px;text-decoration:none;border-bottom:${borderBottom};min-height:64px;">` +
-            `<div style="width:48px;height:48px;border-radius:14px;background:${iconStyle.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${iconStyle.color};">` +
+        `<a href="${card.href ?? '#'}" class="ac-item" style="display:flex;align-items:center;gap:14px;padding:14px 20px;text-decoration:none;border-bottom:${borderBottom};min-height:64px;">` +
+            `<div class="ac-icon-wrap" style="width:48px;height:48px;border-radius:14px;background:${iconStyle.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${iconStyle.color};">` +
                 `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">${CARD_ICONS[card.type]}</svg>` +
             `</div>` +
             `<div style="flex:1;display:flex;flex-direction:column;gap:3px;min-width:0;">` +
