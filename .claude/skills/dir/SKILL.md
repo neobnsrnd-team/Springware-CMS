@@ -118,7 +118,8 @@ src/
 │   │   ├── CreateFolderModal.tsx
 │   │   ├── DeleteConfirmModal.tsx
 │   │   └── UploadProgressList.tsx
-│   └── ui/                           # 공통 UI (확장 예정)
+│   └── ui/                           # 공통 UI
+│       └── Modal.tsx                  # 공통 모달 셸 (오버레이 + 카드 + ESC/바깥클릭 닫기)
 │
 ├── data/                             # 정적 데이터·설정
 │   ├── finance-component-data.ts

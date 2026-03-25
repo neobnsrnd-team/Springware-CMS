@@ -4,6 +4,8 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
+import Modal from '@/components/ui/Modal';
+
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
     { value: 'date', label: '최신 수정순' },
@@ -495,49 +497,42 @@ export default function ApproveClient({
 
             {/* ── 반려 사유 입력 모달 ── */}
             {rejectModalPageId && (
-                <div
-                    onClick={() => setRejectModalPageId(null)}
-                    className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+                <Modal
+                    title="반려 사유 입력"
+                    onClose={() => setRejectModalPageId(null)}
+                    showCloseButton={false}
+                    width="480px"
+                    className="p-8"
                 >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-[20px] p-8 w-[480px] max-w-[90vw] shadow-[0_24px_64px_rgba(0,70,164,0.15)]"
-                    >
-                        <h3 className="m-0 mb-6 text-lg font-bold text-[#111827]">반려 사유 입력</h3>
+                    <textarea
+                        autoFocus
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="반려 사유를 입력해 주세요."
+                        rows={4}
+                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm mb-5 outline-none resize-y"
+                    />
 
-                        <textarea
-                            autoFocus
-                            value={rejectReason}
-                            onChange={(e) => setRejectReason(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Escape') setRejectModalPageId(null);
-                            }}
-                            placeholder="반려 사유를 입력해 주세요."
-                            rows={4}
-                            className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm mb-5 outline-none resize-y"
-                        />
-
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setRejectModalPageId(null)}
-                                className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
-                            >
-                                취소
-                            </button>
-                            <button
-                                onClick={handleRejectConfirm}
-                                disabled={!rejectReason.trim() || rejecting}
-                                className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                    !rejectReason.trim() || rejecting
-                                        ? 'bg-[#d1d5db] cursor-not-allowed'
-                                        : 'bg-[#dc2626] cursor-pointer'
-                                }`}
-                            >
-                                {rejecting ? '처리 중...' : '반려 확정'}
-                            </button>
-                        </div>
+                    <div className="flex justify-end gap-2">
+                        <button
+                            onClick={() => setRejectModalPageId(null)}
+                            className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
+                        >
+                            취소
+                        </button>
+                        <button
+                            onClick={handleRejectConfirm}
+                            disabled={!rejectReason.trim() || rejecting}
+                            className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
+                                !rejectReason.trim() || rejecting
+                                    ? 'bg-[#d1d5db] cursor-not-allowed'
+                                    : 'bg-[#dc2626] cursor-pointer'
+                            }`}
+                        >
+                            {rejecting ? '처리 중...' : '반려 확정'}
+                        </button>
                     </div>
-                </div>
+                </Modal>
             )}
         </div>
     );

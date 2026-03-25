@@ -4,6 +4,8 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
+import Modal from '@/components/ui/Modal';
+
 import ApprovalRequestModal from './ApprovalRequestModal';
 import RejectedReasonModal from './RejectedReasonModal';
 
@@ -553,73 +555,68 @@ export default function DashboardClient({
 
             {/* ── 새 페이지 생성 모달 ── */}
             {showCreateModal && (
-                <div
-                    onClick={handleModalClose}
-                    className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+                <Modal
+                    title="새 페이지 만들기"
+                    onClose={handleModalClose}
+                    showCloseButton={false}
+                    width="480px"
+                    className="p-8"
                 >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-[20px] p-8 w-[480px] max-w-[90vw] shadow-[0_24px_64px_rgba(0,70,164,0.15)]"
-                    >
-                        <h3 className="m-0 mb-6 text-lg font-bold text-[#111827]">새 페이지 만들기</h3>
+                    <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">페이지 이름</label>
+                    <input
+                        autoFocus
+                        value={newPageName}
+                        onChange={(e) => setNewPageName(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newPageName.trim()) handleCreatePage();
+                        }}
+                        placeholder="예: 메인 페이지"
+                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm mb-5 outline-none"
+                    />
 
-                        <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">페이지 이름</label>
-                        <input
-                            autoFocus
-                            value={newPageName}
-                            onChange={(e) => setNewPageName(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && newPageName.trim()) handleCreatePage();
-                                if (e.key === 'Escape') handleModalClose();
-                            }}
-                            placeholder="예: 메인 페이지"
-                            className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm mb-5 outline-none"
-                        />
-
-                        <label className="block text-[13px] font-semibold text-[#374151] mb-2">화면 유형</label>
-                        <div className="flex gap-2.5 mb-7">
-                            {(['mobile', 'web', 'responsive'] as ViewMode[]).map((vm) => {
-                                const icon = vm === 'mobile' ? '📱' : vm === 'web' ? '🖥️' : '🔄';
-                                const vmLabel = vm === 'mobile' ? '모바일' : vm === 'web' ? '웹' : '반응형';
-                                const selected = newPageViewMode === vm;
-                                return (
-                                    <button
-                                        key={vm}
-                                        onClick={() => setNewPageViewMode(vm)}
-                                        className={`flex-1 py-2.5 px-1.5 rounded-lg border-2 text-[13px] font-semibold cursor-pointer flex flex-col items-center gap-1 ${
-                                            selected
-                                                ? 'border-[#0046A4] bg-[#f0f4ff] text-[#0046A4]'
-                                                : 'border-[#e5e7eb] bg-white text-[#6b7280]'
-                                        }`}
-                                    >
-                                        <span className="text-[20px]">{icon}</span>
-                                        {vmLabel}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={handleModalClose}
-                                className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
-                            >
-                                취소
-                            </button>
-                            <button
-                                onClick={handleCreatePage}
-                                disabled={!newPageName.trim() || creating}
-                                className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                    !newPageName.trim() || creating
-                                        ? 'bg-[#d1d5db] cursor-not-allowed'
-                                        : 'bg-[#0046A4] cursor-pointer'
-                                }`}
-                            >
-                                {creating ? '생성 중...' : '만들기'}
-                            </button>
-                        </div>
+                    <label className="block text-[13px] font-semibold text-[#374151] mb-2">화면 유형</label>
+                    <div className="flex gap-2.5 mb-7">
+                        {(['mobile', 'web', 'responsive'] as ViewMode[]).map((vm) => {
+                            const icon = vm === 'mobile' ? '📱' : vm === 'web' ? '🖥️' : '🔄';
+                            const vmLabel = vm === 'mobile' ? '모바일' : vm === 'web' ? '웹' : '반응형';
+                            const selected = newPageViewMode === vm;
+                            return (
+                                <button
+                                    key={vm}
+                                    onClick={() => setNewPageViewMode(vm)}
+                                    className={`flex-1 py-2.5 px-1.5 rounded-lg border-2 text-[13px] font-semibold cursor-pointer flex flex-col items-center gap-1 ${
+                                        selected
+                                            ? 'border-[#0046A4] bg-[#f0f4ff] text-[#0046A4]'
+                                            : 'border-[#e5e7eb] bg-white text-[#6b7280]'
+                                    }`}
+                                >
+                                    <span className="text-[20px]">{icon}</span>
+                                    {vmLabel}
+                                </button>
+                            );
+                        })}
                     </div>
-                </div>
+
+                    <div className="flex justify-end gap-2">
+                        <button
+                            onClick={handleModalClose}
+                            className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
+                        >
+                            취소
+                        </button>
+                        <button
+                            onClick={handleCreatePage}
+                            disabled={!newPageName.trim() || creating}
+                            className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
+                                !newPageName.trim() || creating
+                                    ? 'bg-[#d1d5db] cursor-not-allowed'
+                                    : 'bg-[#0046A4] cursor-pointer'
+                            }`}
+                        >
+                            {creating ? '생성 중...' : '만들기'}
+                        </button>
+                    </div>
+                </Modal>
             )}
         </div>
     );
