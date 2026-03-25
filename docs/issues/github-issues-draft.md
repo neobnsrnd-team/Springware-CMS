@@ -1,0 +1,202 @@
+# GitHub 이슈 초안 — 금융 컴포넌트 ContentBuilder 인라인 편집 전환
+
+> **배경**: 현재 금융 컴포넌트는 `data-cb-type` 플러그인 구조로 되어 있어 ContentBuilder가 내부를 블랙박스로 취급한다. 이 때문에 기본 블록에서 가능한 더블클릭 텍스트 수정, 이미지 교체 등 ContentBuilder 인라인 편집 기능을 금융 컴포넌트에서는 사용할 수 없고, 별도로 만든 톱니바퀴 모달로만 수정 가능하다.
+>
+> **목표**: 금융 컴포넌트를 순수 HTML로 변환하여 기본 블록과 동일하게 ContentBuilder 인라인 편집(더블클릭 텍스트 수정, 이미지 교체, 블록 이동·삭제 등)이 가능하도록 한다.
+>
+> **플러그인 유지 대상** (JS 의존이라 변환 불가): `loan-calculator`, `exchange-board`, `branch-locator`
+
+---
+
+## 선행 관계 요약
+
+```
+Issue #1~#7  ──────────────────────────────────┐
+  (컴포넌트별 변환, 독립·병렬 진행 가능)         │
+                                               ▼
+                               Issue #8: EditCompModal 및 편집 버튼 정리
+                               Issue #9: ContentBuilderRuntime 플러그인 등록 정리
+```
+
+---
+
+## Issue #1 — `app-header` 컴포넌트 순수 HTML 변환
+
+**목표**: 최상단 헤더 컴포넌트의 `data-cb-type` 플러그인 구조를 제거하여, 기본 블록과 동일하게 ContentBuilder에서 더블클릭으로 텍스트·이미지를 직접 편집할 수 있도록 순수 HTML로 변환한다.
+
+**작업 내용**
+- [ ] 플러그인 CSS (`app-header/style.css`)에서 필요한 스타일을 추출해 HTML 인라인 스타일로 이식
+- [ ] `data-cb-type="app-header"` 속성 제거
+- [ ] mobile / web / responsive 3개 variant 모두 변환
+- [ ] DB `DATA` 필드의 `html` 값 업데이트 (`scripts/` 에 마이그레이션 스크립트 작성, `updateComponent` from `src/db/repository/component.repository` 직접 호출)
+- [ ] 에디터에서 더블클릭으로 은행명·로고 등 텍스트·이미지 직접 편집 가능한지 확인 (기본 블록과 동일하게 동작해야 함)
+- [ ] 뷰어(`/view`)에서 렌더링 정상 확인
+
+**영향 범위**
+- `public/assets/plugins/app-header/index.js` (Issue #9에서 플러그인 등록 제거 처리)
+- DB `SPW_CMS_COMPONENT` — `app-header-mobile`, `app-header-web`, `app-header-responsive`
+
+**의존성**: 없음 (독립 진행 가능)
+
+---
+
+## Issue #2 — `product-menu` 컴포넌트 순수 HTML 변환
+
+**목표**: 상품 메뉴(예금·대출·펀드 아이콘 그리드)의 `data-cb-type` 플러그인 구조를 제거하여, 기본 블록과 동일하게 ContentBuilder에서 더블클릭으로 메뉴명·아이콘을 직접 편집할 수 있도록 순수 HTML로 변환한다.
+
+**작업 내용**
+- [ ] 플러그인 CSS에서 필요한 스타일을 인라인 스타일로 이식
+- [ ] `data-cb-type="product-menu"` 속성 제거
+- [ ] mobile / web / responsive 3개 variant 변환
+- [ ] DB `DATA` 필드 `html` 값 업데이트 (`scripts/` 마이그레이션 스크립트, `updateComponent` from `src/db/repository/component.repository` 직접 호출)
+- [ ] 에디터에서 더블클릭으로 메뉴 텍스트·아이콘 직접 편집 가능한지 확인 (기본 블록과 동일하게 동작해야 함)
+- [ ] 뷰어 렌더링 정상 확인
+
+**영향 범위**
+- `public/assets/plugins/product-menu/index.js` (Issue #9에서 플러그인 등록 제거 처리)
+- DB `SPW_CMS_COMPONENT` — `product-menu-mobile`, `product-menu-web`, `product-menu-responsive`
+
+**의존성**: 없음 (독립 진행 가능)
+
+---
+
+## Issue #3 — `auth-center` 컴포넌트 순수 HTML 변환
+
+**목표**: 보안·인증센터(공동인증서·금융인증서·OTP·보안카드 카드 그리드)의 `data-cb-type` 플러그인 구조를 제거하여, 기본 블록과 동일하게 ContentBuilder에서 더블클릭으로 카드 텍스트를 직접 편집할 수 있도록 순수 HTML로 변환한다.
+
+**작업 내용**
+- [ ] 플러그인 CSS에서 필요한 스타일을 인라인 스타일로 이식
+- [ ] `data-cb-type="auth-center"` 속성 제거
+- [ ] mobile / web / responsive 3개 variant 변환
+- [ ] DB `DATA` 필드 `html` 값 업데이트 (`scripts/` 마이그레이션 스크립트, `updateComponent` from `src/db/repository/component.repository` 직접 호출)
+- [ ] 에디터에서 더블클릭으로 카드 제목·설명 텍스트 직접 편집 가능한지 확인 (기본 블록과 동일하게 동작해야 함)
+- [ ] 뷰어 렌더링 정상 확인
+
+**영향 범위**
+- `public/assets/plugins/auth-center/index.js` (Issue #9에서 플러그인 등록 제거 처리)
+- DB `SPW_CMS_COMPONENT` — `auth-center-mobile`, `auth-center-web`, `auth-center-responsive`
+
+**의존성**: 없음 (독립 진행 가능)
+
+---
+
+## Issue #4 — `site-footer` 컴포넌트 순수 HTML 변환
+
+**목표**: 사이트 푸터(약관·연락처·SNS·TOP 버튼)의 `data-cb-type` 플러그인 구조를 제거하여, 기본 블록과 동일하게 ContentBuilder에서 더블클릭으로 링크 텍스트·주소를 직접 편집할 수 있도록 순수 HTML로 변환한다.
+
+**작업 내용**
+- [ ] 플러그인 CSS에서 필요한 스타일을 인라인 스타일로 이식
+- [ ] `data-cb-type="site-footer"` 속성 제거
+- [ ] mobile / web / responsive 3개 variant 변환
+- [ ] DB `DATA` 필드 `html` 값 업데이트 (`scripts/` 마이그레이션 스크립트, `updateComponent` from `src/db/repository/component.repository` 직접 호출)
+- [ ] 에디터에서 더블클릭으로 링크 텍스트·주소 직접 편집 가능한지 확인 (기본 블록과 동일하게 동작해야 함)
+- [ ] 뷰어 렌더링 정상 확인
+
+**영향 범위**
+- `public/assets/plugins/site-footer/index.js` (Issue #9에서 플러그인 등록 제거 처리)
+- DB `SPW_CMS_COMPONENT` — `site-footer-mobile`, `site-footer-web`, `site-footer-responsive`
+
+**의존성**: 없음 (독립 진행 가능)
+
+---
+
+## Issue #5 — `media-video` 컴포넌트 순수 HTML 변환
+
+**목표**: 미디어 홍보(YouTube iframe 임베드)의 `data-cb-type` 플러그인 구조를 제거하여, 기본 블록과 동일하게 ContentBuilder에서 더블클릭으로 제목 텍스트를 직접 편집할 수 있도록 순수 HTML로 변환한다. YouTube iframe은 HTML 표준 `<iframe>` 태그로 ContentBuilder가 별도 플러그인 없이 처리 가능하다.
+
+**작업 내용**
+- [ ] 플러그인 CSS에서 필요한 스타일을 인라인 스타일로 이식
+- [ ] `data-cb-type="media-video"` 속성 제거
+- [ ] YouTube iframe을 표준 HTML `<iframe>` 태그로 유지
+- [ ] mobile / web / responsive 3개 variant 변환
+- [ ] DB `DATA` 필드 `html` 값 업데이트 (`scripts/` 마이그레이션 스크립트, `updateComponent` from `src/db/repository/component.repository` 직접 호출)
+- [ ] 에디터에서 더블클릭으로 제목 텍스트 직접 편집 가능한지 확인 (기본 블록과 동일하게 동작해야 함)
+- [ ] 뷰어 렌더링 정상 확인
+
+**영향 범위**
+- `public/assets/plugins/media-video/index.js` (Issue #9에서 플러그인 등록 제거 처리)
+- DB `SPW_CMS_COMPONENT` — `media-video-mobile`, `media-video-web`, `media-video-responsive`
+
+**의존성**: 없음 (독립 진행 가능)
+
+---
+
+## Issue #6 — `product-gallery` 컴포넌트 순수 HTML 변환 (슬라이더 정적화)
+
+**목표**: 금융 상품 갤러리(예금·적금·대출 카드)의 `data-cb-type` 플러그인 구조를 제거하여, 기본 블록과 동일하게 ContentBuilder에서 더블클릭으로 상품명·금리·설명을 직접 편집할 수 있도록 순수 HTML로 변환한다. 플러그인이 제공하던 스와이프 동작은 제거하고 카드 그리드 레이아웃으로 정적화한다.
+
+> 슬라이드 효과가 필요한 경우 ContentBuilder 기본 블록의 `swiper-slider` 플러그인 조합으로 별도 구성 가능하다.
+
+**작업 내용**
+- [ ] 플러그인 CSS에서 레이아웃 스타일을 인라인 스타일로 이식
+- [ ] `data-cb-type="product-gallery"` 속성 제거
+- [ ] 스와이프 JS 제거 → 카드 목록 그리드(flex/grid) 정적 HTML로 재구성
+- [ ] mobile / web / responsive 3개 variant 변환
+- [ ] DB `DATA` 필드 `html` 값 업데이트 (`scripts/` 마이그레이션 스크립트, `updateComponent` from `src/db/repository/component.repository` 직접 호출)
+- [ ] 에디터에서 더블클릭으로 상품명·금리·설명 텍스트 직접 편집 가능한지 확인 (기본 블록과 동일하게 동작해야 함)
+- [ ] 뷰어 렌더링 정상 확인
+
+**영향 범위**
+- `public/assets/plugins/product-gallery/index.js` (Issue #9에서 플러그인 등록 제거 처리)
+- DB `SPW_CMS_COMPONENT` — `product-gallery-mobile`, `product-gallery-web`, `product-gallery-responsive`
+
+**의존성**: 없음 (독립 진행 가능)
+
+---
+
+## Issue #7 — `promo-banner` 컴포넌트 순수 HTML 변환 (슬라이더 정적화)
+
+**목표**: 홍보 배너(스와이프 슬라이드 배너)의 `data-cb-type` 플러그인 구조를 제거하여, 기본 블록과 동일하게 ContentBuilder에서 더블클릭으로 배너 텍스트·이미지를 직접 편집할 수 있도록 순수 HTML로 변환한다. 슬라이드 동작은 제거하고 배너 목록으로 정적화한다.
+
+> 슬라이드 효과가 필요한 경우 ContentBuilder 기본 블록의 `swiper-slider` 플러그인 조합으로 별도 구성 가능하다.
+
+**작업 내용**
+- [ ] 플러그인 CSS에서 레이아웃 스타일을 인라인 스타일로 이식
+- [ ] `data-cb-type="promo-banner"` 속성 제거
+- [ ] 슬라이드 JS 제거 → 배너 목록 정적 HTML로 재구성
+- [ ] mobile / web / responsive 3개 variant 변환
+- [ ] DB `DATA` 필드 `html` 값 업데이트 (`scripts/` 마이그레이션 스크립트, `updateComponent` from `src/db/repository/component.repository` 직접 호출)
+- [ ] 에디터에서 더블클릭으로 배너 텍스트·이미지 직접 편집 가능한지 확인 (기본 블록과 동일하게 동작해야 함)
+- [ ] 뷰어 렌더링 정상 확인
+
+**영향 범위**
+- `public/assets/plugins/promo-banner/index.js` (Issue #9에서 플러그인 등록 제거 처리)
+- DB `SPW_CMS_COMPONENT` — `promo-banner-mobile`, `promo-banner-web`, `promo-banner-responsive`
+
+**의존성**: 없음 (독립 진행 가능)
+
+---
+
+## Issue #8 — ComponentPanel 편집 버튼(톱니바퀴) 및 EditCompModal 정리
+
+**목표**: Issue #1~#7 완료로 변환된 컴포넌트는 ContentBuilder 인라인 편집으로 대체되었으므로, 더 이상 필요 없는 톱니바퀴 편집 버튼과 EditCompModal을 제거한다. 플러그인 유지 컴포넌트(`loan-calculator`, `exchange-board`, `branch-locator`)는 ContentBuilder 인라인 편집이 불가하므로 편집 버튼을 존치한다.
+
+**작업 내용**
+- [ ] `ComponentPanel.tsx` — 변환된 컴포넌트 카드에서 편집 버튼(톱니바퀴 아이콘) 제거
+- [ ] 플러그인 유지 컴포넌트(`loan-calculator`, `exchange-board`, `branch-locator`)의 편집 버튼은 그대로 유지
+- [ ] 변환 컴포넌트가 대다수이므로 `EditCompModal` 컴포넌트를 플러그인 유지 컴포넌트 전용으로 범위 축소 또는 제거
+- [ ] 편집 버튼 제거 후 패널 UI 레이아웃 정상 확인
+
+**영향 범위**
+- `src/components/edit/ComponentPanel.tsx`
+
+**의존성**: Issue #1 ~ #7 완료 후 진행
+
+---
+
+## Issue #9 — ContentBuilderRuntime 플러그인 등록 정리
+
+**목표**: Issue #1~#7 완료로 변환된 컴포넌트는 더 이상 플러그인 마운트가 필요 없으므로, `EditClient.tsx`의 `ContentBuilderRuntime` 플러그인 등록에서 제거한다. 플러그인이 등록된 채로 남아 있으면 순수 HTML로 변환한 컴포넌트에 런타임이 재개입하여 ContentBuilder 인라인 편집을 다시 차단할 수 있다.
+
+**작업 내용**
+- [ ] `EditClient.tsx` — `ContentBuilderRuntime` 초기화의 `plugins` 옵션에서 변환된 컴포넌트 제거
+  - 제거 대상: `app-header`, `product-menu`, `auth-center`, `site-footer`, `media-video`, `product-gallery`, `promo-banner`
+  - 유지 대상: `loan-calculator`, `exchange-board`, `branch-locator`
+- [ ] 제거된 플러그인의 `public/assets/plugins/<name>/` 폴더 삭제 여부 결정 (재사용 가능성 고려 후 판단)
+- [ ] 정리 후 에디터에서 변환된 컴포넌트의 ContentBuilder 인라인 편집이 정상 동작하는지 최종 확인
+
+**영향 범위**
+- `src/components/edit/EditClient.tsx`
+- `public/assets/plugins/` (선택적 파일 삭제)
+
+**의존성**: Issue #1 ~ #7 완료 후 진행
