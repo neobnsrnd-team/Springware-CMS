@@ -2,6 +2,7 @@
 // 사용자 대시보드 — 페이지 목록 카드 그리드
 
 import { getPageList } from '@/db/repository/page.repository';
+import { getCurrentUser } from '@/lib/current-user';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ViewMode } from '@/db/types';
 
@@ -19,12 +20,16 @@ export default async function DashboardPage({
     const { userId } = await params;
     const { page: pageParam, search: searchParam, sortBy: sortByParam, viewMode: viewModeParam } = await searchParams;
 
+    // cookie 기반 현재 사용자 — admin이면 전체, user이면 본인 페이지만
+    const currentUser = await getCurrentUser();
+
     const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10));
     const search = searchParam ?? '';
     const sortBy = sortByParam === 'name' ? 'name' : 'date';
     const viewMode = VIEW_MODE_VALUES.includes(viewModeParam as ViewMode) ? (viewModeParam as ViewMode) : undefined;
 
     const { list, totalCount } = await getPageList({
+        createUserId: currentUser.role === 'admin' ? undefined : currentUser.userId,
         page: currentPage,
         pageSize: PAGE_SIZE,
         search: search || undefined,
