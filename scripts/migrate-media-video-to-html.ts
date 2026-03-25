@@ -14,8 +14,10 @@ const DEFAULT_YOUTUBE_ID = 'TSxZRHwZam8';
 
 function buildVideoContent(label: string, youtubeId: string): string {
     return (
-        // 영상 제목
-        `<div style="font-size:15px;font-weight:700;color:#1A1A2E;margin-bottom:10px;">${label}</div>` +
+        // 영상 제목 — <a> 태그로 래핑하여 ContentBuilder #divLinkTool 트리거 활성화
+        // 한 번 클릭: #divLinkTool 열림 → "영상 URL 변경" 버튼 노출
+        // 더블클릭: ContentBuilder 인라인 텍스트 편집
+        `<a href="#" style="display:block;font-size:15px;font-weight:700;color:#1A1A2E;margin-bottom:10px;text-decoration:none;">${label}</a>` +
         // 16:9 비율 래퍼
         `<div style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#000;">` +
             `<iframe src="https://www.youtube.com/embed/${youtubeId}" ` +

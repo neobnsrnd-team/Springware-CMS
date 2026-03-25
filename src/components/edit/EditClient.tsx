@@ -14,6 +14,7 @@ import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css';
 import html2canvas from 'html2canvas';
 
 import ComponentPanel from '@/components/edit/ComponentPanel';
+import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
@@ -227,6 +228,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
     // product-menu 아이콘 편집 모달
     const [productMenuBlock, setProductMenuBlock] = useState<HTMLElement | null>(null);
+    // media-video 영상 URL 편집 모달
+    const [mediaVideoBlock, setMediaVideoBlock] = useState<HTMLElement | null>(null);
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
     const currentTab = tabs.find((t) => t.id === bank);
@@ -620,47 +623,91 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // 이미 존재하는 모달에 즉시 적용
         document.querySelectorAll<HTMLElement>('.is-modal').forEach(makeModalDraggable);
 
-        // ── product-menu 아이콘 편집 버튼 — #divLinkTool 주입 ────────────────
-        // <a> 태그(.pm-item) 클릭 시 ContentBuilder는 #divLinkTool을 보여준다.
-        // 이 툴에 버튼을 한 번 주입하고, .icon-active 요소가 .pm-item 안이면 보이고 아니면 숨긴다.
-        const SPW_BTN_CLASS = 'spw-pm-icon-edit-btn';
+        // ── #divLinkTool 커스텀 버튼 주입 ────────────────────────────────────
+        // ContentBuilder는 <a> 태그 클릭 시 #divLinkTool 툴바를 보여준다.
+        // 이 툴바에 커스텀 버튼을 한 번만 주입하고, 활성 요소 위치에 따라 가시성을 제어한다.
+        //
+        // [적용 컴포넌트]
+        //   - product-menu  : .pm-item(<a>) 클릭 → 아이콘 편집 버튼 표시
+        //   - media-video   : 제목 <a> 클릭   → 영상 URL 변경 버튼 표시
+        //
+        // [요구사항] 버튼을 추가하려는 컴포넌트 블록 안에 <a> 태그가 반드시 있어야 한다.
+        const SPW_PM_BTN_CLASS = 'spw-pm-icon-edit-btn';
+        const SPW_MV_BTN_CLASS = 'spw-mv-url-edit-btn';
 
-        const injectIconEditToLinkTool = (linkTool: HTMLElement) => {
-            if (linkTool.querySelector(`.${SPW_BTN_CLASS}`)) return;
+        // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
+        const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
+            // ① product-menu 아이콘 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_PM_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_PM_BTN_CLASS;
+                btn.title = '아이콘 편집';
+                // #divLinkTool 버튼 스타일 통일: width:37px height:37px transparent, fill:#111
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // pm-item 클릭: .icon-active → 상위 product-menu 탐색
+                    // 외부 블록 클릭: .elm-active → 상위 product-menu 탐색
+                    const anchor =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="product-menu"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="product-menu"]');
+                    if (anchor) setProductMenuBlock(anchor);
+                });
+                linkTool.appendChild(btn);
+            }
 
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = SPW_BTN_CLASS;
-            btn.title = '아이콘 편집';
-            // #divLinkTool 버튼 스타일 통일: width:37px height:37px transparent, fill:#111
-            btn.style.cssText =
-                'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
-            btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                // pm-item 클릭: .icon-active → 상위 product-menu 탐색
-                // 외부 블록 클릭: .elm-active → 상위 product-menu 탐색
-                const anchor =
-                    document
-                        .querySelector<HTMLElement>('.icon-active')
-                        ?.closest<HTMLElement>('[data-component-id^="product-menu"]') ??
-                    document
-                        .querySelector<HTMLElement>('.elm-active')
-                        ?.closest<HTMLElement>('[data-component-id^="product-menu"]');
-                if (anchor) setProductMenuBlock(anchor);
-            });
-            linkTool.appendChild(btn);
+            // ② media-video 영상 URL 변경 버튼
+            if (!linkTool.querySelector(`.${SPW_MV_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_MV_BTN_CLASS;
+                btn.title = '영상 URL 변경';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="media-video"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="media-video"]');
+                    if (block) setMediaVideoBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
         };
 
-        // 버튼 가시성 갱신 — .icon-active(pm-item 클릭) 또는 .elm-active(외부 블록 클릭) 모두 처리
+        // 활성 요소 위치에 따라 각 버튼 가시성 갱신
         const updateLinkToolBtnVisibility = () => {
-            const btn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_BTN_CLASS}`);
-            if (!btn) return;
-            const isInPm =
-                !!document.querySelector('.icon-active')?.closest('[data-component-id^="product-menu"]') ||
-                !!document.querySelector('.elm-active')?.closest('[data-component-id^="product-menu"]');
-            btn.style.display = isInPm ? 'flex' : 'none';
+            const pmBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PM_BTN_CLASS}`);
+            const mvBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_MV_BTN_CLASS}`);
+            const iconActive = document.querySelector('.icon-active');
+            const elmActive = document.querySelector('.elm-active');
+
+            if (pmBtn) {
+                const isInPm =
+                    !!iconActive?.closest('[data-component-id^="product-menu"]') ||
+                    !!elmActive?.closest('[data-component-id^="product-menu"]');
+                pmBtn.style.display = isInPm ? 'flex' : 'none';
+            }
+            if (mvBtn) {
+                const isInMv =
+                    !!iconActive?.closest('[data-component-id^="media-video"]') ||
+                    !!elmActive?.closest('[data-component-id^="media-video"]');
+                mvBtn.style.display = isInMv ? 'flex' : 'none';
+            }
         };
 
         const colToolObserver = new MutationObserver((mutations) => {
@@ -669,8 +716,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 // #divLinkTool 추가 감지 → 버튼 주입
                 mutation.addedNodes.forEach((node) => {
                     if (!(node instanceof HTMLElement)) return;
-                    if (node.id === 'divLinkTool') injectIconEditToLinkTool(node);
-                    node.querySelectorAll<HTMLElement>('#divLinkTool').forEach(injectIconEditToLinkTool);
+                    if (node.id === 'divLinkTool') injectCustomButtonsToLinkTool(node);
+                    node.querySelectorAll<HTMLElement>('#divLinkTool').forEach(injectCustomButtonsToLinkTool);
                 });
                 // .icon-active 또는 .elm-active 클래스 변화 → 가시성 갱신
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -691,7 +738,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
         // 이미 DOM에 있는 #divLinkTool에 즉시 적용
         const existingLinkTool = document.querySelector<HTMLElement>('#divLinkTool');
-        if (existingLinkTool) injectIconEditToLinkTool(existingLinkTool);
+        if (existingLinkTool) injectCustomButtonsToLinkTool(existingLinkTool);
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
         // .is-pop.quickadd는 DOM에 항상 존재하며 ContentBuilder가 display만 토글함.
@@ -1879,6 +1926,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             {productMenuBlock && (
                 <ProductMenuIconEditor blockEl={productMenuBlock} onClose={() => setProductMenuBlock(null)} />
             )}
+
+            {/* ── media-video 영상 URL 편집 모달 ── */}
+            {mediaVideoBlock && <MediaVideoEditor blockEl={mediaVideoBlock} onClose={() => setMediaVideoBlock(null)} />}
 
             {/* ── 새 페이지 추가 모달 ── */}
             {showAddTab && (
