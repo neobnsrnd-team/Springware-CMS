@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import type { ParsedBlock, BasicBlock } from './EditClient';
+import { SlideEditorModal } from './SlideEditorModal';
 
 interface Props {
     /** 컴포넌트를 캔버스에 삽입 */
@@ -145,6 +146,7 @@ export default function ComponentPanel({
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [hoveredOrderIdx, setHoveredOrderIdx] = useState<number | null>(null);
     const [editingComp, setEditingComp] = useState<FinanceComponent | null>(null);
+    const [slideEditingComp, setSlideEditingComp] = useState<FinanceComponent | null>(null);
 
     // ── 탭별 스크롤 위치 저장/복원 ────────────────────────────────────────
     const scrollPositions = useRef<Record<Tab, number>>({ finance: 0, basic: 0, order: 0 });
@@ -459,7 +461,14 @@ export default function ComponentPanel({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setEditingComp(comp);
+                                                    if (
+                                                        comp.id.startsWith('promo-banner-') ||
+                                                        comp.id.startsWith('product-gallery-')
+                                                    ) {
+                                                        setSlideEditingComp(comp);
+                                                    } else {
+                                                        setEditingComp(comp);
+                                                    }
                                                 }}
                                                 title="컴포넌트 편집"
                                                 style={{
@@ -872,6 +881,18 @@ export default function ComponentPanel({
                     onClose={() => setEditingComp(null)}
                     onSaved={() => {
                         setEditingComp(null);
+                        onComponentUpdate?.();
+                    }}
+                />
+            )}
+
+            {/* ── 슬라이드/카드 편집 모달 (promo-banner · product-gallery 전용) ── */}
+            {slideEditingComp && (
+                <SlideEditorModal
+                    comp={slideEditingComp}
+                    onClose={() => setSlideEditingComp(null)}
+                    onSaved={() => {
+                        setSlideEditingComp(null);
                         onComponentUpdate?.();
                     }}
                 />
