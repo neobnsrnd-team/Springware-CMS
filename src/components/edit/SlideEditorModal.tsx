@@ -32,12 +32,11 @@ interface ProductGalleryCard {
 
 function parsePromoBannerSlides(root: HTMLElement): PromoBannerSlide[] {
     return Array.from(root.querySelectorAll('[data-pb-slide]')).map((wrapper, i) => {
-        const inner = wrapper.querySelector('.pb-slide');
-        const bgEl = inner?.querySelector('.pb-slide-bg') as HTMLElement | null;
+        const inner = wrapper.querySelector<HTMLElement>('.pb-slide');
         const ctaEl = inner?.querySelector('.pb-slide-cta') as HTMLAnchorElement | null;
         return {
             itemId: inner?.getAttribute('data-item-id') ?? `pb-${i + 1}`,
-            bgColor: bgEl?.style.background ?? '',
+            bgColor: inner?.style.background ?? '',
             badge: inner?.querySelector('.pb-badge')?.textContent ?? '',
             title: inner?.querySelector('.pb-slide-title')?.textContent ?? '',
             desc: inner?.querySelector('.pb-slide-desc')?.textContent ?? '',
@@ -67,8 +66,7 @@ function parseProductGalleryCards(root: HTMLElement): ProductGalleryCard[] {
 
 function buildSlideHtml(slide: PromoBannerSlide): string {
     return (
-        `<div class="pb-slide" data-item-id="${slide.itemId}" style="position:relative;height:200px;overflow:hidden;border-radius:16px;">` +
-        `<div class="pb-slide-bg" style="position:absolute;top:0;right:0;bottom:0;left:0;background:${slide.bgColor};"></div>` +
+        `<div class="pb-slide" data-item-id="${slide.itemId}" style="position:relative;height:200px;border-radius:16px;background:${slide.bgColor};">` +
         `<div class="pb-slide-content" style="position:relative;z-index:1;padding:24px 20px;display:flex;flex-direction:column;gap:6px;height:100%;box-sizing:border-box;justify-content:center;">` +
         `<span class="pb-badge" style="display:inline-block;background:rgba(255,255,255,0.25);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;width:fit-content;border:1px solid rgba(255,255,255,0.4);">${slide.badge}</span>` +
         `<h3 class="pb-slide-title" style="font-size:22px;font-weight:800;color:#fff;margin:0;line-height:1.2;letter-spacing:-0.5px;">${slide.title}</h3>` +
