@@ -6,7 +6,13 @@
 import oracledb from 'oracledb';
 import { getConnection, withTransaction } from '@/db/connection';
 import type { FileSendHistory, ServerInstance, UseYn } from '@/db/types';
-import { FILE_SEND_SELECT_BY_ID, FILE_SEND_INSERT, FILE_SEND_SELECT_BY_INSTANCE } from '@/db/queries/file-send.sql';
+import {
+    FILE_SEND_SELECT_BY_ID,
+    FILE_SEND_INSERT,
+    FILE_SEND_SELECT_BY_INSTANCE,
+    FILE_SEND_UPSERT,
+    FILE_SEND_SELECT_BY_PAGE,
+} from '@/db/queries/file-send.sql';
 import { SERVER_SELECT_BY_ID, SERVER_SELECT_LIST, SERVER_INSERT, SERVER_UPDATE_STATUS } from '@/db/queries/server.sql';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
@@ -43,6 +49,40 @@ export async function createFileSend(input: {
             lastModifierId: input.lastModifierId,
         });
     });
+}
+
+/** 파일 전송 이력 UPSERT — 재배포 시 UPDATE, 신규 시 INSERT */
+export async function upsertFileSend(input: {
+    instanceId: string;
+    fileId: string;
+    fileSize?: number;
+    fileCrcValue?: string;
+    lastModifierId: string;
+}): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(FILE_SEND_UPSERT, {
+            instanceId: input.instanceId,
+            fileId: input.fileId,
+            fileSize: input.fileSize ?? null,
+            fileCrcValue: input.fileCrcValue ?? null,
+            lastModifierId: input.lastModifierId,
+        });
+    });
+}
+
+/** 페이지별 전송 이력 목록 — FILE_ID 접두사로 조회 */
+export async function getFileSendByPage(pageId: string): Promise<(FileSendHistory & { INSTANCE_NAME?: string })[]> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<FileSendHistory & { INSTANCE_NAME?: string }>(
+            FILE_SEND_SELECT_BY_PAGE,
+            { fileIdPrefix: `${pageId.replace(/([%_\\])/g, '\\$1')}_v` },
+            OBJ,
+        );
+        return result.rows ?? [];
+    } finally {
+        await conn.close();
+    }
 }
 
 /** 인스턴스별 전송 이력 목록 */
