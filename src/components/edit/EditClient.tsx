@@ -482,11 +482,9 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                         css: basePath + '/assets/plugins/swiper-slider/style.css',
                     },
 
-                    // ── IBK 금융 모바일 컴포넌트 ──────────────────────────────
-                    'product-gallery': {
-                        url: basePath + '/assets/plugins/product-gallery/index.js',
-                        css: basePath + '/assets/plugins/product-gallery/style.css',
-                    },
+                    // ── 금융 모바일 컴포넌트 (플러그인 유지 대상) ──────────────
+                    // 순수 HTML 변환 완료분은 등록 제거 — 런타임 재개입 방지
+                    // (app-header, product-menu, auth-center, media-video, site-footer, product-gallery, promo-banner)
                     'exchange-board': {
                         url: basePath + '/assets/plugins/exchange-board/index.js',
                         css: basePath + '/assets/plugins/exchange-board/style.css',
@@ -495,12 +493,6 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                         url: basePath + '/assets/plugins/branch-locator/index.js',
                         css: basePath + '/assets/plugins/branch-locator/style.css',
                     },
-                    'promo-banner': {
-                        url: basePath + '/assets/plugins/promo-banner/index.js',
-                        css: basePath + '/assets/plugins/promo-banner/style.css',
-                    },
-                    // 순수 HTML 변환 완료 — 런타임 재개입 방지를 위해 등록 제거
-                    // (app-header, product-menu, auth-center, media-video, site-footer)
                     'loan-calculator': {
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
                         css: basePath + '/assets/plugins/loan-calculator/style.css',

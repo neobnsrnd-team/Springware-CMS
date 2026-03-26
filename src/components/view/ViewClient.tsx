@@ -158,11 +158,9 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     css: basePath + '/assets/plugins/swiper-slider/style.css',
                 },
 
-                // ── IBK 금융 모바일 컴포넌트 ──
-                'product-gallery': {
-                    url: basePath + '/assets/plugins/product-gallery/index.js',
-                    css: basePath + '/assets/plugins/product-gallery/style.css',
-                },
+                // ── 금융 모바일 컴포넌트 (플러그인 유지 대상) ──
+                // 순수 HTML 변환 완료분은 등록 제거 — 런타임 재개입 방지
+                // (app-header, product-menu, auth-center, media-video, site-footer, product-gallery, promo-banner)
                 'exchange-board': {
                     url: basePath + '/assets/plugins/exchange-board/index.js',
                     css: basePath + '/assets/plugins/exchange-board/style.css',
@@ -171,33 +169,9 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     url: basePath + '/assets/plugins/branch-locator/index.js',
                     css: basePath + '/assets/plugins/branch-locator/style.css',
                 },
-                'promo-banner': {
-                    url: basePath + '/assets/plugins/promo-banner/index.js',
-                    css: basePath + '/assets/plugins/promo-banner/style.css',
-                },
-                'media-video': {
-                    url: basePath + '/assets/plugins/media-video/index.js',
-                    css: basePath + '/assets/plugins/media-video/style.css',
-                },
                 'loan-calculator': {
                     url: basePath + '/assets/plugins/loan-calculator/index.js',
                     css: basePath + '/assets/plugins/loan-calculator/style.css',
-                },
-                'auth-center': {
-                    url: basePath + '/assets/plugins/auth-center/index.js',
-                    css: basePath + '/assets/plugins/auth-center/style.css',
-                },
-                'app-header': {
-                    url: basePath + '/assets/plugins/app-header/index.js',
-                    css: basePath + '/assets/plugins/app-header/style.css',
-                },
-                'product-menu': {
-                    url: basePath + '/assets/plugins/product-menu/index.js',
-                    css: basePath + '/assets/plugins/product-menu/style.css',
-                },
-                'site-footer': {
-                    url: basePath + '/assets/plugins/site-footer/index.js',
-                    css: basePath + '/assets/plugins/site-footer/style.css',
                 },
             },
         });
