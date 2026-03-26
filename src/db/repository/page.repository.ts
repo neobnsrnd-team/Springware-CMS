@@ -28,6 +28,7 @@ import {
     PAGE_HISTORY_SELECT_LIST,
     PAGE_HISTORY_COUNT_BY_PAGE,
 } from '@/db/queries/page-history.sql';
+import { COMP_MAP_DELETE_BY_PAGE_VERSION } from '@/db/queries/component-map.sql';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
@@ -51,6 +52,7 @@ export async function getPageList(
     options: {
         approveState?: ApproveState;
         createUserId?: string;
+        createUserName?: string; // CREATE_USER_NAME 필터
         search?: string; // PAGE_NAME LIKE 검색어
         sortBy?: 'name' | 'date'; // 'name': 이름순, 'date'(기본): 최신 수정순
         viewMode?: ViewMode; // 뷰 모드 필터
@@ -66,6 +68,7 @@ export async function getPageList(
     const binds = {
         approveState: options.approveState ?? null,
         createUserId: options.createUserId ?? null,
+        createUserName: options.createUserName ?? null,
         search: options.search ?? null,
         sortBy: options.sortBy === 'name' ? 'name' : 'date',
         viewMode: options.viewMode ?? null,
@@ -82,6 +85,7 @@ export async function getPageList(
                 {
                     approveState: binds.approveState,
                     createUserId: binds.createUserId,
+                    createUserName: binds.createUserName,
                     search: binds.search,
                     viewMode: binds.viewMode,
                 },
@@ -178,6 +182,7 @@ export async function updateApproveState(input: {
     approverId?: string;
     approverName?: string;
     rejectedReason?: string;
+    expiredDate?: string | null;
     lastModifierId: string;
 }): Promise<{ version?: number }> {
     return await withTransaction(async (conn) => {
@@ -188,10 +193,11 @@ export async function updateApproveState(input: {
             approverId: input.approverId ?? null,
             approverName: input.approverName ?? null,
             rejectedReason: clobBind(input.rejectedReason ?? null),
+            expiredDate: input.expiredDate ?? null,
             lastModifierId: input.lastModifierId,
         });
 
-        // 2. 승인(APPROVED)일 때만 PAGE_HISTORY INSERT
+        // 2. 승인(APPROVED)일 때만 PAGE_HISTORY INSERT + COMP_PAGE_MAP 틀
         if (input.approveState === 'APPROVED') {
             const versionResult = await conn.execute<{ NEXT_VERSION: number }>(
                 PAGE_HISTORY_NEXT_VERSION,
@@ -201,6 +207,13 @@ export async function updateApproveState(input: {
             const nextVersion = versionResult.rows?.[0]?.NEXT_VERSION ?? 1;
 
             await conn.execute(PAGE_HISTORY_INSERT, {
+                pageId: input.pageId,
+                version: nextVersion,
+            });
+
+            // TODO #138: COMP_PAGE_MAP 매핑 생성 — 현재는 빈 매핑으로 구조만 확보
+            // 향후 페이지 HTML 파싱 → 컴포넌트 ID 추출 → INSERT 추가
+            await conn.execute(COMP_MAP_DELETE_BY_PAGE_VERSION, {
                 pageId: input.pageId,
                 version: nextVersion,
             });

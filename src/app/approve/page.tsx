@@ -12,13 +12,20 @@ const APPROVE_STATE_VALUES: ApproveState[] = ['WORK', 'PENDING', 'APPROVED', 'RE
 export default async function ApprovePage({
     searchParams,
 }: {
-    searchParams: Promise<{ page?: string; search?: string; sortBy?: string; approveState?: string }>;
+    searchParams: Promise<{
+        page?: string;
+        search?: string;
+        sortBy?: string;
+        approveState?: string;
+        createUser?: string;
+    }>;
 }) {
     const {
         page: pageParam,
         search: searchParam,
         sortBy: sortByParam,
         approveState: approveStateParam,
+        createUser: createUserParam,
     } = await searchParams;
 
     const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10));
@@ -27,6 +34,7 @@ export default async function ApprovePage({
     const approveState = APPROVE_STATE_VALUES.includes(approveStateParam as ApproveState)
         ? (approveStateParam as ApproveState)
         : undefined;
+    const createUser = createUserParam ?? '';
 
     const { list, totalCount } = await getPageList({
         page: currentPage,
@@ -34,6 +42,7 @@ export default async function ApprovePage({
         search: search || undefined,
         sortBy,
         approveState,
+        createUserName: createUser || undefined,
     });
 
     const pages = list.map((p) => ({
@@ -54,6 +63,7 @@ export default async function ApprovePage({
             search={search}
             sortBy={sortBy}
             approveState={approveState ?? null}
+            createUser={createUser}
         />
     );
 }

@@ -80,10 +80,11 @@
 - **이동**: 행 좌측 `⠿` 드래그 핸들로 순서 변경
 - **요청 예시**: "행 사이 간격 조정해줘"
 
-### 플러그인 블록
-- **정의**: `data-cb-type="plugin-name"` 속성을 가진 IBK 커스텀 컴포넌트
-- **예**: 환율 게시판, 퀵뱅킹, 금융 계산기 등
-- **요청 예시**: "환율 플러그인 블록에 GBP 추가해줘"
+### 금융 컴포넌트 블록
+- **정의**: Springware CMS가 제공하는 금융 도메인 특화 컴포넌트. 두 종류로 구분됨
+  - **순수 HTML 컴포넌트**: `data-component-id="<name>-<viewmode>"` 속성 보유. ContentBuilder 인라인 편집(더블클릭 텍스트 수정, 이미지 교체) 가능
+  - **플러그인 컴포넌트**: `data-cb-type="plugin-name"` 속성 보유. JS 런타임 의존으로 플러그인 유지 (`exchange-board`, `branch-locator`, `loan-calculator`, `product-gallery`, `promo-banner`)
+- **요청 예시**: "환율 플러그인 블록에 GBP 추가해줘", "퀵뱅킹 메뉴 아이콘 수정해줘"
 
 ---
 
@@ -91,10 +92,12 @@
 - **위치**: 에디터 우측 사이드바, 블록 클릭 시 나타남
 - **구성**:
 
-| 아이콘 | 명칭 | 역할 |
-|---|---|---|
-| ✏ (연필) | **컨텐츠 편집 패널** | 블록 내 항목 추가·삭제·텍스트 수정 |
-| ⚙ (톱니바퀴) | **설정 패널** | 색상·컬럼 수 등 플러그인 settings 값 |
+| 아이콘 | 명칭 | 역할 | 대상 |
+|---|---|---|---|
+| ✏ (연필) | **컨텐츠 편집 패널** | 블록 내 항목 추가·삭제·텍스트 수정 | 플러그인 컴포넌트 전용 |
+| ⚙ (톱니바퀴) | **설정 패널** | 색상·컬럼 수 등 플러그인 settings 값 | 플러그인 컴포넌트 전용 |
+
+> **순수 HTML 컴포넌트**는 ContentBuilder 네이티브 인라인 편집(더블클릭)으로 직접 수정합니다. 구조화 콘텐츠(SVG 아이콘, iframe 등) 수정이 필요한 경우 `<a>` 클릭 시 `#divLinkTool`에 주입된 커스텀 버튼으로 편집 패널을 엽니다.
 
 - **요청 예시**: "컨텐츠 편집 패널에 항목 추가 버튼 만들어줘", "설정 패널에 폰트 크기 옵션 추가해줘"
 
@@ -112,7 +115,7 @@
 ```
 
 - **렌더링 영역**: `dangerouslySetInnerHTML`로 저장된 HTML 출력
-- **Runtime**: ContentBuilderRuntime이 `mount()` 호출 → 플러그인 활성화
+- **Runtime**: ContentBuilderRuntime이 `init()` 호출 → 플러그인 유지 컴포넌트(`exchange-board`, `branch-locator`, `loan-calculator` 등) 활성화. 순수 HTML 변환 컴포넌트는 별도 활성화 불필요
 - **요청 예시**: "뷰 페이지에 헤더 추가해줘", "렌더링 영역 최대 너비 바꿔줘"
 
 ---
@@ -147,10 +150,10 @@ export default {
 
 | 약어 | 실제 경로 |
 |---|---|
-| `EditClient` | `src/app/edit/EditClient.tsx` |
-| `ViewClient` | `src/app/view/ViewClient.tsx` |
+| `EditClient` | `src/components/edit/EditClient.tsx` |
+| `ViewClient` | `src/components/view/ViewClient.tsx` |
 | `content-plugins` | `public/assets/minimalist-blocks/content-plugins.js` |
 | `플러그인/환율` | `public/assets/plugins/exchange-board/index.js` |
-| `플러그인/퀵뱅킹` | `public/assets/plugins/quick-banking/index.js` |
+| `플러그인/퀵뱅킹` | `public/assets/plugins/product-menu/index.js` |
 | `load API` | `src/app/api/builder/load/route.ts` |
 | `save API` | `src/app/api/builder/save/route.ts` |

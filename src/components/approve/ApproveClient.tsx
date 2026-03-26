@@ -5,6 +5,8 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
+import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard';
+import type { ViewMode } from '@/components/ui/PageCard';
 
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -12,7 +14,6 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
     { value: 'name', label: '이름순' },
 ];
 
-type ViewMode = 'mobile' | 'web' | 'responsive';
 type SortBy = 'date' | 'name';
 type ApproveStateFilter = 'WORK' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -33,22 +34,8 @@ export interface ApproveClientProps {
     search: string;
     sortBy: SortBy;
     approveState: ApproveStateFilter | null;
+    createUser: string;
 }
-
-// 뷰 모드 뱃지 색상
-const VIEW_MODE_STYLE: Record<ViewMode, { bg: string; color: string; label: string }> = {
-    mobile: { bg: '#e8f0fd', color: '#0046A4', label: '모바일' },
-    web: { bg: '#e6f4ef', color: '#008C6A', label: '웹' },
-    responsive: { bg: '#f0eaf9', color: '#6d28d9', label: '반응형' },
-};
-
-// 결재 상태 뱃지 색상
-const APPROVE_STYLE: Record<ApproveStateFilter, { bg: string; color: string; label: string }> = {
-    WORK: { bg: '#f3f4f6', color: '#6b7280', label: '작업중' },
-    PENDING: { bg: '#fefce8', color: '#b45309', label: '승인대기' },
-    APPROVED: { bg: '#e6f4ef', color: '#008C6A', label: '승인' },
-    REJECTED: { bg: '#fef2f2', color: '#dc2626', label: '반려' },
-};
 
 const PAGE_SIZE = 12;
 
@@ -68,6 +55,7 @@ export default function ApproveClient({
     search: initialSearch,
     sortBy: initialSortBy,
     approveState: initialApproveState,
+    createUser: initialCreateUser,
 }: ApproveClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -76,6 +64,7 @@ export default function ApproveClient({
     const [search, setSearch] = useState(initialSearch);
     const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
     const [approveStateFilter, setApproveStateFilter] = useState<ApproveStateFilter | null>(initialApproveState);
+    const [createUserFilter, setCreateUserFilter] = useState(initialCreateUser);
 
     const [pages, setPages] = useState<ApprovePageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
@@ -84,6 +73,11 @@ export default function ApproveClient({
     const [rejectModalPageId, setRejectModalPageId] = useState<string | null>(null);
     const [rejectReason, setRejectReason] = useState('');
     const [rejecting, setRejecting] = useState(false);
+
+    // 승인 모달 상태
+    const [approveModalPageId, setApproveModalPageId] = useState<string | null>(null);
+    const [expiredDate, setExpiredDate] = useState('');
+    const [approving, setApproving] = useState(false);
 
     // 서버에서 새 데이터가 내려올 때 동기화
     useEffect(() => {
@@ -112,17 +106,20 @@ export default function ApproveClient({
         search?: string;
         sortBy?: SortBy;
         approveState?: ApproveStateFilter | null;
+        createUser?: string;
     }) {
         const sp = new URLSearchParams();
         const nextPage = params.page ?? 1;
         const nextSearch = params.search ?? search;
         const nextSortBy = params.sortBy ?? sortBy;
         const nextApproveState = 'approveState' in params ? params.approveState : approveStateFilter;
+        const nextCreateUser = 'createUser' in params ? (params.createUser ?? '') : createUserFilter;
 
         if (nextPage > 1) sp.set('page', String(nextPage));
         if (nextSearch) sp.set('search', nextSearch);
         if (nextSortBy !== 'date') sp.set('sortBy', nextSortBy);
         if (nextApproveState) sp.set('approveState', nextApproveState);
+        if (nextCreateUser) sp.set('createUser', nextCreateUser);
 
         const query = sp.toString();
         startTransition(() => {
@@ -148,10 +145,25 @@ export default function ApproveClient({
         navigate({ page: 1, search, sortBy: value });
     }
 
-    // 승인 상태 필터 변경
+    // 승인 상태 필터 변경 (동일 값 재클릭 시 해제 → 전체)
     function handleApproveStateChange(value: ApproveStateFilter | null) {
-        setApproveStateFilter(value);
-        navigate({ page: 1, search, sortBy, approveState: value });
+        const next = approveStateFilter === value ? null : value;
+        setApproveStateFilter(next);
+        navigate({ page: 1, search, sortBy, approveState: next });
+    }
+
+    // 작성자 필터 클릭
+    function handleCreateUserClick(e: React.MouseEvent, userName: string) {
+        e.stopPropagation();
+        const next = createUserFilter === userName ? '' : userName;
+        setCreateUserFilter(next);
+        navigate({ page: 1, search, sortBy, createUser: next });
+    }
+
+    // 작성자 필터 해제
+    function clearCreateUserFilter() {
+        setCreateUserFilter('');
+        navigate({ page: 1, search, sortBy, createUser: '' });
     }
 
     // 페이지 이동
@@ -159,23 +171,37 @@ export default function ApproveClient({
         navigate({ page, search, sortBy });
     }
 
-    // 승인 처리 — 확인 후 API 호출
-    async function handleApprove(pageId: string) {
-        if (!confirm('이 페이지를 승인하시겠습니까?')) return;
+    // 승인 모달 열기
+    function handleApprove(pageId: string) {
+        setApproveModalPageId(pageId);
+        setExpiredDate('');
+    }
 
+    // 승인 확정 — API 호출 후 페이지 새로고침
+    async function handleApproveConfirm() {
+        if (!approveModalPageId || approving) return;
+
+        setApproving(true);
         try {
-            const res = await fetch(`/api/builder/pages/${pageId}/approve`, {
+            const res = await fetch(`/api/builder/pages/${approveModalPageId}/approve`, {
                 method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    expiredDate: expiredDate || null,
+                }),
             });
             const data = await res.json();
             if (!data.ok) {
                 alert(data.error ?? '승인 처리에 실패했습니다.');
                 return;
             }
+            setApproveModalPageId(null);
             router.refresh();
         } catch (err: unknown) {
             console.error('승인 처리 오류:', err);
             alert('승인 처리에 실패했습니다.');
+        } finally {
+            setApproving(false);
         }
     }
 
@@ -209,18 +235,6 @@ export default function ApproveClient({
         } finally {
             setRejecting(false);
         }
-    }
-
-    // 날짜 포맷 (YYYY.MM.DD HH:MM)
-    function formatDate(isoStr: string | null): string {
-        if (!isoStr) return '—';
-        const d = new Date(isoStr);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const hh = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        return `${yyyy}.${mm}.${dd} ${hh}:${min}`;
     }
 
     const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
@@ -313,6 +327,21 @@ export default function ApproveClient({
                         })}
                     </div>
 
+                    {/* 작성자 필터 태그 */}
+                    {createUserFilter && (
+                        <div className="flex items-center gap-1.5 mb-3">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#eef2f7] text-[12px] text-[#1e3a5f] font-medium">
+                                작성자: {createUserFilter}
+                                <button
+                                    onClick={clearCreateUserFilter}
+                                    className="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full border-0 bg-transparent text-[#6b7280] text-[11px] cursor-pointer hover:bg-[#d1d5db] hover:text-[#374151]"
+                                >
+                                    ✕
+                                </button>
+                            </span>
+                        </div>
+                    )}
+
                     {/* 검색 + 정렬 행 */}
                     <div className="flex gap-2 items-center">
                         {/* 검색 인풋 */}
@@ -322,7 +351,7 @@ export default function ApproveClient({
                             </span>
                             <input
                                 type="text"
-                                placeholder="페이지 이름 검색"
+                                placeholder="페이지 이름 또는 작성자 검색"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full box-border py-[9px] pr-[14px] pl-9 rounded-lg border border-[#e5e7eb] text-[13px] outline-none bg-white text-[#111827]"
@@ -398,85 +427,24 @@ export default function ApproveClient({
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 mb-8">
                         {pages.map((page) => {
-                            const vmStyle = VIEW_MODE_STYLE[page.viewMode] ?? VIEW_MODE_STYLE.mobile;
-                            const apStyle = APPROVE_STYLE[page.approveState] ?? APPROVE_STYLE.WORK;
-
                             return (
-                                <div
+                                <PageCard
                                     key={page.id}
-                                    className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-all duration-150 cursor-pointer flex flex-col hover:shadow-[0_8px_24px_rgba(0,70,164,0.12)] hover:-translate-y-0.5"
+                                    page={page}
                                     onClick={() => {
                                         window.open(`/view?bank=${page.id}`, '_blank');
                                     }}
-                                >
-                                    {/* 썸네일 영역 */}
-                                    <div
-                                        className="relative h-[140px] flex items-center justify-center shrink-0 border-b border-[#f3f4f6] group/thumb overflow-hidden"
-                                        style={{
-                                            background: page.thumbnail
-                                                ? `url(${page.thumbnail}) center/cover no-repeat`
-                                                : '#f0f4ff',
-                                        }}
-                                    >
-                                        {!page.thumbnail && (
-                                            <span className="text-[36px] opacity-40">
-                                                {page.viewMode === 'mobile'
-                                                    ? '📱'
-                                                    : page.viewMode === 'web'
-                                                      ? '🖥️'
-                                                      : '🔄'}
-                                            </span>
-                                        )}
-                                        {/* 미리보기 호버 오버레이 */}
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-[rgba(30,58,95,0.45)] opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-150">
-                                            <svg
-                                                width="22"
-                                                height="22"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                className="text-white"
-                                            >
-                                                <path
-                                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                />
-                                                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-                                            </svg>
-                                            <span className="text-white text-[12px] font-semibold">미리보기</span>
-                                        </div>
-                                    </div>
-
-                                    {/* 카드 본문 */}
-                                    <div className="px-4 pt-3.5 pb-3 flex-1 flex flex-col gap-2">
-                                        <p
-                                            className="m-0 text-sm font-semibold text-[#111827] truncate"
-                                            title={page.label}
-                                        >
-                                            {page.label}
-                                        </p>
-
-                                        {/* 뱃지 행 */}
-                                        <div className="flex gap-1.5 flex-wrap">
-                                            <span
-                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
-                                                style={{ background: vmStyle.bg, color: vmStyle.color }}
-                                            >
-                                                {vmStyle.label}
-                                            </span>
-                                            <span
-                                                className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
-                                                style={{ background: apStyle.bg, color: apStyle.color }}
-                                            >
-                                                {apStyle.label}
-                                            </span>
-                                        </div>
-
-                                        {/* 작성자 + 날짜 */}
+                                    overlay={{ label: '미리보기', color: 'rgba(30,58,95,0.45)' }}
+                                    authorSlot={
                                         <div className="flex items-center justify-between gap-1">
-                                            <span className="flex items-center gap-1 text-[11px] text-[#6b7280] min-w-0">
+                                            <span
+                                                className={`flex items-center gap-1 text-[11px] min-w-0 cursor-pointer transition-colors duration-150 ${
+                                                    createUserFilter === page.createUserName
+                                                        ? 'text-[#1e3a5f] font-semibold'
+                                                        : 'text-[#6b7280] hover:text-[#1e3a5f]'
+                                                }`}
+                                                onClick={(e) => handleCreateUserClick(e, page.createUserName)}
+                                            >
                                                 <svg
                                                     width="11"
                                                     height="11"
@@ -504,29 +472,29 @@ export default function ApproveClient({
                                                 {formatDate(page.lastModifiedDtime)}
                                             </span>
                                         </div>
-                                    </div>
-
-                                    {/* 카드 푸터: 승인/반려 버튼 (PENDING 상태일 때만) */}
-                                    {page.approveState === 'PENDING' && (
-                                        <div
-                                            className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <button
-                                                onClick={() => handleReject(page.id)}
-                                                className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                    }
+                                    footerSlot={
+                                        page.approveState === 'PENDING' ? (
+                                            <div
+                                                className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
+                                                onClick={(e) => e.stopPropagation()}
                                             >
-                                                반려
-                                            </button>
-                                            <button
-                                                onClick={() => handleApprove(page.id)}
-                                                className="px-2.5 py-1 rounded-md border border-[#0046A4] bg-[#0046A4] text-white text-xs cursor-pointer"
-                                            >
-                                                승인
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                                                <button
+                                                    onClick={() => handleReject(page.id)}
+                                                    className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                                >
+                                                    반려
+                                                </button>
+                                                <button
+                                                    onClick={() => handleApprove(page.id)}
+                                                    className="px-2.5 py-1 rounded-md border border-[#1e3a5f] bg-[#1e3a5f] text-white text-xs cursor-pointer"
+                                                >
+                                                    승인
+                                                </button>
+                                            </div>
+                                        ) : undefined
+                                    }
+                                />
                             );
                         })}
                     </div>
@@ -621,6 +589,107 @@ export default function ApproveClient({
                     </div>
                 </Modal>
             )}
+
+            {/* ── 승인 확인 모달 ── */}
+            {approveModalPageId &&
+                (() => {
+                    const targetPage = pages.find((p) => p.id === approveModalPageId);
+                    return (
+                        <Modal
+                            title="페이지 승인"
+                            onClose={() => setApproveModalPageId(null)}
+                            showCloseButton={false}
+                            width="480px"
+                            className="p-8"
+                        >
+                            {/* 페이지 정보 요약 */}
+                            {targetPage && (
+                                <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-[#f9fafb] border border-[#e5e7eb]">
+                                    <div
+                                        className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center"
+                                        style={{
+                                            background: targetPage.thumbnail
+                                                ? `url(${targetPage.thumbnail}) center/cover no-repeat`
+                                                : '#e8f0fd',
+                                        }}
+                                    >
+                                        {!targetPage.thumbnail && (
+                                            <span className="text-lg opacity-40">
+                                                {targetPage.viewMode === 'mobile'
+                                                    ? '📱'
+                                                    : targetPage.viewMode === 'web'
+                                                      ? '🖥️'
+                                                      : '🔄'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="m-0 text-sm font-semibold text-[#111827] truncate">
+                                            {targetPage.label}
+                                        </p>
+                                        <span
+                                            className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
+                                            style={{
+                                                background: VIEW_MODE_STYLE[targetPage.viewMode]?.bg,
+                                                color: VIEW_MODE_STYLE[targetPage.viewMode]?.color,
+                                            }}
+                                        >
+                                            {VIEW_MODE_STYLE[targetPage.viewMode]?.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 만료일 입력 */}
+                            <div className="mb-5">
+                                <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                                    만료일 <span className="text-[#9ca3af] font-normal">(선택)</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        value={expiredDate}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        onChange={(e) => setExpiredDate(e.target.value)}
+                                        onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none pr-9 cursor-pointer"
+                                    />
+                                    {expiredDate && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setExpiredDate('')}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full border-0 bg-transparent text-[#9ca3af] text-sm cursor-pointer hover:bg-[#f3f4f6] hover:text-[#374151]"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">
+                                    설정하지 않으면 만료일 없이 승인됩니다.
+                                </p>
+                            </div>
+
+                            {/* 버튼 */}
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    onClick={() => setApproveModalPageId(null)}
+                                    className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    onClick={handleApproveConfirm}
+                                    disabled={approving}
+                                    className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
+                                        approving ? 'bg-[#d1d5db] cursor-not-allowed' : 'bg-[#1e3a5f] cursor-pointer'
+                                    }`}
+                                >
+                                    {approving ? '처리 중...' : '승인 확정'}
+                                </button>
+                            </div>
+                        </Modal>
+                    );
+                })()}
         </div>
     );
 }

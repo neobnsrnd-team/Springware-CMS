@@ -14,8 +14,12 @@ import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css';
 import html2canvas from 'html2canvas';
 
 import ComponentPanel from '@/components/edit/ComponentPanel';
+import AppHeaderBorderEditor from '@/components/edit/AppHeaderBorderEditor';
+import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
+import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import SlideEditorModal from '@/components/edit/SlideEditorModal';
+import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
 
@@ -57,7 +61,7 @@ function parseBuilderBlocks(html: string, componentsMap?: Record<string, Finance
     return rows.map((row, i) => {
         const rowEl = row as HTMLElement;
 
-        // 금융 컴포넌트 row 확인
+        // 플러그인 기반 금융 컴포넌트 (data-cb-type 존재)
         const pluginEl = rowEl.querySelector('[data-cb-type]');
         if (pluginEl) {
             const cbType = pluginEl.getAttribute('data-cb-type') ?? '';
@@ -66,6 +70,20 @@ function parseBuilderBlocks(html: string, componentsMap?: Record<string, Finance
                 id: `block-${i}-${cbType}`,
                 cbType,
                 label: comp?.label ?? (cbType || `컴포넌트 ${i + 1}`),
+                preview: comp?.preview ?? '',
+                outerHtml: rowEl.outerHTML,
+            };
+        }
+
+        // 순수 HTML 변환 금융 컴포넌트 (data-component-id 존재)
+        const htmlCompEl = rowEl.querySelector('[data-component-id]');
+        if (htmlCompEl) {
+            const compId = htmlCompEl.getAttribute('data-component-id') ?? '';
+            const comp = componentsMap?.[compId];
+            return {
+                id: `block-${i}-${compId}`,
+                cbType: compId,
+                label: comp?.label ?? (compId || `컴포넌트 ${i + 1}`),
                 preview: comp?.preview ?? '',
                 outerHtml: rowEl.outerHTML,
             };
@@ -214,6 +232,14 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
     // product-menu 아이콘 편집 모달
     const [productMenuBlock, setProductMenuBlock] = useState<HTMLElement | null>(null);
+    // media-video 영상 URL 편집 모달
+    const [mediaVideoBlock, setMediaVideoBlock] = useState<HTMLElement | null>(null);
+    // site-footer 드롭다운 편집 패널
+    const [siteFooterBlock, setSiteFooterBlock] = useState<HTMLElement | null>(null);
+    // auth-center 아이콘 편집 패널
+    const [authCenterBlock, setAuthCenterBlock] = useState<HTMLElement | null>(null);
+    // app-header 구분선 편집 패널
+    const [appHeaderBlock, setAppHeaderBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -475,29 +501,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                         url: basePath + '/assets/plugins/promo-banner/index.js',
                         css: basePath + '/assets/plugins/promo-banner/style.css',
                     },
-                    'media-video': {
-                        url: basePath + '/assets/plugins/media-video/index.js',
-                        css: basePath + '/assets/plugins/media-video/style.css',
-                    },
+                    // 순수 HTML 변환 완료 — 런타임 재개입 방지를 위해 등록 제거
+                    // (app-header, product-menu, auth-center, media-video, site-footer)
                     'loan-calculator': {
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
                         css: basePath + '/assets/plugins/loan-calculator/style.css',
-                    },
-                    'auth-center': {
-                        url: basePath + '/assets/plugins/auth-center/index.js',
-                        css: basePath + '/assets/plugins/auth-center/style.css',
-                    },
-                    'app-header': {
-                        url: basePath + '/assets/plugins/app-header/index.js',
-                        css: basePath + '/assets/plugins/app-header/style.css',
-                    },
-                    'product-menu': {
-                        url: basePath + '/assets/plugins/product-menu/index.js',
-                        css: basePath + '/assets/plugins/product-menu/style.css',
-                    },
-                    'site-footer': {
-                        url: basePath + '/assets/plugins/site-footer/index.js',
-                        css: basePath + '/assets/plugins/site-footer/style.css',
                     },
                 },
             });
@@ -628,47 +636,155 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // 이미 존재하는 모달에 즉시 적용
         document.querySelectorAll<HTMLElement>('.is-modal').forEach(makeModalDraggable);
 
-        // ── product-menu 아이콘 편집 버튼 — #divLinkTool 주입 ────────────────
-        // <a> 태그(.pm-item) 클릭 시 ContentBuilder는 #divLinkTool을 보여준다.
-        // 이 툴에 버튼을 한 번 주입하고, .icon-active 요소가 .pm-item 안이면 보이고 아니면 숨긴다.
-        const SPW_BTN_CLASS = 'spw-pm-icon-edit-btn';
+        // ── #divLinkTool 커스텀 버튼 주입 ────────────────────────────────────
+        // ContentBuilder는 <a> 태그 클릭 시 #divLinkTool 툴바를 보여준다.
+        // 이 툴바에 커스텀 버튼을 한 번만 주입하고, 활성 요소 위치에 따라 가시성을 제어한다.
+        //
+        // [적용 컴포넌트]
+        //   - product-menu  : .pm-item(<a>) 클릭 → 아이콘 편집 버튼 표시
+        //   - media-video   : 제목 <a> 클릭   → 영상 URL 변경 버튼 표시
+        //
+        // [요구사항] 버튼을 추가하려는 컴포넌트 블록 안에 <a> 태그가 반드시 있어야 한다.
+        const SPW_PM_BTN_CLASS = 'spw-pm-icon-edit-btn';
+        const SPW_MV_BTN_CLASS = 'spw-mv-url-edit-btn';
+        const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
+        const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
 
-        const injectIconEditToLinkTool = (linkTool: HTMLElement) => {
-            if (linkTool.querySelector(`.${SPW_BTN_CLASS}`)) return;
+        // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
+        const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
+            // ① product-menu 아이콘 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_PM_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_PM_BTN_CLASS;
+                btn.title = '아이콘 편집';
+                // #divLinkTool 버튼 스타일 통일: width:37px height:37px transparent, fill:#111
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // pm-item 클릭: .icon-active → 상위 product-menu 탐색
+                    // 외부 블록 클릭: .elm-active → 상위 product-menu 탐색
+                    const anchor =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="product-menu"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="product-menu"]');
+                    if (anchor) setProductMenuBlock(anchor);
+                });
+                linkTool.appendChild(btn);
+            }
 
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = SPW_BTN_CLASS;
-            btn.title = '아이콘 편집';
-            // #divLinkTool 버튼 스타일 통일: width:37px height:37px transparent, fill:#111
-            btn.style.cssText =
-                'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
-            btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                // pm-item 클릭: .icon-active → 상위 product-menu 탐색
-                // 외부 블록 클릭: .elm-active → 상위 product-menu 탐색
-                const anchor =
-                    document
-                        .querySelector<HTMLElement>('.icon-active')
-                        ?.closest<HTMLElement>('[data-component-id^="product-menu"]') ??
-                    document
-                        .querySelector<HTMLElement>('.elm-active')
-                        ?.closest<HTMLElement>('[data-component-id^="product-menu"]');
-                if (anchor) setProductMenuBlock(anchor);
-            });
-            linkTool.appendChild(btn);
+            // ② app-header 구분선 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_AH_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_AH_BTN_CLASS;
+                btn.title = '구분선 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6" stroke-width="3"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="app-header"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="app-header"]');
+                    if (block) setAppHeaderBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
+
+            // ③ auth-center 아이콘 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_AC_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_AC_BTN_CLASS;
+                btn.title = '아이콘 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="auth-center"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="auth-center"]');
+                    if (block) setAuthCenterBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
+
+            // ③ media-video 영상 URL 변경 버튼
+            if (!linkTool.querySelector(`.${SPW_MV_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_MV_BTN_CLASS;
+                btn.title = '영상 URL 변경';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="media-video"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="media-video"]');
+                    if (block) setMediaVideoBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
         };
 
-        // 버튼 가시성 갱신 — .icon-active(pm-item 클릭) 또는 .elm-active(외부 블록 클릭) 모두 처리
+        // 활성 요소 위치에 따라 각 버튼 가시성 갱신
         const updateLinkToolBtnVisibility = () => {
-            const btn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_BTN_CLASS}`);
-            if (!btn) return;
-            const isInPm =
-                !!document.querySelector('.icon-active')?.closest('[data-component-id^="product-menu"]') ||
-                !!document.querySelector('.elm-active')?.closest('[data-component-id^="product-menu"]');
-            btn.style.display = isInPm ? 'flex' : 'none';
+            const pmBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PM_BTN_CLASS}`);
+            const acBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_AC_BTN_CLASS}`);
+            const ahBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_AH_BTN_CLASS}`);
+            const mvBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_MV_BTN_CLASS}`);
+            const iconActive = document.querySelector('.icon-active');
+            const elmActive = document.querySelector('.elm-active');
+
+            if (pmBtn) {
+                const isInPm =
+                    !!iconActive?.closest('[data-component-id^="product-menu"]') ||
+                    !!elmActive?.closest('[data-component-id^="product-menu"]');
+                pmBtn.style.display = isInPm ? 'flex' : 'none';
+            }
+            if (acBtn) {
+                const isInAc =
+                    !!iconActive?.closest('[data-component-id^="auth-center"]') ||
+                    !!elmActive?.closest('[data-component-id^="auth-center"]');
+                acBtn.style.display = isInAc ? 'flex' : 'none';
+            }
+            if (ahBtn) {
+                const isInAh =
+                    !!iconActive?.closest('[data-component-id^="app-header"]') ||
+                    !!elmActive?.closest('[data-component-id^="app-header"]');
+                ahBtn.style.display = isInAh ? 'flex' : 'none';
+            }
+            if (mvBtn) {
+                const isInMv =
+                    !!iconActive?.closest('[data-component-id^="media-video"]') ||
+                    !!elmActive?.closest('[data-component-id^="media-video"]');
+                mvBtn.style.display = isInMv ? 'flex' : 'none';
+            }
         };
 
         const colToolObserver = new MutationObserver((mutations) => {
@@ -677,8 +793,8 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
                 // #divLinkTool 추가 감지 → 버튼 주입
                 mutation.addedNodes.forEach((node) => {
                     if (!(node instanceof HTMLElement)) return;
-                    if (node.id === 'divLinkTool') injectIconEditToLinkTool(node);
-                    node.querySelectorAll<HTMLElement>('#divLinkTool').forEach(injectIconEditToLinkTool);
+                    if (node.id === 'divLinkTool') injectCustomButtonsToLinkTool(node);
+                    node.querySelectorAll<HTMLElement>('#divLinkTool').forEach(injectCustomButtonsToLinkTool);
                 });
                 // .icon-active 또는 .elm-active 클래스 변화 → 가시성 갱신
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -699,7 +815,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
 
         // 이미 DOM에 있는 #divLinkTool에 즉시 적용
         const existingLinkTool = document.querySelector<HTMLElement>('#divLinkTool');
-        if (existingLinkTool) injectIconEditToLinkTool(existingLinkTool);
+        if (existingLinkTool) injectCustomButtonsToLinkTool(existingLinkTool);
 
         // ── 슬라이드 편집 버튼 — .is-row-tool 주입 ───────────────────────────
         // promo-banner / product-gallery 블록 선택 시 행 툴바에 "슬라이드 편집" 버튼 추가
@@ -1090,6 +1206,20 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const containerEl = document.querySelector('.container');
         if (containerEl) koObserver.observe(containerEl, { childList: true });
 
+        // ── site-footer select 클릭 감지 → 드롭다운 편집 패널 오픈 ──────────────
+        // <select>는 ContentBuilder가 #divLinkTool을 열지 않으므로,
+        // 캡처 단계에서 직접 클릭을 감지하여 SiteFooterSelectEditor를 띄웁니다.
+        const handleSiteFooterSelectClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const select = target.closest<HTMLSelectElement>('[data-component-id^="site-footer"] select');
+            if (!select) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const block = select.closest<HTMLElement>('[data-component-id^="site-footer"]');
+            if (block) setSiteFooterBlock(block);
+        };
+        document.addEventListener('click', handleSiteFooterSelectClick, true);
+
         // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
         const loadController = new AbortController();
         fetch('/api/builder/load', {
@@ -1150,6 +1280,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
             document.removeEventListener('click', redirectCellAddToRowAdd, true);
             document.removeEventListener('click', markKorean, true);
+            document.removeEventListener('click', handleSiteFooterSelectClick, true);
             koObserver.disconnect();
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
             if (reinitTimer) clearTimeout(reinitTimer);
@@ -1956,6 +2087,24 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             {/* ── 슬라이드 편집 모달 (promo-banner / product-gallery) ── */}
             {slideEditorBlock && (
                 <SlideEditorModal blockEl={slideEditorBlock} onClose={() => setSlideEditorBlock(null)} />
+            )}
+
+            {/* ── media-video 영상 URL 편집 모달 ── */}
+            {mediaVideoBlock && <MediaVideoEditor blockEl={mediaVideoBlock} onClose={() => setMediaVideoBlock(null)} />}
+
+            {/* ── site-footer 드롭다운 편집 패널 ── */}
+            {siteFooterBlock && (
+                <SiteFooterSelectEditor blockEl={siteFooterBlock} onClose={() => setSiteFooterBlock(null)} />
+            )}
+
+            {/* ── auth-center 아이콘 편집 패널 ── */}
+            {authCenterBlock && (
+                <AuthCenterIconEditor blockEl={authCenterBlock} onClose={() => setAuthCenterBlock(null)} />
+            )}
+
+            {/* ── app-header 구분선 편집 패널 ── */}
+            {appHeaderBlock && (
+                <AppHeaderBorderEditor blockEl={appHeaderBlock} onClose={() => setAppHeaderBlock(null)} />
             )}
 
             {/* ── 새 페이지 추가 모달 ── */}

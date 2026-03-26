@@ -21,7 +21,8 @@ export const PAGE_SELECT_LIST = `
       WHERE USE_YN = 'Y'
         AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
         AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
-        AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%')
+        AND (:createUserName IS NULL OR CREATE_USER_NAME = :createUserName)
+        AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%' OR CREATE_USER_NAME LIKE '%' || :search || '%')
         AND (:viewMode IS NULL OR VIEW_MODE = :viewMode)
       ORDER BY
         CASE WHEN :sortBy = 'name' THEN PAGE_NAME END ASC,
@@ -39,7 +40,8 @@ export const PAGE_COUNT = `
   WHERE USE_YN = 'Y'
     AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
     AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
-    AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%')
+    AND (:createUserName IS NULL OR CREATE_USER_NAME = :createUserName)
+    AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%' OR CREATE_USER_NAME LIKE '%' || :search || '%')
     AND (:viewMode IS NULL OR VIEW_MODE = :viewMode)
 `;
 
@@ -94,6 +96,7 @@ export const PAGE_UPDATE_APPROVE_STATE = `
       APPROVER_NAME = :approverName,
       APPROVE_DATE = SYSTIMESTAMP,
       REJECTED_REASON = :rejectedReason,
+      EXPIRED_DATE = TO_DATE(:expiredDate, 'YYYY-MM-DD'),
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
 `;
