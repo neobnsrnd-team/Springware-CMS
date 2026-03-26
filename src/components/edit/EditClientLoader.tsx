@@ -7,6 +7,6 @@ import dynamic from 'next/dynamic';
 // localStorage 기반 탭 목록이 서버 DEFAULT_TABS로 렌더링되어 삭제된 탭이 잠깐 노출되는 현상 방지
 const EditClient = dynamic(() => import('@/components/edit/EditClient'), { ssr: false });
 
-export default function EditClientLoader({ bank }: { bank: string }) {
-    return <EditClient bank={bank} />;
+export default function EditClientLoader({ bank, userId }: { bank: string; userId: string }) {
+    return <EditClient bank={bank} userId={userId} />;
 }
