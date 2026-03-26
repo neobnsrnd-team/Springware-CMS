@@ -22,7 +22,12 @@ function toFinanceComponent(row: CmsComponentParsed): FinanceComponent | null {
         id: typeof d.id === 'string' ? d.id : row.COMPONENT_ID,
         label: typeof d.label === 'string' ? d.label : '',
         description: typeof d.description === 'string' ? d.description : '',
-        preview: typeof d.preview === 'string' ? d.preview : (row.COMPONENT_THUMBNAIL ?? ''),
+        preview:
+            typeof d.preview === 'string'
+                ? d.preview
+                : typeof d.thumbnail === 'string'
+                  ? d.thumbnail
+                  : (row.COMPONENT_THUMBNAIL ?? ''),
         html: typeof d.html === 'string' ? d.html : '',
         viewMode: isValidViewMode ? (viewMode as FinanceComponent['viewMode']) : row.VIEW_MODE,
     };
