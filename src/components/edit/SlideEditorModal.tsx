@@ -4,7 +4,7 @@
 // API 호출 없음 — Save 버튼이 builder.html()로 캔버스 전체를 읽어 저장.
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -189,6 +189,15 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
 
     const [promoSlides, setPromoSlides] = useState<PromoBannerSlide[]>(() => parsePromoBannerSlides(blockEl));
     const [productCards, setProductCards] = useState<ProductGalleryCard[]>(() => parseProductGalleryCards(blockEl));
+
+    // 모달 열림 동안 열 툴바·RTE 툴바 숨김
+    useEffect(() => {
+        const targets = document.querySelectorAll<HTMLElement>('.is-col-tool, .is-rte-tool');
+        targets.forEach((el) => (el.style.display = 'none'));
+        return () => {
+            targets.forEach((el) => (el.style.display = ''));
+        };
+    }, []);
 
     function handleConfirm() {
         if (isPromoBanner) {
