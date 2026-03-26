@@ -175,6 +175,20 @@ const INPUT: React.CSSProperties = {
 
 const LBL: React.CSSProperties = { fontSize: '11px', fontWeight: 600, color: '#6b7280' };
 
+// ── 배경색 프리셋 ─────────────────────────────────────────────────────────
+
+const BG_PRESETS = [
+    { label: 'IBK 블루', value: 'linear-gradient(135deg,#0046A4 0%,#0066CC 100%)' },
+    { label: '하나 초록', value: 'linear-gradient(135deg,#007D5A 0%,#00A878 100%)' },
+    { label: 'KB 노랑', value: 'linear-gradient(135deg,#C89600 0%,#F0B50A 100%)' },
+    { label: '신한 파랑', value: 'linear-gradient(135deg,#004A99 0%,#0066BB 100%)' },
+    { label: '우리 주황', value: 'linear-gradient(135deg,#E05500 0%,#FF6B00 100%)' },
+    { label: '보라', value: 'linear-gradient(135deg,#6B21A8 0%,#9333EA 100%)' },
+    { label: '분홍', value: 'linear-gradient(135deg,#9D174D 0%,#DB2777 100%)' },
+    { label: '진회색', value: 'linear-gradient(135deg,#1F2937 0%,#374151 100%)' },
+    { label: '에메랄드', value: 'linear-gradient(135deg,#065F46 0%,#059669 100%)' },
+];
+
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────
 
 interface Props {
@@ -444,23 +458,62 @@ function PromoSlidesEditor({
                             style={INPUT}
                         />
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span style={LBL}>링크</span>
-                            <input
-                                value={slide.ctaHref}
-                                onChange={(e) => update(idx, { ctaHref: e.target.value })}
-                                style={INPUT}
-                            />
-                        </label>
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span style={LBL}>배경색 (CSS gradient)</span>
-                            <input
-                                value={slide.bgColor}
-                                onChange={(e) => update(idx, { bgColor: e.target.value })}
-                                style={INPUT}
-                            />
-                        </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={LBL}>링크</span>
+                        <input
+                            value={slide.ctaHref}
+                            onChange={(e) => update(idx, { ctaHref: e.target.value })}
+                            style={INPUT}
+                        />
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={LBL}>배경색</span>
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {BG_PRESETS.map(({ label, value }) => (
+                                <button
+                                    key={value}
+                                    title={label}
+                                    onClick={() => update(idx, { bgColor: value })}
+                                    style={{
+                                        width: 28,
+                                        height: 28,
+                                        borderRadius: 6,
+                                        background: value,
+                                        border:
+                                            slide.bgColor === value ? '2.5px solid #0046A4' : '2px solid transparent',
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                        outline: 'none',
+                                        flexShrink: 0,
+                                        boxShadow: '0 0 0 1px rgba(0,0,0,0.15)',
+                                    }}
+                                />
+                            ))}
+                            {/* 직접 단색 선택 */}
+                            <label
+                                title="직접 선택"
+                                style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 6,
+                                    border: '2px solid #d1d5db',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    overflow: 'hidden',
+                                    flexShrink: 0,
+                                    background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+                                }}
+                            >
+                                <input
+                                    type="color"
+                                    value={slide.bgColor.startsWith('#') ? slide.bgColor : '#0046A4'}
+                                    onChange={(e) => update(idx, { bgColor: e.target.value })}
+                                    style={{ opacity: 0, width: 1, height: 1, padding: 0, border: 'none' }}
+                                />
+                            </label>
+                        </div>
                     </div>
                 </div>
             ))}
