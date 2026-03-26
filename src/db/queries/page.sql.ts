@@ -120,3 +120,12 @@ export const COMP_MAP_DELETE_BY_PAGE = `
   DELETE FROM SPW_CMS_COMP_PAGE_MAP
   WHERE PAGE_ID = :pageId
 `;
+
+/** 배포 완료 후 노출 시작일 및 무결성 값 갱신 — 만료일은 승인 시점에 이미 결정 */
+export const PAGE_UPDATE_DEPLOY = `
+  UPDATE SPW_CMS_PAGE
+  SET BEGINNING_DATE  = TRUNC(SYSDATE),
+      FILE_CRC_VALUE  = :fileCrcValue,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+`;

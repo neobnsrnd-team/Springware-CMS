@@ -7,6 +7,7 @@ import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
 import { seedBasicBlocks } from './seed-basic-blocks';
+import { seedServerInstances } from './seed-server-instances';
 import { closePool } from '@/db/connection';
 
 async function main() {
@@ -24,9 +25,14 @@ async function main() {
     const basic = await seedBasicBlocks();
     console.log(`\n기본 블록: ${basic.inserted}건 INSERT, ${basic.skipped}건 건너뜀`);
 
+    // 3. 서버 인스턴스 시드
+    console.log('\n── 서버 인스턴스 시드 ──');
+    const servers = await seedServerInstances();
+    console.log(`\n서버 인스턴스: ${servers.inserted}건 INSERT, ${servers.skipped}건 건너뜀`);
+
     // 결과 요약
-    const totalInserted = finance.inserted + basic.inserted;
-    const totalSkipped = finance.skipped + basic.skipped;
+    const totalInserted = finance.inserted + basic.inserted + servers.inserted;
+    const totalSkipped = finance.skipped + basic.skipped + servers.skipped;
     console.log('\n' + '='.repeat(60));
     console.log(`시드 완료 — 총 ${totalInserted}건 INSERT, ${totalSkipped}건 건너뜀`);
     console.log('='.repeat(60));

@@ -19,6 +19,7 @@ import {
     PAGE_SOFT_DELETE,
     PAGE_HARD_DELETE,
     COMP_MAP_DELETE_BY_PAGE,
+    PAGE_UPDATE_DEPLOY,
 } from '@/db/queries/page.sql';
 import {
     PAGE_HISTORY_NEXT_VERSION,
@@ -276,6 +277,13 @@ export async function deletePage(pageId: string, lastModifierId: string): Promis
             await conn.execute(PAGE_HARD_DELETE, { pageId });
             return { deleteType: 'hard' };
         }
+    });
+}
+
+/** 배포 완료 후 노출 기간 및 CRC 값 갱신 — BEGINNING_DATE=오늘, EXPIRED_DATE=+7일 */
+export async function updatePageDeploy(pageId: string, fileCrcValue: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_UPDATE_DEPLOY, { pageId, fileCrcValue, lastModifierId });
     });
 }
 
