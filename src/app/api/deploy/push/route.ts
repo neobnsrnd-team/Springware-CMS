@@ -16,7 +16,7 @@ import oracledb from 'oracledb';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
-/** CRC32 대신 SHA-256 앞 8자리로 무결성 값 생성 */
+/** CRC32 대신 SHA-256 앞 16자리로 무결성 값 생성 */
 function calcCrc(content: string): string {
     return createHash('sha256').update(content, 'utf8').digest('hex').slice(0, 16);
 }
@@ -60,9 +60,12 @@ export async function POST(req: NextRequest) {
             return errorResponse('승인된 페이지만 배포할 수 있습니다.', 400);
         }
 
-        // 2. HTML 파일 읽기 — 파일 존재 여부 선행 확인
+        // 2. HTML 파일 읽기 — 경로 조작 방지 및 파일 존재 여부 선행 확인
         if (!page.FILE_PATH) {
             return errorResponse('배포할 HTML 파일 경로가 없습니다.', 400);
+        }
+        if (page.FILE_PATH.includes('..') || path.isAbsolute(page.FILE_PATH)) {
+            return errorResponse('유효하지 않은 파일 경로입니다.', 400);
         }
         const absolutePath = path.join(process.cwd(), 'public', page.FILE_PATH);
         try {

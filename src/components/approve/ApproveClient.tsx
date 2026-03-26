@@ -852,9 +852,9 @@ export default function ApproveClient({
                                 <p className="text-sm text-[#9ca3af] text-center py-8">배포 이력이 없습니다.</p>
                             ) : (
                                 <div className="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
-                                    {historyList.map((record, idx) => (
+                                    {historyList.map((record) => (
                                         <div
-                                            key={idx}
+                                            key={`${record.INSTANCE_ID}-${record.FILE_ID}`}
                                             className="flex flex-col gap-1 px-4 py-3 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] text-xs"
                                         >
                                             <div className="flex items-center justify-between">

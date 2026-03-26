@@ -63,7 +63,7 @@ export async function upsertFileSend(input: {
         await conn.execute(FILE_SEND_UPSERT, {
             instanceId: input.instanceId,
             fileId: input.fileId,
-            fileSize: input.fileSize?.toString() ?? null,
+            fileSize: input.fileSize ?? null,
             fileCrcValue: input.fileCrcValue ?? null,
             lastModifierId: input.lastModifierId,
         });
@@ -76,7 +76,7 @@ export async function getFileSendByPage(pageId: string): Promise<(FileSendHistor
     try {
         const result = await conn.execute<FileSendHistory & { INSTANCE_NAME?: string }>(
             FILE_SEND_SELECT_BY_PAGE,
-            { fileIdPrefix: `${pageId}_v` },
+            { fileIdPrefix: `${pageId.replace(/([%_\\])/g, '\\$1')}_v` },
             OBJ,
         );
         return result.rows ?? [];

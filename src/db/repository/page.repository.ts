@@ -280,7 +280,7 @@ export async function deletePage(pageId: string, lastModifierId: string): Promis
     });
 }
 
-/** 배포 완료 후 노출 기간 및 CRC 값 갱신 — BEGINNING_DATE=오늘, EXPIRED_DATE=+7일 */
+/** 배포 완료 후 노출 시작일 및 CRC 값 갱신 — BEGINNING_DATE=오늘 */
 export async function updatePageDeploy(pageId: string, fileCrcValue: string, lastModifierId: string): Promise<void> {
     await withTransaction(async (conn) => {
         await conn.execute(PAGE_UPDATE_DEPLOY, { pageId, fileCrcValue, lastModifierId });
