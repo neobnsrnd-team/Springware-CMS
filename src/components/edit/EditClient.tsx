@@ -24,12 +24,13 @@ import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
 
-// content-plugins.js data_basic 스니펫 타입
+// 기본 블록 타입 — DB SPW_CMS_COMPONENT에서 로드
 export interface BasicBlock {
-    thumbnail: string; // 예: 'preview/basic-01b.png'
+    id: string; // COMPONENT_ID (예: 'basic-web-001')
+    thumbnail: string; // 썸네일 경로 (예: 'preview/basic-01b.png')
     html: string;
-    category: string;
     viewMode: 'mobile' | 'web' | 'responsive';
+    label?: string; // DB label (한국어 블록명)
 }
 
 // 캔버스에 올라간 블록 하나를 나타내는 타입
@@ -1357,56 +1358,34 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         }
     }, [tabs, tabsLoading, SESSION_TABS_KEY]);
 
-    // ── content-plugins 로드 (웹/모바일/반응형 3파일) ─────────────────────
-    // ContentBuilder 기본 피커 대신 우측 패널 "기본 블록" 탭에 표시합니다.
+    // ── 기본 블록 DB 로드 (viewMode 변경 시 재조회) ─────────────────────
     useEffect(() => {
-        const sources = [
-            { src: '/assets/minimalist-blocks/content-plugins.js', key: 'data_basic' },
-            { src: '/assets/minimalist-blocks/content-plugins-mobile.js', key: 'data_basic_mobile' },
-            { src: '/assets/minimalist-blocks/content-plugins-responsive.js', key: 'data_basic_responsive' },
-        ];
-        const scripts: HTMLScriptElement[] = [];
-        let loaded = 0;
-
-        const mergeAll = () => {
-            const raw: BasicBlock[] = [
-                ...(window.data_basic?.snippets ?? []),
-                ...(window.data_basic_mobile?.snippets ?? []),
-                ...(window.data_basic_responsive?.snippets ?? []),
-            ];
-            // 상대경로 → 절대경로 변환 (캔버스에서 /edit 기준으로 해석되는 문제 방지)
-            const fixed = raw.map((s: BasicBlock) => ({
-                ...s,
-                html: s.html
-                    .replace(/src="assets\//g, 'src="/assets/')
-                    .replace(/url\(&quot;assets\//g, 'url(&quot;/assets/')
-                    .replace(/url\('assets\//g, "url('/assets/")
-                    .replace(/url\(assets\//g, 'url(/assets/'),
-            }));
-            setBasicBlocks(fixed);
-        };
-
-        sources.forEach(({ src }) => {
-            const s = document.createElement('script');
-            s.src = src;
-            s.onload = s.onerror = () => {
-                loaded++;
-                if (loaded >= sources.length) mergeAll();
-            };
-            document.head.appendChild(s);
-            scripts.push(s);
-        });
-
-        return () => {
-            scripts.forEach((s) => {
-                try {
-                    document.head.removeChild(s);
-                } catch {
-                    /* 이미 제거됨 */
+        let cancelled = false;
+        fetch(`/api/components?type=basic&viewMode=${viewMode}`)
+            .then((res) => res.json())
+            .then((data) => {
+                if (!cancelled && data.ok) {
+                    const blocks: BasicBlock[] = data.components.map(
+                        (c: { id: string; label?: string; preview?: string; html: string; viewMode: string }) => ({
+                            id: c.id,
+                            thumbnail: c.preview ?? '',
+                            html: c.html
+                                .replace(/src="assets\//g, 'src="/assets/')
+                                .replace(/url\(&quot;assets\//g, 'url(&quot;/assets/')
+                                .replace(/url\('assets\//g, "url('/assets/")
+                                .replace(/url\(assets\//g, 'url(/assets/'),
+                            viewMode: c.viewMode as BasicBlock['viewMode'],
+                            label: c.label,
+                        }),
+                    );
+                    setBasicBlocks(blocks);
                 }
-            });
+            })
+            .catch((err) => console.error('기본 블록 로드 오류:', err));
+        return () => {
+            cancelled = true;
         };
-    }, []);
+    }, [viewMode]);
 
     // ── 금융 컴포넌트 API 로드 (viewMode 변경 시 재요청) ────────────────
     useEffect(() => {

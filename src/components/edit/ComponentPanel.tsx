@@ -1188,7 +1188,7 @@ function BasicBlockCard({
                     lineHeight: 1.3,
                 }}
             >
-                {BLOCK_LABELS[block.thumbnail] ?? block.thumbnail}
+                {block.label ?? BLOCK_LABELS[block.thumbnail] ?? block.thumbnail}
             </div>
 
             {/* 추가 버튼 */}

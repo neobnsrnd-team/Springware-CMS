@@ -25,6 +25,7 @@ export interface ApprovePageCard {
     lastModifiedDtime: string | null;
     approveState: ApproveStateFilter;
     createUserName: string;
+    hasFile: boolean;
 }
 
 export interface ApproveClientProps {
@@ -432,6 +433,10 @@ export default function ApproveClient({
                                     key={page.id}
                                     page={page}
                                     onClick={() => {
+                                        if (!page.hasFile) {
+                                            alert('페이지 파일이 로컬에 존재하지 않습니다.');
+                                            return;
+                                        }
                                         window.open(`/view?bank=${page.id}`, '_blank');
                                     }}
                                     overlay={{ label: '미리보기', color: 'rgba(30,58,95,0.45)' }}

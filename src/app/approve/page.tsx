@@ -1,6 +1,9 @@
 // src/app/approve/page.tsx
 // 관리자 승인 대시보드 — 전체 페이지 목록 (승인 상태 필터)
 
+import { existsSync } from 'fs';
+import { join } from 'path';
+
 import { getPageList } from '@/db/repository/page.repository';
 import ApproveClient from '@/components/approve/ApproveClient';
 import type { ApproveState, ViewMode } from '@/db/types';
@@ -53,6 +56,7 @@ export default async function ApprovePage({
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
         approveState: p.APPROVE_STATE,
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
+        hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
     }));
 
     return (
