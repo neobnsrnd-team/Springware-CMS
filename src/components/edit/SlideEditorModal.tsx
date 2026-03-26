@@ -190,12 +190,11 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
     const [promoSlides, setPromoSlides] = useState<PromoBannerSlide[]>(() => parsePromoBannerSlides(blockEl));
     const [productCards, setProductCards] = useState<ProductGalleryCard[]>(() => parseProductGalleryCards(blockEl));
 
-    // 모달 열림 동안 열 툴바·RTE 툴바 숨김
+    // 모달 열림 동안 열 툴바·RTE 툴바 숨김 (CB가 재표시해도 CSS로 강제 억제)
     useEffect(() => {
-        const targets = document.querySelectorAll<HTMLElement>('.is-col-tool, .is-rte-tool');
-        targets.forEach((el) => (el.style.display = 'none'));
+        document.body.classList.add('spw-slide-modal-open');
         return () => {
-            targets.forEach((el) => (el.style.display = ''));
+            document.body.classList.remove('spw-slide-modal-open');
         };
     }, []);
 

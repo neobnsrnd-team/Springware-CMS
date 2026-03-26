@@ -35,6 +35,12 @@ a {
   color: #0046A4 !important;
 }
 
+/* 슬라이드 편집 모달 열림 시 CB 툴바 강제 숨김 */
+body.spw-slide-modal-open .is-col-tool,
+body.spw-slide-modal-open .is-rte-tool {
+    display: none !important;
+}
+
 .btns {
   @apply fixed bottom-8 left-8 flex gap-2;
 }
