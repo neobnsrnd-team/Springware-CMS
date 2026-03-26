@@ -7,11 +7,15 @@ import 'dotenv/config';
 import { getComponentById, updateComponent } from '../src/db/repository/component.repository';
 import { closePool } from '../src/db/connection';
 
-// IBK 기본 로고 SVG (data URI) — public/assets/plugins/app-header/index.js DEFAULT_LOGO_SRC 동일값
+// 기본 로고 placeholder SVG (data URI) — public/assets/plugins/app-header/index.js DEFAULT_LOGO_SRC 동일값
 const DEFAULT_LOGO_SRC =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 34 34'%3E" +
-    "%3Crect width='34' height='34' rx='6' fill='%230046A4'/%3E" +
-    "%3Ctext x='17' y='23' text-anchor='middle' fill='white' font-size='10' font-weight='900' font-family='sans-serif'%3EIBK%3C/text%3E" +
+    "%3Crect width='34' height='34' rx='6' fill='%23E5E7EB'/%3E" +
+    "%3Cpolygon points='17,7 8,14 26,14' fill='%236B7280'/%3E" +
+    "%3Crect x='11' y='14' width='2' height='8' fill='%236B7280'/%3E" +
+    "%3Crect x='16' y='14' width='2' height='8' fill='%236B7280'/%3E" +
+    "%3Crect x='21' y='14' width='2' height='8' fill='%236B7280'/%3E" +
+    "%3Crect x='9' y='22' width='16' height='3' rx='1' fill='%236B7280'/%3E" +
     "%3C/svg%3E";
 
 // 공통 폰트 패밀리 (style.css에서 추출)
@@ -24,7 +28,7 @@ const APP_HEADER_MOBILE_HTML =
         `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:54px;padding:0 14px;">` +
             `<a href="#" style="display:flex;align-items:center;gap:8px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:34px;height:34px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
-                `<span style="font-size:17px;font-weight:800;color:#1A1A2E;letter-spacing:-0.4px;white-space:nowrap;line-height:1;">IBK기업은행</span>` +
+                `<span style="font-size:17px;font-weight:800;color:#1A1A2E;letter-spacing:-0.4px;white-space:nowrap;line-height:1;">금융사명</span>` +
             `</a>` +
         `</div>` +
     `</div>`;
@@ -36,7 +40,7 @@ const APP_HEADER_WEB_HTML =
         `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:60px;padding:0 24px;max-width:1200px;margin:0 auto;">` +
             `<a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:38px;height:38px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
-                `<span style="font-size:18px;font-weight:800;color:#1A1A2E;letter-spacing:-0.4px;white-space:nowrap;line-height:1;">IBK기업은행</span>` +
+                `<span style="font-size:18px;font-weight:800;color:#1A1A2E;letter-spacing:-0.4px;white-space:nowrap;line-height:1;">금융사명</span>` +
             `</a>` +
         `</div>` +
     `</div>`;
@@ -48,7 +52,7 @@ const APP_HEADER_RESPONSIVE_HTML =
         `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:54px;padding:0 14px;">` +
             `<a href="#" style="display:flex;align-items:center;gap:8px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:34px;height:34px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
-                `<span style="font-size:17px;font-weight:800;color:#1A1A2E;letter-spacing:-0.4px;white-space:nowrap;line-height:1;">IBK기업은행</span>` +
+                `<span style="font-size:17px;font-weight:800;color:#1A1A2E;letter-spacing:-0.4px;white-space:nowrap;line-height:1;">금융사명</span>` +
             `</a>` +
         `</div>` +
     `</div>`;

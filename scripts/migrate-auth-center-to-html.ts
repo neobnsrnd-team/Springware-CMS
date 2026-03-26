@@ -78,7 +78,7 @@ function buildNotice(): string {
     return (
         `<div style="display:flex;align-items:flex-start;gap:8px;background:#FEF9C3;padding:14px 20px;border-top:1px solid #FEF08A;">` +
             NOTICE_ICON_SVG +
-            `<p style="font-size:12px;color:#78350F;line-height:1.5;margin:0;font-weight:500;">IBK기업은행은 절대 개인정보, 보안카드 번호 전체를 요구하지 않습니다.</p>` +
+            `<p style="font-size:12px;color:#78350F;line-height:1.5;margin:0;font-weight:500;">[금융사명]은 절대 개인정보, 보안카드 번호 전체를 요구하지 않습니다.</p>` +
         `</div>`
     );
 }

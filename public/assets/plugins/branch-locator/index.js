@@ -26,7 +26,7 @@ Usage:
             <div class="bl-branch-item" data-type="branch">
                 <div class="bl-branch-icon branch">영</div>
                 <div class="bl-branch-info">
-                    <span class="bl-branch-name">IBK 강남지점</span>
+                    <span class="bl-branch-name">[금융사명] 강남지점</span>
                     <span class="bl-branch-addr">서울 강남구 테헤란로 123</span>
                     <span class="bl-branch-hours">평일 09:00~16:00</span>
                 </div>
@@ -37,7 +37,7 @@ Usage:
             <div class="bl-branch-item" data-type="atm">
                 <div class="bl-branch-icon atm">ATM</div>
                 <div class="bl-branch-info">
-                    <span class="bl-branch-name">IBK ATM (강남역 2번출구)</span>
+                    <span class="bl-branch-name">[금융사명] ATM (강남역 2번출구)</span>
                     <span class="bl-branch-addr">서울 강남구 강남대로 396</span>
                     <span class="bl-branch-hours">24시간 운영</span>
                 </div>

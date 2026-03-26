@@ -1,6 +1,6 @@
 
 /*
-환율 게시판 플러그인 — IBK 기업은행 스타일
+환율 게시판 플러그인
 
 사용법:
 <div data-cb-type="exchange-board">
