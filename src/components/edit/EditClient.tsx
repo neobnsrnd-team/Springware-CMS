@@ -713,9 +713,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             btn.className = SPW_SLIDE_BTN_CLASS;
             btn.title = '슬라이드 편집';
             btn.style.cssText =
-                'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
             // 슬라이드 스택 아이콘
-            btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="#111"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>`;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>`;
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
