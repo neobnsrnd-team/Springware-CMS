@@ -101,6 +101,32 @@ export const PAGE_UPDATE_APPROVE_STATE = `
   WHERE PAGE_ID = :pageId
 `;
 
+/** 만료 페이지 조회 — EXPIRED_DATE 경과 + 공개 + 사용 중인 페이지 */
+export const PAGE_SELECT_EXPIRED = `
+  SELECT *
+  FROM SPW_CMS_PAGE
+  WHERE EXPIRED_DATE < TRUNC(SYSDATE)
+    AND IS_PUBLIC = 'Y'
+    AND USE_YN = 'Y'
+`;
+
+/** IS_PUBLIC 단건 업데이트 — 관리자 긴급 차단/해제 */
+export const PAGE_UPDATE_IS_PUBLIC = `
+  UPDATE SPW_CMS_PAGE
+  SET IS_PUBLIC = :isPublic,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+`;
+
+/** 만료 처리 — IS_PUBLIC='N', FILE_PATH_BACK 기록 (USE_YN은 유지 — 대시보드 노출) */
+export const PAGE_EXPIRE = `
+  UPDATE SPW_CMS_PAGE
+  SET IS_PUBLIC = 'N',
+      FILE_PATH_BACK = :filePathBack,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+`;
+
 /** 소프트 삭제 — 승인된 페이지 (USE_YN = 'N', HISTORY 보존) */
 export const PAGE_SOFT_DELETE = `
   UPDATE SPW_CMS_PAGE
