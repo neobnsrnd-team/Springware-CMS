@@ -4,7 +4,7 @@
 // API 호출 없음 — Save 버튼이 builder.html()로 캔버스 전체를 읽어 저장.
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -190,6 +190,42 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
     const [promoSlides, setPromoSlides] = useState<PromoBannerSlide[]>(() => parsePromoBannerSlides(blockEl));
     const [productCards, setProductCards] = useState<ProductGalleryCard[]>(() => parseProductGalleryCards(blockEl));
 
+    const [pos, setPos] = useState(() => ({
+        x: Math.max(8, window.innerWidth / 2 - 280),
+        y: Math.max(8, window.innerHeight / 2 - 300),
+    }));
+    const dragging = useRef(false);
+    const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 });
+
+    const onHeaderMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            if ((e.target as HTMLElement).closest('button, input, select')) return;
+            dragging.current = true;
+            dragStart.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
+            e.preventDefault();
+        },
+        [pos],
+    );
+
+    useEffect(() => {
+        const onMove = (e: MouseEvent) => {
+            if (!dragging.current) return;
+            setPos({
+                x: dragStart.current.px + e.clientX - dragStart.current.mx,
+                y: dragStart.current.py + e.clientY - dragStart.current.my,
+            });
+        };
+        const onUp = () => {
+            dragging.current = false;
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        return () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        };
+    }, []);
+
     // 모달 열림 동안 열 툴바·RTE 툴바 숨김 (CB가 재표시해도 CSS로 강제 억제)
     useEffect(() => {
         document.body.classList.add('spw-slide-modal-open');
@@ -211,134 +247,117 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
 
     return (
         <div
-            onClick={onClose}
             style={{
                 position: 'fixed',
-                inset: 0,
-                background: 'rgba(0,0,0,0.45)',
-                zIndex: 9999,
+                left: pos.x,
+                top: pos.y,
+                width: 560,
+                maxHeight: '85vh',
+                zIndex: 99999,
+                background: '#fff',
+                border: '1px solid #e5e7eb',
+                borderRadius: 12,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                flexDirection: 'column',
+                fontFamily: "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif",
+                overflow: 'hidden',
             }}
         >
+            {/* 헤더 (드래그 핸들) */}
             <div
-                onClick={(e) => e.stopPropagation()}
+                onMouseDown={onHeaderMouseDown}
                 style={{
-                    background: '#fff',
-                    borderRadius: '12px',
-                    width: '560px',
-                    maxWidth: '90vw',
-                    maxHeight: '85vh',
+                    padding: '12px 14px',
+                    borderBottom: '1px solid #f3f4f6',
+                    borderRadius: '12px 12px 0 0',
+                    background: '#fafafa',
                     display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-                    overflow: 'hidden',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexShrink: 0,
+                    cursor: 'grab',
+                    userSelect: 'none',
                 }}
             >
-                {/* 헤더 */}
-                <div
+                <span style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>{title}</span>
+                <button
+                    onClick={onClose}
                     style={{
-                        padding: '16px 20px',
-                        borderBottom: '1px solid #e5e7eb',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexShrink: 0,
+                        width: 24,
+                        height: 24,
+                        border: 'none',
+                        background: 'none',
+                        cursor: 'pointer',
+                        color: '#6b7280',
+                        fontSize: 18,
+                        padding: 0,
+                        lineHeight: 1,
                     }}
                 >
-                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>{title}</span>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            width: '28px',
-                            height: '28px',
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            color: '#6b7280',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '6px',
-                        }}
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            width={16}
-                            height={16}
-                        >
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                    </button>
-                </div>
+                    ×
+                </button>
+            </div>
 
-                {/* 본문 */}
-                <div
-                    style={{
-                        padding: '16px 20px',
-                        overflowY: 'auto',
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px',
-                    }}
-                >
-                    {isPromoBanner ? (
-                        <PromoSlidesEditor slides={promoSlides} onChange={setPromoSlides} />
-                    ) : (
-                        <ProductCardsEditor cards={productCards} onChange={setProductCards} />
-                    )}
-                </div>
+            {/* 본문 */}
+            <div
+                style={{
+                    padding: '16px 20px',
+                    overflowY: 'auto',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                }}
+            >
+                {isPromoBanner ? (
+                    <PromoSlidesEditor slides={promoSlides} onChange={setPromoSlides} />
+                ) : (
+                    <ProductCardsEditor cards={productCards} onChange={setProductCards} />
+                )}
+            </div>
 
-                {/* 푸터 */}
-                <div
+            {/* 푸터 */}
+            <div
+                style={{
+                    padding: '14px 20px',
+                    borderTop: '1px solid #e5e7eb',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '8px',
+                    flexShrink: 0,
+                }}
+            >
+                <button
+                    onClick={onClose}
                     style={{
-                        padding: '14px 20px',
-                        borderTop: '1px solid #e5e7eb',
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: '8px',
-                        flexShrink: 0,
+                        padding: '7px 16px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        background: '#fff',
+                        color: '#374151',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
                     }}
                 >
-                    <button
-                        onClick={onClose}
-                        style={{
-                            padding: '7px 16px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '8px',
-                            background: '#fff',
-                            color: '#374151',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                        }}
-                    >
-                        취소
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        style={{
-                            padding: '7px 16px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            background: '#0046A4',
-                            color: '#fff',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                        }}
-                    >
-                        확인
-                    </button>
-                </div>
+                    취소
+                </button>
+                <button
+                    onClick={handleConfirm}
+                    style={{
+                        padding: '7px 16px',
+                        border: 'none',
+                        borderRadius: '8px',
+                        background: '#0046A4',
+                        color: '#fff',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                    }}
+                >
+                    확인
+                </button>
             </div>
         </div>
     );
