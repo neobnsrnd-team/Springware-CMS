@@ -1604,19 +1604,35 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     }
 
     // ── 탭 추가 ──────────────────────────────────────────────────────────
-    function handleAddTab() {
+    async function handleAddTab() {
         const label = newTabName.trim();
         if (!label) return;
         const id = `${userId}-${Date.now()}`;
         const selectedViewMode = newTabViewMode;
 
-        // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트
-        const headerComp = financeComponents.find((c) => c.id === 'app-header');
-        const defaultHtml = headerComp ? `<div class="row"><div class="column">\n${headerComp.html}\n</div></div>` : '';
-
         setShowAddTab(false);
         setNewTabName('');
         setNewTabViewMode('mobile');
+
+        // 새 캔버스 기본 콘텐츠: selectedViewMode에 맞는 app-header 컴포넌트
+        // financeComponents는 현재 탭 viewMode 기준이므로 직접 fetch해서 정확한 variant 사용
+        let defaultHtml = '';
+        try {
+            const res = await fetch(`/api/components?type=finance&viewMode=${selectedViewMode}`);
+            const data = await res.json();
+            const comps: FinanceComponent[] = data.ok ? data.components : financeComponents;
+            const headerComp =
+                comps.find((c) => c.id === 'app-header') ?? financeComponents.find((c) => c.id === 'app-header');
+            // spw-finance-col: handleInsertComponent와 동일하게 padding 제거 + 전체 너비 보장
+            if (headerComp) {
+                defaultHtml = `<div class="row"><div class="column spw-finance-col">\n${headerComp.html}\n</div></div>`;
+            }
+        } catch {
+            const headerComp = financeComponents.find((c) => c.id === 'app-header');
+            if (headerComp) {
+                defaultHtml = `<div class="row"><div class="column spw-finance-col">\n${headerComp.html}\n</div></div>`;
+            }
+        }
 
         // DB에 페이지 생성 (pageName + viewMode 포함) → 이동
         fetch('/api/builder/save', {
