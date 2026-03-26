@@ -28,7 +28,8 @@ import {
     PAGE_HISTORY_SELECT_LIST,
     PAGE_HISTORY_COUNT_BY_PAGE,
 } from '@/db/queries/page-history.sql';
-import { COMP_MAP_DELETE_BY_PAGE_VERSION } from '@/db/queries/component-map.sql';
+import { COMP_MAP_DELETE_BY_PAGE_VERSION, COMP_MAP_INSERT } from '@/db/queries/component-map.sql';
+import { readPageHtml } from '@/lib/page-file';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
@@ -211,12 +212,36 @@ export async function updateApproveState(input: {
                 version: nextVersion,
             });
 
-            // TODO #138: COMP_PAGE_MAP 매핑 생성 — 현재는 빈 매핑으로 구조만 확보
-            // 향후 페이지 HTML 파싱 → 컴포넌트 ID 추출 → INSERT 추가
+            // COMP_PAGE_MAP 매핑 생성 — HTML 파싱으로 컴포넌트 ID 추출 (#138)
             await conn.execute(COMP_MAP_DELETE_BY_PAGE_VERSION, {
                 pageId: input.pageId,
                 version: nextVersion,
             });
+
+            // 페이지 HTML 파일에서 data-component-id 추출
+            const page = await conn.execute<CmsPage>(PAGE_SELECT_BY_ID, { pageId: input.pageId }, OBJ);
+            const filePath = page.rows?.[0]?.FILE_PATH;
+            if (filePath) {
+                const html = await readPageHtml(filePath);
+                if (!html) {
+                    throw new Error('페이지 파일이 존재하지 않습니다. 로컬에 파일을 동기화한 후 다시 시도해주세요.');
+                }
+
+                const regex = /data-component-id\s*=\s*["']([^"']+)["']/g;
+                const componentIds = Array.from(html.matchAll(regex), (m) => m[1]);
+
+                if (componentIds.length > 0) {
+                    const binds = componentIds.map((componentId, i) => ({
+                        pageId: input.pageId,
+                        version: nextVersion,
+                        sortOrder: i + 1,
+                        componentId,
+                        lastModifierId: input.lastModifierId,
+                    }));
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    await (conn as any).executeMany(COMP_MAP_INSERT, binds);
+                }
+            }
 
             return { version: nextVersion };
         }
