@@ -13,7 +13,7 @@ const COMPONENT_META: Record<string, { label: string; description: string }> = {
     'product-menu':     { label: '퀵메뉴',        description: '아이콘 그리드 메뉴' },
     'product-gallery':  { label: '상품 갤러리',   description: '상품 카드 슬라이더' },
     'exchange-board':   { label: '환율 현황',      description: '실시간 환율 조회' },
-    'branch-locator':   { label: '지점 찾기',      description: '지도·영업점 검색' },
+    'branch-locator':   { label: '지점 등록',      description: '지도·영업점 검색' },
     'promo-banner':     { label: '홍보 배너',      description: '슬라이드 홍보 배너' },
     'media-video':      { label: '미디어',         description: '유튜브 영상 임베드' },
     'loan-calculator':  { label: '금융 계산기',    description: '대출·예금 이자 계산' },
