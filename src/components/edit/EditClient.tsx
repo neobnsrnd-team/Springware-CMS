@@ -28,7 +28,6 @@ export interface BasicBlock {
     id: string; // COMPONENT_ID (예: 'basic-web-001')
     thumbnail: string; // 썸네일 경로 (예: 'preview/basic-01b.png')
     html: string;
-    category: string;
     viewMode: 'mobile' | 'web' | 'responsive';
     label?: string; // DB label (한국어 블록명)
 }
@@ -1344,7 +1343,6 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                                 .replace(/url\(&quot;assets\//g, 'url(&quot;/assets/')
                                 .replace(/url\('assets\//g, "url('/assets/")
                                 .replace(/url\(assets\//g, 'url(/assets/'),
-                            category: '',
                             viewMode: c.viewMode as BasicBlock['viewMode'],
                             label: c.label,
                         }),

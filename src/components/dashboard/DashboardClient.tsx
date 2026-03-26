@@ -27,6 +27,7 @@ export interface DashboardPageCard {
     lastModifiedDtime: string | null;
     approveState: ApproveStateValue;
     rejectedReason: string | null;
+    hasFile: boolean;
 }
 
 export interface DashboardClientProps {
@@ -376,6 +377,10 @@ export default function DashboardClient({
                                     key={page.id}
                                     page={page}
                                     onClick={() => {
+                                        if (!page.hasFile) {
+                                            alert('페이지 파일이 로컬에 존재하지 않습니다.');
+                                            return;
+                                        }
                                         window.location.href = `/edit?bank=${page.id}`;
                                     }}
                                     overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}

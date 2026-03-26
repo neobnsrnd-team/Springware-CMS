@@ -1,6 +1,9 @@
 // src/app/[userId]/page.tsx
 // 사용자 대시보드 — 페이지 목록 카드 그리드
 
+import { existsSync } from 'fs';
+import { join } from 'path';
+
 import { getPageList } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
 import DashboardClient from '@/components/dashboard/DashboardClient';
@@ -45,6 +48,7 @@ export default async function DashboardPage({
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
         approveState: p.APPROVE_STATE,
         rejectedReason: p.REJECTED_REASON ?? null,
+        hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
     }));
 
     return (
