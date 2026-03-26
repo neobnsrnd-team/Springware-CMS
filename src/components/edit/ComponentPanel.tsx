@@ -455,43 +455,45 @@ export default function ComponentPanel({
                                                 </div>
                                             </div>
 
-                                            {/* 편집 버튼 */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingComp(comp);
-                                                }}
-                                                title="컴포넌트 편집"
-                                                style={{
-                                                    flexShrink: 0,
-                                                    width: '26px',
-                                                    height: '26px',
-                                                    border: `1px solid ${hoveredId === comp.id ? '#9ca3af' : '#d1d5db'}`,
-                                                    borderRadius: '50%',
-                                                    background: hoveredId === comp.id ? '#f3f4f6' : '#f9fafb',
-                                                    color: hoveredId === comp.id ? '#374151' : '#9ca3af',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    transition: 'all 0.12s',
-                                                    padding: 0,
-                                                }}
-                                            >
-                                                <svg
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth={2}
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    width={12}
-                                                    height={12}
+                                            {/* 편집 버튼 — 플러그인 방식(data-cb-type) 컴포넌트만 표시 */}
+                                            {comp.html.includes('data-cb-type') && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingComp(comp);
+                                                    }}
+                                                    title="컴포넌트 편집"
+                                                    style={{
+                                                        flexShrink: 0,
+                                                        width: '26px',
+                                                        height: '26px',
+                                                        border: `1px solid ${hoveredId === comp.id ? '#9ca3af' : '#d1d5db'}`,
+                                                        borderRadius: '50%',
+                                                        background: hoveredId === comp.id ? '#f3f4f6' : '#f9fafb',
+                                                        color: hoveredId === comp.id ? '#374151' : '#9ca3af',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        transition: 'all 0.12s',
+                                                        padding: 0,
+                                                    }}
                                                 >
-                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                                </svg>
-                                            </button>
+                                                    <svg
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth={2}
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        width={12}
+                                                        height={12}
+                                                    >
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                    </svg>
+                                                </button>
+                                            )}
 
                                             {/* 추가 버튼 */}
                                             <button
