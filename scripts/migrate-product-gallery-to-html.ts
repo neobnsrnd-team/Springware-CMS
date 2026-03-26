@@ -23,7 +23,7 @@ const CARDS = [
     {
         type: 'savings',
         badge: '적금',
-        productName: 'IBK D-Day 적금',
+        productName: '[상품명] 적금',
         rateValue: '4.5',
         rateLabel: '최고 금리 (연)',
         detail: '기간 1~36개월 · 월 최대 100만원',
@@ -32,7 +32,7 @@ const CARDS = [
     {
         type: 'deposit',
         badge: '예금',
-        productName: 'IBK평생한가족예금',
+        productName: '[상품명] 예금',
         rateValue: '3.8',
         rateLabel: '최고 금리 (연)',
         detail: '기간 6~36개월 · 1인 1계좌',
@@ -41,7 +41,7 @@ const CARDS = [
     {
         type: 'loan',
         badge: '대출',
-        productName: 'IBK 기업대출',
+        productName: '[상품명] 대출',
         rateValue: '4.2',
         rateLabel: '최저 금리 (연)',
         detail: '한도 최대 10억 · 거치 최대 3년',

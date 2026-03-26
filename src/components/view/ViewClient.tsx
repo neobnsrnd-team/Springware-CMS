@@ -160,14 +160,10 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
 
                 // ── 금융 모바일 컴포넌트 (플러그인 유지 대상) ──
                 // 순수 HTML 변환 완료분은 등록 제거 — 런타임 재개입 방지
-                // (app-header, product-menu, auth-center, media-video, site-footer, product-gallery, promo-banner)
+                // (app-header, product-menu, auth-center, media-video, site-footer, product-gallery, promo-banner, branch-locator)
                 'exchange-board': {
                     url: basePath + '/assets/plugins/exchange-board/index.js',
                     css: basePath + '/assets/plugins/exchange-board/style.css',
-                },
-                'branch-locator': {
-                    url: basePath + '/assets/plugins/branch-locator/index.js',
-                    css: basePath + '/assets/plugins/branch-locator/style.css',
                 },
                 'loan-calculator': {
                     url: basePath + '/assets/plugins/loan-calculator/index.js',

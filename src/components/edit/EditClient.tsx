@@ -16,6 +16,7 @@ import html2canvas from 'html2canvas';
 import ComponentPanel from '@/components/edit/ComponentPanel';
 import AppHeaderBorderEditor from '@/components/edit/AppHeaderBorderEditor';
 import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
+import BranchLocatorEditor from '@/components/edit/BranchLocatorEditor';
 import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import SlideEditorModal from '@/components/edit/SlideEditorModal';
@@ -239,6 +240,8 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     const [authCenterBlock, setAuthCenterBlock] = useState<HTMLElement | null>(null);
     // app-header 구분선 편집 패널
     const [appHeaderBlock, setAppHeaderBlock] = useState<HTMLElement | null>(null);
+    // branch-locator 지점 편집 패널
+    const [branchLocatorBlock, setBranchLocatorBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -485,14 +488,10 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
 
                     // ── 금융 모바일 컴포넌트 (플러그인 유지 대상) ──────────────
                     // 순수 HTML 변환 완료분은 등록 제거 — 런타임 재개입 방지
-                    // (app-header, product-menu, auth-center, media-video, site-footer, product-gallery, promo-banner)
+                    // (app-header, product-menu, auth-center, media-video, site-footer, product-gallery, promo-banner, branch-locator)
                     'exchange-board': {
                         url: basePath + '/assets/plugins/exchange-board/index.js',
                         css: basePath + '/assets/plugins/exchange-board/style.css',
-                    },
-                    'branch-locator': {
-                        url: basePath + '/assets/plugins/branch-locator/index.js',
-                        css: basePath + '/assets/plugins/branch-locator/style.css',
                     },
                     'loan-calculator': {
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
@@ -640,6 +639,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         const SPW_MV_BTN_CLASS = 'spw-mv-url-edit-btn';
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
         const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
+        const SPW_BL_BTN_CLASS = 'spw-bl-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -741,6 +741,30 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 });
                 linkTool.appendChild(btn);
             }
+
+            // ⑤ branch-locator 지점 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_BL_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_BL_BTN_CLASS;
+                btn.title = '지점 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="branch-locator"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="branch-locator"]');
+                    if (block) setBranchLocatorBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
         };
 
         // 활성 요소 위치에 따라 각 버튼 가시성 갱신
@@ -775,6 +799,13 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                     !!iconActive?.closest('[data-component-id^="media-video"]') ||
                     !!elmActive?.closest('[data-component-id^="media-video"]');
                 mvBtn.style.display = isInMv ? 'flex' : 'none';
+            }
+            const blBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_BL_BTN_CLASS}`);
+            if (blBtn) {
+                const isInBl =
+                    !!iconActive?.closest('[data-component-id^="branch-locator"]') ||
+                    !!elmActive?.closest('[data-component-id^="branch-locator"]');
+                blBtn.style.display = isInBl ? 'flex' : 'none';
             }
         };
 
@@ -1573,19 +1604,35 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     }
 
     // ── 탭 추가 ──────────────────────────────────────────────────────────
-    function handleAddTab() {
+    async function handleAddTab() {
         const label = newTabName.trim();
         if (!label) return;
         const id = `${userId}-${Date.now()}`;
         const selectedViewMode = newTabViewMode;
 
-        // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트
-        const headerComp = financeComponents.find((c) => c.id === 'app-header');
-        const defaultHtml = headerComp ? `<div class="row"><div class="column">\n${headerComp.html}\n</div></div>` : '';
-
         setShowAddTab(false);
         setNewTabName('');
         setNewTabViewMode('mobile');
+
+        // 새 캔버스 기본 콘텐츠: selectedViewMode에 맞는 app-header 컴포넌트
+        // financeComponents는 현재 탭 viewMode 기준이므로 직접 fetch해서 정확한 variant 사용
+        let defaultHtml = '';
+        try {
+            const res = await fetch(`/api/components?type=finance&viewMode=${selectedViewMode}`);
+            const data = await res.json();
+            const comps: FinanceComponent[] = data.ok ? data.components : financeComponents;
+            const headerComp =
+                comps.find((c) => c.id === 'app-header') ?? financeComponents.find((c) => c.id === 'app-header');
+            // spw-finance-col: handleInsertComponent와 동일하게 padding 제거 + 전체 너비 보장
+            if (headerComp) {
+                defaultHtml = `<div class="row"><div class="column spw-finance-col">\n${headerComp.html}\n</div></div>`;
+            }
+        } catch {
+            const headerComp = financeComponents.find((c) => c.id === 'app-header');
+            if (headerComp) {
+                defaultHtml = `<div class="row"><div class="column spw-finance-col">\n${headerComp.html}\n</div></div>`;
+            }
+        }
 
         // DB에 페이지 생성 (pageName + viewMode 포함) → 이동
         fetch('/api/builder/save', {
@@ -2074,6 +2121,11 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             {/* ── app-header 구분선 편집 패널 ── */}
             {appHeaderBlock && (
                 <AppHeaderBorderEditor blockEl={appHeaderBlock} onClose={() => setAppHeaderBlock(null)} />
+            )}
+
+            {/* ── branch-locator 지점 편집 패널 ── */}
+            {branchLocatorBlock && (
+                <BranchLocatorEditor blockEl={branchLocatorBlock} onClose={() => setBranchLocatorBlock(null)} />
             )}
 
             {/* ── 새 페이지 추가 모달 ── */}
