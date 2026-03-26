@@ -203,6 +203,15 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         });
         runtime.init();
 
+        // dangerouslySetInnerHTML은 <script> 태그를 실행하지 않으므로
+        // [data-spw-block] 컴포넌트 내 인라인 스크립트를 직접 재실행
+        // replaceChild로 동일 위치에 삽입 → document.currentScript.parentElement가 컴포넌트 div를 가리킴
+        document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
+            const newScript = document.createElement('script');
+            newScript.textContent = oldScript.textContent;
+            oldScript.parentNode?.replaceChild(newScript, oldScript);
+        });
+
         return () => runtime.destroy();
     }, [viewMode, embed]);
 

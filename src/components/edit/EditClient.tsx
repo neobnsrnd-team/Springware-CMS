@@ -18,6 +18,7 @@ import AppHeaderBorderEditor from '@/components/edit/AppHeaderBorderEditor';
 import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
 import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
+import SlideEditorModal from '@/components/edit/SlideEditorModal';
 import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
@@ -239,6 +240,9 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     const [authCenterBlock, setAuthCenterBlock] = useState<HTMLElement | null>(null);
     // app-header 구분선 편집 패널
     const [appHeaderBlock, setAppHeaderBlock] = useState<HTMLElement | null>(null);
+
+    // 슬라이드 편집 모달 (promo-banner / product-gallery)
+    const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
     const currentTab = tabs.find((t) => t.id === bank);
@@ -813,6 +817,70 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         const existingLinkTool = document.querySelector<HTMLElement>('#divLinkTool');
         if (existingLinkTool) injectCustomButtonsToLinkTool(existingLinkTool);
 
+        // ── 슬라이드 편집 버튼 — .is-row-tool 주입 ───────────────────────────
+        // promo-banner / product-gallery 블록 선택 시 행 툴바에 "슬라이드 편집" 버튼 추가
+        const SPW_SLIDE_BTN_CLASS = 'spw-slide-edit-btn';
+
+        const injectSlideEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_SLIDE_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_SLIDE_BTN_CLASS;
+            btn.title = '슬라이드 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            // 슬라이드 스택 아이콘
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block =
+                    activeEl?.closest<HTMLElement>('[data-component-id^="promo-banner"]') ??
+                    activeEl?.closest<HTMLElement>('[data-component-id^="product-gallery"]');
+                if (block) setSlideEditorBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateSlideToolBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_SLIDE_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isSlide =
+                    !!activeEl?.closest('[data-component-id^="promo-banner"]') ||
+                    !!activeEl?.closest('[data-component-id^="product-gallery"]');
+                btn.style.display = isSlide ? 'flex' : 'none';
+            });
+        };
+
+        // 슬라이드 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
+        const slideToolObserver = new MutationObserver((mutations) => {
+            let needsSlideVisibility = false;
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (!(node instanceof HTMLElement)) return;
+                    if (node.classList.contains('is-row-tool')) injectSlideEditToRowTool(node);
+                    node.querySelectorAll<HTMLElement>('.is-row-tool').forEach(injectSlideEditToRowTool);
+                });
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if ((mutation.target as HTMLElement).classList.contains('elm-active')) {
+                        needsSlideVisibility = true;
+                    }
+                }
+            });
+            if (needsSlideVisibility) updateSlideToolBtnVisibility();
+        });
+        slideToolObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        // 이미 DOM에 있는 .is-row-tool에 즉시 적용
+        document.querySelectorAll<HTMLElement>('.is-row-tool').forEach(injectSlideEditToRowTool);
+
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
         // .is-pop.quickadd는 DOM에 항상 존재하며 ContentBuilder가 display만 토글함.
         // style 변경을 감지하여 표시될 때 position:fixed로 전환 + 드래그 핸들 등록.
@@ -1208,6 +1276,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             rteObserver.disconnect();
             modalObserver.disconnect();
             colToolObserver.disconnect();
+            slideToolObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
             document.removeEventListener('click', redirectCellAddToRowAdd, true);
             document.removeEventListener('click', markKorean, true);
@@ -2013,6 +2082,11 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             {/* ── product-menu 아이콘 편집 모달 ── */}
             {productMenuBlock && (
                 <ProductMenuIconEditor blockEl={productMenuBlock} onClose={() => setProductMenuBlock(null)} />
+            )}
+
+            {/* ── 슬라이드 편집 모달 (promo-banner / product-gallery) ── */}
+            {slideEditorBlock && (
+                <SlideEditorModal blockEl={slideEditorBlock} onClose={() => setSlideEditorBlock(null)} />
             )}
 
             {/* ── media-video 영상 URL 편집 모달 ── */}
