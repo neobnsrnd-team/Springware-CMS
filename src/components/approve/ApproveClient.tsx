@@ -26,6 +26,8 @@ export interface ApprovePageCard {
     approveState: ApproveStateFilter;
     createUserName: string;
     hasFile: boolean;
+    isPublic: string;
+    expiredDate: string | null;
 }
 
 export interface ApproveClientProps {
@@ -79,6 +81,24 @@ export default function ApproveClient({
     const [approveModalPageId, setApproveModalPageId] = useState<string | null>(null);
     const [expiredDate, setExpiredDate] = useState('');
     const [approving, setApproving] = useState(false);
+
+    // 배포 상태
+    const [deploying, setDeploying] = useState<string | null>(null); // 배포 중인 pageId
+
+    // 배포 이력 모달 상태
+    type DeployRecord = {
+        INSTANCE_ID: string;
+        FILE_ID: string;
+        FILE_SIZE: string | null;
+        FILE_CRC_VALUE: string | null;
+        LAST_MODIFIED_DTIME: string | null;
+        LAST_MODIFIER_ID: string | null;
+        INSTANCE_NAME?: string;
+    };
+    const [historyModalPageId, setHistoryModalPageId] = useState<string | null>(null);
+    const [historyModalPage, setHistoryModalPage] = useState<ApprovePageCard | null>(null);
+    const [historyList, setHistoryList] = useState<DeployRecord[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     // 서버에서 새 데이터가 내려올 때 동기화
     useEffect(() => {
@@ -203,6 +223,51 @@ export default function ApproveClient({
             alert('승인 처리에 실패했습니다.');
         } finally {
             setApproving(false);
+        }
+    }
+
+    // 배포 실행 — 컨펌 후 API 호출
+    async function handleDeploy(pageId: string) {
+        if (!window.confirm('배포하시겠습니까?\n승인된 페이지를 운영 서버로 전송합니다.')) return;
+        if (deploying) return;
+
+        setDeploying(pageId);
+        try {
+            const res = await fetch('/api/deploy/push', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                alert(data.error ?? '배포에 실패했습니다.');
+                return;
+            }
+            alert(`배포 완료 (성공: ${data.successCount}개 서버, 실패: ${data.failCount}개 서버)`);
+            router.refresh();
+        } catch (err: unknown) {
+            console.error('배포 오류:', err);
+            alert('배포 처리에 실패했습니다.');
+        } finally {
+            setDeploying(null);
+        }
+    }
+
+    // 배포 이력 모달 열기
+    async function handleOpenHistory(pageId: string) {
+        const targetPage = pages.find((p) => p.id === pageId) ?? null;
+        setHistoryModalPageId(pageId);
+        setHistoryModalPage(targetPage);
+        setHistoryList([]);
+        setHistoryLoading(true);
+        try {
+            const res = await fetch(`/api/deploy/history?pageId=${encodeURIComponent(pageId)}`);
+            const data = await res.json();
+            if (data.ok) setHistoryList(data.history ?? []);
+        } catch (err: unknown) {
+            console.error('배포 이력 조회 오류:', err);
+        } finally {
+            setHistoryLoading(false);
         }
     }
 
@@ -497,6 +562,34 @@ export default function ApproveClient({
                                                     승인
                                                 </button>
                                             </div>
+                                        ) : page.approveState === 'APPROVED' ? (
+                                            <div
+                                                className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    onClick={() => handleOpenHistory(page.id)}
+                                                    className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
+                                                >
+                                                    배포 이력
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeploy(page.id)}
+                                                    disabled={deploying === page.id || !page.hasFile}
+                                                    title={
+                                                        !page.hasFile
+                                                            ? '로컬 파일이 없습니다. 에디터에서 저장 후 시도해 주세요.'
+                                                            : undefined
+                                                    }
+                                                    className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${
+                                                        deploying === page.id || !page.hasFile
+                                                            ? 'border-[#d1d5db] bg-[#d1d5db] text-white cursor-not-allowed'
+                                                            : 'border-[#0046A4] bg-[#0046A4] text-white cursor-pointer'
+                                                    }`}
+                                                >
+                                                    {deploying === page.id ? '배포 중...' : '배포'}
+                                                </button>
+                                            </div>
                                         ) : undefined
                                     }
                                 />
@@ -692,6 +785,101 @@ export default function ApproveClient({
                                     {approving ? '처리 중...' : '승인 확정'}
                                 </button>
                             </div>
+                        </Modal>
+                    );
+                })()}
+            {/* ── 배포 이력 모달 ── */}
+            {historyModalPageId &&
+                (() => {
+                    // 바로가기 활성 조건: IS_PUBLIC='Y' AND (만료일 없음 OR 만료일 미경과)
+                    const isActive =
+                        historyModalPage?.isPublic === 'Y' &&
+                        (!historyModalPage.expiredDate || new Date(historyModalPage.expiredDate) >= new Date());
+
+                    const disabledReason =
+                        historyModalPage?.isPublic === 'N'
+                            ? '공개 차단된 페이지입니다.'
+                            : historyModalPage?.expiredDate && new Date(historyModalPage.expiredDate) < new Date()
+                              ? '만료된 페이지입니다.'
+                              : undefined;
+
+                    return (
+                        <Modal
+                            title="배포 이력"
+                            onClose={() => setHistoryModalPageId(null)}
+                            showCloseButton
+                            width="560px"
+                            className="p-8"
+                        >
+                            {/* 바로가기 버튼 — 이력이 있을 때만 표시 */}
+                            {!historyLoading && historyList.length > 0 && (
+                                <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#f3f4f6]">
+                                    <span className="text-sm font-medium text-[#374151]">배포된 페이지</span>
+                                    <button
+                                        disabled={!isActive}
+                                        title={disabledReason}
+                                        onClick={() => window.open(`/deployed/${historyModalPageId}.html`, '_blank')}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors ${
+                                            isActive
+                                                ? 'border-[#0046A4] text-[#0046A4] bg-white cursor-pointer hover:bg-[#EBF4FF]'
+                                                : 'border-[#e5e7eb] text-[#d1d5db] bg-[#f9fafb] cursor-not-allowed'
+                                        }`}
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                                            <path
+                                                d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                            <path
+                                                d="M15 3h6v6M10 14L21 3"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                        {disabledReason ?? '바로가기'}
+                                    </button>
+                                </div>
+                            )}
+
+                            {historyLoading ? (
+                                <p className="text-sm text-[#9ca3af] text-center py-8">불러오는 중...</p>
+                            ) : historyList.length === 0 ? (
+                                <p className="text-sm text-[#9ca3af] text-center py-8">배포 이력이 없습니다.</p>
+                            ) : (
+                                <div className="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
+                                    {historyList.map((record) => (
+                                        <div
+                                            key={`${record.INSTANCE_ID}-${record.FILE_ID}`}
+                                            className="flex flex-col gap-1 px-4 py-3 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] text-xs"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-semibold text-[#1e3a5f]">
+                                                    {record.INSTANCE_NAME ?? record.INSTANCE_ID}
+                                                </span>
+                                                <span className="text-[#9ca3af]">
+                                                    {record.LAST_MODIFIED_DTIME ?? '-'}
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-3 text-[#6b7280]">
+                                                <span>파일: {record.FILE_ID}</span>
+                                                {record.FILE_SIZE && (
+                                                    <span>크기: {Number(record.FILE_SIZE).toLocaleString()} B</span>
+                                                )}
+                                            </div>
+                                            {record.FILE_CRC_VALUE && (
+                                                <span className="text-[#9ca3af] font-mono">
+                                                    CRC: {record.FILE_CRC_VALUE}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </Modal>
                     );
                 })()}

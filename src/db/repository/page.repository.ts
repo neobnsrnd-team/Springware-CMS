@@ -19,6 +19,10 @@ import {
     PAGE_SOFT_DELETE,
     PAGE_HARD_DELETE,
     COMP_MAP_DELETE_BY_PAGE,
+    PAGE_SELECT_EXPIRED,
+    PAGE_UPDATE_IS_PUBLIC,
+    PAGE_EXPIRE,
+    PAGE_UPDATE_DEPLOY,
 } from '@/db/queries/page.sql';
 import {
     PAGE_HISTORY_NEXT_VERSION,
@@ -279,6 +283,13 @@ export async function deletePage(pageId: string, lastModifierId: string): Promis
     });
 }
 
+/** 배포 완료 후 노출 시작일 및 CRC 값 갱신 — BEGINNING_DATE=오늘 */
+export async function updatePageDeploy(pageId: string, fileCrcValue: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_UPDATE_DEPLOY, { pageId, fileCrcValue, lastModifierId });
+    });
+}
+
 // ═══════════════════════════════════════════════
 // 이력 조회
 // ═══════════════════════════════════════════════
@@ -336,4 +347,33 @@ export async function getHistoryList(
     } finally {
         await conn.close();
     }
+}
+
+// ═══════════════════════════════════════════════
+// 만료 관리
+// ═══════════════════════════════════════════════
+
+/** 만료 페이지 목록 조회 — EXPIRED_DATE 경과 + IS_PUBLIC='Y' + USE_YN='Y' */
+export async function getExpiredPages(): Promise<CmsPage[]> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<CmsPage>(PAGE_SELECT_EXPIRED, {}, OBJ);
+        return result.rows ?? [];
+    } finally {
+        await conn.close();
+    }
+}
+
+/** IS_PUBLIC 단건 변경 — 관리자 긴급 차단/해제 */
+export async function setPagePublic(pageId: string, isPublic: 'Y' | 'N', lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_UPDATE_IS_PUBLIC, { pageId, isPublic, lastModifierId });
+    });
+}
+
+/** 만료 처리 단건 — IS_PUBLIC='N', FILE_PATH_BACK 기록 */
+export async function expirePage(pageId: string, filePathBack: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_EXPIRE, { pageId, filePathBack, lastModifierId });
+    });
 }

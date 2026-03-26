@@ -57,6 +57,8 @@ export default async function ApprovePage({
         approveState: p.APPROVE_STATE,
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
+        isPublic: p.IS_PUBLIC ?? 'Y',
+        expiredDate: p.EXPIRED_DATE ? new Date(p.EXPIRED_DATE).toISOString() : null,
     }));
 
     return (

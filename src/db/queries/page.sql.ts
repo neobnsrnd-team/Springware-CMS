@@ -101,6 +101,32 @@ export const PAGE_UPDATE_APPROVE_STATE = `
   WHERE PAGE_ID = :pageId
 `;
 
+/** 만료 페이지 조회 — EXPIRED_DATE 경과 + 공개 + 사용 중인 페이지 */
+export const PAGE_SELECT_EXPIRED = `
+  SELECT *
+  FROM SPW_CMS_PAGE
+  WHERE EXPIRED_DATE < TRUNC(SYSDATE)
+    AND IS_PUBLIC = 'Y'
+    AND USE_YN = 'Y'
+`;
+
+/** IS_PUBLIC 단건 업데이트 — 관리자 긴급 차단/해제 */
+export const PAGE_UPDATE_IS_PUBLIC = `
+  UPDATE SPW_CMS_PAGE
+  SET IS_PUBLIC = :isPublic,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+`;
+
+/** 만료 처리 — IS_PUBLIC='N', FILE_PATH_BACK 기록 (USE_YN은 유지 — 대시보드 노출) */
+export const PAGE_EXPIRE = `
+  UPDATE SPW_CMS_PAGE
+  SET IS_PUBLIC = 'N',
+      FILE_PATH_BACK = :filePathBack,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+`;
+
 /** 소프트 삭제 — 승인된 페이지 (USE_YN = 'N', HISTORY 보존) */
 export const PAGE_SOFT_DELETE = `
   UPDATE SPW_CMS_PAGE
@@ -118,5 +144,14 @@ export const PAGE_HARD_DELETE = `
 /** COMP_PAGE_MAP 전체 삭제 (페이지 하드 삭제 시 연관 매핑 정리) */
 export const COMP_MAP_DELETE_BY_PAGE = `
   DELETE FROM SPW_CMS_COMP_PAGE_MAP
+  WHERE PAGE_ID = :pageId
+`;
+
+/** 배포 완료 후 노출 시작일 및 무결성 값 갱신 — 만료일은 승인 시점에 이미 결정 */
+export const PAGE_UPDATE_DEPLOY = `
+  UPDATE SPW_CMS_PAGE
+  SET BEGINNING_DATE  = TRUNC(SYSDATE),
+      FILE_CRC_VALUE  = :fileCrcValue,
+      LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
 `;
