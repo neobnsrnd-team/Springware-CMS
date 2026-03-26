@@ -29,6 +29,7 @@ export interface DashboardPageCard {
     rejectedReason: string | null;
     hasFile: boolean;
     isExpired: boolean;
+    isPublic: string;
 }
 
 export interface DashboardClientProps {
@@ -67,6 +68,7 @@ export default function DashboardClient({
     const [search, setSearch] = useState(initialSearch);
     const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
     const [viewModeFilter, setViewModeFilter] = useState<ViewMode | null>(initialViewMode);
+    const [showExpired, setShowExpired] = useState(false);
 
     // 삭제 후 낙관적 업데이트용 로컬 페이지 목록
     const [pages, setPages] = useState<DashboardPageCard[]>(initialPages);
@@ -282,6 +284,16 @@ export default function DashboardClient({
                                 </button>
                             );
                         })}
+                        <button
+                            onClick={() => setShowExpired(!showExpired)}
+                            className={`px-[14px] py-[5px] rounded-full border text-[12px] cursor-pointer transition-all duration-150 ${
+                                showExpired
+                                    ? 'border-[#dc2626] bg-[#fef2f2] text-[#dc2626] font-semibold'
+                                    : 'border-[#e5e7eb] bg-white text-[#6b7280] font-normal'
+                            }`}
+                        >
+                            만료 포함
+                        </button>
                     </div>
 
                     {/* 검색 + 정렬 행 */}
@@ -372,55 +384,66 @@ export default function DashboardClient({
                     </div>
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 mb-8">
-                        {pages.map((page) => {
-                            return (
-                                <PageCard
-                                    key={page.id}
-                                    page={page}
-                                    onClick={() => {
-                                        if (page.isExpired) {
-                                            alert('만료된 페이지는 수정할 수 없습니다.');
-                                            return;
-                                        }
-                                        if (!page.hasFile) {
-                                            alert('페이지 파일이 로컬에 존재하지 않습니다.');
-                                            return;
-                                        }
-                                        window.location.href = `/edit?bank=${page.id}`;
-                                    }}
-                                    overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}
-                                    footerSlot={
-                                        <div
-                                            className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-1.5"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            {page.approveState === 'REJECTED' && (
-                                                <button
-                                                    onClick={() => setRejectedTarget(page)}
-                                                    className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                        {pages
+                            .filter((p) => showExpired || !p.isExpired)
+                            .map((page) => {
+                                return (
+                                    <PageCard
+                                        key={page.id}
+                                        page={page}
+                                        onClick={() => {
+                                            if (page.isExpired) {
+                                                alert('만료된 페이지는 수정할 수 없습니다.');
+                                                return;
+                                            }
+                                            if (!page.hasFile) {
+                                                alert('페이지 파일이 로컬에 존재하지 않습니다.');
+                                                return;
+                                            }
+                                            window.location.href = `/edit?bank=${page.id}`;
+                                        }}
+                                        overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}
+                                        footerSlot={
+                                            page.isExpired ? (
+                                                <div className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end">
+                                                    <span className="text-xs text-[#dc2626] font-medium">
+                                                        만료된 페이지
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-1.5"
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    반려 사유
-                                                </button>
-                                            )}
-                                            {(page.approveState === 'WORK' || page.approveState === 'REJECTED') && (
-                                                <button
-                                                    onClick={() => setApprovalTarget(page)}
-                                                    className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
-                                                >
-                                                    승인 요청
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleDeletePage(page.id, page.label)}
-                                                className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
-                                            >
-                                                삭제
-                                            </button>
-                                        </div>
-                                    }
-                                />
-                            );
-                        })}
+                                                    {page.approveState === 'REJECTED' && (
+                                                        <button
+                                                            onClick={() => setRejectedTarget(page)}
+                                                            className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                                        >
+                                                            반려 사유
+                                                        </button>
+                                                    )}
+                                                    {(page.approveState === 'WORK' ||
+                                                        page.approveState === 'REJECTED') && (
+                                                        <button
+                                                            onClick={() => setApprovalTarget(page)}
+                                                            className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                        >
+                                                            승인 요청
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeletePage(page.id, page.label)}
+                                                        className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                                    >
+                                                        삭제
+                                                    </button>
+                                                </div>
+                                            )
+                                        }
+                                    />
+                                );
+                            })}
                     </div>
                 )}
 

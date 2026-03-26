@@ -48,6 +48,8 @@ export interface PageCardPage {
     thumbnail: string | null;
     lastModifiedDtime: string | null;
     approveState: ApproveStateValue;
+    isExpired?: boolean;
+    isPublic?: string;
 }
 
 export interface PageCardProps {
@@ -117,9 +119,12 @@ export default function PageCard({ page, onClick, overlay, authorSlot, footerSlo
                     </span>
                     <span
                         className="px-2 py-0.5 rounded-[10px] text-[11px] font-semibold"
-                        style={{ background: apStyle.bg, color: apStyle.color }}
+                        style={{
+                            background: page.isExpired ? '#fef2f2' : page.isPublic === 'N' ? '#f3f4f6' : apStyle.bg,
+                            color: page.isExpired ? '#dc2626' : page.isPublic === 'N' ? '#6b7280' : apStyle.color,
+                        }}
                     >
-                        {apStyle.label}
+                        {page.isExpired ? '만료' : page.isPublic === 'N' ? '비공개' : apStyle.label}
                     </span>
                 </div>
 

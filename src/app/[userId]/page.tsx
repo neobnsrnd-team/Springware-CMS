@@ -51,6 +51,7 @@ export default async function DashboardPage({
         rejectedReason: p.REJECTED_REASON ?? null,
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
         isExpired: isPageExpired(p.IS_PUBLIC, p.EXPIRED_DATE),
+        isPublic: p.IS_PUBLIC ?? 'Y',
     }));
 
     return (

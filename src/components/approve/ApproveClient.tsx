@@ -70,6 +70,7 @@ export default function ApproveClient({
     const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
     const [approveStateFilter, setApproveStateFilter] = useState<ApproveStateFilter | null>(initialApproveState);
     const [createUserFilter, setCreateUserFilter] = useState(initialCreateUser);
+    const [showExpired, setShowExpired] = useState(true);
 
     const [pages, setPages] = useState<ApprovePageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
@@ -233,6 +234,27 @@ export default function ApproveClient({
             alert('날짜 수정에 실패했습니다.');
         } finally {
             setSavingDates(false);
+        }
+    }
+
+    // IS_PUBLIC 토글 — 비공개/공개 복원
+    async function handleSetPublic(pageId: string, isPublic: 'Y' | 'N') {
+        const actionText = isPublic === 'Y' ? '공개 복원' : '비공개 처리';
+        if (!confirm(`이 페이지를 ${actionText}하시겠습니까?`)) return;
+        try {
+            const res = await fetch(`/api/builder/pages/${pageId}/set-public`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isPublic }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                alert(data.error ?? `${actionText}에 실패했습니다.`);
+                return;
+            }
+            router.refresh();
+        } catch {
+            alert(`${actionText}에 실패했습니다.`);
         }
     }
 
@@ -445,6 +467,16 @@ export default function ApproveClient({
                                 </button>
                             );
                         })}
+                        <button
+                            onClick={() => setShowExpired(!showExpired)}
+                            className={`px-[14px] py-[5px] rounded-full border text-[12px] cursor-pointer transition-all duration-150 ${
+                                showExpired
+                                    ? 'border-[#dc2626] bg-[#fef2f2] text-[#dc2626] font-semibold'
+                                    : 'border-[#e5e7eb] bg-white text-[#6b7280] font-normal'
+                            }`}
+                        >
+                            만료 포함
+                        </button>
                     </div>
 
                     {/* 작성자 필터 태그 */}
@@ -546,119 +578,157 @@ export default function ApproveClient({
                     <div className="text-center py-20 text-[#9ca3af] text-sm">{getEmptyMessage()}</div>
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 mb-8">
-                        {pages.map((page) => {
-                            return (
-                                <PageCard
-                                    key={page.id}
-                                    page={page}
-                                    onClick={() => {
-                                        if (page.isExpired) {
-                                            alert('만료된 페이지입니다.');
-                                            return;
-                                        }
-                                        if (!page.hasFile) {
-                                            alert('페이지 파일이 로컬에 존재하지 않습니다.');
-                                            return;
-                                        }
-                                        window.open(`/view?bank=${page.id}`, '_blank');
-                                    }}
-                                    overlay={{ label: '미리보기', color: 'rgba(30,58,95,0.45)' }}
-                                    authorSlot={
-                                        <div className="flex items-center justify-between gap-1">
-                                            <span
-                                                className={`flex items-center gap-1 text-[11px] min-w-0 cursor-pointer transition-colors duration-150 ${
-                                                    createUserFilter === page.createUserName
-                                                        ? 'text-[#1e3a5f] font-semibold'
-                                                        : 'text-[#6b7280] hover:text-[#1e3a5f]'
-                                                }`}
-                                                onClick={(e) => handleCreateUserClick(e, page.createUserName)}
-                                            >
-                                                <svg
-                                                    width="11"
-                                                    height="11"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    className="shrink-0 text-[#9ca3af]"
-                                                >
-                                                    <circle
-                                                        cx="12"
-                                                        cy="8"
-                                                        r="4"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                    />
-                                                    <path
-                                                        d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        strokeLinecap="round"
-                                                    />
-                                                </svg>
-                                                <span className="truncate">{page.createUserName}</span>
-                                            </span>
-                                            <span className="text-[11px] text-[#9ca3af] shrink-0">
-                                                {formatDate(page.lastModifiedDtime)}
-                                            </span>
-                                        </div>
-                                    }
-                                    footerSlot={
-                                        page.approveState === 'PENDING' ? (
-                                            <div
-                                                className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <button
-                                                    onClick={() => handleReject(page.id)}
-                                                    className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
-                                                >
-                                                    반려
-                                                </button>
-                                                <button
-                                                    onClick={() => handleApprove(page.id)}
-                                                    className="px-2.5 py-1 rounded-md border border-[#1e3a5f] bg-[#1e3a5f] text-white text-xs cursor-pointer"
-                                                >
-                                                    승인
-                                                </button>
-                                            </div>
-                                        ) : page.approveState === 'APPROVED' ? (
-                                            <div
-                                                className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <button
-                                                    onClick={() => handleOpenDateModal(page.id)}
-                                                    className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
-                                                >
-                                                    날짜 관리
-                                                </button>
-                                                <button
-                                                    onClick={() => handleOpenHistory(page.id)}
-                                                    className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
-                                                >
-                                                    배포 이력
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeploy(page.id)}
-                                                    disabled={deploying === page.id || !page.hasFile}
-                                                    title={
-                                                        !page.hasFile
-                                                            ? '로컬 파일이 없습니다. 에디터에서 저장 후 시도해 주세요.'
-                                                            : undefined
-                                                    }
-                                                    className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${
-                                                        deploying === page.id || !page.hasFile
-                                                            ? 'border-[#d1d5db] bg-[#d1d5db] text-white cursor-not-allowed'
-                                                            : 'border-[#0046A4] bg-[#0046A4] text-white cursor-pointer'
+                        {pages
+                            .filter((p) => showExpired || !p.isExpired)
+                            .map((page) => {
+                                return (
+                                    <PageCard
+                                        key={page.id}
+                                        page={page}
+                                        onClick={() => {
+                                            if (page.isExpired) {
+                                                alert('만료된 페이지입니다.');
+                                                return;
+                                            }
+                                            if (!page.hasFile) {
+                                                alert('페이지 파일이 로컬에 존재하지 않습니다.');
+                                                return;
+                                            }
+                                            window.open(`/view?bank=${page.id}`, '_blank');
+                                        }}
+                                        overlay={{ label: '미리보기', color: 'rgba(30,58,95,0.45)' }}
+                                        authorSlot={
+                                            <div className="flex items-center justify-between gap-1">
+                                                <span
+                                                    className={`flex items-center gap-1 text-[11px] min-w-0 cursor-pointer transition-colors duration-150 ${
+                                                        createUserFilter === page.createUserName
+                                                            ? 'text-[#1e3a5f] font-semibold'
+                                                            : 'text-[#6b7280] hover:text-[#1e3a5f]'
                                                     }`}
+                                                    onClick={(e) => handleCreateUserClick(e, page.createUserName)}
                                                 >
-                                                    {deploying === page.id ? '배포 중...' : '배포'}
-                                                </button>
+                                                    <svg
+                                                        width="11"
+                                                        height="11"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        className="shrink-0 text-[#9ca3af]"
+                                                    >
+                                                        <circle
+                                                            cx="12"
+                                                            cy="8"
+                                                            r="4"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                        />
+                                                        <path
+                                                            d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                        />
+                                                    </svg>
+                                                    <span className="truncate">{page.createUserName}</span>
+                                                </span>
+                                                <span className="text-[11px] text-[#9ca3af] shrink-0">
+                                                    {formatDate(page.lastModifiedDtime)}
+                                                </span>
                                             </div>
-                                        ) : undefined
-                                    }
-                                />
-                            );
-                        })}
+                                        }
+                                        footerSlot={
+                                            page.approveState === 'PENDING' ? (
+                                                <div
+                                                    className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <button
+                                                        onClick={() => handleReject(page.id)}
+                                                        className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                                    >
+                                                        반려
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleApprove(page.id)}
+                                                        className="px-2.5 py-1 rounded-md border border-[#1e3a5f] bg-[#1e3a5f] text-white text-xs cursor-pointer"
+                                                    >
+                                                        승인
+                                                    </button>
+                                                </div>
+                                            ) : page.approveState === 'APPROVED' && page.isExpired ? (
+                                                <div
+                                                    className="px-4 py-2 border-t border-[#f3f4f6] flex items-center justify-between"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <span className="text-xs text-[#dc2626] font-medium">
+                                                        만료된 페이지
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleSetPublic(page.id, 'Y')}
+                                                        className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                    >
+                                                        공개 복원
+                                                    </button>
+                                                </div>
+                                            ) : page.approveState === 'APPROVED' && page.isPublic === 'N' ? (
+                                                <div
+                                                    className="px-4 py-2 border-t border-[#f3f4f6] flex items-center justify-between"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <span className="text-xs text-[#6b7280] font-medium">
+                                                        비공개 상태
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleSetPublic(page.id, 'Y')}
+                                                        className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                    >
+                                                        공개 복원
+                                                    </button>
+                                                </div>
+                                            ) : page.approveState === 'APPROVED' ? (
+                                                <div
+                                                    className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <button
+                                                        onClick={() => handleSetPublic(page.id, 'N')}
+                                                        className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
+                                                    >
+                                                        비공개
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenDateModal(page.id)}
+                                                        className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
+                                                    >
+                                                        날짜 관리
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenHistory(page.id)}
+                                                        className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
+                                                    >
+                                                        배포 이력
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeploy(page.id)}
+                                                        disabled={deploying === page.id || !page.hasFile}
+                                                        title={
+                                                            !page.hasFile
+                                                                ? '로컬 파일이 없습니다. 에디터에서 저장 후 시도해 주세요.'
+                                                                : undefined
+                                                        }
+                                                        className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${
+                                                            deploying === page.id || !page.hasFile
+                                                                ? 'border-[#d1d5db] bg-[#d1d5db] text-white cursor-not-allowed'
+                                                                : 'border-[#0046A4] bg-[#0046A4] text-white cursor-pointer'
+                                                        }`}
+                                                    >
+                                                        {deploying === page.id ? '배포 중...' : '배포'}
+                                                    </button>
+                                                </div>
+                                            ) : undefined
+                                        }
+                                    />
+                                );
+                            })}
                     </div>
                 )}
 
