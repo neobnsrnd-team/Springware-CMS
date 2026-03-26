@@ -1375,7 +1375,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                                 .replace(/url\('assets\//g, "url('/assets/")
                                 .replace(/url\(assets\//g, 'url(/assets/'),
                             viewMode: c.viewMode as BasicBlock['viewMode'],
-                            label: c.label,
+                            label: c.label || undefined,
                         }),
                     );
                     setBasicBlocks(blocks);
