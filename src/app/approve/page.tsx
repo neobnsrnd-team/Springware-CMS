@@ -59,6 +59,7 @@ export default async function ApprovePage({
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
         isPublic: p.IS_PUBLIC ?? 'Y',
+        beginningDate: p.BEGINNING_DATE ? new Date(p.BEGINNING_DATE).toISOString() : null,
         expiredDate: p.EXPIRED_DATE ? new Date(p.EXPIRED_DATE).toISOString() : null,
         isExpired: isPageExpired(p.IS_PUBLIC, p.EXPIRED_DATE),
     }));

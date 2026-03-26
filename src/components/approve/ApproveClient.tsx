@@ -27,6 +27,7 @@ export interface ApprovePageCard {
     createUserName: string;
     hasFile: boolean;
     isPublic: string;
+    beginningDate: string | null;
     expiredDate: string | null;
     isExpired: boolean;
 }
@@ -80,8 +81,15 @@ export default function ApproveClient({
 
     // 승인 모달 상태
     const [approveModalPageId, setApproveModalPageId] = useState<string | null>(null);
+    const [beginningDate, setBeginningDate] = useState('');
     const [expiredDate, setExpiredDate] = useState('');
     const [approving, setApproving] = useState(false);
+
+    // 날짜 관리 모달 상태
+    const [dateModalPageId, setDateModalPageId] = useState<string | null>(null);
+    const [editBeginningDate, setEditBeginningDate] = useState('');
+    const [editExpiredDate, setEditExpiredDate] = useState('');
+    const [savingDates, setSavingDates] = useState(false);
 
     // 배포 상태
     const [deploying, setDeploying] = useState<string | null>(null); // 배포 중인 pageId
@@ -188,6 +196,46 @@ export default function ApproveClient({
         navigate({ page: 1, search, sortBy, createUser: '' });
     }
 
+    // 날짜 관리 모달 열기
+    function handleOpenDateModal(pageId: string) {
+        const target = pages.find((p) => p.id === pageId);
+        setDateModalPageId(pageId);
+        setEditBeginningDate(target?.beginningDate?.split('T')[0] ?? '');
+        setEditExpiredDate(target?.expiredDate?.split('T')[0] ?? '');
+    }
+
+    // 날짜 관리 저장
+    async function handleSaveDates() {
+        if (!dateModalPageId || savingDates) return;
+        if (editBeginningDate && editExpiredDate && editBeginningDate > editExpiredDate) {
+            alert('시작일은 만료일보다 이전이어야 합니다.');
+            return;
+        }
+        setSavingDates(true);
+        try {
+            const res = await fetch(`/api/builder/pages/${dateModalPageId}/update-dates`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    beginningDate: editBeginningDate || null,
+                    expiredDate: editExpiredDate || null,
+                }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                alert(data.error ?? '날짜 수정에 실패했습니다.');
+                return;
+            }
+            setDateModalPageId(null);
+            router.refresh();
+        } catch (err: unknown) {
+            console.error('날짜 수정 오류:', err);
+            alert('날짜 수정에 실패했습니다.');
+        } finally {
+            setSavingDates(false);
+        }
+    }
+
     // 페이지 이동
     function handlePageChange(page: number) {
         navigate({ page, search, sortBy });
@@ -196,6 +244,10 @@ export default function ApproveClient({
     // 승인 모달 열기
     function handleApprove(pageId: string) {
         setApproveModalPageId(pageId);
+        const d = new Date();
+        setBeginningDate(
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+        );
         setExpiredDate('');
     }
 
@@ -209,6 +261,7 @@ export default function ApproveClient({
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    beginningDate: beginningDate || null,
                     expiredDate: expiredDate || null,
                 }),
             });
@@ -573,6 +626,12 @@ export default function ApproveClient({
                                                 onClick={(e) => e.stopPropagation()}
                                             >
                                                 <button
+                                                    onClick={() => handleOpenDateModal(page.id)}
+                                                    className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
+                                                >
+                                                    날짜 관리
+                                                </button>
+                                                <button
                                                     onClick={() => handleOpenHistory(page.id)}
                                                     className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
                                                 >
@@ -743,6 +802,34 @@ export default function ApproveClient({
                                 </div>
                             )}
 
+                            {/* 시작일 입력 */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                                    시작일 <span className="text-[#9ca3af] font-normal">(선택)</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        value={beginningDate}
+                                        onChange={(e) => setBeginningDate(e.target.value)}
+                                        onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none pr-9 cursor-pointer"
+                                    />
+                                    {beginningDate && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setBeginningDate('')}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full border-0 bg-transparent text-[#9ca3af] text-sm cursor-pointer hover:bg-[#f3f4f6] hover:text-[#374151]"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">
+                                    페이지 노출 시작일입니다. 기본값은 오늘입니다.
+                                </p>
+                            </div>
+
                             {/* 만료일 입력 */}
                             <div className="mb-5">
                                 <label className="block text-sm font-medium text-[#374151] mb-1.5">
@@ -752,7 +839,7 @@ export default function ApproveClient({
                                     <input
                                         type="date"
                                         value={expiredDate}
-                                        min={new Date().toISOString().split('T')[0]}
+                                        min={beginningDate || undefined}
                                         onChange={(e) => setExpiredDate(e.target.value)}
                                         onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                                         className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none pr-9 cursor-pointer"
@@ -770,6 +857,11 @@ export default function ApproveClient({
                                 <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">
                                     설정하지 않으면 만료일 없이 승인됩니다.
                                 </p>
+                                {beginningDate && expiredDate && beginningDate > expiredDate && (
+                                    <p className="m-0 mt-1 text-[12px] text-[#dc2626] font-medium">
+                                        시작일은 만료일보다 이전이어야 합니다.
+                                    </p>
+                                )}
                             </div>
 
                             {/* 버튼 */}
@@ -782,9 +874,13 @@ export default function ApproveClient({
                                 </button>
                                 <button
                                     onClick={handleApproveConfirm}
-                                    disabled={approving}
+                                    disabled={
+                                        approving || (!!beginningDate && !!expiredDate && beginningDate > expiredDate)
+                                    }
                                     className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                        approving ? 'bg-[#d1d5db] cursor-not-allowed' : 'bg-[#1e3a5f] cursor-pointer'
+                                        approving || (!!beginningDate && !!expiredDate && beginningDate > expiredDate)
+                                            ? 'bg-[#d1d5db] cursor-not-allowed'
+                                            : 'bg-[#1e3a5f] cursor-pointer'
                                     }`}
                                 >
                                     {approving ? '처리 중...' : '승인 확정'}
@@ -793,6 +889,72 @@ export default function ApproveClient({
                         </Modal>
                     );
                 })()}
+            {/* ── 날짜 관리 모달 ── */}
+            {dateModalPageId && (
+                <Modal
+                    title="날짜 관리"
+                    onClose={() => setDateModalPageId(null)}
+                    showCloseButton={false}
+                    width="420px"
+                    className="p-8"
+                >
+                    {/* 시작일 */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-[#374151] mb-1.5">시작일</label>
+                        <input
+                            type="date"
+                            value={editBeginningDate}
+                            onChange={(e) => setEditBeginningDate(e.target.value)}
+                            onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                            className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none cursor-pointer"
+                        />
+                    </div>
+
+                    {/* 만료일 */}
+                    <div className="mb-5">
+                        <label className="block text-sm font-medium text-[#374151] mb-1.5">만료일</label>
+                        <input
+                            type="date"
+                            value={editExpiredDate}
+                            min={editBeginningDate || undefined}
+                            onChange={(e) => setEditExpiredDate(e.target.value)}
+                            onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                            className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none cursor-pointer"
+                        />
+                        {editBeginningDate && editExpiredDate && editBeginningDate > editExpiredDate && (
+                            <p className="m-0 mt-1 text-[12px] text-[#dc2626] font-medium">
+                                시작일은 만료일보다 이전이어야 합니다.
+                            </p>
+                        )}
+                    </div>
+
+                    {/* 버튼 */}
+                    <div className="flex justify-end gap-2">
+                        <button
+                            onClick={() => setDateModalPageId(null)}
+                            className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
+                        >
+                            취소
+                        </button>
+                        <button
+                            onClick={handleSaveDates}
+                            disabled={
+                                savingDates ||
+                                (!!editBeginningDate && !!editExpiredDate && editBeginningDate > editExpiredDate)
+                            }
+                            className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
+                                savingDates ||
+                                (!!editBeginningDate && !!editExpiredDate && editBeginningDate > editExpiredDate)
+                                    ? 'bg-[#d1d5db] cursor-not-allowed'
+                                    : 'bg-[#1e3a5f] cursor-pointer'
+                            }`}
+                        >
+                            {savingDates ? '저장 중...' : '저장'}
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
             {/* ── 배포 이력 모달 ── */}
             {historyModalPageId &&
                 (() => {

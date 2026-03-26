@@ -20,6 +20,7 @@ import {
     PAGE_HARD_DELETE,
     COMP_MAP_DELETE_BY_PAGE,
     PAGE_RESET_TO_WORK,
+    PAGE_UPDATE_DATES,
     PAGE_SELECT_EXPIRED,
     PAGE_UPDATE_IS_PUBLIC,
     PAGE_EXPIRE,
@@ -188,6 +189,7 @@ export async function updateApproveState(input: {
     approverId?: string;
     approverName?: string;
     rejectedReason?: string;
+    beginningDate?: string | null;
     expiredDate?: string | null;
     lastModifierId: string;
 }): Promise<{ version?: number }> {
@@ -199,6 +201,7 @@ export async function updateApproveState(input: {
             approverId: input.approverId ?? null,
             approverName: input.approverName ?? null,
             rejectedReason: clobBind(input.rejectedReason ?? null),
+            beginningDate: input.beginningDate ?? null,
             expiredDate: input.expiredDate ?? null,
             lastModifierId: input.lastModifierId,
         });
@@ -358,6 +361,23 @@ export async function getHistoryList(
 export async function resetApproveStateToWork(pageId: string, lastModifierId: string): Promise<void> {
     await withTransaction(async (conn) => {
         await conn.execute(PAGE_RESET_TO_WORK, { pageId, lastModifierId });
+    });
+}
+
+/** 승인된 페이지 시작일/만료일 수정 — 관리자 날짜 관리 */
+export async function updatePageDates(
+    pageId: string,
+    beginningDate: string | null,
+    expiredDate: string | null,
+    lastModifierId: string,
+): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_UPDATE_DATES, {
+            pageId,
+            beginningDate: beginningDate ?? null,
+            expiredDate: expiredDate ?? null,
+            lastModifierId,
+        });
     });
 }
 

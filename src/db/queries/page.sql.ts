@@ -96,9 +96,20 @@ export const PAGE_UPDATE_APPROVE_STATE = `
       APPROVER_NAME = :approverName,
       APPROVE_DATE = SYSTIMESTAMP,
       REJECTED_REASON = :rejectedReason,
+      BEGINNING_DATE = TO_DATE(:beginningDate, 'YYYY-MM-DD'),
       EXPIRED_DATE = TO_DATE(:expiredDate, 'YYYY-MM-DD'),
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
+`;
+
+/** 승인된 페이지 시작일/만료일 수정 — 관리자 날짜 관리 */
+export const PAGE_UPDATE_DATES = `
+  UPDATE SPW_CMS_PAGE
+  SET BEGINNING_DATE = TO_DATE(:beginningDate, 'YYYY-MM-DD'),
+      EXPIRED_DATE = TO_DATE(:expiredDate, 'YYYY-MM-DD'),
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+    AND APPROVE_STATE = 'APPROVED'
 `;
 
 /** 재수정 시 APPROVE_STATE → WORK 전환 (APPROVED/REJECTED만 대상) */
@@ -156,11 +167,10 @@ export const COMP_MAP_DELETE_BY_PAGE = `
   WHERE PAGE_ID = :pageId
 `;
 
-/** 배포 완료 후 노출 시작일 및 무결성 값 갱신 — 만료일은 승인 시점에 이미 결정 */
+/** 배포 완료 후 무결성 값 갱신 — 시작일/만료일은 승인 시점에 이미 설정 */
 export const PAGE_UPDATE_DEPLOY = `
   UPDATE SPW_CMS_PAGE
-  SET BEGINNING_DATE  = TRUNC(SYSDATE),
-      FILE_CRC_VALUE  = :fileCrcValue,
+  SET FILE_CRC_VALUE  = :fileCrcValue,
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
 `;
