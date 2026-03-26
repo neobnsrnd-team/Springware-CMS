@@ -169,7 +169,7 @@ const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon
     responsive: { label: '반응형', maxWidth: '100%', icon: '🔄' },
 };
 
-export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
+export default function EditClient({ bank = 'ibk', userId }: { bank?: string; userId: string }) {
     const builderRef = useRef<ContentBuilder | null>(null); // ContentBuilder 인스턴스
     const runtimeRef = useRef<ContentBuilderRuntime | null>(null); // Runtime 인스턴스
     const [containerOpacity, setContainerOpacity] = useState(0);
@@ -215,14 +215,12 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         financeComponentsMapRef.current = financeComponentsMap;
     }, [financeComponentsMap]);
 
-    // 세션 스토리지 탭 목록 키
-    const SESSION_TABS_KEY = 'cms_editor_tabs';
+    // 세션 스토리지 탭 목록 키 — 사용자별 분리
+    const SESSION_TABS_KEY = `cms_editor_tabs_${userId}`;
 
     // 세션 기반 탭 목록 (현재 세션에서 열어본 페이지만 표시)
     const [tabs, setTabs] = useState<TabData[]>([]);
     const [tabsLoading, setTabsLoading] = useState(true);
-    // 현재 사용자 ID (로그인 미구현 상태에서 'system' 고정)
-    const [currentUserId] = useState('system');
     // 탭 추가 인라인 입력 표시 여부
     const [showAddTab, setShowAddTab] = useState(false);
     // 탭 이름 입력값
@@ -1607,7 +1605,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
     function handleAddTab() {
         const label = newTabName.trim();
         if (!label) return;
-        const id = `${currentUserId}-${Date.now()}`;
+        const id = `${userId}-${Date.now()}`;
         const selectedViewMode = newTabViewMode;
 
         // 새 캔버스 기본 콘텐츠: 상단 네비게이션(app-header) 컴포넌트
@@ -1642,7 +1640,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             window.location.href = `/edit?bank=${remaining[0].id}`;
         } else {
             // 탭이 없으면 대시보드로 이동
-            window.location.href = `/${currentUserId}`;
+            window.location.href = `/${userId}`;
         }
     }
 
@@ -1667,7 +1665,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
         // 삭제 후 탭 제거 후 이동
         const remaining = tabs.filter((t) => t.id !== bank);
         setTabs(remaining);
-        window.location.href = remaining.length > 0 ? `/edit?bank=${remaining[0].id}` : `/${currentUserId}`;
+        window.location.href = remaining.length > 0 ? `/edit?bank=${remaining[0].id}` : `/${userId}`;
     }
 
     // ── 저장 / 미리보기 / HTML 보기 ──────────────────────────────────────
@@ -1791,7 +1789,7 @@ export default function EditClient({ bank = 'ibk' }: { bank?: string }) {
             >
                 {/* 대시보드 이동 버튼 */}
                 <a
-                    href={`/${currentUserId}`}
+                    href={`/${userId}`}
                     title="대시보드로 돌아가기"
                     style={{
                         display: 'inline-flex',
