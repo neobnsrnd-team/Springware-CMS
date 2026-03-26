@@ -28,6 +28,7 @@ export interface ApprovePageCard {
     hasFile: boolean;
     isPublic: string;
     expiredDate: string | null;
+    isExpired: boolean;
 }
 
 export interface ApproveClientProps {
@@ -498,6 +499,10 @@ export default function ApproveClient({
                                     key={page.id}
                                     page={page}
                                     onClick={() => {
+                                        if (page.isExpired) {
+                                            alert('만료된 페이지입니다.');
+                                            return;
+                                        }
                                         if (!page.hasFile) {
                                             alert('페이지 파일이 로컬에 존재하지 않습니다.');
                                             return;

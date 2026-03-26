@@ -5,6 +5,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
+import { isPageExpired } from '@/lib/page-file';
 import ApproveClient from '@/components/approve/ApproveClient';
 import type { ApproveState, ViewMode } from '@/db/types';
 
@@ -59,6 +60,7 @@ export default async function ApprovePage({
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
         isPublic: p.IS_PUBLIC ?? 'Y',
         expiredDate: p.EXPIRED_DATE ? new Date(p.EXPIRED_DATE).toISOString() : null,
+        isExpired: isPageExpired(p.IS_PUBLIC, p.EXPIRED_DATE),
     }));
 
     return (

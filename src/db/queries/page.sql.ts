@@ -101,6 +101,15 @@ export const PAGE_UPDATE_APPROVE_STATE = `
   WHERE PAGE_ID = :pageId
 `;
 
+/** 재수정 시 APPROVE_STATE → WORK 전환 (APPROVED/REJECTED만 대상) */
+export const PAGE_RESET_TO_WORK = `
+  UPDATE SPW_CMS_PAGE
+  SET APPROVE_STATE = 'WORK',
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+    AND APPROVE_STATE IN ('APPROVED', 'REJECTED')
+`;
+
 /** 만료 페이지 조회 — EXPIRED_DATE 경과 + 공개 + 사용 중인 페이지 */
 export const PAGE_SELECT_EXPIRED = `
   SELECT *

@@ -38,6 +38,12 @@ export async function deletePageHtml(filePath: string): Promise<void> {
     }
 }
 
+/** 만료 여부 판단 — IS_PUBLIC='N' + EXPIRED_DATE 경과 */
+export function isPageExpired(isPublic: string | null, expiredDate: Date | string | null): boolean {
+    if (isPublic !== 'N' || expiredDate == null) return false;
+    return new Date(expiredDate) < new Date();
+}
+
 /** 썸네일 파일 삭제. 파일 없으면(ENOENT) 무시, 그 외 에러는 rethrow. */
 export async function deletePageThumbnail(pageId: string): Promise<void> {
     const fullPath = path.join(PAGES_DIR, 'thumbnails', `${pageId}_thumb.jpg`);

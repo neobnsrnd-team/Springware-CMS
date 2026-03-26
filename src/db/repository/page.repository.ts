@@ -19,6 +19,7 @@ import {
     PAGE_SOFT_DELETE,
     PAGE_HARD_DELETE,
     COMP_MAP_DELETE_BY_PAGE,
+    PAGE_RESET_TO_WORK,
     PAGE_SELECT_EXPIRED,
     PAGE_UPDATE_IS_PUBLIC,
     PAGE_EXPIRE,
@@ -347,6 +348,17 @@ export async function getHistoryList(
     } finally {
         await conn.close();
     }
+}
+
+// ═══════════════════════════════════════════════
+// 상태 전환
+// ═══════════════════════════════════════════════
+
+/** 재수정 시 APPROVE_STATE → WORK 전환 (APPROVED/REJECTED만 대상, 그 외 무시) */
+export async function resetApproveStateToWork(pageId: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_RESET_TO_WORK, { pageId, lastModifierId });
+    });
 }
 
 // ═══════════════════════════════════════════════

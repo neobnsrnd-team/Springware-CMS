@@ -6,6 +6,7 @@ import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
+import { isPageExpired } from '@/lib/page-file';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ViewMode } from '@/db/types';
 
@@ -49,6 +50,7 @@ export default async function DashboardPage({
         approveState: p.APPROVE_STATE,
         rejectedReason: p.REJECTED_REASON ?? null,
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
+        isExpired: isPageExpired(p.IS_PUBLIC, p.EXPIRED_DATE),
     }));
 
     return (
