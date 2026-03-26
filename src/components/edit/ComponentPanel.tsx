@@ -456,7 +456,7 @@ export default function ComponentPanel({
                                             </div>
 
                                             {/* 편집 버튼 — 플러그인 방식(data-cb-type) 컴포넌트만 표시 */}
-                                            {comp.html.includes('data-cb-type') && (
+                                            {/data-cb-type\s*=/.test(comp.html) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
