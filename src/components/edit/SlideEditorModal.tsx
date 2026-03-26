@@ -201,7 +201,12 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
     const componentId = blockEl.getAttribute('data-component-id') ?? '';
     const isPromoBanner = componentId.startsWith('promo-banner-');
 
-    const [promoSlides, setPromoSlides] = useState<PromoBannerSlide[]>(() => parsePromoBannerSlides(blockEl));
+    // 모달 열릴 때 DOM 스냅샷 저장 (취소 시 복원용)
+    const snapshot = useRef('');
+    const [promoSlides, setPromoSlides] = useState<PromoBannerSlide[]>(() => {
+        snapshot.current = blockEl.innerHTML;
+        return parsePromoBannerSlides(blockEl);
+    });
     const [productCards, setProductCards] = useState<ProductGalleryCard[]>(() => parseProductGalleryCards(blockEl));
 
     const [pos, setPos] = useState(() => ({
@@ -248,12 +253,23 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
         };
     }, []);
 
+    // 상태 변경 시 DOM 즉시 반영 (실시간 미리보기)
+    useEffect(() => {
+        if (isPromoBanner) applyPromoBannerSlides(blockEl, promoSlides);
+    }, [blockEl, isPromoBanner, promoSlides]);
+
+    useEffect(() => {
+        if (!isPromoBanner) applyProductGalleryCards(blockEl, productCards, componentId);
+    }, [blockEl, componentId, isPromoBanner, productCards]);
+
+    // 확인: DOM이 이미 반영된 상태이므로 그냥 닫기
     function handleConfirm() {
-        if (isPromoBanner) {
-            applyPromoBannerSlides(blockEl, promoSlides);
-        } else {
-            applyProductGalleryCards(blockEl, productCards, componentId);
-        }
+        onClose();
+    }
+
+    // 취소: 스냅샷으로 DOM 복원 후 닫기
+    function handleCancel() {
+        blockEl.innerHTML = snapshot.current;
         onClose();
     }
 
@@ -296,7 +312,7 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
             >
                 <span style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>{title}</span>
                 <button
-                    onClick={onClose}
+                    onClick={handleCancel}
                     style={{
                         width: 24,
                         height: 24,
@@ -343,7 +359,7 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
                 }}
             >
                 <button
-                    onClick={onClose}
+                    onClick={handleCancel}
                     style={{
                         padding: '7px 16px',
                         border: '1px solid #d1d5db',
