@@ -141,7 +141,7 @@ function applyProductGalleryCards(root: HTMLElement, cards: ProductGalleryCard[]
 
 const DEFAULT_SLIDE: PromoBannerSlide = {
     itemId: '',
-    bgColor: 'linear-gradient(135deg,#0046A4 0%,#0066CC 100%)',
+    bgColor: '#0046A4',
     badge: '이벤트',
     title: '새 배너 제목',
     desc: '배너 설명을 입력하세요',
@@ -178,15 +178,15 @@ const LBL: React.CSSProperties = { fontSize: '11px', fontWeight: 600, color: '#6
 // ── 배경색 프리셋 ─────────────────────────────────────────────────────────
 
 const BG_PRESETS = [
-    { label: 'IBK 블루', value: 'linear-gradient(135deg,#0046A4 0%,#0066CC 100%)' },
-    { label: '하나 초록', value: 'linear-gradient(135deg,#007D5A 0%,#00A878 100%)' },
-    { label: 'KB 노랑', value: 'linear-gradient(135deg,#C89600 0%,#F0B50A 100%)' },
-    { label: '신한 파랑', value: 'linear-gradient(135deg,#004A99 0%,#0066BB 100%)' },
-    { label: '우리 주황', value: 'linear-gradient(135deg,#E05500 0%,#FF6B00 100%)' },
-    { label: '보라', value: 'linear-gradient(135deg,#6B21A8 0%,#9333EA 100%)' },
-    { label: '분홍', value: 'linear-gradient(135deg,#9D174D 0%,#DB2777 100%)' },
-    { label: '진회색', value: 'linear-gradient(135deg,#1F2937 0%,#374151 100%)' },
-    { label: '에메랄드', value: 'linear-gradient(135deg,#065F46 0%,#059669 100%)' },
+    { label: 'IBK 블루', value: '#0046A4' },
+    { label: '하나 초록', value: '#008B5E' },
+    { label: 'KB 노랑', value: '#F0B50A' },
+    { label: '신한 파랑', value: '#005BAC' },
+    { label: '우리 하늘', value: '#0070C0' },
+    { label: '보라', value: '#6B21A8' },
+    { label: '분홍', value: '#DB2777' },
+    { label: '진회색', value: '#1F2937' },
+    { label: '에메랄드', value: '#059669' },
 ];
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────
