@@ -4,6 +4,7 @@ import { readFile, access } from 'fs/promises';
 import path from 'path';
 
 import { NextRequest } from 'next/server';
+import oracledb from 'oracledb';
 
 import { getConnection } from '@/db/connection';
 import { PAGE_SELECT_BY_ID } from '@/db/queries/page.sql';
@@ -12,13 +13,112 @@ import { updatePageDeploy } from '@/db/repository/page.repository';
 import type { CmsPage } from '@/db/types';
 import { getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
-import oracledb from 'oracledb';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+
+const CMS_BASE_URL = process.env.CMS_BASE_URL || 'http://localhost:3000';
 
 /** CRC32 대신 SHA-256 앞 16자리로 무결성 값 생성 */
 function calcCrc(content: string): string {
     return createHash('sha256').update(content, 'utf8').digest('hex').slice(0, 16);
+}
+
+// 배포 HTML 렌더링에 필요한 레이아웃 CSS (globals.css 56~106행)
+const LAYOUT_CSS = `
+.is-container [data-cb-type] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.is-container .is-col:has(> [data-cb-type]),
+.is-container .column:has(> [data-cb-type]),
+.is-container [class*="col"]:has(> [data-cb-type]),
+.is-container .column.spw-finance-col {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+}
+.is-container .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+`;
+
+/** HTML 프래그먼트 → 완전한 HTML 문서로 조립 (CSS 인라인 + 경로 치환 + 트래커 포함) */
+async function buildDeployHtml(fragment: string, pageId: string, pageName: string): Promise<string> {
+    // 1. ContentBuilder 런타임 CSS 읽기
+    let runtimeCss = '';
+    try {
+        const cssPath = path.join(
+            process.cwd(),
+            'node_modules',
+            '@innovastudio',
+            'contentbuilder-runtime',
+            'dist',
+            'contentbuilder-runtime.css',
+        );
+        runtimeCss = await readFile(cssPath, 'utf8');
+    } catch {
+        throw new Error('ContentBuilder 런타임 CSS를 찾을 수 없습니다. npm install을 확인해주세요.');
+    }
+
+    // 2. 에셋 경로 치환 — CMS 서버 절대 URL로 변환
+    const html = fragment
+        .replace(/src="\/(assets|uploads)\//g, `src="${CMS_BASE_URL}/$1/`)
+        .replace(/url\((['"]?)\/(assets|uploads)\//g, `url($1${CMS_BASE_URL}/$2/`);
+
+    // 3. 완전한 HTML 문서 조립
+    return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>${pageName}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>${runtimeCss}</style>
+    <style>${LAYOUT_CSS}</style>
+</head>
+<body class="is-container">
+${html}
+    <script src="${CMS_BASE_URL}/runtime/contentbuilder-runtime.min.js"></script>
+    <script>
+    // ContentBuilder 런타임 초기화 — 플러그인 동적 로드 + mount
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof ContentBuilderRuntime === 'undefined') return;
+        var base = '${CMS_BASE_URL}';
+        var pluginNames = [
+            'logo-loop','click-counter','card-list','accordion','hero-animation',
+            'animated-stats','timeline','before-after-slider','more-info','social-share',
+            'pendulum','browser-mockup','hero-background','cta-buttons',
+            'media-slider','media-grid','particle-constellation','vector-force',
+            'aurora-glow','simple-stats','faq','callout-box','code','video-embed',
+            'swiper-slider','exchange-board','loan-calculator'
+        ];
+        var plugins = {};
+        pluginNames.forEach(function(name) {
+            plugins[name] = {
+                url: base + '/assets/plugins/' + name + '/index.js',
+                css: base + '/assets/plugins/' + name + '/style.css'
+            };
+        });
+        var runtime = new ContentBuilderRuntime({ plugins: plugins });
+        runtime.init();
+
+        // 인라인 스크립트 재실행 (dangerouslySetInnerHTML과 동일 이슈)
+        document.querySelectorAll('[data-spw-block] script').forEach(function(oldScript) {
+            var newScript = document.createElement('script');
+            newScript.textContent = oldScript.textContent;
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+    });
+    </script>
+    <script src="${CMS_BASE_URL}/cms-tracker.js" data-page-id="${pageId}" data-cms-url="${CMS_BASE_URL}"></script>
+</body>
+</html>`;
 }
 
 /** 배포 대상 서버로 HTML + 트래커 JS 전송 */
@@ -80,11 +180,9 @@ export async function POST(req: NextRequest) {
         }
         const rawHtml = await readFile(absolutePath, 'utf8');
 
-        // 트래킹 스크립트 태그 주입 — 배포 HTML에 조회/클릭 추적 삽입
-        const trackerTag = `<script src="/cms-tracker.js" data-page-id="${pageId}"></script>`;
-        const html = rawHtml.includes('</body>')
-            ? rawHtml.replace('</body>', `${trackerTag}\n</body>`)
-            : `${rawHtml}\n${trackerTag}`;
+        // 프래그먼트 → 완전한 HTML 문서 조립 (CSS 인라인 + 경로 치환 + 트래커 포함)
+        const pageName = page.PAGE_NAME ?? pageId;
+        const html = await buildDeployHtml(rawHtml, pageId, pageName);
 
         const crcValue = calcCrc(html);
 
