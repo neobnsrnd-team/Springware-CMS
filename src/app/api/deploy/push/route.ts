@@ -68,8 +68,8 @@ async function buildDeployHtml(fragment: string, pageId: string, pageName: strin
     // 2. 에셋 경로 치환 — CMS 서버 절대 URL로 변환
     // 선행 슬래시 유무·역슬래시(Windows) 모두 처리
     const html = fragment
-        .replace(/src="\/?(assets|uploads)[/\\]/g, `src="${CMS_BASE_URL}/$1/`)
-        .replace(/url\((['"]?)\/?(assets|uploads)[/\\]/g, `url($1${CMS_BASE_URL}/$2/`);
+        .replace(/src="\/?(assets|uploads)[\/\\]/g, `src="${CMS_BASE_URL}/$1/`)
+        .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${CMS_BASE_URL}/$2/`);
 
     // 3. 완전한 HTML 문서 조립
     return `<!DOCTYPE html>
