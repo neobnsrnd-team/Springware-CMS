@@ -3,7 +3,7 @@
 
 import { NextRequest } from 'next/server';
 
-import { getAbGroup, setAbGroup, clearAbGroup, clearPageAbGroup } from '@/db/repository/page.repository';
+import { getAbGroup, setAbGroupForPages, clearAbGroup, clearPageAbGroup } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
@@ -66,13 +66,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 각 페이지 그룹 설정
+        // 단일 트랜잭션으로 모든 페이지 그룹 설정 (원자성 보장)
         // SQL WHERE 조건: AB_GROUP_ID IS NULL OR AB_GROUP_ID = :groupId 으로 타 그룹 덮어쓰기 방지
-        const results: { pageId: string; updated: boolean }[] = [];
-        for (const { pageId, weight } of pages) {
-            const rowsAffected = await setAbGroup(pageId, groupId, weight, userId);
-            results.push({ pageId, updated: rowsAffected > 0 });
-        }
+        const results = await setAbGroupForPages(pages, groupId, userId);
 
         const rejected = results.filter((r) => !r.updated).map((r) => r.pageId);
         if (rejected.length > 0) {

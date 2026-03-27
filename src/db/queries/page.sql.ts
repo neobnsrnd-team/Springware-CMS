@@ -178,14 +178,6 @@ export const PAGE_SELECT_AB_GROUP = `
   ORDER BY AB_WEIGHT DESC NULLS LAST
 `;
 
-/** A/B 그룹 ID 존재 여부 확인 (중복 생성 방지) */
-export const PAGE_CHECK_AB_GROUP_EXISTS = `
-  SELECT COUNT(*) AS CNT
-  FROM SPW_CMS_PAGE
-  WHERE AB_GROUP_ID = :groupId
-    AND USE_YN = 'Y'
-`;
-
 /** 페이지 A/B 그룹 설정 (가중치 포함) */
 export const PAGE_UPDATE_AB_GROUP = `
   UPDATE SPW_CMS_PAGE
@@ -214,17 +206,6 @@ export const PAGE_CLEAR_PAGE_AB_GROUP = `
       AB_WEIGHT        = NULL,
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
-`;
-
-/** Winner 승격 — Winner 외 페이지의 AB_GROUP_ID, AB_WEIGHT를 NULL로 초기화 */
-export const PAGE_PROMOTE_WINNER = `
-  UPDATE SPW_CMS_PAGE
-  SET AB_GROUP_ID      = NULL,
-      AB_WEIGHT        = NULL,
-      LAST_MODIFIER_ID = :lastModifierId
-  WHERE AB_GROUP_ID = :groupId
-    AND PAGE_ID     <> :winnerPageId
-    AND USE_YN      = 'Y'
 `;
 
 /** 배포 완료 후 무결성 값 갱신 — 시작일/만료일은 승인 시점에 이미 설정 */

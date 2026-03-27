@@ -1,8 +1,10 @@
 // src/app/ab/page.tsx
 // A/B 테스트 관리 대시보드 — 그룹 목록 조회 및 관리
 
+export const dynamic = 'force-dynamic';
+
 import { getPageList } from '@/db/repository/page.repository';
-import { getViewCountByPage, getClickCountByPage } from '@/db/repository/page-view-log.repository';
+import { getViewCountsByPages, getClickCountsByPages } from '@/db/repository/page-view-log.repository';
 import AbTestClient from '@/components/ab/AbTestClient';
 import type { ViewMode } from '@/db/types';
 import type { AbGroupInfo, AbPageCard } from '@/components/ab/AbTestClient';
@@ -14,27 +16,26 @@ export default async function AbTestPage() {
         pageSize: 500,
     });
 
-    // 페이지 카드 정보 + 조회/클릭 수 조회 (병렬)
-    const pages: AbPageCard[] = await Promise.all(
-        list.map(async (p) => {
-            const [viewCount, clickCount] = await Promise.all([
-                getViewCountByPage(p.PAGE_ID),
-                getClickCountByPage(p.PAGE_ID),
-            ]);
-            return {
-                id: p.PAGE_ID,
-                label: p.PAGE_NAME,
-                viewMode: (p.VIEW_MODE ?? 'mobile') as ViewMode,
-                thumbnail: p.THUMBNAIL ?? null,
-                lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
-                approveState: p.APPROVE_STATE,
-                abGroupId: p.AB_GROUP_ID ?? null,
-                abWeight: p.AB_WEIGHT ?? null,
-                viewCount,
-                clickCount,
-            };
-        }),
-    );
+    const pageIds = list.map((p) => p.PAGE_ID);
+
+    // 조회수/클릭수 일괄 조회 — N+1 방지
+    const [viewCountsMap, clickCountsMap] = await Promise.all([
+        getViewCountsByPages(pageIds),
+        getClickCountsByPages(pageIds),
+    ]);
+
+    const pages: AbPageCard[] = list.map((p) => ({
+        id: p.PAGE_ID,
+        label: p.PAGE_NAME,
+        viewMode: (p.VIEW_MODE ?? 'mobile') as ViewMode,
+        thumbnail: p.THUMBNAIL ?? null,
+        lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
+        approveState: p.APPROVE_STATE,
+        abGroupId: p.AB_GROUP_ID ?? null,
+        abWeight: p.AB_WEIGHT ?? null,
+        viewCount: viewCountsMap.get(p.PAGE_ID) ?? 0,
+        clickCount: clickCountsMap.get(p.PAGE_ID) ?? 0,
+    }));
 
     // A/B 그룹 목록 구성 — AB_GROUP_ID 기준 그룹핑
     const groupMap = new Map<string, AbGroupInfo>();

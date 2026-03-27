@@ -5,8 +5,11 @@ import { useState, useTransition, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
-import { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard';
+import { VIEW_MODE_STYLE } from '@/components/ui/PageCard';
 import type { ViewMode } from '@/components/ui/PageCard';
+
+// 그룹 페이지 구분 색상 팔레트
+const GROUP_COLORS = ['#0046A4', '#008C6A', '#b45309', '#dc2626', '#6d28d9'];
 
 // ── 타입 ──
 
@@ -145,10 +148,15 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
     const handleClearGroup = async (groupId: string) => {
         if (!confirm(`그룹 '${groupId}'를 해제하시겠습니까?\n그룹 내 모든 페이지의 A/B 설정이 초기화됩니다.`)) return;
         try {
-            await fetch(`/api/builder/ab?groupId=${encodeURIComponent(groupId)}`, { method: 'DELETE' });
-            setGroups((prev) => prev.filter((g) => g.groupId !== groupId));
+            const res = await fetch(`/api/builder/ab?groupId=${encodeURIComponent(groupId)}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => null);
+                alert(data?.error ?? '그룹 해제에 실패했습니다.');
+                return;
+            }
+            await refreshGroups();
         } catch {
-            alert('그룹 해제에 실패했습니다.');
+            alert('네트워크 오류로 그룹 해제에 실패했습니다.');
         }
     };
 
@@ -176,7 +184,7 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
             }
             setWinnerModalOpen(false);
             setWinnerGroup(null);
-            setGroups((prev) => prev.filter((g) => g.groupId !== winnerGroup.groupId));
+            await refreshGroups();
         } catch {
             alert('네트워크 오류가 발생했습니다.');
         }
@@ -296,7 +304,7 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
                                                 const newPages = [...selectedPages];
                                                 newPages[idx] = {
                                                     ...newPages[idx],
-                                                    weight: Math.max(1, parseInt(e.target.value, 10) || 1),
+                                                    weight: Math.max(0.01, parseFloat(e.target.value) || 1),
                                                 };
                                                 setSelectedPages(newPages);
                                             }}
@@ -434,11 +442,10 @@ function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: Ab
             <div className="flex rounded-lg overflow-hidden h-3 mb-3">
                 {group.pages.map((p, idx) => {
                     const ratio = totalWeight > 0 ? ((p.AB_WEIGHT ?? 0) / totalWeight) * 100 : 0;
-                    const colors = ['#0046A4', '#008C6A', '#b45309', '#dc2626', '#6d28d9'];
                     return (
                         <div
                             key={p.PAGE_ID}
-                            style={{ width: `${ratio}%`, background: colors[idx % colors.length] }}
+                            style={{ width: `${ratio}%`, background: GROUP_COLORS[idx % GROUP_COLORS.length] }}
                             title={`${p.PAGE_NAME}: ${ratio.toFixed(1)}%`}
                         />
                     );
@@ -450,14 +457,13 @@ function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: Ab
                 {group.pages.map((p, idx) => {
                     const pageDetail = pages.find((pd) => pd.id === p.PAGE_ID);
                     const ratio = totalWeight > 0 ? ((p.AB_WEIGHT ?? 0) / totalWeight) * 100 : 0;
-                    const colors = ['#0046A4', '#008C6A', '#b45309', '#dc2626', '#6d28d9'];
                     const vmStyle = pageDetail ? VIEW_MODE_STYLE[pageDetail.viewMode] : null;
 
                     return (
                         <div key={p.PAGE_ID} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#f8f9fb]">
                             <div
                                 className="w-2.5 h-2.5 rounded-full shrink-0"
-                                style={{ background: colors[idx % colors.length] }}
+                                style={{ background: GROUP_COLORS[idx % GROUP_COLORS.length] }}
                             />
                             <span className="flex-1 text-sm font-semibold text-[#111827] truncate">{p.PAGE_NAME}</span>
                             {vmStyle && (

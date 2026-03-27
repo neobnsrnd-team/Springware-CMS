@@ -26,11 +26,9 @@ import {
     PAGE_EXPIRE,
     PAGE_UPDATE_DEPLOY,
     PAGE_SELECT_AB_GROUP,
-    PAGE_CHECK_AB_GROUP_EXISTS,
     PAGE_UPDATE_AB_GROUP,
     PAGE_CLEAR_AB_GROUP,
     PAGE_CLEAR_PAGE_AB_GROUP,
-    PAGE_PROMOTE_WINNER,
 } from '@/db/queries/page.sql';
 import {
     PAGE_HISTORY_NEXT_VERSION,
@@ -441,31 +439,23 @@ export async function getAbGroup(groupId: string): Promise<AbGroupPage[]> {
     }
 }
 
-/** A/B 그룹 ID 존재 여부 확인 */
-export async function checkAbGroupExists(groupId: string): Promise<boolean> {
-    const conn = await getConnection();
-    try {
-        const result = await conn.execute<{ CNT: number }>(PAGE_CHECK_AB_GROUP_EXISTS, { groupId }, OBJ);
-        return (result.rows?.[0]?.CNT ?? 0) > 0;
-    } finally {
-        await conn.close();
-    }
-}
-
 /**
- * 페이지를 A/B 그룹에 설정 (가중치 포함)
+ * 여러 페이지를 A/B 그룹에 일괄 설정 — 단일 트랜잭션으로 원자성 보장
  * - 이미 다른 그룹에 속한 페이지는 덮어쓰지 않음 (SQL WHERE 조건)
- * @returns 실제로 업데이트된 행 수
+ * @returns 각 pageId별 업데이트 성공 여부 목록
  */
-export async function setAbGroup(
-    pageId: string,
+export async function setAbGroupForPages(
+    pages: { pageId: string; weight: number }[],
     groupId: string,
-    weight: number,
     lastModifierId: string,
-): Promise<number> {
+): Promise<{ pageId: string; updated: boolean }[]> {
     return await withTransaction(async (conn) => {
-        const result = await conn.execute(PAGE_UPDATE_AB_GROUP, { pageId, groupId, weight, lastModifierId });
-        return result.rowsAffected ?? 0;
+        const results: { pageId: string; updated: boolean }[] = [];
+        for (const { pageId, weight } of pages) {
+            const result = await conn.execute(PAGE_UPDATE_AB_GROUP, { pageId, groupId, weight, lastModifierId });
+            results.push({ pageId, updated: (result.rowsAffected ?? 0) > 0 });
+        }
+        return results;
     });
 }
 
@@ -484,14 +474,9 @@ export async function clearPageAbGroup(pageId: string, lastModifierId: string): 
 }
 
 /**
- * Winner 승격 — Winner 외 패배 페이지들의 AB_GROUP_ID, AB_WEIGHT를 NULL로 초기화
- * Winner 페이지 자체의 AB_GROUP_ID도 NULL로 초기화 (단독 노출 전환)
+ * Winner 승격 — 그룹 전체 A/B 설정 해제 (단독 노출 전환)
+ * winnerPageId는 API 레이어에서 유효성 검증에 사용되며, 여기서는 그룹 전체 해제만 수행
  */
-export async function promoteWinner(groupId: string, winnerPageId: string, lastModifierId: string): Promise<void> {
-    await withTransaction(async (conn) => {
-        // 패배 페이지 그룹 해제
-        await conn.execute(PAGE_PROMOTE_WINNER, { groupId, winnerPageId, lastModifierId });
-        // Winner 페이지도 그룹 해제 (단독 노출)
-        await conn.execute(PAGE_CLEAR_PAGE_AB_GROUP, { pageId: winnerPageId, lastModifierId });
-    });
+export async function promoteWinner(groupId: string, _winnerPageId: string, lastModifierId: string): Promise<void> {
+    await clearAbGroup(groupId, lastModifierId);
 }
