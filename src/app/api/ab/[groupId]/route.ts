@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAbGroup } from '@/db/repository/page.repository';
+import { getServerList } from '@/db/repository/file-send.repository';
 import { getErrorMessage } from '@/lib/api-response';
 
 const COOKIE_PREFIX = 'ab_';
@@ -31,6 +32,7 @@ function pickByWeight(pages: { PAGE_ID: string; AB_WEIGHT: number | null; IS_PUB
  * GET /api/ab/[groupId]
  * - 쿠키에 이미 배정된 pageId가 있고 현재 그룹에 유효하면 그 페이지로 리다이렉트
  * - 없거나 유효하지 않으면 Weighted Random Selection 후 쿠키 저장 및 리다이렉트
+ * - 활성 운영 서버(FWK_CMS_SERVER_INSTANCE)의 /deployed/{pageId}.html 절대 URL로 302 리다이렉트
  * - 그룹 내 활성 페이지가 없으면 404 반환
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) {
@@ -57,9 +59,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ grou
             return NextResponse.json({ ok: false, error: '노출 가능한 페이지가 없습니다.' }, { status: 404 });
         }
 
-        // /view?pageId=xxx 로 리다이렉트
-        const redirectUrl = new URL('/view', req.url);
-        redirectUrl.searchParams.set('pageId', targetPageId);
+        // 활성 운영 서버 조회 — 첫 번째 서버의 배포 URL로 리다이렉트
+        const servers = await getServerList('Y');
+        if (servers.length === 0) {
+            return NextResponse.json({ ok: false, error: '활성화된 운영 서버가 없습니다.' }, { status: 503 });
+        }
+        const server = servers[0];
+        const redirectUrl = new URL(
+            `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/deployed/${targetPageId}.html`,
+        );
 
         const res = NextResponse.redirect(redirectUrl, 302);
 

@@ -1,7 +1,7 @@
 // src/components/ab/AbTestClient.tsx
 'use client';
 
-import { useState, useTransition, useCallback } from 'react';
+import { useState, useTransition, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
@@ -59,6 +59,10 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
 
     const [pages] = useState(initialPages);
     const [groups, setGroups] = useState(initialGroups);
+
+    useEffect(() => {
+        setGroups(initialGroups);
+    }, [initialGroups]);
 
     // 그룹 생성 모달
     const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -380,16 +384,18 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
                             선정된 페이지만 단독 노출되며, 나머지 페이지의 A/B 설정이 해제됩니다.
                         </p>
                         <div className="flex flex-col gap-2">
-                            {winnerGroup.pages.map((p) => (
-                                <button
-                                    key={p.PAGE_ID}
-                                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-[#e5e7eb] hover:border-[#0046A4] hover:bg-[#f0f4ff] transition-colors text-left"
-                                    onClick={() => handlePromoteWinner(p.PAGE_ID)}
-                                >
-                                    <span className="text-sm font-semibold text-[#111827]">{p.PAGE_NAME}</span>
-                                    <span className="text-xs text-[#6b7280]">노출 비중 {p.AB_WEIGHT ?? '-'}</span>
-                                </button>
-                            ))}
+                            {winnerGroup.pages
+                                .filter((p) => (p.AB_WEIGHT ?? 0) > 0)
+                                .map((p) => (
+                                    <button
+                                        key={p.PAGE_ID}
+                                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-[#e5e7eb] hover:border-[#0046A4] hover:bg-[#f0f4ff] transition-colors text-left"
+                                        onClick={() => handlePromoteWinner(p.PAGE_ID)}
+                                    >
+                                        <span className="text-sm font-semibold text-[#111827]">{p.PAGE_NAME}</span>
+                                        <span className="text-xs text-[#6b7280]">노출 비중 {p.AB_WEIGHT ?? '-'}</span>
+                                    </button>
+                                ))}
                         </div>
                         <button
                             className="mt-4 w-full px-4 py-2 rounded-lg text-sm text-[#374151] bg-[#f3f4f6] hover:bg-[#e5e7eb] transition-colors"
@@ -419,18 +425,28 @@ interface AbGroupCardProps {
 }
 
 function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: AbGroupCardProps) {
-    const totalWeight = group.pages.reduce((sum, p) => sum + (p.AB_WEIGHT ?? 0), 0);
+    // AB_WEIGHT = 0인 페이지가 존재하면 Winner 확정 상태
+    const isWinnerConfirmed = group.pages.some((p) => p.AB_WEIGHT === 0);
+    const activePages = group.pages.filter((p) => (p.AB_WEIGHT ?? 0) > 0);
+    const totalWeight = activePages.reduce((sum, p) => sum + (p.AB_WEIGHT ?? 0), 0);
 
     return (
         <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-5">
             {/* 그룹 헤더 */}
             <div className="flex items-start justify-between mb-4">
                 <div>
-                    <span className="text-xs font-semibold text-[#0046A4] bg-[#e8f0fd] px-2 py-0.5 rounded-full">
-                        {group.groupId}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-[#0046A4] bg-[#e8f0fd] px-2 py-0.5 rounded-full">
+                            {group.groupId}
+                        </span>
+                        {isWinnerConfirmed && (
+                            <span className="text-xs font-bold text-[#008C6A] bg-[#e6f7f3] px-2 py-0.5 rounded-full">
+                                Winner 확정
+                            </span>
+                        )}
+                    </div>
                     <p className="text-[11px] text-[#9ca3af] mt-1">
-                        페이지 {group.pages.length}개 · 총 노출 비중 {totalWeight}
+                        페이지 {group.pages.length}개{!isWinnerConfirmed && ` · 총 노출 비중 ${totalWeight}`}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -440,12 +456,14 @@ function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: Ab
                     >
                         {copied ? '복사됨!' : 'URL 복사'}
                     </button>
-                    <button
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#008C6A] hover:bg-[#006e52] transition-colors"
-                        onClick={onPromote}
-                    >
-                        Winner 선정
-                    </button>
+                    {!isWinnerConfirmed && (
+                        <button
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#008C6A] hover:bg-[#006e52] transition-colors"
+                            onClick={onPromote}
+                        >
+                            Winner 선정
+                        </button>
+                    )}
                     <button
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#dc2626] bg-[#fef2f2] hover:bg-[#fee2e2] transition-colors"
                         onClick={onClear}
@@ -475,14 +493,33 @@ function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: Ab
                     const pageDetail = pages.find((pd) => pd.id === p.PAGE_ID);
                     const ratio = totalWeight > 0 ? ((p.AB_WEIGHT ?? 0) / totalWeight) * 100 : 0;
                     const vmStyle = pageDetail ? VIEW_MODE_STYLE[pageDetail.viewMode] : null;
+                    const isWinner = isWinnerConfirmed && p.AB_WEIGHT === 1;
+                    const isLoser = isWinnerConfirmed && p.AB_WEIGHT === 0;
 
                     return (
-                        <div key={p.PAGE_ID} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#f8f9fb]">
+                        <div
+                            key={p.PAGE_ID}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg ${isLoser ? 'bg-[#f3f4f6] opacity-60' : 'bg-[#f8f9fb]'}`}
+                        >
                             <div
                                 className="w-2.5 h-2.5 rounded-full shrink-0"
-                                style={{ background: GROUP_COLORS[idx % GROUP_COLORS.length] }}
+                                style={{ background: isLoser ? '#d1d5db' : GROUP_COLORS[idx % GROUP_COLORS.length] }}
                             />
-                            <span className="flex-1 text-sm font-semibold text-[#111827] truncate">{p.PAGE_NAME}</span>
+                            <span
+                                className={`flex-1 text-sm font-semibold truncate ${isLoser ? 'text-[#9ca3af]' : 'text-[#111827]'}`}
+                            >
+                                {p.PAGE_NAME}
+                            </span>
+                            {isWinner && (
+                                <span className="px-2 py-0.5 rounded-[10px] text-[10px] font-bold text-white bg-[#008C6A] shrink-0">
+                                    Winner
+                                </span>
+                            )}
+                            {isLoser && (
+                                <span className="px-2 py-0.5 rounded-[10px] text-[10px] font-semibold text-[#9ca3af] bg-[#e5e7eb] shrink-0">
+                                    노출 종료
+                                </span>
+                            )}
                             {vmStyle && (
                                 <span
                                     className="px-2 py-0.5 rounded-[10px] text-[10px] font-semibold"
@@ -492,7 +529,11 @@ function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: Ab
                                 </span>
                             )}
                             <span className="text-xs text-[#6b7280] shrink-0">
-                                노출 비중 {p.AB_WEIGHT ?? '-'} ({ratio.toFixed(1)}%)
+                                {isWinner
+                                    ? '100% 단독 노출'
+                                    : isLoser
+                                      ? '노출 비중 0'
+                                      : `노출 비중 ${p.AB_WEIGHT ?? '-'} (${ratio.toFixed(1)}%)`}
                             </span>
                             {pageDetail && (
                                 <div className="flex gap-2 text-[11px] text-[#9ca3af] shrink-0">
