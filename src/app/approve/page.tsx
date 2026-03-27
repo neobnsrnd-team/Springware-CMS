@@ -7,11 +7,10 @@ import { join } from 'path';
 import { getPageList } from '@/db/repository/page.repository';
 import { isPageExpired } from '@/lib/page-file';
 import ApproveClient from '@/components/approve/ApproveClient';
-import type { ApproveState, ViewMode } from '@/db/types';
+import { APPROVE_STATE_VALUES, type ApproveStateFilter } from '@/data/approve-config';
+import type { ViewMode } from '@/db/types';
 
 const PAGE_SIZE = 12;
-
-const APPROVE_STATE_VALUES: ApproveState[] = ['WORK', 'PENDING', 'APPROVED', 'REJECTED'];
 
 export default async function ApprovePage({
     searchParams,
@@ -35,8 +34,8 @@ export default async function ApprovePage({
     const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10));
     const search = searchParam ?? '';
     const sortBy = sortByParam === 'name' ? 'name' : 'date';
-    const approveState = APPROVE_STATE_VALUES.includes(approveStateParam as ApproveState)
-        ? (approveStateParam as ApproveState)
+    const approveState = APPROVE_STATE_VALUES.includes(approveStateParam as ApproveStateFilter)
+        ? (approveStateParam as ApproveStateFilter)
         : undefined;
     const createUser = createUserParam ?? '';
 
@@ -46,6 +45,7 @@ export default async function ApprovePage({
         search: search || undefined,
         sortBy,
         approveState,
+        excludeApproveState: 'WORK',
         createUserName: createUser || undefined,
     });
 
@@ -55,7 +55,7 @@ export default async function ApprovePage({
         viewMode: (p.VIEW_MODE ?? 'mobile') as ViewMode,
         thumbnail: p.THUMBNAIL ?? null,
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
-        approveState: p.APPROVE_STATE,
+        approveState: p.APPROVE_STATE as ApproveStateFilter,
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
         isPublic: p.IS_PUBLIC ?? 'Y',

@@ -20,6 +20,7 @@ export const PAGE_SELECT_LIST = `
       FROM SPW_CMS_PAGE
       WHERE USE_YN = 'Y'
         AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
+        AND (:excludeApproveState IS NULL OR APPROVE_STATE != :excludeApproveState)
         AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
         AND (:createUserName IS NULL OR CREATE_USER_NAME = :createUserName)
         AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%' OR CREATE_USER_NAME LIKE '%' || :search || '%')
@@ -39,6 +40,7 @@ export const PAGE_COUNT = `
   FROM SPW_CMS_PAGE
   WHERE USE_YN = 'Y'
     AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
+    AND (:excludeApproveState IS NULL OR APPROVE_STATE != :excludeApproveState)
     AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
     AND (:createUserName IS NULL OR CREATE_USER_NAME = :createUserName)
     AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%' OR CREATE_USER_NAME LIKE '%' || :search || '%')

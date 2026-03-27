@@ -9,6 +9,10 @@ import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard'
 import type { ViewMode } from '@/components/ui/PageCard';
 import AdminNavTabs from '@/components/admin/AdminNavTabs';
 import StatsModal from './StatsModal';
+import { APPROVE_FILTERS } from '@/data/approve-config';
+import type { ApproveStateFilter } from '@/data/approve-config';
+
+export type { ApproveStateFilter };
 
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -17,7 +21,6 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 ];
 
 type SortBy = 'date' | 'name';
-type ApproveStateFilter = 'WORK' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface ApprovePageCard {
     id: string;
@@ -45,15 +48,6 @@ export interface ApproveClientProps {
 }
 
 const PAGE_SIZE = 12;
-
-// 승인 상태 필터 옵션
-const APPROVE_FILTERS: { value: ApproveStateFilter | null; label: string }[] = [
-    { value: null, label: '전체' },
-    { value: 'PENDING', label: '승인대기' },
-    { value: 'WORK', label: '작업중' },
-    { value: 'APPROVED', label: '승인' },
-    { value: 'REJECTED', label: '반려' },
-];
 
 export default function ApproveClient({
     initialPages,
@@ -99,6 +93,9 @@ export default function ApproveClient({
 
     // 배포 상태
     const [deploying, setDeploying] = useState<string | null>(null); // 배포 중인 pageId
+
+    // 카드 더보기 드롭다운 상태
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     // 배포 이력 모달 상태
     type DeployRecord = {
@@ -695,33 +692,74 @@ export default function ApproveClient({
                                                     className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end gap-2"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    <button
-                                                        onClick={() => handleSetPublic(page.id, 'N')}
-                                                        className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
-                                                    >
-                                                        비공개
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setStatsPageId(page.id);
-                                                            setStatsLabel(page.label);
-                                                        }}
-                                                        className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
-                                                    >
-                                                        통계
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleOpenDateModal(page.id)}
-                                                        className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
-                                                    >
-                                                        날짜 관리
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleOpenHistory(page.id)}
-                                                        className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
-                                                    >
-                                                        배포 이력
-                                                    </button>
+                                                    {/* 더보기 드롭다운 */}
+                                                    <div className="relative">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenMenuId(openMenuId === page.id ? null : page.id);
+                                                            }}
+                                                            className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer hover:bg-[#f9fafb]"
+                                                        >
+                                                            ⋮ 더보기
+                                                        </button>
+                                                        {openMenuId === page.id && (
+                                                            <>
+                                                                {/* 외부 클릭 감지용 오버레이 */}
+                                                                <div
+                                                                    className="fixed inset-0 z-[9]"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                />
+                                                                <div
+                                                                    className="absolute right-0 bottom-full mb-1 w-36 bg-white border border-[#e5e7eb] rounded-lg shadow-lg z-10 py-1"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setStatsPageId(page.id);
+                                                                            setStatsLabel(page.label);
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-xs text-[#374151] hover:bg-[#f9fafb] cursor-pointer"
+                                                                    >
+                                                                        통계
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            handleOpenDateModal(page.id);
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-xs text-[#374151] hover:bg-[#f9fafb] cursor-pointer"
+                                                                    >
+                                                                        날짜 관리
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            handleOpenHistory(page.id);
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-xs text-[#374151] hover:bg-[#f9fafb] cursor-pointer"
+                                                                    >
+                                                                        배포 이력
+                                                                    </button>
+                                                                    <div className="my-1 border-t border-[#f3f4f6]" />
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            handleSetPublic(page.id, 'N');
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-xs text-[#dc2626] hover:bg-[#fff5f5] cursor-pointer"
+                                                                    >
+                                                                        비공개 처리
+                                                                    </button>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    {/* 배포 버튼 */}
                                                     <button
                                                         onClick={() => handleDeploy(page.id)}
                                                         disabled={deploying === page.id || !page.hasFile}
