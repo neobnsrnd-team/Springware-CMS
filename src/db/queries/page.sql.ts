@@ -208,6 +208,25 @@ export const PAGE_CLEAR_PAGE_AB_GROUP = `
   WHERE PAGE_ID = :pageId
 `;
 
+/** Winner 승격 — 패배 페이지 AB_WEIGHT = 0 (AB_GROUP_ID 유지, 이력 보존) */
+export const PAGE_PROMOTE_WINNER = `
+  UPDATE SPW_CMS_PAGE
+  SET AB_WEIGHT        = 0,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE AB_GROUP_ID = :groupId
+    AND PAGE_ID <> :winnerPageId
+    AND USE_YN = 'Y'
+`;
+
+/** Winner 페이지 단독 노출 고정 — AB_WEIGHT = 1 */
+export const PAGE_SET_WINNER = `
+  UPDATE SPW_CMS_PAGE
+  SET AB_WEIGHT        = 1,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :winnerPageId
+    AND USE_YN = 'Y'
+`;
+
 /** 배포 완료 후 무결성 값 갱신 — 시작일/만료일은 승인 시점에 이미 설정 */
 export const PAGE_UPDATE_DEPLOY = `
   UPDATE SPW_CMS_PAGE

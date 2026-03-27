@@ -29,6 +29,8 @@ import {
     PAGE_UPDATE_AB_GROUP,
     PAGE_CLEAR_AB_GROUP,
     PAGE_CLEAR_PAGE_AB_GROUP,
+    PAGE_PROMOTE_WINNER,
+    PAGE_SET_WINNER,
 } from '@/db/queries/page.sql';
 import {
     PAGE_HISTORY_NEXT_VERSION,
@@ -474,9 +476,13 @@ export async function clearPageAbGroup(pageId: string, lastModifierId: string): 
 }
 
 /**
- * Winner 승격 — 그룹 전체 A/B 설정 해제 (단독 노출 전환)
- * winnerPageId는 API 레이어에서 유효성 검증에 사용되며, 여기서는 그룹 전체 해제만 수행
+ * Winner 승격 — 단일 트랜잭션으로 처리
+ * - 패배 페이지: AB_WEIGHT = 0 (AB_GROUP_ID 유지 — 이력 보존)
+ * - Winner 페이지: AB_WEIGHT = 1 (단독 노출 고정)
  */
-export async function promoteWinner(groupId: string, _winnerPageId: string, lastModifierId: string): Promise<void> {
-    await clearAbGroup(groupId, lastModifierId);
+export async function promoteWinner(groupId: string, winnerPageId: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_PROMOTE_WINNER, { groupId, winnerPageId, lastModifierId });
+        await conn.execute(PAGE_SET_WINNER, { winnerPageId, lastModifierId });
+    });
 }
