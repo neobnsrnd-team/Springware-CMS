@@ -1,7 +1,7 @@
 // src/data/approve-config.ts
 // 승인 관리 화면 필터 설정 — 서버/클라이언트 양쪽에서 공유
 
-export type ApproveStateFilter = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ApproveStateFilter = 'WORK' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export const APPROVE_FILTERS: { value: ApproveStateFilter | null; label: string }[] = [
     { value: null, label: '전체' },

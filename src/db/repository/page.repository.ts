@@ -64,7 +64,7 @@ export async function getPageById(pageId: string): Promise<CmsPage | null> {
 export async function getPageList(
     options: {
         approveState?: ApproveState;
-        excludeApproveState?: ApproveState; // 특정 상태 제외 필터
+        excludeNewWork?: boolean; // 승인 이력 없는 순수 신규 WORK 제외 (관리자 대시보드용)
         createUserId?: string;
         createUserName?: string; // CREATE_USER_NAME 필터
         search?: string; // PAGE_NAME LIKE 검색어
@@ -81,7 +81,7 @@ export async function getPageList(
 
     const binds = {
         approveState: options.approveState ?? null,
-        excludeApproveState: options.excludeApproveState ?? null,
+        excludeNewWork: options.excludeNewWork ? 1 : 0,
         createUserId: options.createUserId ?? null,
         createUserName: options.createUserName ?? null,
         search: options.search ?? null,
@@ -99,7 +99,7 @@ export async function getPageList(
                 PAGE_COUNT,
                 {
                     approveState: binds.approveState,
-                    excludeApproveState: binds.excludeApproveState,
+                    excludeNewWork: binds.excludeNewWork,
                     createUserId: binds.createUserId,
                     createUserName: binds.createUserName,
                     search: binds.search,

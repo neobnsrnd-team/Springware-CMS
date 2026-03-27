@@ -45,7 +45,7 @@ export default async function ApprovePage({
         search: search || undefined,
         sortBy,
         approveState,
-        excludeApproveState: 'WORK',
+        excludeNewWork: true,
         createUserName: createUser || undefined,
     });
 
@@ -62,6 +62,7 @@ export default async function ApprovePage({
         beginningDate: p.BEGINNING_DATE ? new Date(p.BEGINNING_DATE).toISOString() : null,
         expiredDate: p.EXPIRED_DATE ? new Date(p.EXPIRED_DATE).toISOString() : null,
         isExpired: isPageExpired(p.IS_PUBLIC, p.EXPIRED_DATE),
+        hasApproveHistory: p.APPROVE_DATE != null,
     }));
 
     return (

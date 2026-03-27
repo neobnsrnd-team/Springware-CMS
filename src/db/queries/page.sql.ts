@@ -20,7 +20,7 @@ export const PAGE_SELECT_LIST = `
       FROM SPW_CMS_PAGE
       WHERE USE_YN = 'Y'
         AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
-        AND (:excludeApproveState IS NULL OR APPROVE_STATE != :excludeApproveState)
+        AND (:excludeNewWork = 0 OR NOT (APPROVE_STATE = 'WORK' AND APPROVE_DATE IS NULL))
         AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
         AND (:createUserName IS NULL OR CREATE_USER_NAME = :createUserName)
         AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%' OR CREATE_USER_NAME LIKE '%' || :search || '%')
@@ -40,7 +40,7 @@ export const PAGE_COUNT = `
   FROM SPW_CMS_PAGE
   WHERE USE_YN = 'Y'
     AND (:approveState IS NULL OR APPROVE_STATE = :approveState)
-    AND (:excludeApproveState IS NULL OR APPROVE_STATE != :excludeApproveState)
+    AND (:excludeNewWork = 0 OR NOT (APPROVE_STATE = 'WORK' AND APPROVE_DATE IS NULL))
     AND (:createUserId IS NULL OR CREATE_USER_ID = :createUserId)
     AND (:createUserName IS NULL OR CREATE_USER_NAME = :createUserName)
     AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%' OR CREATE_USER_NAME LIKE '%' || :search || '%')
@@ -104,14 +104,13 @@ export const PAGE_UPDATE_APPROVE_STATE = `
   WHERE PAGE_ID = :pageId
 `;
 
-/** 승인된 페이지 시작일/만료일 수정 — 관리자 날짜 관리 */
+/** 페이지 시작일/만료일 수정 — 관리자 날짜 관리 (승인 이력 있는 페이지 대상) */
 export const PAGE_UPDATE_DATES = `
   UPDATE SPW_CMS_PAGE
   SET BEGINNING_DATE = TO_DATE(:beginningDate, 'YYYY-MM-DD'),
       EXPIRED_DATE = TO_DATE(:expiredDate, 'YYYY-MM-DD'),
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
-    AND APPROVE_STATE = 'APPROVED'
 `;
 
 /** 재수정 시 APPROVE_STATE → WORK 전환 (APPROVED/REJECTED만 대상) */
