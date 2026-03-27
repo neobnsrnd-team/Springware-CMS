@@ -25,8 +25,8 @@ async function initPool(): Promise<void> {
                 poolMin: 0, // 공유 Oracle XE 세션 제한 고려 (최대 20개)
                 poolMax: 5,
                 poolIncrement: 1,
-                poolTimeout: 300, // 5분: 유휴 커넥션 정리
-                queueTimeout: 10000, // 10초: 커넥션 대기 타임아웃
+                poolTimeout: 60, // 1분: 유휴 커넥션 빠른 반환 (Oracle XE 세션 제한 대응)
+                queueTimeout: 30000, // 30초: 커넥션 부족 시 대기 시간 확보
             });
 
             console.warn('Oracle 커넥션 풀 초기화 완료');
@@ -41,17 +41,45 @@ async function initPool(): Promise<void> {
 }
 
 // 커넥션 획득 (최초 호출 시 풀 자동 초기화, 스키마 설정 포함)
+// Oracle XE 세션 제한(약 20개) 대응: 최대 3회 재시도 (0.5초 간격)
+const MAX_CONN_RETRIES = 3;
+const CONN_RETRY_DELAY = 500;
+
 export async function getConnection(): Promise<oracledb.Connection> {
     await initPool();
-    const conn = await oracledb.getConnection();
-    // 테이블 소유 스키마로 세션 변경 (쿼리에서 스키마 생략 가능)
-    // SQL 인젝션 방지를 위해 PL/SQL 블록과 바인드 변수 사용
-    await conn.execute(
-        `BEGIN
-           EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(:schemaName);
-         END;`,
-        { schemaName: ORACLE_SCHEMA },
-    );
+
+    // 커넥션 획득만 재시도 — 스키마 설정 실패는 즉시 throw (커넥션 누수 방지)
+    let conn: oracledb.Connection | null = null;
+
+    for (let attempt = 1; attempt <= MAX_CONN_RETRIES; attempt++) {
+        try {
+            conn = await oracledb.getConnection();
+            break;
+        } catch (err: unknown) {
+            if (attempt < MAX_CONN_RETRIES) {
+                console.warn(`커넥션 획득 실패 (${attempt}/${MAX_CONN_RETRIES}회), ${CONN_RETRY_DELAY}ms 후 재시도...`);
+                await new Promise((resolve) => setTimeout(resolve, CONN_RETRY_DELAY));
+            } else {
+                throw err;
+            }
+        }
+    }
+
+    if (!conn) throw new Error('커넥션 획득에 실패했습니다.');
+
+    // 테이블 소유 스키마로 세션 변경 — 실패 시 커넥션 반환 후 throw
+    try {
+        await conn.execute(
+            `BEGIN
+               EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(:schemaName);
+             END;`,
+            { schemaName: ORACLE_SCHEMA },
+        );
+    } catch (err: unknown) {
+        await conn.close();
+        throw err;
+    }
+
     return conn;
 }
 
