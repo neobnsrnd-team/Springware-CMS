@@ -1,7 +1,7 @@
 // src/components/ab/AbTestClient.tsx
 'use client';
 
-import { useState, useTransition, useCallback } from 'react';
+import { useState, useTransition, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
@@ -59,6 +59,10 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
 
     const [pages] = useState(initialPages);
     const [groups, setGroups] = useState(initialGroups);
+
+    useEffect(() => {
+        setGroups(initialGroups);
+    }, [initialGroups]);
 
     // 그룹 생성 모달
     const [createModalOpen, setCreateModalOpen] = useState(false);
