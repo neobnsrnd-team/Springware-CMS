@@ -5,7 +5,12 @@ import oracledb from 'oracledb';
 
 import { getConnection, withTransaction } from '@/db/connection';
 import type { ViewLogEventType } from '@/db/types';
-import { VIEW_LOG_INSERT, VIEW_LOG_COUNT_BY_PAGE, VIEW_LOG_COUNT_BY_COMPONENT } from '@/db/queries/page-view-log.sql';
+import {
+    VIEW_LOG_INSERT,
+    VIEW_LOG_COUNT_BY_PAGE,
+    VIEW_LOG_COUNT_BY_COMPONENT,
+    VIEW_LOG_CLICK_COUNT_BY_PAGE,
+} from '@/db/queries/page-view-log.sql';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
@@ -30,6 +35,17 @@ export async function getViewCountByPage(pageId: string): Promise<number> {
     try {
         const result = await conn.execute<{ VIEW_COUNT: number }>(VIEW_LOG_COUNT_BY_PAGE, { pageId }, OBJ);
         return result.rows?.[0]?.VIEW_COUNT ?? 0;
+    } finally {
+        await conn.close();
+    }
+}
+
+/** 페이지별 CLICK 총 건수 조회 */
+export async function getClickCountByPage(pageId: string): Promise<number> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<{ CLICK_COUNT: number }>(VIEW_LOG_CLICK_COUNT_BY_PAGE, { pageId }, OBJ);
+        return result.rows?.[0]?.CLICK_COUNT ?? 0;
     } finally {
         await conn.close();
     }

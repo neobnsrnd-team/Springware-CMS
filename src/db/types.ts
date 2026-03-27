@@ -66,6 +66,8 @@ export interface CmsPage {
     FINAL_APPROVAL_DTIME: Date | null;
     FINAL_APPROVAL_USER_ID: string | null;
     FINAL_APPROVAL_USER_NAME: string | null;
+    AB_GROUP_ID: string | null;
+    AB_WEIGHT: number | null;
 }
 
 // ── SPW_CMS_PAGE_HISTORY ──
