@@ -24,27 +24,32 @@ async function deployExpiredPage(pageId: string): Promise<{ serverDeployed: numb
     const expiredHtml = await fs.readFile(EXPIRED_HTML_PATH, 'utf8');
     const latestHistory = await getLatestHistory(pageId);
     const version = latestHistory?.VERSION ?? 1;
-    const fileId = `${pageId}_v${version}.html`;
+    // 만료 전용 fileId — 정상 배포 이력 덮어쓰기 방지
+    const fileId = `${pageId}_v${version}_expired.html`;
+    const fileSize = Buffer.byteLength(expiredHtml, 'utf8');
 
-    let serverDeployed = 0;
-    let serverFailed = 0;
+    // 전체 서버 병렬 전송
+    const results = await Promise.all(
+        servers.map(async (server) => {
+            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
+            try {
+                await sendToServer(serverUrl, pageId, expiredHtml);
+                await upsertFileSend({
+                    instanceId: server.INSTANCE_ID,
+                    fileId,
+                    fileSize,
+                    lastModifierId: 'scheduler',
+                });
+                return true;
+            } catch (err: unknown) {
+                console.warn(`[만료 스케줄러] 운영 서버 전송 실패 [${server.INSTANCE_ID}]:`, err);
+                return false;
+            }
+        }),
+    );
 
-    for (const server of servers) {
-        const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
-        try {
-            await sendToServer(serverUrl, pageId, expiredHtml);
-            await upsertFileSend({
-                instanceId: server.INSTANCE_ID,
-                fileId,
-                fileSize: Buffer.byteLength(expiredHtml, 'utf8'),
-                lastModifierId: 'scheduler',
-            });
-            serverDeployed++;
-        } catch (err: unknown) {
-            console.warn(`[만료 스케줄러] 운영 서버 전송 실패 [${server.INSTANCE_ID}]:`, err);
-            serverFailed++;
-        }
-    }
+    const serverDeployed = results.filter(Boolean).length;
+    const serverFailed = results.length - serverDeployed;
 
     return { serverDeployed, serverFailed };
 }
