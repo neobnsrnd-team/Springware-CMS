@@ -9,10 +9,11 @@ import oracledb from 'oracledb';
 import { getConnection } from '@/db/connection';
 import { PAGE_SELECT_BY_ID } from '@/db/queries/page.sql';
 import { upsertFileSend, getServerList } from '@/db/repository/file-send.repository';
-import { updatePageDeploy } from '@/db/repository/page.repository';
+import { updatePageDeploy, getLatestHistory } from '@/db/repository/page.repository';
 import type { CmsPage } from '@/db/types';
 import { getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
+import { sendToServer } from '@/lib/deploy-utils';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
@@ -122,19 +123,6 @@ ${html}
 </html>`;
 }
 
-/** 배포 대상 서버로 HTML + 트래커 JS 전송 */
-async function sendToServer(serverUrl: string, pageId: string, html: string, trackerJs?: string | null): Promise<void> {
-    const res = await fetch(serverUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId, html, trackerJs }),
-    });
-    if (!res.ok) {
-        const text = await res.text().catch(() => '응답 없음');
-        throw new Error(`서버 전송 실패 (${res.status}): ${text}`);
-    }
-}
-
 export async function POST(req: NextRequest) {
     try {
         const { pageId } = (await req.json()) as { pageId?: string };
@@ -203,7 +191,6 @@ export async function POST(req: NextRequest) {
         }
 
         // 4. 최신 승인 버전 조회 (FILE_ID 생성용)
-        const { getLatestHistory } = await import('@/db/repository/page.repository');
         const latestHistory = await getLatestHistory(pageId);
         const version = latestHistory?.VERSION ?? 1;
         const fileId = `${pageId}_v${version}.html`;
