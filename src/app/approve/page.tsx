@@ -6,13 +6,11 @@ import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
 import { isPageExpired } from '@/lib/page-file';
-import ApproveClient, { APPROVE_FILTERS, type ApproveStateFilter } from '@/components/approve/ApproveClient';
+import ApproveClient from '@/components/approve/ApproveClient';
+import { APPROVE_STATE_VALUES, type ApproveStateFilter } from '@/data/approve-config';
 import type { ViewMode } from '@/db/types';
 
 const PAGE_SIZE = 12;
-
-// APPROVE_FILTERS의 null 제외 값만 추출 — 필터 목록과 항상 동기화
-const APPROVE_STATE_VALUES = APPROVE_FILTERS.map((f) => f.value).filter((v): v is ApproveStateFilter => v !== null);
 
 export default async function ApprovePage({
     searchParams,

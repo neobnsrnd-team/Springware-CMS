@@ -9,6 +9,10 @@ import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard'
 import type { ViewMode } from '@/components/ui/PageCard';
 import AdminNavTabs from '@/components/admin/AdminNavTabs';
 import StatsModal from './StatsModal';
+import { APPROVE_FILTERS } from '@/data/approve-config';
+import type { ApproveStateFilter } from '@/data/approve-config';
+
+export type { ApproveStateFilter };
 
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -17,7 +21,6 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 ];
 
 type SortBy = 'date' | 'name';
-export type ApproveStateFilter = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface ApprovePageCard {
     id: string;
@@ -45,14 +48,6 @@ export interface ApproveClientProps {
 }
 
 const PAGE_SIZE = 12;
-
-// 승인 상태 필터 옵션 — approve/page.tsx에서 APPROVE_STATE_VALUES 생성에 공유
-export const APPROVE_FILTERS: { value: ApproveStateFilter | null; label: string }[] = [
-    { value: null, label: '전체' },
-    { value: 'PENDING', label: '승인대기' },
-    { value: 'APPROVED', label: '승인' },
-    { value: 'REJECTED', label: '반려' },
-];
 
 export default function ApproveClient({
     initialPages,
