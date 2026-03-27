@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard';
 import type { ViewMode } from '@/components/ui/PageCard';
+import AdminNavTabs from '@/components/admin/AdminNavTabs';
 
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -397,13 +398,14 @@ export default function ApproveClient({
     return (
         <div className="min-h-screen bg-[#eaedf0]">
             {/* ── 헤더 ── */}
-            <header className="bg-[#1e3a5f] px-8 h-[60px] flex items-center gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.18)] sticky top-0 z-[100]">
-                <span className="font-bold text-base text-white tracking-[-0.3px]">Springware CMS</span>
-                <span className="text-[#4e7aad] text-sm">/</span>
-                <span className="text-sm text-[#c8dff5]">승인 관리</span>
-                <span className="ml-auto px-2.5 py-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold tracking-wide">
-                    관리자
-                </span>
+            <header className="bg-[#1e3a5f] px-8 shadow-[0_2px_8px_rgba(0,0,0,0.18)] sticky top-0 z-[100]">
+                <div className="h-[60px] flex items-center gap-3">
+                    <span className="font-bold text-base text-white tracking-[-0.3px]">Springware CMS</span>
+                    <span className="ml-auto px-2.5 py-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold tracking-wide">
+                        관리자
+                    </span>
+                </div>
+                <AdminNavTabs />
             </header>
 
             {/* ── 본문 ── */}

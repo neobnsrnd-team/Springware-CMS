@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import { VIEW_MODE_STYLE } from '@/components/ui/PageCard';
 import type { ViewMode } from '@/components/ui/PageCard';
+import AdminNavTabs from '@/components/admin/AdminNavTabs';
 
 // 그룹 페이지 구분 색상 팔레트
 const GROUP_COLORS = ['#0046A4', '#008C6A', '#b45309', '#dc2626', '#6d28d9'];
@@ -198,11 +199,22 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
     return (
         <div className="min-h-screen bg-[#f8f9fb]">
             {/* 헤더 */}
-            <header className="sticky top-0 z-30 bg-white border-b border-[#e5e7eb] px-6 py-4 flex items-center justify-between shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+            <header className="bg-[#1e3a5f] px-8 shadow-[0_2px_8px_rgba(0,0,0,0.18)] sticky top-0 z-30">
+                <div className="h-[60px] flex items-center gap-3">
+                    <span className="font-bold text-base text-white tracking-[-0.3px]">Springware CMS</span>
+                    <span className="ml-auto px-2.5 py-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold tracking-wide">
+                        관리자
+                    </span>
+                </div>
+                <AdminNavTabs />
+            </header>
+
+            {/* 페이지 타이틀 */}
+            <div className="bg-white border-b border-[#e5e7eb] px-8 py-4 flex items-center justify-between shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                 <div>
-                    <h1 className="text-lg font-bold text-[#111827] m-0">A/B 테스트 관리</h1>
+                    <h1 className="text-lg font-bold text-[#111827] m-0">콘텐츠 최적화 관리</h1>
                     <p className="text-xs text-[#6b7280] mt-0.5">
-                        승인된 페이지를 그룹으로 묶어 노출 비율을 설정합니다.
+                        페이지별 노출 비중을 설정하고 클릭률에 따른 최적의 콘텐츠를 결정합니다.
                     </p>
                 </div>
                 <button
@@ -217,12 +229,12 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
                 >
                     + 새 그룹 생성
                 </button>
-            </header>
+            </div>
 
             <main className="px-6 py-6 max-w-5xl mx-auto">
                 {/* 그룹 목록 */}
                 {groups.length === 0 ? (
-                    <div className="text-center py-20 text-[#9ca3af] text-sm">생성된 A/B 테스트 그룹이 없습니다.</div>
+                    <div className="text-center py-20 text-[#9ca3af] text-sm">생성된 그룹이 없습니다.</div>
                 ) : (
                     <div className="flex flex-col gap-4">
                         {groups.map((group) => (
@@ -309,7 +321,7 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
                                                 setSelectedPages(newPages);
                                             }}
                                         />
-                                        <span className="text-xs text-[#6b7280] w-8">가중치</span>
+                                        <span className="text-xs text-[#6b7280] w-12">노출 비중</span>
                                         {selectedPages.length > 2 && (
                                             <button
                                                 className="text-[#dc2626] text-xs hover:underline"
@@ -322,7 +334,7 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
                                 ))}
                             </div>
                             <p className="text-[11px] text-[#9ca3af] mt-1">
-                                가중치는 상대적 비율입니다 (예: 7과 3이면 70%:30% 노출)
+                                노출 비중은 상대적 비율입니다 (예: 7과 3이면 70%:30% 노출)
                             </p>
                         </div>
 
@@ -370,7 +382,7 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
                                     onClick={() => handlePromoteWinner(p.PAGE_ID)}
                                 >
                                     <span className="text-sm font-semibold text-[#111827]">{p.PAGE_NAME}</span>
-                                    <span className="text-xs text-[#6b7280]">가중치 {p.AB_WEIGHT ?? '-'}</span>
+                                    <span className="text-xs text-[#6b7280]">노출 비중 {p.AB_WEIGHT ?? '-'}</span>
                                 </button>
                             ))}
                         </div>
@@ -413,7 +425,7 @@ function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: Ab
                         {group.groupId}
                     </span>
                     <p className="text-[11px] text-[#9ca3af] mt-1">
-                        페이지 {group.pages.length}개 · 총 가중치 {totalWeight}
+                        페이지 {group.pages.length}개 · 총 노출 비중 {totalWeight}
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -475,11 +487,11 @@ function AbGroupCard({ group, pages, copied, onCopyUrl, onPromote, onClear }: Ab
                                 </span>
                             )}
                             <span className="text-xs text-[#6b7280] shrink-0">
-                                가중치 {p.AB_WEIGHT ?? '-'} ({ratio.toFixed(1)}%)
+                                노출 비중 {p.AB_WEIGHT ?? '-'} ({ratio.toFixed(1)}%)
                             </span>
                             {pageDetail && (
                                 <div className="flex gap-2 text-[11px] text-[#9ca3af] shrink-0">
-                                    <span>조회 {pageDetail.viewCount.toLocaleString()}</span>
+                                    <span>노출 {pageDetail.viewCount.toLocaleString()}</span>
                                     <span>클릭 {pageDetail.clickCount.toLocaleString()}</span>
                                 </div>
                             )}
