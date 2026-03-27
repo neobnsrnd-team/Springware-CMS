@@ -25,6 +25,10 @@ import {
     PAGE_UPDATE_IS_PUBLIC,
     PAGE_EXPIRE,
     PAGE_UPDATE_DEPLOY,
+    PAGE_SELECT_AB_GROUP,
+    PAGE_UPDATE_AB_GROUP,
+    PAGE_CLEAR_AB_GROUP,
+    PAGE_CLEAR_PAGE_AB_GROUP,
 } from '@/db/queries/page.sql';
 import {
     PAGE_HISTORY_NEXT_VERSION,
@@ -276,10 +280,13 @@ export async function deletePage(pageId: string, lastModifierId: string): Promis
 
         if (hasHistory) {
             // 승인된 페이지: 소프트 삭제 (DB 보존, HISTORY 유지)
+            // A/B 그룹 참여 중이면 먼저 해제
+            await conn.execute(PAGE_CLEAR_PAGE_AB_GROUP, { pageId, lastModifierId });
             await conn.execute(PAGE_SOFT_DELETE, { pageId, lastModifierId });
             return { deleteType: 'soft' };
         } else {
-            // 미승인 페이지: COMP_MAP + PAGE 하드 삭제
+            // 미승인 페이지: A/B 그룹 해제 → COMP_MAP + PAGE 하드 삭제
+            await conn.execute(PAGE_CLEAR_PAGE_AB_GROUP, { pageId, lastModifierId });
             await conn.execute(COMP_MAP_DELETE_BY_PAGE, { pageId });
             await conn.execute(PAGE_HARD_DELETE, { pageId });
             return { deleteType: 'hard' };
@@ -408,4 +415,68 @@ export async function expirePage(pageId: string, filePathBack: string, lastModif
     await withTransaction(async (conn) => {
         await conn.execute(PAGE_EXPIRE, { pageId, filePathBack, lastModifierId });
     });
+}
+
+// ═══════════════════════════════════════════════
+// A/B 테스트
+// ═══════════════════════════════════════════════
+
+export interface AbGroupPage {
+    PAGE_ID: string;
+    PAGE_NAME: string;
+    AB_WEIGHT: number | null;
+    IS_PUBLIC: string;
+}
+
+/** A/B 그룹 내 페이지 목록 조회 */
+export async function getAbGroup(groupId: string): Promise<AbGroupPage[]> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<AbGroupPage>(PAGE_SELECT_AB_GROUP, { groupId }, OBJ);
+        return result.rows ?? [];
+    } finally {
+        await conn.close();
+    }
+}
+
+/**
+ * 여러 페이지를 A/B 그룹에 일괄 설정 — 단일 트랜잭션으로 원자성 보장
+ * - 이미 다른 그룹에 속한 페이지는 덮어쓰지 않음 (SQL WHERE 조건)
+ * @returns 각 pageId별 업데이트 성공 여부 목록
+ */
+export async function setAbGroupForPages(
+    pages: { pageId: string; weight: number }[],
+    groupId: string,
+    lastModifierId: string,
+): Promise<{ pageId: string; updated: boolean }[]> {
+    return await withTransaction(async (conn) => {
+        const results: { pageId: string; updated: boolean }[] = [];
+        for (const { pageId, weight } of pages) {
+            const result = await conn.execute(PAGE_UPDATE_AB_GROUP, { pageId, groupId, weight, lastModifierId });
+            results.push({ pageId, updated: (result.rowsAffected ?? 0) > 0 });
+        }
+        return results;
+    });
+}
+
+/** 그룹 전체 해제 — 그룹 내 모든 페이지의 AB_GROUP_ID, AB_WEIGHT를 NULL로 */
+export async function clearAbGroup(groupId: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_CLEAR_AB_GROUP, { groupId, lastModifierId });
+    });
+}
+
+/** 단일 페이지 A/B 그룹 해제 */
+export async function clearPageAbGroup(pageId: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_CLEAR_PAGE_AB_GROUP, { pageId, lastModifierId });
+    });
+}
+
+/**
+ * Winner 승격 — 그룹 전체 A/B 설정 해제 (단독 노출 전환)
+ * winnerPageId는 API 레이어에서 유효성 검증에 사용되며, 여기서는 그룹 전체 해제만 수행
+ */
+export async function promoteWinner(groupId: string, _winnerPageId: string, lastModifierId: string): Promise<void> {
+    await clearAbGroup(groupId, lastModifierId);
 }
