@@ -147,7 +147,12 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
     // ── 그룹 해제 ──
 
     const handleClearGroup = async (groupId: string) => {
-        if (!confirm(`그룹 '${groupId}'를 해제하시겠습니까?\n그룹 내 모든 페이지의 A/B 설정이 초기화됩니다.`)) return;
+        if (
+            !confirm(
+                `'${groupId}' 그룹의 최적화 설정을 중단하시겠습니까?\n\n중단 시, 페이지별 노출 비중 데이터 및 통계가 모두 초기화됩니다.`,
+            )
+        )
+            return;
         try {
             const res = await fetch(`/api/builder/ab?groupId=${encodeURIComponent(groupId)}`, { method: 'DELETE' });
             if (!res.ok) {
