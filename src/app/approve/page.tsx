@@ -6,13 +6,13 @@ import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
 import { isPageExpired } from '@/lib/page-file';
-import ApproveClient from '@/components/approve/ApproveClient';
-import type { ApproveStateFilter } from '@/components/approve/ApproveClient';
-import type { ApproveState, ViewMode } from '@/db/types';
+import ApproveClient, { APPROVE_FILTERS, type ApproveStateFilter } from '@/components/approve/ApproveClient';
+import type { ViewMode } from '@/db/types';
 
 const PAGE_SIZE = 12;
 
-const APPROVE_STATE_VALUES: ApproveState[] = ['PENDING', 'APPROVED', 'REJECTED'];
+// APPROVE_FILTERS의 null 제외 값만 추출 — 필터 목록과 항상 동기화
+const APPROVE_STATE_VALUES = APPROVE_FILTERS.map((f) => f.value).filter((v): v is ApproveStateFilter => v !== null);
 
 export default async function ApprovePage({
     searchParams,
@@ -36,8 +36,8 @@ export default async function ApprovePage({
     const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10));
     const search = searchParam ?? '';
     const sortBy = sortByParam === 'name' ? 'name' : 'date';
-    const approveState = APPROVE_STATE_VALUES.includes(approveStateParam as ApproveState)
-        ? (approveStateParam as ApproveState)
+    const approveState = APPROVE_STATE_VALUES.includes(approveStateParam as ApproveStateFilter)
+        ? (approveStateParam as ApproveStateFilter)
         : undefined;
     const createUser = createUserParam ?? '';
 
@@ -73,7 +73,7 @@ export default async function ApprovePage({
             currentPage={currentPage}
             search={search}
             sortBy={sortBy}
-            approveState={(approveState ?? null) as ApproveStateFilter | null}
+            approveState={approveState ?? null}
             createUser={createUser}
         />
     );

@@ -46,8 +46,8 @@ export interface ApproveClientProps {
 
 const PAGE_SIZE = 12;
 
-// 승인 상태 필터 옵션
-const APPROVE_FILTERS: { value: ApproveStateFilter | null; label: string }[] = [
+// 승인 상태 필터 옵션 — approve/page.tsx에서 APPROVE_STATE_VALUES 생성에 공유
+export const APPROVE_FILTERS: { value: ApproveStateFilter | null; label: string }[] = [
     { value: null, label: '전체' },
     { value: 'PENDING', label: '승인대기' },
     { value: 'APPROVED', label: '승인' },
