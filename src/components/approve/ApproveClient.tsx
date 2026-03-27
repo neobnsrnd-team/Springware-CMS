@@ -8,6 +8,7 @@ import Modal from '@/components/ui/Modal';
 import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard';
 import type { ViewMode } from '@/components/ui/PageCard';
 import AdminNavTabs from '@/components/admin/AdminNavTabs';
+import StatsModal from './StatsModal';
 
 // 정렬 옵션 목록
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -88,6 +89,9 @@ export default function ApproveClient({
     const [approving, setApproving] = useState(false);
 
     // 날짜 관리 모달 상태
+    const [statsPageId, setStatsPageId] = useState<string | null>(null);
+    const [statsLabel, setStatsLabel] = useState('');
+
     const [dateModalPageId, setDateModalPageId] = useState<string | null>(null);
     const [editBeginningDate, setEditBeginningDate] = useState('');
     const [editExpiredDate, setEditExpiredDate] = useState('');
@@ -698,6 +702,15 @@ export default function ApproveClient({
                                                         비공개
                                                     </button>
                                                     <button
+                                                        onClick={() => {
+                                                            setStatsPageId(page.id);
+                                                            setStatsLabel(page.label);
+                                                        }}
+                                                        className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
+                                                    >
+                                                        통계
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleOpenDateModal(page.id)}
                                                         className="px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] text-xs cursor-pointer"
                                                     >
@@ -961,6 +974,11 @@ export default function ApproveClient({
                         </Modal>
                     );
                 })()}
+            {/* ── 통계 모달 ── */}
+            {statsPageId && (
+                <StatsModal pageId={statsPageId} pageLabel={statsLabel} onClose={() => setStatsPageId(null)} />
+            )}
+
             {/* ── 날짜 관리 모달 ── */}
             {dateModalPageId && (
                 <Modal
