@@ -111,3 +111,14 @@ export interface ServerInstance {
     LAST_MODIFIER_ID: string | null;
     LAST_MODIFIED_DTIME: Date | null;
 }
+
+// ── SPW_CMS_PAGE_VIEW_LOG ──
+export type ViewLogEventType = 'VIEW' | 'CLICK';
+
+export interface CmsPageViewLog {
+    LOG_ID: number;
+    PAGE_ID: string;
+    COMPONENT_ID: string | null;
+    EVENT_TYPE: ViewLogEventType;
+    VIEW_DTIME: Date | null;
+}

@@ -21,12 +21,12 @@ function calcCrc(content: string): string {
     return createHash('sha256').update(content, 'utf8').digest('hex').slice(0, 16);
 }
 
-/** 배포 대상 서버로 HTML 전송 */
-async function sendToServer(serverUrl: string, pageId: string, html: string): Promise<void> {
+/** 배포 대상 서버로 HTML + 트래커 JS 전송 */
+async function sendToServer(serverUrl: string, pageId: string, html: string, trackerJs?: string | null): Promise<void> {
     const res = await fetch(serverUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId, html }),
+        body: JSON.stringify({ pageId, html, trackerJs }),
     });
     if (!res.ok) {
         const text = await res.text().catch(() => '응답 없음');
@@ -76,8 +76,24 @@ export async function POST(req: NextRequest) {
                 400,
             );
         }
-        const html = await readFile(absolutePath, 'utf8');
+        const rawHtml = await readFile(absolutePath, 'utf8');
+
+        // 트래킹 스크립트 태그 주입 — 배포 HTML에 조회/클릭 추적 삽입
+        const trackerTag = `<script src="/cms-tracker.js" data-page-id="${pageId}"></script>`;
+        const html = rawHtml.includes('</body>')
+            ? rawHtml.replace('</body>', `${trackerTag}\n</body>`)
+            : `${rawHtml}\n${trackerTag}`;
+
         const crcValue = calcCrc(html);
+
+        // 트래커 JS 파일 읽기 (운영 서버로 함께 Push)
+        const trackerJsPath = path.join(process.cwd(), 'public', 'cms-tracker.js');
+        let trackerJs: string | null = null;
+        try {
+            trackerJs = await readFile(trackerJsPath, 'utf8');
+        } catch {
+            console.warn('cms-tracker.js 파일을 찾을 수 없습니다. 트래커 없이 배포합니다.');
+        }
 
         // 3. ALIVE_YN='Y' 서버 목록 조회
         const servers = await getServerList('Y');
@@ -97,7 +113,7 @@ export async function POST(req: NextRequest) {
         for (const server of servers) {
             const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
             try {
-                await sendToServer(serverUrl, pageId, html);
+                await sendToServer(serverUrl, pageId, html, trackerJs);
                 await upsertFileSend({
                     instanceId: server.INSTANCE_ID,
                     fileId,

@@ -9,7 +9,11 @@ import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-respo
 
 export async function POST(req: NextRequest) {
     try {
-        const { pageId, html } = (await req.json()) as { pageId?: string; html?: string };
+        const { pageId, html, trackerJs } = (await req.json()) as {
+            pageId?: string;
+            html?: string;
+            trackerJs?: string;
+        };
 
         if (!pageId || typeof pageId !== 'string') {
             return errorResponse('pageId가 필요합니다.', 400);
@@ -29,6 +33,12 @@ export async function POST(req: NextRequest) {
 
         const filePath = path.join(deployDir, `${pageId}.html`);
         await writeFile(filePath, html, 'utf8');
+
+        // 트래커 JS 파일 저장 (push에서 함께 전송된 경우)
+        if (trackerJs && typeof trackerJs === 'string') {
+            const trackerPath = path.join(process.cwd(), 'public', 'cms-tracker.js');
+            await writeFile(trackerPath, trackerJs, 'utf8');
+        }
 
         return successResponse({ path: `/deployed/${pageId}.html` });
     } catch (err: unknown) {

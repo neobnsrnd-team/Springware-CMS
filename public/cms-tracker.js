@@ -1,0 +1,38 @@
+// cms-tracker.js
+// 페이지 조회수(VIEW) + 컴포넌트 클릭수(CLICK) 트래킹 스크립트
+// 배포 시 HTML에 자동 주입됨: <script src="/cms-tracker.js" data-page-id="{pageId}"></script>
+
+(function () {
+    const script = document.currentScript;
+    const pageId = script && script.getAttribute('data-page-id');
+    if (!pageId) return;
+
+    // 페이지 조회 전송 (Blob으로 application/json Content-Type 보장)
+    try {
+        navigator.sendBeacon(
+            '/api/track/view',
+            new Blob([JSON.stringify({ pageId: pageId })], { type: 'application/json' }),
+        );
+    } catch (e) {
+        console.error('CMS Tracker (view) failed:', e);
+    }
+
+    // 컴포넌트 클릭 전송
+    document.addEventListener('click', function (e) {
+        const el = e.target.closest('[data-component-id]');
+        if (!el) return;
+        const componentId = el.getAttribute('data-component-id');
+        if (!componentId) return;
+
+        try {
+            navigator.sendBeacon(
+                '/api/track/click',
+                new Blob([JSON.stringify({ pageId: pageId, componentId: componentId })], {
+                    type: 'application/json',
+                }),
+            );
+        } catch (ex) {
+            console.error('CMS Tracker (click) failed:', ex);
+        }
+    });
+})();
