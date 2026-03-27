@@ -64,10 +64,12 @@ export async function POST(req: NextRequest) {
         if (!page.FILE_PATH) {
             return errorResponse('배포할 HTML 파일 경로가 없습니다.', 400);
         }
-        if (page.FILE_PATH.includes('..') || path.isAbsolute(page.FILE_PATH)) {
+        // FILE_PATH는 /uploads/pages/xxx.html 형태로 저장 — 앞 슬래시 제거 후 검증
+        const normalizedFilePath = page.FILE_PATH.replace(/^\//, '');
+        if (normalizedFilePath.includes('..') || path.isAbsolute(normalizedFilePath)) {
             return errorResponse('유효하지 않은 파일 경로입니다.', 400);
         }
-        const absolutePath = path.join(process.cwd(), 'public', page.FILE_PATH);
+        const absolutePath = path.join(process.cwd(), 'public', normalizedFilePath);
         try {
             await access(absolutePath);
         } catch {
