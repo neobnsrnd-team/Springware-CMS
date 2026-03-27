@@ -7,11 +7,12 @@ import { join } from 'path';
 import { getPageList } from '@/db/repository/page.repository';
 import { isPageExpired } from '@/lib/page-file';
 import ApproveClient from '@/components/approve/ApproveClient';
+import type { ApproveStateFilter } from '@/components/approve/ApproveClient';
 import type { ApproveState, ViewMode } from '@/db/types';
 
 const PAGE_SIZE = 12;
 
-const APPROVE_STATE_VALUES: ApproveState[] = ['WORK', 'PENDING', 'APPROVED', 'REJECTED'];
+const APPROVE_STATE_VALUES: ApproveState[] = ['PENDING', 'APPROVED', 'REJECTED'];
 
 export default async function ApprovePage({
     searchParams,
@@ -46,6 +47,7 @@ export default async function ApprovePage({
         search: search || undefined,
         sortBy,
         approveState,
+        excludeApproveState: 'WORK',
         createUserName: createUser || undefined,
     });
 
@@ -55,7 +57,7 @@ export default async function ApprovePage({
         viewMode: (p.VIEW_MODE ?? 'mobile') as ViewMode,
         thumbnail: p.THUMBNAIL ?? null,
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
-        approveState: p.APPROVE_STATE,
+        approveState: p.APPROVE_STATE as ApproveStateFilter,
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
         isPublic: p.IS_PUBLIC ?? 'Y',
@@ -71,7 +73,7 @@ export default async function ApprovePage({
             currentPage={currentPage}
             search={search}
             sortBy={sortBy}
-            approveState={approveState ?? null}
+            approveState={(approveState ?? null) as ApproveStateFilter | null}
             createUser={createUser}
         />
     );

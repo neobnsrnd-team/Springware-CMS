@@ -17,7 +17,7 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 ];
 
 type SortBy = 'date' | 'name';
-type ApproveStateFilter = 'WORK' | 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ApproveStateFilter = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface ApprovePageCard {
     id: string;
@@ -50,7 +50,6 @@ const PAGE_SIZE = 12;
 const APPROVE_FILTERS: { value: ApproveStateFilter | null; label: string }[] = [
     { value: null, label: '전체' },
     { value: 'PENDING', label: '승인대기' },
-    { value: 'WORK', label: '작업중' },
     { value: 'APPROVED', label: '승인' },
     { value: 'REJECTED', label: '반려' },
 ];
