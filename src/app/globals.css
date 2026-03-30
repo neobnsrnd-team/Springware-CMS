@@ -161,14 +161,14 @@ body.spw-slide-modal-open .is-rte-tool {
 }
 
 /* ── 에디터 캔버스에서 아코디언 항목 항상 펼침 ──────────────────────────
- * 에디터(.container)에서는 본문을 직접 편집할 수 있도록 모든 항목 표시.
- * 미리보기·배포 환경에서는 인라인 스크립트가 max-height를 제어하므로 영향 없음.
+ * .is-builder: ContentBuilder 에디터가 활성화된 경우에만 적용.
+ * 미리보기·배포 환경에는 .is-builder가 없으므로 토글 동작에 영향 없음.
  */
-.container .ia-body {
+.is-builder .container .ia-body {
     max-height: none !important;
     overflow: visible !important;
 }
-.container .ia-chevron {
+.is-builder .container .ia-chevron {
     transform: rotate(180deg) !important;
 }
 
