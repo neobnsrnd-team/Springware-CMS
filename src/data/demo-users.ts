@@ -17,6 +17,7 @@ export const DEMO_USERS: DemoUser[] = [
     { userId: 'admin', userName: '관리자', role: 'admin' },
     { userId: 'system', userName: '시스템', role: 'user' },
     { userId: 'user1', userName: '김담당', role: 'user' },
+    { userId: 'user2', userName: '시연자', role: 'user' },
 ];
 
 /** userId로 데모 사용자 조회. 없으면 system 폴백 */
