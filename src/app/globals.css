@@ -164,11 +164,11 @@ body.spw-slide-modal-open .is-rte-tool {
  * .is-builder: ContentBuilder 에디터가 활성화된 경우에만 적용.
  * 미리보기·배포 환경에는 .is-builder가 없으므로 토글 동작에 영향 없음.
  */
-.is-builder .container .ia-body {
+.is-builder .ia-body {
     max-height: none !important;
     overflow: visible !important;
 }
-.is-builder .container .ia-chevron {
+.is-builder .ia-chevron {
     transform: rotate(180deg) !important;
 }
 

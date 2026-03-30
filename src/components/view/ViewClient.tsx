@@ -187,6 +187,12 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         });
     }
 })();`;
+        // data-accordion-inited guard 초기화 — 에디터에서 설정된 채 저장된 경우 스크립트가
+        // 즉시 return해 이벤트 리스너가 등록되지 않으므로, 재실행 전에 속성을 제거한다.
+        document.querySelectorAll<HTMLElement>('[data-spw-block][data-accordion-inited]').forEach((el) => {
+            el.removeAttribute('data-accordion-inited');
+        });
+
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
             // 외부 스크립트(src), 비 JS 타입(type="text/html" 등), HTML 템플릿 스크립트를 제외합니다.
             if (
