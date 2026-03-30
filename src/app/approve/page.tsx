@@ -12,6 +12,12 @@ import type { ViewMode } from '@/db/types';
 
 const PAGE_SIZE = 12;
 
+// toISOString()은 UTC로 변환되므로 KST 자정(00:00)이 전날 15:00(UTC)로 밀려 날짜가 하루 차이남.
+// 로컬 타임 기준으로 YYYY-MM-DD 문자열을 직접 추출한다.
+function formatDateOnly(d: Date): string {
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+}
+
 export default async function ApprovePage({
     searchParams,
 }: {
@@ -59,8 +65,8 @@ export default async function ApprovePage({
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
         hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
         isPublic: p.IS_PUBLIC ?? 'Y',
-        beginningDate: p.BEGINNING_DATE ? new Date(p.BEGINNING_DATE).toISOString() : null,
-        expiredDate: p.EXPIRED_DATE ? new Date(p.EXPIRED_DATE).toISOString() : null,
+        beginningDate: p.BEGINNING_DATE ? formatDateOnly(new Date(p.BEGINNING_DATE)) : null,
+        expiredDate: p.EXPIRED_DATE ? formatDateOnly(new Date(p.EXPIRED_DATE)) : null,
         isExpired: isPageExpired(p.IS_PUBLIC, p.EXPIRED_DATE),
         hasApproveHistory: p.APPROVE_DATE != null,
     }));
