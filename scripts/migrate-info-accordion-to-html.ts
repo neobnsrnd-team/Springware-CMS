@@ -10,12 +10,11 @@ import { closePool } from '../src/db/connection';
 const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
 
 // 화살표(chevron) SVG — 아래 방향 기본, JS에서 rotate(180deg)로 열림 표시
-const CHEVRON_SVG =
-    `<svg class="ia-chevron" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" ` +
-    `stroke-linecap="round" stroke-linejoin="round" width="16" height="16" ` +
-    `style="flex-shrink:0;transition:transform 0.25s ease;">` +
-        `<path d="m6 9 6 6 6-6"/>` +
-    `</svg>`;
+const CHEVRON_SVG = `<svg class="ia-chevron" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round" width="16" height="16"
+     style="flex-shrink:0;transition:transform 0.25s ease;">
+    <path d="m6 9 6 6 6-6"/>
+</svg>`;
 
 // ── 아코디언 항목 빌더 ────────────────────────────────────────────────────────
 
@@ -106,18 +105,14 @@ const ACCORDION_SCRIPT =
                     `chev.style.transform='rotate(0deg)';` +
                 `}else{` +
                     `item.setAttribute('data-open','1');` +
-                    `body.style.maxHeight='2000px';` +
+                    `body.style.maxHeight=body.scrollHeight+'px';` +
                     `chev.style.transform='rotate(180deg)';` +
                 `}` +
             `});` +
         `});` +
-        // 초기 상태: 첫 번째 항목 열기
-        `var first=root.querySelector('.ia-item');` +
-        `if(first){` +
-            `first.setAttribute('data-open','1');` +
-            `first.querySelector('.ia-body').style.maxHeight='2000px';` +
-            `first.querySelector('.ia-chevron').style.transform='rotate(180deg)';` +
-        `}` +
+        // 초기 상태: 첫 번째 헤더 click() — 클릭 핸들러 재사용으로 중복 제거
+        `var firstHeader=root.querySelector('.ia-header');` +
+        `if(firstHeader){firstHeader.click();}` +
     `})();` +
     `</script>`;
 
@@ -209,7 +204,12 @@ async function main() {
                 componentThumbnail: existing.COMPONENT_THUMBNAIL ?? undefined,
                 data: {
                     ...(existing.DATA ?? {}) as Record<string, unknown>,
-                    html: variant.html,
+                    id:          variant.id.replace(`-${variant.viewMode}`, ''),
+                    label:       variant.label,
+                    description: variant.description,
+                    preview:     '/assets/minimalist-blocks/preview/ibk-info-accordion.svg',
+                    html:        variant.html,
+                    viewMode:    variant.viewMode,
                 },
                 lastModifierId: 'system',
             });
