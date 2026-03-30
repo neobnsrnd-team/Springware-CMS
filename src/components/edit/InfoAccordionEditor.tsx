@@ -1,5 +1,6 @@
 // src/components/edit/InfoAccordionEditor.tsx
-// info-accordion 블록의 항목(토글)을 추가·삭제·순서변경·내용편집하는 모달 에디터
+// info-accordion 블록의 항목(토글) 제목을 추가·삭제·순서변경하는 모달 에디터
+// 본문(content)은 에디터 캔버스에서 직접 편집
 
 'use client';
 
@@ -7,7 +8,7 @@ import { useState } from 'react';
 
 interface AccordionItem {
     title: string;
-    content: string;
+    content: string; // 에디터 캔버스에서 직접 편집 — 여기서는 변경하지 않음
 }
 
 interface Props {
@@ -66,14 +67,9 @@ function buildItemsHtml(items: AccordionItem[]): string {
 
 /** blockEl DOM을 새 항목 데이터로 갱신 */
 function applyToBlock(blockEl: HTMLElement, items: AccordionItem[]) {
-    // data-accordion-items 속성 갱신 (에디터가 다시 열릴 때 최신 데이터 읽기용)
     blockEl.setAttribute('data-accordion-items', JSON.stringify(items));
-
-    // 기존 아코디언 항목 + 스크립트 제거 후 재삽입
     blockEl.querySelectorAll('.ia-item, script').forEach((el) => el.remove());
     blockEl.insertAdjacentHTML('beforeend', buildItemsHtml(items) + ACCORDION_SCRIPT);
-
-    // data-accordion-inited 초기화 — 스크립트 재실행 시 guard 통과하도록
     blockEl.removeAttribute('data-accordion-inited');
 }
 
@@ -109,7 +105,7 @@ const S = {
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 480,
+        width: 440,
         maxHeight: '80vh',
         display: 'flex',
         flexDirection: 'column' as const,
@@ -137,7 +133,7 @@ const S = {
         padding: '12px 14px',
         display: 'flex',
         flexDirection: 'column' as const,
-        gap: 8,
+        gap: 6,
     },
     footer: {
         display: 'flex',
@@ -148,19 +144,14 @@ const S = {
         borderTop: '1px solid #f3f4f6',
         flexShrink: 0,
     },
-    itemCard: {
-        border: '1px solid #e5e7eb',
-        borderRadius: 8,
-        background: '#fafafa',
-        overflow: 'hidden' as const,
-    },
-    itemHeader: {
+    itemRow: {
         display: 'flex',
         alignItems: 'center',
         gap: 6,
-        padding: '8px 10px',
-        background: '#f3f4f6',
-        borderBottom: '1px solid #e5e7eb',
+        padding: '6px 10px',
+        border: '1px solid #e5e7eb',
+        borderRadius: 8,
+        background: '#fafafa',
     },
     iconBtn: {
         width: 26,
@@ -190,16 +181,9 @@ const S = {
         color: '#ef4444',
         marginLeft: 'auto',
     } as React.CSSProperties,
-    label: {
-        fontSize: 11,
-        fontWeight: 600,
-        color: '#6b7280',
-        display: 'block',
-        marginBottom: 4,
-    },
     input: {
-        width: '100%',
-        padding: '7px 10px',
+        flex: 1,
+        padding: '6px 10px',
         border: '1px solid #e5e7eb',
         borderRadius: 6,
         fontSize: 13,
@@ -208,21 +192,7 @@ const S = {
         boxSizing: 'border-box' as const,
         fontFamily: FONT_FAMILY,
         outline: 'none',
-    },
-    textarea: {
-        width: '100%',
-        padding: '7px 10px',
-        border: '1px solid #e5e7eb',
-        borderRadius: 6,
-        fontSize: 12,
-        color: '#374151',
-        background: '#fff',
-        boxSizing: 'border-box' as const,
-        fontFamily: FONT_FAMILY,
-        outline: 'none',
-        resize: 'vertical' as const,
-        minHeight: 72,
-        lineHeight: 1.6,
+        minWidth: 0,
     },
     addBtn: {
         width: '100%',
@@ -265,31 +235,21 @@ const S = {
 
 export default function InfoAccordionEditor({ blockEl, onClose }: Props) {
     const [items, setItems] = useState<AccordionItem[]>(() => parseItems(blockEl));
-    const [expandedIdx, setExpandedIdx] = useState<number | null>(0);
 
     const handleTitleChange = (idx: number, value: string) => {
         setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, title: value } : item)));
     };
 
-    const handleContentChange = (idx: number, value: string) => {
-        setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, content: value } : item)));
-    };
-
     const handleAdd = () => {
-        const newItems = [...items, { title: '새 항목', content: '· 내용을 입력해 주세요.' }];
-        setItems(newItems);
-        setExpandedIdx(newItems.length - 1);
+        setItems((prev) => [
+            ...prev,
+            { title: '새 항목', content: '<p style="margin:0;">· 내용을 입력해 주세요.</p>' },
+        ]);
     };
 
     const handleDelete = (idx: number) => {
         if (items.length <= 1) return;
-        const newItems = items.filter((_, i) => i !== idx);
-        setItems(newItems);
-        setExpandedIdx((prev) => {
-            if (prev === null) return null;
-            if (prev === idx) return null;
-            return prev > idx ? prev - 1 : prev;
-        });
+        setItems((prev) => prev.filter((_, i) => i !== idx));
     };
 
     const handleMoveUp = (idx: number) => {
@@ -297,7 +257,6 @@ export default function InfoAccordionEditor({ blockEl, onClose }: Props) {
         const newItems = [...items];
         [newItems[idx - 1], newItems[idx]] = [newItems[idx], newItems[idx - 1]];
         setItems(newItems);
-        setExpandedIdx(idx - 1);
     };
 
     const handleMoveDown = (idx: number) => {
@@ -305,7 +264,6 @@ export default function InfoAccordionEditor({ blockEl, onClose }: Props) {
         const newItems = [...items];
         [newItems[idx], newItems[idx + 1]] = [newItems[idx + 1], newItems[idx]];
         setItems(newItems);
-        setExpandedIdx(idx + 1);
     };
 
     const handleApply = () => {
@@ -341,140 +299,103 @@ export default function InfoAccordionEditor({ blockEl, onClose }: Props) {
                     </button>
                 </div>
 
+                {/* 안내 문구 */}
+                <div
+                    style={{
+                        padding: '8px 14px',
+                        background: '#f0f4ff',
+                        borderBottom: '1px solid #e5e7eb',
+                        fontSize: 11,
+                        color: '#4b6baf',
+                        flexShrink: 0,
+                    }}
+                >
+                    제목을 추가·삭제·순서변경합니다. 본문은 에디터 캔버스에서 직접 편집해 주세요.
+                </div>
+
                 {/* 항목 목록 */}
                 <div style={S.body}>
                     {items.map((item, idx) => (
-                        <div key={idx} style={S.itemCard}>
-                            {/* 항목 헤더 */}
-                            <div style={S.itemHeader}>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', minWidth: 18 }}>
-                                    {idx + 1}
-                                </span>
+                        <div key={idx} style={S.itemRow}>
+                            {/* 순서 번호 */}
+                            <span
+                                style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', minWidth: 16, flexShrink: 0 }}
+                            >
+                                {idx + 1}
+                            </span>
 
-                                {/* 순서 변경 버튼 */}
-                                <button
-                                    type="button"
-                                    title="위로"
-                                    disabled={idx === 0}
-                                    onClick={() => handleMoveUp(idx)}
-                                    style={{ ...S.iconBtn, opacity: idx === 0 ? 0.35 : 1 }}
+                            {/* 순서 변경 버튼 */}
+                            <button
+                                type="button"
+                                title="위로"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveUp(idx)}
+                                style={{ ...S.iconBtn, opacity: idx === 0 ? 0.35 : 1 }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="13"
+                                    height="13"
+                                    fill="none"
+                                    stroke="#374151"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        width="13"
-                                        height="13"
-                                        fill="none"
-                                        stroke="#374151"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="m18 15-6-6-6 6" />
-                                    </svg>
-                                </button>
-                                <button
-                                    type="button"
-                                    title="아래로"
-                                    disabled={idx === items.length - 1}
-                                    onClick={() => handleMoveDown(idx)}
-                                    style={{ ...S.iconBtn, opacity: idx === items.length - 1 ? 0.35 : 1 }}
+                                    <path d="m18 15-6-6-6 6" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                title="아래로"
+                                disabled={idx === items.length - 1}
+                                onClick={() => handleMoveDown(idx)}
+                                style={{ ...S.iconBtn, opacity: idx === items.length - 1 ? 0.35 : 1 }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="13"
+                                    height="13"
+                                    fill="none"
+                                    stroke="#374151"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        width="13"
-                                        height="13"
-                                        fill="none"
-                                        stroke="#374151"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="m6 9 6 6 6-6" />
-                                    </svg>
-                                </button>
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </button>
 
-                                {/* 펼침/접힘 토글 */}
-                                <button
-                                    type="button"
-                                    onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
-                                    style={{
-                                        flex: 1,
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        textAlign: 'left',
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                        color: '#1A1A2E',
-                                        padding: '0 4px',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    {item.title || '(제목 없음)'}
-                                </button>
+                            {/* 제목 입력 */}
+                            <input
+                                type="text"
+                                value={item.title}
+                                onChange={(e) => handleTitleChange(idx, e.target.value)}
+                                style={S.input}
+                                placeholder="항목 제목"
+                            />
 
-                                {/* 삭제 버튼 */}
-                                <button
-                                    type="button"
-                                    title="항목 삭제"
-                                    disabled={items.length <= 1}
-                                    onClick={() => handleDelete(idx)}
-                                    style={{ ...S.deleteBtn, opacity: items.length <= 1 ? 0.35 : 1 }}
+                            {/* 삭제 버튼 */}
+                            <button
+                                type="button"
+                                title="항목 삭제"
+                                disabled={items.length <= 1}
+                                onClick={() => handleDelete(idx)}
+                                style={{ ...S.deleteBtn, opacity: items.length <= 1 ? 0.35 : 1 }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="13"
+                                    height="13"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        width="13"
-                                        height="13"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M18 6 6 18M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            {/* 항목 편집 폼 (펼침 상태) */}
-                            {expandedIdx === idx && (
-                                <div
-                                    style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}
-                                >
-                                    <div>
-                                        <label style={S.label}>제목</label>
-                                        <input
-                                            type="text"
-                                            value={item.title}
-                                            onChange={(e) => handleTitleChange(idx, e.target.value)}
-                                            style={S.input}
-                                            placeholder="항목 제목"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label style={S.label}>본문 (HTML)</label>
-                                        <textarea
-                                            value={item.content}
-                                            onChange={(e) => handleContentChange(idx, e.target.value)}
-                                            style={S.textarea}
-                                            placeholder="본문 HTML을 입력하세요. 예: <p>· 내용</p>"
-                                        />
-                                        <p
-                                            style={{
-                                                fontSize: 11,
-                                                color: '#9ca3af',
-                                                margin: '4px 0 0',
-                                                lineHeight: 1.5,
-                                            }}
-                                        >
-                                            {'<p>· 텍스트</p>'} · {'<strong>강조</strong>'} · {'<table>'}표{'</table>'}{' '}
-                                            사용 가능
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                                    <path d="M18 6 6 18M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
                     ))}
 

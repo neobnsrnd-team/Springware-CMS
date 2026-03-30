@@ -643,7 +643,6 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
         const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
         const SPW_BL_BTN_CLASS = 'spw-bl-edit-btn';
-        const SPW_IA_BTN_CLASS = 'spw-ia-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -746,31 +745,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 linkTool.appendChild(btn);
             }
 
-            // ⑤ info-accordion 항목 편집 버튼
-            if (!linkTool.querySelector(`.${SPW_IA_BTN_CLASS}`)) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = SPW_IA_BTN_CLASS;
-                btn.title = '항목 편집';
-                btn.style.cssText =
-                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
-                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`;
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    const block =
-                        document
-                            .querySelector<HTMLElement>('.icon-active')
-                            ?.closest<HTMLElement>('[data-component-id^="info-accordion"]') ??
-                        document
-                            .querySelector<HTMLElement>('.elm-active')
-                            ?.closest<HTMLElement>('[data-component-id^="info-accordion"]');
-                    if (block) setInfoAccordionBlock(block);
-                });
-                linkTool.appendChild(btn);
-            }
-
-            // ⑥ branch-locator 지점 편집 버튼
+            // ⑤ branch-locator 지점 편집 버튼
             if (!linkTool.querySelector(`.${SPW_BL_BTN_CLASS}`)) {
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -834,13 +809,6 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                     !!iconActive?.closest('[data-component-id^="branch-locator"]') ||
                     !!elmActive?.closest('[data-component-id^="branch-locator"]');
                 blBtn.style.display = isInBl ? 'flex' : 'none';
-            }
-            const iaBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_IA_BTN_CLASS}`);
-            if (iaBtn) {
-                const isInIa =
-                    !!iconActive?.closest('[data-component-id^="info-accordion"]') ||
-                    !!elmActive?.closest('[data-component-id^="info-accordion"]');
-                iaBtn.style.display = isInIa ? 'flex' : 'none';
             }
         };
 
@@ -911,22 +879,62 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             });
         };
 
-        // 슬라이드 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
+        // ── info-accordion 항목 편집 버튼 — .is-row-tool 주입 ────────────────
+        const SPW_IA_ROW_BTN_CLASS = 'spw-ia-row-edit-btn';
+
+        const injectIaEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_IA_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_IA_ROW_BTN_CLASS;
+            btn.title = '항목 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="info-accordion"]');
+                if (block) setInfoAccordionBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateIaRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_IA_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isIa = !!activeEl?.closest('[data-component-id^="info-accordion"]');
+                btn.style.display = isIa ? 'flex' : 'none';
+            });
+        };
+
+        // 슬라이드·아코디언 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
         const slideToolObserver = new MutationObserver((mutations) => {
-            let needsSlideVisibility = false;
+            let needsRowToolVisibility = false;
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if (!(node instanceof HTMLElement)) return;
-                    if (node.classList.contains('is-row-tool')) injectSlideEditToRowTool(node);
-                    node.querySelectorAll<HTMLElement>('.is-row-tool').forEach(injectSlideEditToRowTool);
+                    if (node.classList.contains('is-row-tool')) {
+                        injectSlideEditToRowTool(node);
+                        injectIaEditToRowTool(node);
+                    }
+                    node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
+                        injectSlideEditToRowTool(t);
+                        injectIaEditToRowTool(t);
+                    });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                     if ((mutation.target as HTMLElement).classList.contains('elm-active')) {
-                        needsSlideVisibility = true;
+                        needsRowToolVisibility = true;
                     }
                 }
             });
-            if (needsSlideVisibility) updateSlideToolBtnVisibility();
+            if (needsRowToolVisibility) {
+                updateSlideToolBtnVisibility();
+                updateIaRowBtnVisibility();
+            }
         });
         slideToolObserver.observe(document.body, {
             childList: true,
@@ -936,7 +944,10 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         });
 
         // 이미 DOM에 있는 .is-row-tool에 즉시 적용
-        document.querySelectorAll<HTMLElement>('.is-row-tool').forEach(injectSlideEditToRowTool);
+        document.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
+            injectSlideEditToRowTool(t);
+            injectIaEditToRowTool(t);
+        });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
         // .is-pop.quickadd는 DOM에 항상 존재하며 ContentBuilder가 display만 토글함.
