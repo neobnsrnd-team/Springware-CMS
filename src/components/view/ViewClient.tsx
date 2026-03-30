@@ -188,6 +188,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
     }
 })();`;
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
+            // 외부 스크립트(src), 비 JS 타입(type="text/html" 등), HTML 템플릿 스크립트를 제외합니다.
+            if (
+                oldScript.src ||
+                (oldScript.type && !/javascript|ecmascript/i.test(oldScript.type)) ||
+                (oldScript.textContent ?? '').trimStart().startsWith('<')
+            ) {
+                return;
+            }
             const newScript = document.createElement('script');
             newScript.textContent = clearDotsCode + (oldScript.textContent ?? '');
             oldScript.parentNode?.replaceChild(newScript, oldScript);
