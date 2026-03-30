@@ -176,14 +176,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         // dangerouslySetInnerHTML은 <script> 태그를 실행하지 않으므로
         // [data-spw-block] 컴포넌트 내 인라인 스크립트를 직접 재실행
         // replaceChild로 동일 위치에 삽입 → document.currentScript.parentElement가 컴포넌트 div를 가리킴
-        // React StrictMode는 개발 환경에서 effect를 두 번 실행하므로, 이미 초기화된 블록은 건너뜀
+        // 스크립트 실행 전 dot 컨테이너를 초기화하는 코드를 주입 —
+        // runtime.init() 이중 실행, React StrictMode 이중 실행 등 어떤 경로로든
+        // 스크립트가 여러 번 실행되어도 dot 개수가 누적되지 않도록 보장
+        const clearDotsCode = `(function(){var _r=document.currentScript&&document.currentScript.closest('[data-spw-block]');if(_r){_r.querySelectorAll('[data-pg-dots],[data-pb-dots]').forEach(function(e){e.innerHTML=''});}})();`;
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
-            const block = oldScript.closest<HTMLElement>('[data-spw-block]');
-            if (block?.dataset.scriptsInited) return;
             const newScript = document.createElement('script');
-            newScript.textContent = oldScript.textContent;
+            newScript.textContent = clearDotsCode + (oldScript.textContent ?? '');
             oldScript.parentNode?.replaceChild(newScript, oldScript);
-            if (block) block.dataset.scriptsInited = '1';
         });
 
         return () => runtime.destroy();
