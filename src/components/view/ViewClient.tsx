@@ -179,7 +179,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         // 스크립트 실행 전 dot 컨테이너를 초기화하는 코드를 주입 —
         // runtime.init() 이중 실행, React StrictMode 이중 실행 등 어떤 경로로든
         // 스크립트가 여러 번 실행되어도 dot 개수가 누적되지 않도록 보장
-        const clearDotsCode = `(function(){var _r=document.currentScript&&document.currentScript.closest('[data-spw-block]');if(_r){_r.querySelectorAll('[data-pg-dots],[data-pb-dots]').forEach(function(e){e.innerHTML=''});}})();`;
+        const clearDotsCode = `(function() {
+    const block = document.currentScript?.closest('[data-spw-block]');
+    if (block) {
+        block.querySelectorAll('[data-pg-dots], [data-pb-dots]').forEach(function(dotsContainer) {
+            dotsContainer.innerHTML = '';
+        });
+    }
+})();`;
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
             const newScript = document.createElement('script');
             newScript.textContent = clearDotsCode + (oldScript.textContent ?? '');
