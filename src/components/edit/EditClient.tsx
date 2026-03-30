@@ -17,6 +17,7 @@ import ComponentPanel from '@/components/edit/ComponentPanel';
 import AppHeaderBorderEditor from '@/components/edit/AppHeaderBorderEditor';
 import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
 import BranchLocatorEditor from '@/components/edit/BranchLocatorEditor';
+import InfoAccordionEditor from '@/components/edit/InfoAccordionEditor';
 import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import SlideEditorModal from '@/components/edit/SlideEditorModal';
@@ -242,6 +243,8 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     const [appHeaderBlock, setAppHeaderBlock] = useState<HTMLElement | null>(null);
     // branch-locator 지점 편집 패널
     const [branchLocatorBlock, setBranchLocatorBlock] = useState<HTMLElement | null>(null);
+    // info-accordion 항목 편집 모달
+    const [infoAccordionBlock, setInfoAccordionBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -640,6 +643,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
         const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
         const SPW_BL_BTN_CLASS = 'spw-bl-edit-btn';
+        const SPW_IA_BTN_CLASS = 'spw-ia-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -742,7 +746,31 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 linkTool.appendChild(btn);
             }
 
-            // ⑤ branch-locator 지점 편집 버튼
+            // ⑤ info-accordion 항목 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_IA_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_IA_BTN_CLASS;
+                btn.title = '항목 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-component-id^="info-accordion"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-component-id^="info-accordion"]');
+                    if (block) setInfoAccordionBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
+
+            // ⑥ branch-locator 지점 편집 버튼
             if (!linkTool.querySelector(`.${SPW_BL_BTN_CLASS}`)) {
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -806,6 +834,13 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                     !!iconActive?.closest('[data-component-id^="branch-locator"]') ||
                     !!elmActive?.closest('[data-component-id^="branch-locator"]');
                 blBtn.style.display = isInBl ? 'flex' : 'none';
+            }
+            const iaBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_IA_BTN_CLASS}`);
+            if (iaBtn) {
+                const isInIa =
+                    !!iconActive?.closest('[data-component-id^="info-accordion"]') ||
+                    !!elmActive?.closest('[data-component-id^="info-accordion"]');
+                iaBtn.style.display = isInIa ? 'flex' : 'none';
             }
         };
 
@@ -2107,6 +2142,11 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
 
             {/* ── media-video 영상 URL 편집 모달 ── */}
             {mediaVideoBlock && <MediaVideoEditor blockEl={mediaVideoBlock} onClose={() => setMediaVideoBlock(null)} />}
+
+            {/* ── info-accordion 항목 편집 모달 ── */}
+            {infoAccordionBlock && (
+                <InfoAccordionEditor blockEl={infoAccordionBlock} onClose={() => setInfoAccordionBlock(null)} />
+            )}
 
             {/* ── site-footer 드롭다운 편집 패널 ── */}
             {siteFooterBlock && (
