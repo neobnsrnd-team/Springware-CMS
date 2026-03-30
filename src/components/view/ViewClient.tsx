@@ -176,10 +176,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         // dangerouslySetInnerHTML은 <script> 태그를 실행하지 않으므로
         // [data-spw-block] 컴포넌트 내 인라인 스크립트를 직접 재실행
         // replaceChild로 동일 위치에 삽입 → document.currentScript.parentElement가 컴포넌트 div를 가리킴
+        // React StrictMode는 개발 환경에서 effect를 두 번 실행하므로, 이미 초기화된 블록은 건너뜀
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
+            const block = oldScript.closest<HTMLElement>('[data-spw-block]');
+            if (block?.dataset.scriptsInited) return;
             const newScript = document.createElement('script');
             newScript.textContent = oldScript.textContent;
             oldScript.parentNode?.replaceChild(newScript, oldScript);
+            if (block) block.dataset.scriptsInited = '1';
         });
 
         return () => runtime.destroy();
