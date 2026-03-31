@@ -500,6 +500,10 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
                         css: basePath + '/assets/plugins/loan-calculator/style.css',
                     },
+                    'sticky-floating-bar': {
+                        url: basePath + '/assets/plugins/sticky-floating-bar/index.js',
+                        css: basePath + '/assets/plugins/sticky-floating-bar/style.css',
+                    },
                 },
             });
             // Make runtime available globally for ContentBuilder editor
