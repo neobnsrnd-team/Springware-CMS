@@ -56,6 +56,7 @@ const SCROLL_SCRIPT =
     `if(!root)return;` +
     `var track=root.querySelector('[data-bc-track]');` +
     `if(!track)return;` +
+    `track.className=(track.className||'').replace(/\\bflex(?:-col)?\\b/g,'').trim();` +
     `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:4px 0 8px;';` +
     `var slides=Array.from(track.querySelectorAll('[data-bc-slide]'));` +
     `slides.forEach(function(s){` +

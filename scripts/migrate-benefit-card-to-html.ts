@@ -54,6 +54,8 @@ const SCROLL_SCRIPT =
         `if(!root)return;` +
         `var track=root.querySelector('[data-bc-track]');` +
         `if(!track)return;` +
+        // ContentBuilder가 flex-direction:column → class="flex flex-col"로 변환하는 경우 대응
+        `track.className=(track.className||'').replace(/\\bflex(?:-col)?\\b/g,'').trim();` +
         // 트랙을 가로 scroll-snap 컨테이너로 변환
         `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:4px 0 8px;';` +
         `var slides=Array.from(track.querySelectorAll('[data-bc-slide]'));` +
