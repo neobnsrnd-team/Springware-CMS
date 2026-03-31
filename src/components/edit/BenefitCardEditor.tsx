@@ -97,16 +97,19 @@ function applyToBlock(blockEl: HTMLElement, cards: CardItem[]) {
 
 /**
  * blockEl에서 현재 카드 데이터 파싱
- * DOM 우선 → data-bc-cards 폴백
- * ContentBuilder 인라인 편집 결과가 DOM에 반영되어 있을 경우 정확히 읽기 위해 DOM을 먼저 시도
+ *
+ * 우선순위:
+ * 1. DOM (data-bc-title 속성 존재 시) — ContentBuilder 인라인 편집 결과 반영
+ * 2. data-bc-cards 속성 — data-bc-title 없는 구버전 블록(마이그레이션 재실행 전) 또는 DOM 파싱 실패
  */
 function parseCards(blockEl: HTMLElement): CardItem[] {
-    // DOM에서 직접 읽기 (인라인 편집 반영)
     const anchors = blockEl.querySelectorAll(
         '[data-bc-slide] a, [data-bc-container] > a, [data-bc-container] > div > a',
     );
 
-    if (anchors.length > 0) {
+    // data-bc-title 속성이 존재하는 경우에만 DOM 읽기
+    // 구버전 블록(속성 없음)은 anchors가 있어도 폴백으로 내려감
+    if (anchors.length > 0 && anchors[0]?.querySelector('[data-bc-title]')) {
         return Array.from(anchors).map((el) => {
             const iconWrapper = el.querySelector('[data-bc-icon]');
             const iconImg = iconWrapper?.querySelector('img');
@@ -121,7 +124,7 @@ function parseCards(blockEl: HTMLElement): CardItem[] {
         });
     }
 
-    // 폴백: data-bc-cards 속성 (마이그레이션으로 삽입된 구버전 블록)
+    // 폴백: data-bc-cards 속성 (구버전 블록 또는 DOM 속성 없는 경우)
     const raw = blockEl.getAttribute('data-bc-cards');
     if (raw) {
         try {
