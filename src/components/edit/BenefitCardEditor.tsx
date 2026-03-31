@@ -49,7 +49,7 @@ function buildCard(card: CardItem): string {
 
 // mobile 뷰어용 scroll-snap 변환 인라인 스크립트 (마이그레이션 스크립트와 동기화)
 const SCROLL_SCRIPT =
-    `<script>` +
+    `<script data-bc-script>` +
     `(function(){` +
     `if(window.builderRuntime)return;` +
     `var root=document.currentScript&&document.currentScript.parentElement;` +
@@ -81,7 +81,7 @@ function applyToBlock(blockEl: HTMLElement, cards: CardItem[]) {
                 .map((card) => `<div data-bc-slide style="width:100%;">${buildCard(card)}</div>`)
                 .join('');
         }
-        blockEl.querySelectorAll('script').forEach((el) => el.remove());
+        blockEl.querySelectorAll('script[data-bc-script]').forEach((el) => el.remove());
         blockEl.insertAdjacentHTML('beforeend', SCROLL_SCRIPT);
     } else if (compId.endsWith('-web')) {
         container.innerHTML = cards.map((card) => buildCard(card)).join('');
@@ -114,7 +114,7 @@ function parseCards(blockEl: HTMLElement): CardItem[] {
             const titleEl = el.querySelector('[data-bc-title]');
             const descEl = el.querySelector('[data-bc-desc]');
             return {
-                icon: iconImg?.getAttribute('src') ?? iconSpan?.textContent?.trim() ?? '💰',
+                icon: (iconImg?.getAttribute('src') ?? iconSpan?.textContent?.trim()) || '💰',
                 title: titleEl?.textContent?.trim() ?? '',
                 desc: descEl?.textContent?.trim() ?? '',
             };

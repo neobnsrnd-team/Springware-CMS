@@ -47,7 +47,7 @@ function buildCard(card: (typeof CARDS)[number]): string {
 // 에디터: 기본 column 레이아웃 유지 (카드 전체 표시)
 // 뷰어: 트랙/슬라이드 CSS를 가로 scroll-snap으로 변환
 const SCROLL_SCRIPT =
-    `<script>` +
+    `<script data-bc-script>` +
     `(function(){` +
         `if(window.builderRuntime)return;` +
         `var root=document.currentScript&&document.currentScript.parentElement;` +
@@ -68,7 +68,7 @@ const SCROLL_SCRIPT =
 // 뷰어: 스크립트가 가로 scroll-snap으로 변환
 // data-bc-cards: BenefitCardEditor가 카드 데이터 파싱에 사용
 const MOBILE_HTML =
-    `<div data-component-id="benefit-card-mobile" data-spw-block data-bc-cards='${JSON.stringify(CARDS)}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:20px 16px 24px;">` +
+    `<div data-component-id="benefit-card-mobile" data-spw-block data-bc-cards='${JSON.stringify(CARDS).replace(/'/g, "&#39;")}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:20px 16px 24px;">` +
         `<h3 style="font-size:16px;font-weight:700;color:#1A1A2E;margin:0 0 14px;">주요 혜택</h3>` +
         `<div data-bc-container data-bc-track style="display:flex;flex-direction:column;gap:12px;">` +
             CARDS.map((card) =>
@@ -81,7 +81,7 @@ const MOBILE_HTML =
 // ── web variant ───────────────────────────────────────────────────────────────
 // 3열 flex 고정 그리드
 const WEB_HTML =
-    `<div data-component-id="benefit-card-web" data-spw-block data-bc-cards='${JSON.stringify(CARDS)}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:24px;max-width:960px;margin:0 auto;box-sizing:border-box;">` +
+    `<div data-component-id="benefit-card-web" data-spw-block data-bc-cards='${JSON.stringify(CARDS).replace(/'/g, "&#39;")}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:24px;max-width:960px;margin:0 auto;box-sizing:border-box;">` +
         `<h3 style="font-size:18px;font-weight:700;color:#1A1A2E;margin:0 0 16px;">주요 혜택</h3>` +
         `<div data-bc-container style="display:flex;flex-direction:row;gap:12px;">` +
             CARDS.map((card) => buildCard(card)).join('') +
@@ -91,7 +91,7 @@ const WEB_HTML =
 // ── responsive variant ────────────────────────────────────────────────────────
 // 2열 flex-wrap 그리드
 const RESPONSIVE_HTML =
-    `<div data-component-id="benefit-card-responsive" data-spw-block data-bc-cards='${JSON.stringify(CARDS)}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:20px;width:100%;box-sizing:border-box;">` +
+    `<div data-component-id="benefit-card-responsive" data-spw-block data-bc-cards='${JSON.stringify(CARDS).replace(/'/g, "&#39;")}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:20px;width:100%;box-sizing:border-box;">` +
         `<h3 style="font-size:17px;font-weight:700;color:#1A1A2E;margin:0 0 14px;">주요 혜택</h3>` +
         `<div data-bc-container style="display:flex;flex-wrap:wrap;gap:12px;">` +
             CARDS.map((card) =>
