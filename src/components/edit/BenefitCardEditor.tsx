@@ -75,12 +75,10 @@ function applyToBlock(blockEl: HTMLElement, cards: CardItem[]) {
     if (!container) return;
 
     if (compId.endsWith('-mobile')) {
-        const track = container.querySelector<HTMLElement>('[data-bc-track]');
-        if (track) {
-            track.innerHTML = cards
-                .map((card) => `<div data-bc-slide style="width:100%;">${buildCard(card)}</div>`)
-                .join('');
-        }
+        // container 자체가 data-bc-track을 겸하므로 querySelector 대신 container 직접 사용
+        container.innerHTML = cards
+            .map((card) => `<div data-bc-slide style="width:100%;">${buildCard(card)}</div>`)
+            .join('');
         blockEl.querySelectorAll('script[data-bc-script]').forEach((el) => el.remove());
         blockEl.insertAdjacentHTML('beforeend', SCROLL_SCRIPT);
     } else if (compId.endsWith('-web')) {
