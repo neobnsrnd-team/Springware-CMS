@@ -1,12 +1,13 @@
 // src/components/edit/BenefitCardEditor.tsx
-// benefit-card 블록의 혜택 카드 항목을 추가·삭제·순서변경·내용수정하는 모달 에디터 (Issue #231)
+// benefit-card 블록의 혜택 카드 항목을 추가·삭제·순서변경·제목수정하는 모달 에디터 (Issue #231)
+// 아이콘·설명은 ContentBuilder 인라인 편집으로 직접 수정
 
 'use client';
 
 import { useState } from 'react';
 
 interface CardItem {
-    icon: string;
+    icon: string; // 이모지 또는 이미지 URL
     title: string;
     desc: string;
 }
@@ -18,17 +19,29 @@ interface Props {
 
 const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
 
-// ── 카드 HTML 빌더 (마이그레이션 스크립트와 동일) ───────────────────────────
+// ── 헬퍼 ─────────────────────────────────────────────────────────────────────
+
+/** 값이 이미지 URL인지 판별 (http/https, 절대경로 /, data URI) */
+function isImageUrl(val: string): boolean {
+    return /^(https?:\/\/|\/|data:image\/)/.test(val.trim());
+}
+
+// ── 카드 HTML 빌더 ────────────────────────────────────────────────────────────
+// data-bc-icon / data-bc-title / data-bc-desc: parseCards()가 DOM에서 읽을 때 사용
 
 function buildCard(card: CardItem): string {
+    const iconContent = isImageUrl(card.icon)
+        ? `<img src="${card.icon}" style="width:28px;height:28px;object-fit:contain;" alt="" />`
+        : `<span style="font-size:24px;line-height:1;">${card.icon}</span>`;
+
     return (
         `<a href="#" style="display:block;text-decoration:none;flex:1;min-width:0;">` +
         `<div style="background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;box-shadow:0 4px 20px rgba(0,70,164,0.08);height:100%;box-sizing:border-box;">` +
-        `<div style="width:48px;height:48px;background:#E8F0FC;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
-        `<span style="font-size:24px;line-height:1;">${card.icon}</span>` +
+        `<div data-bc-icon style="width:48px;height:48px;background:#E8F0FC;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+        iconContent +
         `</div>` +
-        `<div style="font-size:16px;font-weight:700;color:#0046A4;line-height:1.3;word-break:keep-all;">${card.title}</div>` +
-        `<div style="font-size:12px;color:#6B7280;line-height:1.4;word-break:keep-all;">${card.desc}</div>` +
+        `<div data-bc-title style="font-size:16px;font-weight:700;color:#0046A4;line-height:1.3;word-break:keep-all;">${card.title}</div>` +
+        `<div data-bc-desc style="font-size:12px;color:#6B7280;line-height:1.4;word-break:keep-all;">${card.desc}</div>` +
         `</div>` +
         `</a>`
     );
@@ -55,7 +68,6 @@ const SCROLL_SCRIPT =
 
 /** blockEl DOM을 새 카드 데이터로 갱신 */
 function applyToBlock(blockEl: HTMLElement, cards: CardItem[]) {
-    // 카드 데이터를 속성에 저장 (재편집 시 파싱용)
     blockEl.setAttribute('data-bc-cards', JSON.stringify(cards));
 
     const compId = blockEl.getAttribute('data-component-id') ?? '';
@@ -63,21 +75,17 @@ function applyToBlock(blockEl: HTMLElement, cards: CardItem[]) {
     if (!container) return;
 
     if (compId.endsWith('-mobile')) {
-        // mobile: data-bc-track 내 slide 목록 교체 + 스크립트 재주입
         const track = container.querySelector<HTMLElement>('[data-bc-track]');
         if (track) {
             track.innerHTML = cards
                 .map((card) => `<div data-bc-slide style="width:100%;">${buildCard(card)}</div>`)
                 .join('');
         }
-        // 스크립트 재주입
         blockEl.querySelectorAll('script').forEach((el) => el.remove());
         blockEl.insertAdjacentHTML('beforeend', SCROLL_SCRIPT);
     } else if (compId.endsWith('-web')) {
-        // web: flex row 컨테이너 내 카드 직접 교체
         container.innerHTML = cards.map((card) => buildCard(card)).join('');
     } else if (compId.endsWith('-responsive')) {
-        // responsive: flex-wrap 컨테이너 내 래퍼 div 교체
         container.innerHTML = cards
             .map(
                 (card) =>
@@ -87,30 +95,43 @@ function applyToBlock(blockEl: HTMLElement, cards: CardItem[]) {
     }
 }
 
-/** blockEl에서 현재 카드 데이터 파싱 */
+/**
+ * blockEl에서 현재 카드 데이터 파싱
+ * DOM 우선 → data-bc-cards 폴백
+ * ContentBuilder 인라인 편집 결과가 DOM에 반영되어 있을 경우 정확히 읽기 위해 DOM을 먼저 시도
+ */
 function parseCards(blockEl: HTMLElement): CardItem[] {
-    // data-bc-cards 속성 우선 사용
+    // DOM에서 직접 읽기 (인라인 편집 반영)
+    const anchors = blockEl.querySelectorAll(
+        '[data-bc-slide] a, [data-bc-container] > a, [data-bc-container] > div > a',
+    );
+
+    if (anchors.length > 0) {
+        return Array.from(anchors).map((el) => {
+            const iconWrapper = el.querySelector('[data-bc-icon]');
+            const iconImg = iconWrapper?.querySelector('img');
+            const iconSpan = iconWrapper?.querySelector('span');
+            const titleEl = el.querySelector('[data-bc-title]');
+            const descEl = el.querySelector('[data-bc-desc]');
+            return {
+                icon: iconImg?.getAttribute('src') ?? iconSpan?.textContent?.trim() ?? '💰',
+                title: titleEl?.textContent?.trim() ?? '',
+                desc: descEl?.textContent?.trim() ?? '',
+            };
+        });
+    }
+
+    // 폴백: data-bc-cards 속성 (마이그레이션으로 삽입된 구버전 블록)
     const raw = blockEl.getAttribute('data-bc-cards');
     if (raw) {
         try {
             return JSON.parse(raw) as CardItem[];
         } catch {
-            // 파싱 실패 시 DOM에서 직접 읽기
+            // 무시
         }
     }
 
-    // 폴백: DOM에서 추출
-    const slides = blockEl.querySelectorAll(
-        '[data-bc-slide] a, [data-bc-container] > a, [data-bc-container] > div > a',
-    );
-    return Array.from(slides).map((el) => {
-        const spans = el.querySelectorAll('span, div');
-        return {
-            icon: (spans[0] as HTMLElement)?.textContent?.trim() ?? '💰',
-            title: (spans[1] as HTMLElement)?.textContent?.trim() ?? '',
-            desc: (spans[2] as HTMLElement)?.textContent?.trim() ?? '',
-        };
-    });
+    return [];
 }
 
 // ── 스타일 상수 ──────────────────────────────────────────────────────────────
@@ -128,7 +149,7 @@ const S = {
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 480,
+        width: 400,
         maxHeight: '82vh',
         display: 'flex',
         flexDirection: 'column' as const,
@@ -175,19 +196,15 @@ const S = {
         borderTop: '1px solid #f3f4f6',
         flexShrink: 0,
     },
-    itemCard: {
+    itemRow: {
         border: '1px solid #e5e7eb',
         borderRadius: 10,
         background: '#fafafa',
-        padding: '10px 12px',
+        padding: '7px 10px',
         display: 'flex',
-        flexDirection: 'column' as const,
-        gap: 8,
-    },
-    itemHeader: {
-        display: 'flex',
+        flexDirection: 'row' as const,
         alignItems: 'center',
-        gap: 6,
+        gap: 5,
     },
     iconBtn: {
         width: 26,
@@ -215,20 +232,7 @@ const S = {
         flexShrink: 0,
         padding: 0,
         color: '#ef4444',
-        marginLeft: 'auto',
     } as React.CSSProperties,
-    inputRow: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-    },
-    label: {
-        fontSize: 11,
-        fontWeight: 600,
-        color: '#6b7280',
-        width: 36,
-        flexShrink: 0,
-    },
     input: {
         flex: 1,
         padding: '5px 9px',
@@ -241,18 +245,6 @@ const S = {
         fontFamily: FONT_FAMILY,
         outline: 'none',
         minWidth: 0,
-    },
-    iconInput: {
-        width: 56,
-        padding: '5px 9px',
-        border: '1px solid #e5e7eb',
-        borderRadius: 6,
-        fontSize: 20,
-        textAlign: 'center' as const,
-        background: '#fff',
-        boxSizing: 'border-box' as const,
-        outline: 'none',
-        flexShrink: 0,
     },
     addBtn: {
         width: '100%',
@@ -296,8 +288,8 @@ const S = {
 export default function BenefitCardEditor({ blockEl, onClose }: Props) {
     const [cards, setCards] = useState<CardItem[]>(() => parseCards(blockEl));
 
-    const handleChange = (idx: number, field: keyof CardItem, value: string) => {
-        setCards((prev) => prev.map((card, i) => (i === idx ? { ...card, [field]: value } : card)));
+    const handleTitleChange = (idx: number, value: string) => {
+        setCards((prev) => prev.map((card, i) => (i === idx ? { ...card, title: value } : card)));
     };
 
     const handleAdd = () => {
@@ -357,116 +349,99 @@ export default function BenefitCardEditor({ blockEl, onClose }: Props) {
                 </div>
 
                 {/* 안내 */}
-                <div style={S.guide}>혜택 카드를 추가·삭제·순서변경·내용수정합니다. 아이콘은 이모지를 입력하세요.</div>
+                <div style={S.guide}>
+                    제목을 수정하거나 카드를 추가·삭제·순서변경합니다. 아이콘·설명은 카드를 직접 클릭해 편집하세요.
+                </div>
 
                 {/* 카드 목록 */}
                 <div style={S.body}>
                     {cards.map((card, idx) => (
-                        <div key={idx} style={S.itemCard}>
-                            {/* 카드 헤더: 순서 + 이동 버튼 + 삭제 */}
-                            <div style={S.itemHeader}>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', minWidth: 20 }}>
-                                    {idx + 1}
-                                </span>
-                                <button
-                                    type="button"
-                                    title="위로"
-                                    disabled={idx === 0}
-                                    onClick={() => handleMoveUp(idx)}
-                                    style={{ ...S.iconBtn, opacity: idx === 0 ? 0.35 : 1 }}
-                                >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        width="13"
-                                        height="13"
-                                        fill="none"
-                                        stroke="#374151"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="m18 15-6-6-6 6" />
-                                    </svg>
-                                </button>
-                                <button
-                                    type="button"
-                                    title="아래로"
-                                    disabled={idx === cards.length - 1}
-                                    onClick={() => handleMoveDown(idx)}
-                                    style={{ ...S.iconBtn, opacity: idx === cards.length - 1 ? 0.35 : 1 }}
-                                >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        width="13"
-                                        height="13"
-                                        fill="none"
-                                        stroke="#374151"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="m6 9 6 6 6-6" />
-                                    </svg>
-                                </button>
-                                <button
-                                    type="button"
-                                    title="카드 삭제"
-                                    disabled={cards.length <= 1}
-                                    onClick={() => handleDelete(idx)}
-                                    style={{ ...S.deleteBtn, opacity: cards.length <= 1 ? 0.35 : 1 }}
-                                >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        width="13"
-                                        height="13"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M18 6 6 18M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
+                        <div key={idx} style={S.itemRow}>
+                            {/* 순서 번호 */}
+                            <span
+                                style={{
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: '#9ca3af',
+                                    minWidth: 16,
+                                    textAlign: 'center',
+                                }}
+                            >
+                                {idx + 1}
+                            </span>
 
-                            {/* 아이콘 입력 */}
-                            <div style={S.inputRow}>
-                                <span style={S.label}>아이콘</span>
-                                <input
-                                    type="text"
-                                    value={card.icon}
-                                    onChange={(e) => handleChange(idx, 'icon', e.target.value)}
-                                    style={S.iconInput}
-                                    maxLength={4}
-                                    placeholder="💰"
-                                />
-                                <span style={{ fontSize: 11, color: '#9ca3af' }}>이모지를 입력하세요</span>
-                            </div>
+                            {/* 위/아래 이동 */}
+                            <button
+                                type="button"
+                                title="위로"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveUp(idx)}
+                                style={{ ...S.iconBtn, opacity: idx === 0 ? 0.35 : 1 }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="13"
+                                    height="13"
+                                    fill="none"
+                                    stroke="#374151"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="m18 15-6-6-6 6" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                title="아래로"
+                                disabled={idx === cards.length - 1}
+                                onClick={() => handleMoveDown(idx)}
+                                style={{ ...S.iconBtn, opacity: idx === cards.length - 1 ? 0.35 : 1 }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="13"
+                                    height="13"
+                                    fill="none"
+                                    stroke="#374151"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </button>
 
-                            {/* 제목 입력 */}
-                            <div style={S.inputRow}>
-                                <span style={S.label}>제목</span>
-                                <input
-                                    type="text"
-                                    value={card.title}
-                                    onChange={(e) => handleChange(idx, 'title', e.target.value)}
-                                    style={S.input}
-                                    placeholder="30,000원 캐시백"
-                                />
-                            </div>
+                            {/* 제목 */}
+                            <input
+                                type="text"
+                                value={card.title}
+                                onChange={(e) => handleTitleChange(idx, e.target.value)}
+                                style={S.input}
+                                placeholder="30,000원 캐시백"
+                            />
 
-                            {/* 설명 입력 */}
-                            <div style={S.inputRow}>
-                                <span style={S.label}>설명</span>
-                                <input
-                                    type="text"
-                                    value={card.desc}
-                                    onChange={(e) => handleChange(idx, 'desc', e.target.value)}
-                                    style={S.input}
-                                    placeholder="이벤트 참여 완료 시"
-                                />
-                            </div>
+                            {/* 삭제 */}
+                            <button
+                                type="button"
+                                title="카드 삭제"
+                                disabled={cards.length <= 1}
+                                onClick={() => handleDelete(idx)}
+                                style={{ ...S.deleteBtn, opacity: cards.length <= 1 ? 0.35 : 1 }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="13"
+                                    height="13"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M18 6 6 18M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
                     ))}
 

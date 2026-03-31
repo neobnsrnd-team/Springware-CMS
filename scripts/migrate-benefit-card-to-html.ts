@@ -17,19 +17,26 @@ const CARDS = [
     { icon: '🎁', title: '스타벅스 쿠폰',    desc: '추첨 1,000명 증정'   },
 ] as const;
 
+// 이미지 URL 판별 (http/https, 절대경로, data URI)
+function isImageUrl(val: string): boolean {
+    return /^(https?:\/\/|\/|data:image\/)/.test(val.trim());
+}
+
 // 카드 1개 HTML — <a> 래퍼 포함 (ContentBuilder 인라인 편집 진입점)
+// data-bc-icon / data-bc-title / data-bc-desc: BenefitCardEditor DOM 파싱용
 function buildCard(card: (typeof CARDS)[number]): string {
+    const iconContent = isImageUrl(card.icon)
+        ? `<img src="${card.icon}" style="width:28px;height:28px;object-fit:contain;" alt="" />`
+        : `<span style="font-size:24px;line-height:1;">${card.icon}</span>`;
+
     return (
         `<a href="#" style="display:block;text-decoration:none;flex:1;min-width:0;">` +
             `<div style="background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;box-shadow:0 4px 20px rgba(0,70,164,0.08);height:100%;box-sizing:border-box;">` +
-                // 아이콘 래퍼
-                `<div style="width:48px;height:48px;background:#E8F0FC;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
-                    `<span style="font-size:24px;line-height:1;">${card.icon}</span>` +
+                `<div data-bc-icon style="width:48px;height:48px;background:#E8F0FC;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+                    iconContent +
                 `</div>` +
-                // 포인트 텍스트
-                `<div style="font-size:16px;font-weight:700;color:#0046A4;line-height:1.3;word-break:keep-all;">${card.title}</div>` +
-                // 보조 설명
-                `<div style="font-size:12px;color:#6B7280;line-height:1.4;word-break:keep-all;">${card.desc}</div>` +
+                `<div data-bc-title style="font-size:16px;font-weight:700;color:#0046A4;line-height:1.3;word-break:keep-all;">${card.title}</div>` +
+                `<div data-bc-desc style="font-size:12px;color:#6B7280;line-height:1.4;word-break:keep-all;">${card.desc}</div>` +
             `</div>` +
         `</a>`
     );
