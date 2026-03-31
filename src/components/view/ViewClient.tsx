@@ -169,6 +169,10 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     url: basePath + '/assets/plugins/loan-calculator/index.js',
                     css: basePath + '/assets/plugins/loan-calculator/style.css',
                 },
+                'sticky-floating-bar': {
+                    url: basePath + '/assets/plugins/sticky-floating-bar/index.js',
+                    css: basePath + '/assets/plugins/sticky-floating-bar/style.css',
+                },
             },
         });
         runtime.init();
