@@ -1,0 +1,270 @@
+// scripts/migrate-menu-tab-grid-to-html.ts
+// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226)
+// 금융 앱 전체 메뉴 탭 그리드 (접기/펼치기) 컴포넌트
+// 실행: npx tsx scripts/migrate-menu-tab-grid-to-html.ts
+
+import 'dotenv/config';
+import { getComponentById, updateComponent, createComponent } from '../src/db/repository/component.repository';
+import { closePool } from '../src/db/connection';
+
+const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+
+// ── 탭 항목 타입 ─────────────────────────────────────────────────────────
+
+interface TabItem {
+    label: string;
+}
+
+// ── 기본 예시 탭 데이터 (하나카드 메뉴) ───────────────────────────────────
+
+const DEFAULT_TABS: TabItem[] = [
+    { label: '전체' },
+    { label: '새로 나왔어요!' },
+    { label: '이용내역' },
+    { label: '이용금액결제' },
+    { label: '내카드' },
+    { label: '카드신청' },
+    { label: '금융' },
+    { label: '해외하면 하나카드' },
+    { label: '혜택' },
+    { label: '증명/납부' },
+    { label: '내 자산' },
+    { label: '내 계좌' },
+    { label: '라이프 UP' },
+    { label: '고객지원' },
+    { label: '기업카드' },
+    { label: '가맹점' },
+    { label: '나라사랑카드' },
+    { label: '별별뉴스' },
+    { label: '하나서비스' },
+];
+
+// ── chevron SVG ──────────────────────────────────────────────────────────
+
+const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="flex-shrink:0;transition:transform 0.25s ease;"><path d="m6 9 6 6 6-6"/></svg>`;
+
+// ── 탭바 항목 HTML ───────────────────────────────────────────────────────
+
+function buildTabBarItem(tab: TabItem, idx: number): string {
+    const isActive = idx === 0;
+    const activeStyle = isActive
+        ? 'border-bottom:2px solid #1A1A2E;color:#1A1A2E;font-weight:700;'
+        : 'border-bottom:2px solid transparent;color:#9CA3AF;font-weight:400;';
+    return (
+        `<span data-menu-tab data-tab-idx="${idx}"` +
+        ` ${isActive ? 'data-tab-active="true"' : ''}` +
+        ` style="display:inline-block;padding:12px 0;font-size:14px;white-space:nowrap;cursor:pointer;${activeStyle}"` +
+        `>${tab.label}</span>`
+    );
+}
+
+// ── 그리드 항목 HTML ─────────────────────────────────────────────────────
+
+function buildGridItem(tab: TabItem, idx: number): string {
+    const isActive = idx === 0;
+    return (
+        `<span data-menu-grid-item data-grid-idx="${idx}"` +
+        ` style="display:block;padding:14px 4px;font-size:14px;color:${isActive ? '#1A1A2E' : '#4B5563'};` +
+        `font-weight:${isActive ? '700' : '400'};cursor:pointer;text-align:center;white-space:nowrap;` +
+        `text-overflow:ellipsis;overflow:hidden;"` +
+        `>${tab.label}</span>`
+    );
+}
+
+// ── 인라인 토글 스크립트 ─────────────────────────────────────────────────
+// 에디터(.is-builder) 환경에서는 실행하지 않음 — 실제 페이지(/view)에서만 동작
+
+const TOGGLE_SCRIPT =
+    `<script>` +
+    `(function(){` +
+        `var root=document.currentScript&&document.currentScript.closest('[data-spw-block]');` +
+        `if(!root||root.getAttribute('data-menu-tab-inited')==='1')return;` +
+        // 에디터 환경 감지 — ContentBuilder가 .is-builder 클래스를 부여
+        `if(root.closest('.is-builder'))return;` +
+        `root.setAttribute('data-menu-tab-inited','1');` +
+
+        // 요소 참조
+        `var scrollWrap=root.querySelector('[data-menu-tab-scroll]');` +
+        `var gridWrap=root.querySelector('[data-menu-tab-grid]');` +
+        `var toggleBtn=root.querySelector('[data-menu-tab-toggle]');` +
+        `var chevron=toggleBtn&&toggleBtn.querySelector('svg');` +
+        `var expanded=false;` +
+
+        // 스크롤바 숨김 (인라인 불가한 ::-webkit-scrollbar 대응)
+        `var styleId='mtg-scroll-hide-'+Math.random().toString(36).slice(2,8);` +
+        `scrollWrap.setAttribute('data-mtg-id',styleId);` +
+        `var styleEl=document.createElement('style');` +
+        `styleEl.textContent='[data-mtg-id=\"'+styleId+'\"]::-webkit-scrollbar{display:none}';` +
+        `root.appendChild(styleEl);` +
+
+        // 펼치기/접기 토글
+        `function toggle(){` +
+            `expanded=!expanded;` +
+            `if(expanded){` +
+                `gridWrap.style.display='grid';` +
+                // requestAnimationFrame으로 display:grid 적용 후 maxHeight 설정
+                `requestAnimationFrame(function(){` +
+                    `gridWrap.style.maxHeight=gridWrap.scrollHeight+'px';` +
+                `});` +
+                `chevron.style.transform='rotate(180deg)';` +
+            `}else{` +
+                `gridWrap.style.maxHeight='0';` +
+                `setTimeout(function(){if(!expanded)gridWrap.style.display='none';},300);` +
+                `chevron.style.transform='rotate(0deg)';` +
+            `}` +
+        `}` +
+        `if(toggleBtn)toggleBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle();});` +
+
+        // 탭 선택
+        `var allTabs=root.querySelectorAll('[data-menu-tab]');` +
+        `var allGridItems=root.querySelectorAll('[data-menu-grid-item]');` +
+        `function selectTab(idx,fromGrid){` +
+            `allTabs.forEach(function(t){` +
+                `var isActive=t.getAttribute('data-tab-idx')===String(idx);` +
+                `t.style.borderBottomColor=isActive?'#1A1A2E':'transparent';` +
+                `t.style.color=isActive?'#1A1A2E':'#9CA3AF';` +
+                `t.style.fontWeight=isActive?'700':'400';` +
+                `if(isActive){` +
+                    `t.setAttribute('data-tab-active','true');` +
+                    // 선택된 탭이 보이도록 스크롤 (inline-start: 가능하면 왼쪽 정렬)
+                    `t.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});` +
+                `}else{t.removeAttribute('data-tab-active');}` +
+            `});` +
+            `allGridItems.forEach(function(g){` +
+                `var isActive=g.getAttribute('data-grid-idx')===String(idx);` +
+                `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
+                `g.style.fontWeight=isActive?'700':'400';` +
+            `});` +
+            // 그리드에서 선택하면 접기
+            `if(fromGrid&&expanded)toggle();` +
+        `}` +
+        `allTabs.forEach(function(t){` +
+            `t.addEventListener('click',function(e){e.preventDefault();selectTab(t.getAttribute('data-tab-idx'),false);});` +
+        `});` +
+        `allGridItems.forEach(function(g){` +
+            `g.addEventListener('click',function(e){e.preventDefault();selectTab(g.getAttribute('data-grid-idx'),true);});` +
+        `});` +
+    `})();` +
+    `</script>`;
+
+// ── 전체 HTML 조립 ───────────────────────────────────────────────────────
+
+function buildMenuTabGridHtml(tabs: TabItem[], componentId: string, extraStyle: string): string {
+    const tabsJson = JSON.stringify(tabs).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+
+    return (
+        `<div data-component-id="${componentId}" data-spw-block` +
+        ` data-menu-tabs="${tabsJson}"` +
+        ` style="font-family:${FONT_FAMILY};background:#ffffff;${extraStyle}">` +
+
+            // 탭바 래퍼 — overflow:hidden으로 스크롤 영역이 보이는 폭을 초과하지 않게 제한
+            // (루트 [data-spw-block]이 아닌 내부 요소이므로 ContentBuilder 툴바 잘림 없음)
+            `<div data-menu-tab-bar style="position:relative;overflow:hidden;border-bottom:1px solid #E5E7EB;">` +
+
+                // 가로 스크롤 영역 — padding-right로 토글 버튼 + 그라데이션 자리 확보
+                `<div data-menu-tab-scroll style="display:flex;align-items:center;gap:16px;` +
+                `padding:0 48px 0 16px;overflow-x:auto;scrollbar-width:none;` +
+                `-webkit-overflow-scrolling:touch;">` +
+                    tabs.map((tab, i) => buildTabBarItem(tab, i)).join('') +
+                `</div>` +
+
+                // 우측 그라데이션 페이드 + 토글 버튼 — 항상 우측 고정
+                `<span data-menu-tab-toggle style="position:absolute;right:0;top:0;bottom:0;z-index:2;` +
+                `padding:0 10px 0 20px;display:flex;align-items:center;cursor:pointer;` +
+                `background:linear-gradient(to right,rgba(255,255,255,0) 0%,rgba(255,255,255,0.85) 35%,#ffffff 60%);` +
+                `border-bottom:1px solid #E5E7EB;">` +
+                    CHEVRON_DOWN_SVG +
+                `</span>` +
+
+            `</div>` +
+
+            // 그리드 (펼친 상태, 기본 숨김)
+            `<div data-menu-tab-grid style="display:none;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));` +
+            `gap:0;padding:8px 12px;max-height:0;overflow:hidden;transition:max-height 0.3s ease;` +
+            `border-bottom:1px solid #E5E7EB;">` +
+                tabs.map((tab, i) => buildGridItem(tab, i)).join('') +
+            `</div>` +
+
+            TOGGLE_SCRIPT +
+        `</div>`
+    );
+}
+
+// ── 3개 variant HTML ──────────────────────────────────────────────────────
+
+const MENU_TAB_GRID_MOBILE_HTML     = buildMenuTabGridHtml(DEFAULT_TABS, 'menu-tab-grid-mobile',     '');
+const MENU_TAB_GRID_WEB_HTML        = buildMenuTabGridHtml(DEFAULT_TABS, 'menu-tab-grid-web',        'max-width:480px;margin:0 auto;');
+const MENU_TAB_GRID_RESPONSIVE_HTML = buildMenuTabGridHtml(DEFAULT_TABS, 'menu-tab-grid-responsive', 'width:100%;box-sizing:border-box;');
+
+// ── DB 등록 ───────────────────────────────────────────────────────────────
+
+const VARIANTS = [
+    {
+        id: 'menu-tab-grid-mobile',
+        html: MENU_TAB_GRID_MOBILE_HTML,
+        viewMode: 'mobile' as const,
+        label: '메뉴 탭 그리드',
+        description: '전체 메뉴 탭 그리드 (접기/펼치기)',
+    },
+    {
+        id: 'menu-tab-grid-web',
+        html: MENU_TAB_GRID_WEB_HTML,
+        viewMode: 'web' as const,
+        label: '메뉴 탭 그리드',
+        description: '전체 메뉴 탭 그리드 (접기/펼치기)',
+    },
+    {
+        id: 'menu-tab-grid-responsive',
+        html: MENU_TAB_GRID_RESPONSIVE_HTML,
+        viewMode: 'responsive' as const,
+        label: '메뉴 탭 그리드',
+        description: '전체 메뉴 탭 그리드 (접기/펼치기)',
+    },
+];
+
+async function main() {
+    for (const variant of VARIANTS) {
+        const existing = await getComponentById(variant.id);
+
+        if (existing) {
+            await updateComponent({
+                componentId:        variant.id,
+                componentType:      existing.COMPONENT_TYPE,
+                viewMode:           existing.VIEW_MODE,
+                componentThumbnail: existing.COMPONENT_THUMBNAIL ?? undefined,
+                data: {
+                    ...(existing.DATA ?? {}) as Record<string, unknown>,
+                    id:          variant.id.replace(`-${variant.viewMode}`, ''),
+                    label:       variant.label,
+                    description: variant.description,
+                    preview:     '/assets/minimalist-blocks/preview/ibk-menu-tab-grid.svg',
+                    html:        variant.html,
+                    viewMode:    variant.viewMode,
+                },
+                lastModifierId: 'system',
+            });
+            console.log(`✅ ${variant.id} — UPDATE 완료`);
+        } else {
+            await createComponent({
+                componentId:        variant.id,
+                componentType:      'finance',
+                viewMode:           variant.viewMode,
+                componentThumbnail: '/assets/minimalist-blocks/preview/ibk-menu-tab-grid.svg',
+                data: {
+                    id:          variant.id.replace(`-${variant.viewMode}`, ''),
+                    label:       variant.label,
+                    description: variant.description,
+                    preview:     '/assets/minimalist-blocks/preview/ibk-menu-tab-grid.svg',
+                    html:        variant.html,
+                    viewMode:    variant.viewMode,
+                },
+                createUserId:   'system',
+                createUserName: '시스템',
+            });
+            console.log(`✅ ${variant.id} — INSERT 완료`);
+        }
+    }
+    await closePool();
+}
+
+main().catch((err) => { console.error('실패:', err); process.exit(1); });

@@ -18,6 +18,7 @@ import AppHeaderBorderEditor from '@/components/edit/AppHeaderBorderEditor';
 import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
 import BranchLocatorEditor from '@/components/edit/BranchLocatorEditor';
 import InfoAccordionEditor from '@/components/edit/InfoAccordionEditor';
+import MenuTabGridEditor from '@/components/edit/MenuTabGridEditor';
 import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import SlideEditorModal from '@/components/edit/SlideEditorModal';
@@ -245,6 +246,8 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     const [branchLocatorBlock, setBranchLocatorBlock] = useState<HTMLElement | null>(null);
     // info-accordion 항목 편집 모달
     const [infoAccordionBlock, setInfoAccordionBlock] = useState<HTMLElement | null>(null);
+    // menu-tab-grid 탭 항목 편집 모달
+    const [menuTabGridBlock, setMenuTabGridBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -883,6 +886,37 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             });
         };
 
+        // ── menu-tab-grid 탭 항목 편집 버튼 — .is-row-tool 주입 ────────────────
+        const SPW_MTG_ROW_BTN_CLASS = 'spw-mtg-row-edit-btn';
+
+        const injectMtgEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_MTG_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_MTG_ROW_BTN_CLASS;
+            btn.title = '탭 메뉴 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="menu-tab-grid"]');
+                if (block) setMenuTabGridBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateMtgRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_MTG_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isMtg = !!activeEl?.closest('[data-component-id^="menu-tab-grid"]');
+                btn.style.display = isMtg ? 'flex' : 'none';
+            });
+        };
+
         // ── info-accordion 항목 편집 버튼 — .is-row-tool 주입 ────────────────
         const SPW_IA_ROW_BTN_CLASS = 'spw-ia-row-edit-btn';
 
@@ -923,10 +957,12 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                     if (node.classList.contains('is-row-tool')) {
                         injectSlideEditToRowTool(node);
                         injectIaEditToRowTool(node);
+                        injectMtgEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
                         injectIaEditToRowTool(t);
+                        injectMtgEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -938,6 +974,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             if (needsRowToolVisibility) {
                 updateSlideToolBtnVisibility();
                 updateIaRowBtnVisibility();
+                updateMtgRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -951,6 +988,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         document.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
             injectSlideEditToRowTool(t);
             injectIaEditToRowTool(t);
+            injectMtgEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
@@ -2161,6 +2199,11 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             {/* ── info-accordion 항목 편집 모달 ── */}
             {infoAccordionBlock && (
                 <InfoAccordionEditor blockEl={infoAccordionBlock} onClose={() => setInfoAccordionBlock(null)} />
+            )}
+
+            {/* ── menu-tab-grid 탭 항목 편집 모달 ── */}
+            {menuTabGridBlock && (
+                <MenuTabGridEditor blockEl={menuTabGridBlock} onClose={() => setMenuTabGridBlock(null)} />
             )}
 
             {/* ── site-footer 드롭다운 편집 패널 ── */}

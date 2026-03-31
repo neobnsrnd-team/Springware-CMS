@@ -191,10 +191,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         });
     }
 })();`;
-        // data-accordion-inited guard 초기화 — 에디터에서 설정된 채 저장된 경우 스크립트가
-        // 즉시 return해 이벤트 리스너가 등록되지 않으므로, 재실행 전에 속성을 제거한다.
+        // data-accordion-inited / data-menu-tab-inited guard 초기화 — 에디터에서 설정된 채
+        // 저장된 경우 스크립트가 즉시 return해 이벤트 리스너가 등록되지 않으므로,
+        // 재실행 전에 속성을 제거한다.
         document.querySelectorAll<HTMLElement>('[data-spw-block][data-accordion-inited]').forEach((el) => {
             el.removeAttribute('data-accordion-inited');
+        });
+        document.querySelectorAll<HTMLElement>('[data-spw-block][data-menu-tab-inited]').forEach((el) => {
+            el.removeAttribute('data-menu-tab-inited');
         });
 
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
