@@ -1,5 +1,5 @@
 // scripts/migrate-menu-tab-grid-to-html.ts
-// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226)
+// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226, #232 스크롤 앵커링 + Sticky)
 // 금융 앱 전체 메뉴 탭 그리드 (접기/펼치기) 컴포넌트
 // 실행: npx tsx scripts/migrate-menu-tab-grid-to-html.ts
 
@@ -13,6 +13,7 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 
 interface TabItem {
     label: string;
+    target?: number; // 연결할 블록 인덱스 (순서 패널 기준, 없으면 스크롤 미동작)
 }
 
 // ── 기본 예시 탭 데이터 (하나카드 메뉴) ───────────────────────────────────
@@ -88,7 +89,27 @@ const TOGGLE_SCRIPT =
         `var gridWrap=root.querySelector('[data-menu-tab-grid]');` +
         `var toggleBtn=root.querySelector('[data-menu-tab-toggle]');` +
         `var chevron=toggleBtn&&toggleBtn.querySelector('svg');` +
+        `var tabBar=root.querySelector('[data-menu-tab-bar]');` +
         `var expanded=false;` +
+
+        // 탭 데이터 (앵커 스크롤용)
+        `var tabsData=[];` +
+        `try{tabsData=JSON.parse(root.getAttribute('data-menu-tabs')||'[]');}catch(e){}` +
+
+        // Sticky 모드 — .row 래퍼에 적용해야 .is-container 전체 높이 안에서 고정됨
+        `var stickyRow=root.closest('.row');` +
+        `var isSticky=root.getAttribute('data-menu-sticky')==='true';` +
+        `if(isSticky&&stickyRow){` +
+            `stickyRow.style.position='sticky';` +
+            `stickyRow.style.top='0';` +
+            `stickyRow.style.zIndex='100';` +
+            `stickyRow.style.background='#ffffff';` +
+        `}else if(stickyRow){` +
+            `stickyRow.style.position='';` +
+            `stickyRow.style.top='';` +
+            `stickyRow.style.zIndex='';` +
+            `stickyRow.style.background='';` +
+        `}` +
 
         // 스크롤바 숨김 (인라인 불가한 ::-webkit-scrollbar 대응)
         `var styleId='mtg-scroll-hide-'+Math.random().toString(36).slice(2,8);` +
@@ -115,6 +136,22 @@ const TOGGLE_SCRIPT =
         `}` +
         `if(toggleBtn)toggleBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle();});` +
 
+        // 앵커 스크롤 — 타겟 블록(.row)으로 부드럽게 이동
+        `function scrollToTarget(idx){` +
+            `var td=tabsData[Number(idx)];` +
+            `if(!td||typeof td.target!=='number')return;` +
+            `var container=root.closest('.is-container');` +
+            `if(!container)return;` +
+            `var rows=container.querySelectorAll(':scope > .row');` +
+            `var targetRow=rows[td.target];` +
+            `if(!targetRow)return;` +
+            // Sticky 모드에서 탭바 높이만큼 오프셋 적용 (row 높이는 그리드 포함 시 과대)
+            `if(isSticky&&tabBar){` +
+                `targetRow.style.scrollMarginTop=tabBar.offsetHeight+'px';` +
+            `}` +
+            `targetRow.scrollIntoView({behavior:'smooth',block:'start'});` +
+        `}` +
+
         // 탭 선택
         `var allTabs=root.querySelectorAll('[data-menu-tab]');` +
         `var allGridItems=root.querySelectorAll('[data-menu-grid-item]');` +
@@ -135,8 +172,9 @@ const TOGGLE_SCRIPT =
                 `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
                 `g.style.fontWeight=isActive?'700':'400';` +
             `});` +
-            // 그리드에서 선택하면 접기
-            `if(fromGrid&&expanded)toggle();` +
+            // 그리드 펼쳐져 있으면 접기 → 접힘 애니메이션(300ms) 완료 후 스크롤
+            `if(expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
+            `else{scrollToTarget(idx);}` +
         `}` +
         `allTabs.forEach(function(t){` +
             `t.addEventListener('click',function(e){e.preventDefault();selectTab(t.getAttribute('data-tab-idx'),false);});` +
@@ -155,6 +193,7 @@ function buildMenuTabGridHtml(tabs: TabItem[], componentId: string, extraStyle: 
     return (
         `<div data-component-id="${componentId}" data-spw-block` +
         ` data-menu-tabs="${tabsJson}"` +
+        ` data-menu-sticky="false"` +
         ` style="font-family:${FONT_FAMILY};background:#ffffff;${extraStyle}">` +
 
             // 탭바 래퍼 — overflow:hidden으로 스크롤 영역이 보이는 폭을 초과하지 않게 제한

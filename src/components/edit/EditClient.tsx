@@ -2268,7 +2268,11 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
 
             {/* ── menu-tab-grid 탭 항목 편집 모달 ── */}
             {menuTabGridBlock && (
-                <MenuTabGridEditor blockEl={menuTabGridBlock} onClose={() => setMenuTabGridBlock(null)} />
+                <MenuTabGridEditor
+                    blockEl={menuTabGridBlock}
+                    canvasBlocks={canvasBlocks}
+                    onClose={() => setMenuTabGridBlock(null)}
+                />
             )}
 
             {/* ── benefit-card 혜택 카드 편집 모달 ── */}

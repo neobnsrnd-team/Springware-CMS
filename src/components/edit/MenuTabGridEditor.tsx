@@ -1,5 +1,5 @@
 // src/components/edit/MenuTabGridEditor.tsx
-// menu-tab-grid 블록의 탭 항목을 추가·삭제·순서변경·이름수정하는 모달 에디터 (Issue #226)
+// menu-tab-grid 블록의 탭 항목 편집 + 블록 연결 + Sticky 설정 모달 에디터 (Issue #226, #232)
 
 'use client';
 
@@ -7,10 +7,20 @@ import { useState } from 'react';
 
 interface TabItem {
     label: string;
+    target?: number; // 연결할 블록 인덱스 (순서 패널 기준, 없으면 스크롤 미동작)
+}
+
+interface CanvasBlock {
+    id: string;
+    cbType: string;
+    label: string;
+    preview: string;
+    outerHtml: string;
 }
 
 interface Props {
     blockEl: HTMLElement;
+    canvasBlocks: CanvasBlock[];
     onClose: () => void;
 }
 
@@ -57,7 +67,23 @@ const TOGGLE_SCRIPT =
     `var gridWrap=root.querySelector('[data-menu-tab-grid]');` +
     `var toggleBtn=root.querySelector('[data-menu-tab-toggle]');` +
     `var chevron=toggleBtn&&toggleBtn.querySelector('svg');` +
+    `var tabBar=root.querySelector('[data-menu-tab-bar]');` +
     `var expanded=false;` +
+    `var tabsData=[];` +
+    `try{tabsData=JSON.parse(root.getAttribute('data-menu-tabs')||'[]');}catch(e){}` +
+    `var stickyRow=root.closest('.row');` +
+    `var isSticky=root.getAttribute('data-menu-sticky')==='true';` +
+    `if(isSticky&&stickyRow){` +
+    `stickyRow.style.position='sticky';` +
+    `stickyRow.style.top='0';` +
+    `stickyRow.style.zIndex='100';` +
+    `stickyRow.style.background='#ffffff';` +
+    `}else if(stickyRow){` +
+    `stickyRow.style.position='';` +
+    `stickyRow.style.top='';` +
+    `stickyRow.style.zIndex='';` +
+    `stickyRow.style.background='';` +
+    `}` +
     `var styleId='mtg-scroll-hide-'+Math.random().toString(36).slice(2,8);` +
     `scrollWrap.setAttribute('data-mtg-id',styleId);` +
     `var styleEl=document.createElement('style');` +
@@ -76,6 +102,19 @@ const TOGGLE_SCRIPT =
     `}` +
     `}` +
     `if(toggleBtn)toggleBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle();});` +
+    `function scrollToTarget(idx){` +
+    `var td=tabsData[Number(idx)];` +
+    `if(!td||typeof td.target!=='number')return;` +
+    `var container=root.closest('.is-container');` +
+    `if(!container)return;` +
+    `var rows=container.querySelectorAll(':scope > .row');` +
+    `var targetRow=rows[td.target];` +
+    `if(!targetRow)return;` +
+    `if(isSticky&&tabBar){` +
+    `targetRow.style.scrollMarginTop=tabBar.offsetHeight+'px';` +
+    `}` +
+    `targetRow.scrollIntoView({behavior:'smooth',block:'start'});` +
+    `}` +
     `var allTabs=root.querySelectorAll('[data-menu-tab]');` +
     `var allGridItems=root.querySelectorAll('[data-menu-grid-item]');` +
     `function selectTab(idx,fromGrid){` +
@@ -92,7 +131,8 @@ const TOGGLE_SCRIPT =
     `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
     `g.style.fontWeight=isActive?'700':'400';` +
     `});` +
-    `if(fromGrid&&expanded)toggle();` +
+    `if(expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
+    `else{scrollToTarget(idx);}` +
     `}` +
     `allTabs.forEach(function(t){` +
     `t.addEventListener('click',function(e){e.preventDefault();selectTab(t.getAttribute('data-tab-idx'),false);});` +
@@ -106,8 +146,9 @@ const TOGGLE_SCRIPT =
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
 
 /** blockEl DOM을 새 탭 데이터로 갱신 */
-function applyToBlock(blockEl: HTMLElement, tabs: TabItem[]) {
+function applyToBlock(blockEl: HTMLElement, tabs: TabItem[], sticky: boolean) {
     blockEl.setAttribute('data-menu-tabs', JSON.stringify(tabs));
+    blockEl.setAttribute('data-menu-sticky', String(sticky));
 
     // 탭바 갱신 — innerHTML로 완전 교체
     // (insertAdjacentHTML을 쓰면 이전 구조의 잔여 요소 뒤에 탭이 추가되어 화면 밖으로 밀릴 수 있음)
@@ -144,6 +185,7 @@ function parseTabs(blockEl: HTMLElement): TabItem[] {
     // data-menu-tabs 없을 경우 그리드 DOM에서 추출 (하위 호환)
     return Array.from(blockEl.querySelectorAll('[data-menu-grid-item]')).map((el) => ({
         label: el.textContent?.trim() ?? '',
+        target: undefined,
     }));
 }
 
@@ -290,11 +332,23 @@ const S = {
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────────────
 
-export default function MenuTabGridEditor({ blockEl, onClose }: Props) {
+export default function MenuTabGridEditor({ blockEl, canvasBlocks, onClose }: Props) {
     const [tabs, setTabs] = useState<TabItem[]>(() => parseTabs(blockEl));
+    const [sticky, setSticky] = useState(() => blockEl.getAttribute('data-menu-sticky') === 'true');
+
+    // 메뉴 탭 그리드 자기 자신의 블록 인덱스 (드롭다운에서 제외용)
+    // DOM에서 실제 .row 위치를 찾아야 동일 타입 복수 블록에서도 정확함
+    const selfBlockIdx = Array.from(blockEl.closest('.container')?.children ?? [])
+        .filter((el) => (el as HTMLElement).classList.contains('row'))
+        .indexOf(blockEl.closest('.row') as HTMLElement);
 
     const handleLabelChange = (idx: number, value: string) => {
         setTabs((prev) => prev.map((tab, i) => (i === idx ? { ...tab, label: value } : tab)));
+    };
+
+    const handleTargetChange = (idx: number, value: string) => {
+        const target = value === '' ? undefined : Number(value);
+        setTabs((prev) => prev.map((tab, i) => (i === idx ? { ...tab, target } : tab)));
     };
 
     const handleAdd = () => {
@@ -321,7 +375,7 @@ export default function MenuTabGridEditor({ blockEl, onClose }: Props) {
     };
 
     const handleApply = () => {
-        applyToBlock(blockEl, tabs);
+        applyToBlock(blockEl, tabs, sticky);
         onClose();
     };
 
@@ -364,7 +418,51 @@ export default function MenuTabGridEditor({ blockEl, onClose }: Props) {
                         flexShrink: 0,
                     }}
                 >
-                    탭 메뉴 항목을 추가·삭제·이름변경·순서변경합니다.
+                    탭 메뉴 항목을 추가·삭제·이름변경·순서변경하고, 연결할 블록을 선택합니다.
+                </div>
+
+                {/* Sticky 토글 */}
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 14px',
+                        borderBottom: '1px solid #f3f4f6',
+                        flexShrink: 0,
+                    }}
+                >
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>상단 고정 (Sticky)</span>
+                    <button
+                        type="button"
+                        onClick={() => setSticky((prev) => !prev)}
+                        style={{
+                            width: 44,
+                            height: 24,
+                            borderRadius: 12,
+                            border: 'none',
+                            background: sticky ? '#0046A4' : '#d1d5db',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            transition: 'background 0.2s ease',
+                            padding: 0,
+                            flexShrink: 0,
+                        }}
+                    >
+                        <span
+                            style={{
+                                position: 'absolute',
+                                top: 2,
+                                left: sticky ? 22 : 2,
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                background: '#fff',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                transition: 'left 0.2s ease',
+                            }}
+                        />
+                    </button>
                 </div>
 
                 {/* 항목 목록 */}
@@ -425,9 +523,37 @@ export default function MenuTabGridEditor({ blockEl, onClose }: Props) {
                                 type="text"
                                 value={tab.label}
                                 onChange={(e) => handleLabelChange(idx, e.target.value)}
-                                style={S.input}
+                                style={{ ...S.input, flex: 1 }}
                                 placeholder="메뉴 이름"
                             />
+
+                            {/* 연결 블록 선택 */}
+                            <select
+                                value={tab.target ?? ''}
+                                onChange={(e) => handleTargetChange(idx, e.target.value)}
+                                style={{
+                                    flex: '0 0 120px',
+                                    padding: '6px 6px',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: 6,
+                                    fontSize: 11,
+                                    color: tab.target != null ? '#111827' : '#9ca3af',
+                                    background: '#fff',
+                                    fontFamily: FONT_FAMILY,
+                                    outline: 'none',
+                                    minWidth: 0,
+                                }}
+                                title="스크롤 이동할 블록 선택"
+                            >
+                                <option value="">연결 없음</option>
+                                {canvasBlocks.map((block, blockIdx) =>
+                                    blockIdx !== selfBlockIdx ? (
+                                        <option key={block.id} value={blockIdx}>
+                                            {blockIdx + 1}. {block.label}
+                                        </option>
+                                    ) : null,
+                                )}
+                            </select>
 
                             {/* 삭제 버튼 */}
                             <button
