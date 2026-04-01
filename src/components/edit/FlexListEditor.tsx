@@ -118,6 +118,16 @@ const ICONS_20: Record<string, string> = {
     won: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0046A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l4 16 4-12 4 12 4-16"/><path d="M3 10h18"/><path d="M3 14h18"/></svg>',
 };
 
+// ── href 보안 처리 ───────────────────────────────────────────────────────
+
+function sanitizeHref(url: string): string {
+    const trimmed = url.trim();
+    if (/^(https?:\/\/|\/|#)/.test(trimmed)) {
+        return trimmed.replace(/"/g, '&quot;');
+    }
+    return '#';
+}
+
 // ── HTML 빌더 (마이그레이션 스크립트와 동기화) ──────────────────────────
 
 function buildIconHtml(iconKey: string, bgColor: string): string {
@@ -161,7 +171,7 @@ function buildColumnHtml(col: FlexListColumn): string {
 
 function wrapColumnWithLink(colHtml: string, href?: string): string {
     if (!href) return colHtml;
-    return `<a href="${href}" data-fl-col-link style="text-decoration:none;display:contents;">${colHtml}</a>`;
+    return `<a href="${sanitizeHref(href)}" data-fl-col-link style="text-decoration:none;display:contents;">${colHtml}</a>`;
 }
 
 function buildRowHtml(row: FlexListRow, isLast: boolean): string {
@@ -171,7 +181,7 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
 
     if (linkMode === 'row' && row.rowHref) {
         const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
-        return `<a href="${row.rowHref}" data-fl-link-mode="row" style="${flexStyle}">${columnsHtml}</a>`;
+        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row" style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
