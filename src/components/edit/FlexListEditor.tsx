@@ -147,7 +147,7 @@ function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
               : 'flex:1;min-width:0;height:48px;';
 
     return (
-        `<span data-fl-type="image" data-fl-image-src="${safeSrc}"` +
+        `<span data-fl-type="image" data-fl-width="${width}" data-fl-image-src="${safeSrc}"` +
         ` style="${widthStyle}display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         (safeSrc
             ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="" />`
