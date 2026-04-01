@@ -26,8 +26,8 @@ export const PAGE_SELECT_LIST = `
         AND (:search IS NULL OR PAGE_NAME LIKE '%' || :search || '%' OR CREATE_USER_NAME LIKE '%' || :search || '%')
         AND (:viewMode IS NULL OR VIEW_MODE = :viewMode)
       ORDER BY
-        CASE WHEN :sortBy = 'name' THEN PAGE_NAME END ASC,
-        CASE WHEN :sortBy != 'name' THEN LAST_MODIFIED_DTIME END DESC NULLS LAST
+        CASE WHEN :sortBy = 'name' THEN PAGE_NAME ELSE NULL END ASC NULLS LAST,
+        CASE WHEN :sortBy = 'name' THEN NULL ELSE LAST_MODIFIED_DTIME END DESC NULLS LAST
     ) p
     WHERE ROWNUM <= :endRow
   )
