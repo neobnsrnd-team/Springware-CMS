@@ -204,11 +204,11 @@ export default function DashboardClient({
         }
     }
 
-    // 페이지 삭제 — 낙관적 업데이트 후 API 호출
+    // 페이지 삭제 — 낙관적 업데이트 후 API 호출, 성공 시 서버 재조회로 다음 페이지 항목 보충
     async function handleDeletePage(pageId: string, label: string) {
         if (!confirm(`'${label}' 페이지를 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
 
-        // 낙관적 업데이트
+        // 낙관적 업데이트 (API 응답 전 즉시 피드백)
         setPages((prev) => prev.filter((p) => p.id !== pageId));
         setLocalTotalCount((prev) => prev - 1);
 
@@ -221,7 +221,12 @@ export default function DashboardClient({
                 // 실패 시 서버 데이터로 복구
                 setPages(initialPages);
                 setLocalTotalCount(totalCount);
+                return;
             }
+            // 성공 시 서버 재조회 — 다음 페이지 항목을 당겨와 빈 자리 보충
+            // 현재 페이지의 마지막 항목을 삭제한 경우 이전 페이지로 이동
+            const nextPage = pages.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+            navigate({ page: nextPage, search, sortBy });
         } catch (err: unknown) {
             console.error('페이지 삭제 실패:', err);
             setPages(initialPages);
