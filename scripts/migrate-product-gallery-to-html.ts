@@ -141,11 +141,11 @@ const PRODUCT_GALLERY_MOBILE_HTML =
 // ── web variant ─────────────────────────────────────────────────────────────
 // 데스크탑: 카드 가로 3열 고정 그리드, max-width 중앙 정렬 (슬라이더 불필요)
 const PRODUCT_GALLERY_WEB_HTML =
-    `<div data-component-id="product-gallery-web" data-spw-block style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;position:relative;max-width:960px;margin:0 auto;">` +
+    `<div data-component-id="product-gallery-web" data-spw-block style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;position:relative;width:100%;box-sizing:border-box;">` +
         `<div style="padding:20px 20px 12px;">` +
             `<h3 style="font-size:18px;font-weight:700;color:#1A1A2E;margin:0;">주요 금융상품</h3>` +
         `</div>` +
-        `<div style="display:flex;flex-direction:row;gap:12px;padding:4px 20px 20px;">` +
+        `<div data-pg-grid style="display:flex;flex-direction:row;gap:12px;padding:4px 20px 20px;">` +
             CARDS.map((card, i) =>
                 `<div style="flex:1;min-width:0;">${buildCard(card, `pg-${i + 1}`)}</div>`,
             ).join('') +

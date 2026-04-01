@@ -26,6 +26,8 @@ interface ProductGalleryCard {
     rateLabel: string;
     detail: string;
     ctaHref: string;
+    accentColor?: string; // 커스텀 강조 색상 (미설정 시 type 기본값 사용)
+    bgImage?: string; // 카드 배경 이미지 URL
 }
 
 // ── DOM 파싱 ──────────────────────────────────────────────────────────────
@@ -46,20 +48,50 @@ function parsePromoBannerSlides(root: HTMLElement): PromoBannerSlide[] {
     });
 }
 
-function parseProductGalleryCards(root: HTMLElement): ProductGalleryCard[] {
-    return Array.from(root.querySelectorAll('[data-pg-slide]')).map((wrapper) => {
-        const inner = wrapper.firstElementChild as HTMLElement | null;
-        const ctaEl = inner?.querySelector('[data-pg-field="cta"]') as HTMLAnchorElement | null;
-        return {
-            type: (inner?.getAttribute('data-type') ?? 'savings') as ProductGalleryCard['type'],
-            badge: inner?.querySelector('[data-pg-field="badge"]')?.textContent ?? '',
-            productName: inner?.querySelector('[data-pg-field="productName"]')?.textContent ?? '',
-            rateValue: inner?.querySelector('[data-pg-field="rateValue"]')?.textContent ?? '',
-            rateLabel: inner?.querySelector('[data-pg-field="rateLabel"]')?.textContent ?? '',
-            detail: inner?.querySelector('[data-pg-field="detail"]')?.textContent ?? '',
-            ctaHref: ctaEl?.getAttribute('href') ?? '#',
-        };
-    });
+// rgb(r, g, b) / rgba(r, g, b, a) → #rrggbb 변환 (DOM style 값 파싱용, 알파값 무시)
+function rgbToHex(rgb: string): string {
+    const match = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+    if (!match) return rgb;
+    return '#' + [match[1], match[2], match[3]].map((v) => parseInt(v).toString(16).padStart(2, '0')).join('');
+}
+
+function parseCard(inner: HTMLElement | null): ProductGalleryCard {
+    const ctaEl = inner?.querySelector('[data-pg-field="cta"]') as HTMLAnchorElement | null;
+    const rateEl = inner?.querySelector<HTMLElement>('[data-pg-field="rateValue"]');
+    const rawColor = rateEl?.style.color ?? '';
+    const accentColor = rawColor ? rgbToHex(rawColor) : undefined;
+    const bgImageMatch = (inner?.style.backgroundImage ?? '').match(/url\(['"]?([^'"]+)['"]?\)/);
+    const rawBgImage = bgImageMatch?.[1];
+    // 백슬래시 → 슬래시, 절대 경로 보정 (Windows 환경 대응)
+    const bgImage = rawBgImage
+        ? (() => {
+              const s = rawBgImage.replace(/\\/g, '/');
+              return s.startsWith('/') ? s : '/' + s;
+          })()
+        : undefined;
+    return {
+        type: (inner?.getAttribute('data-type') ?? 'savings') as ProductGalleryCard['type'],
+        badge: inner?.querySelector('[data-pg-field="badge"]')?.textContent ?? '',
+        productName: inner?.querySelector('[data-pg-field="productName"]')?.textContent ?? '',
+        rateValue: rateEl?.textContent ?? '',
+        rateLabel: inner?.querySelector('[data-pg-field="rateLabel"]')?.textContent ?? '',
+        detail: inner?.querySelector('[data-pg-field="detail"]')?.textContent ?? '',
+        ctaHref: ctaEl?.getAttribute('href') ?? '#',
+        accentColor,
+        bgImage,
+    };
+}
+
+function parseProductGalleryCards(root: HTMLElement, componentId: string): ProductGalleryCard[] {
+    if (componentId === 'product-gallery-web') {
+        // 웹: data-pg-slide 없음 — data-pg-grid 그리드 컨테이너 내부 [data-type] 카드 직접 파싱
+        const gridDiv = root.querySelector<HTMLElement>('[data-pg-grid]');
+        return Array.from(gridDiv?.querySelectorAll('[data-type]') ?? []).map((el) => parseCard(el as HTMLElement));
+    }
+    // 모바일/반응형: data-pg-slide 기준
+    return Array.from(root.querySelectorAll('[data-pg-slide]')).map((wrapper) =>
+        parseCard(wrapper.firstElementChild as HTMLElement | null),
+    );
 }
 
 // ── HTML 재생성 ───────────────────────────────────────────────────────────
@@ -84,19 +116,27 @@ const CARD_COLORS: Record<string, { accent: string; accentLight: string }> = {
 };
 
 function buildCardHtml(card: ProductGalleryCard, itemId: string): string {
-    const { accent, accentLight } = CARD_COLORS[card.type];
+    const base = CARD_COLORS[card.type];
+    const accent = card.accentColor ?? base.accent;
+    const accentLight = card.accentColor ? card.accentColor + '1A' : base.accentLight;
+    const bgImageStyle = card.bgImage
+        ? `background-image:url('${card.bgImage}');background-size:cover;background-position:center;`
+        : '';
     return (
-        `<div data-type="${card.type}" data-item-id="${itemId}" style="background:#fff;border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 20px rgba(0,70,164,0.08);position:relative;overflow:hidden;">` +
+        `<div data-type="${card.type}" data-item-id="${itemId}" style="background:#fff;${bgImageStyle}border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 20px rgba(0,70,164,0.08);position:relative;overflow:hidden;">` +
         `<div style="position:absolute;top:0;right:0;width:120px;height:120px;background:linear-gradient(135deg,${accentLight} 0%,transparent 70%);border-radius:0 16px 0 100%;pointer-events:none;"></div>` +
-        `<div data-pg-field="badge" style="display:inline-flex;align-items:center;background:${accentLight};color:${accent};font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;width:fit-content;letter-spacing:0.5px;">${card.badge}</div>` +
-        `<div data-pg-field="productName" style="font-size:20px;font-weight:700;color:#1A1A2E;line-height:1.3;margin-top:4px;">${card.productName}</div>` +
-        `<div data-pg-field="rateWrap" style="display:flex;align-items:baseline;gap:2px;margin-top:8px;">` +
+        (card.bgImage
+            ? `<div style="position:absolute;inset:0;background:rgba(255,255,255,0.82);border-radius:16px;pointer-events:none;"></div>`
+            : '') +
+        `<div data-pg-field="badge" style="display:inline-flex;align-items:center;background:${accentLight};color:${accent};font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;width:fit-content;letter-spacing:0.5px;position:relative;">${card.badge}</div>` +
+        `<div data-pg-field="productName" style="font-size:20px;font-weight:700;color:#1A1A2E;line-height:1.3;margin-top:4px;position:relative;">${card.productName}</div>` +
+        `<div data-pg-field="rateWrap" style="display:flex;align-items:baseline;gap:2px;margin-top:8px;position:relative;">` +
         `<span data-pg-field="rateValue" style="font-size:40px;font-weight:800;color:${accent};line-height:1;letter-spacing:-1px;">${card.rateValue}</span>` +
         `<span style="font-size:22px;font-weight:700;color:${accent};">%</span>` +
         `</div>` +
-        `<div data-pg-field="rateLabel" style="font-size:12px;color:#6B7280;font-weight:500;">${card.rateLabel}</div>` +
-        `<div data-pg-field="detail" style="font-size:13px;color:#6B7280;padding:10px 0;border-top:1px solid #F3F4F6;margin-top:4px;">${card.detail}</div>` +
-        `<a data-pg-field="cta" href="${card.ctaHref}" style="display:flex;align-items:center;justify-content:center;background:${accent};color:#fff;text-decoration:none;font-size:15px;font-weight:600;padding:14px;border-radius:12px;margin-top:8px;min-height:48px;-webkit-tap-highlight-color:transparent;">자세히 보기</a>` +
+        `<div data-pg-field="rateLabel" style="font-size:12px;color:#6B7280;font-weight:500;position:relative;">${card.rateLabel}</div>` +
+        `<div data-pg-field="detail" style="font-size:13px;color:#6B7280;padding:10px 0;border-top:1px solid #F3F4F6;margin-top:4px;position:relative;">${card.detail}</div>` +
+        `<a data-pg-field="cta" href="${card.ctaHref}" style="display:flex;align-items:center;justify-content:center;background:${accent};color:#fff;text-decoration:none;font-size:15px;font-weight:600;padding:14px;border-radius:12px;margin-top:8px;min-height:48px;-webkit-tap-highlight-color:transparent;position:relative;">자세히 보기</a>` +
         `</div>`
     );
 }
@@ -118,8 +158,8 @@ function applyPromoBannerSlides(root: HTMLElement, slides: PromoBannerSlide[]) {
 
 function applyProductGalleryCards(root: HTMLElement, cards: ProductGalleryCard[], componentId: string) {
     if (componentId === 'product-gallery-web') {
-        // 웹: data-pg-track 없음 — 헤더 다음 그리드 컨테이너
-        const gridDiv = root.children[1] as HTMLElement | null;
+        // 웹: data-pg-track 없음 — data-pg-grid 그리드 컨테이너
+        const gridDiv = root.querySelector<HTMLElement>('[data-pg-grid]');
         if (gridDiv) {
             gridDiv.innerHTML = cards
                 .map((c, i) => `<div style="flex:1;min-width:0;">${buildCardHtml(c, `pg-${i + 1}`)}</div>`)
@@ -205,7 +245,9 @@ export default function SlideEditorModal({ blockEl, onClose }: Props) {
         snapshot.current = blockEl.innerHTML;
         return parsePromoBannerSlides(blockEl);
     });
-    const [productCards, setProductCards] = useState<ProductGalleryCard[]>(() => parseProductGalleryCards(blockEl));
+    const [productCards, setProductCards] = useState<ProductGalleryCard[]>(() =>
+        parseProductGalleryCards(blockEl, componentId),
+    );
 
     const [pos, setPos] = useState(() => ({
         x: Math.max(8, window.innerWidth / 2 - 280),
@@ -558,6 +600,17 @@ const CARD_TYPE_OPTIONS: { value: ProductGalleryCard['type']; label: string }[] 
     { value: 'loan', label: '대출' },
 ];
 
+const CARD_COLOR_PRESETS = [
+    { label: 'IBK 블루', value: '#0046A4' },
+    { label: '하나 초록', value: '#008B5E' },
+    { label: 'KB 노랑', value: '#F0B50A' },
+    { label: '신한 파랑', value: '#005BAC' },
+    { label: '우리 하늘', value: '#0070C0' },
+    { label: '주황', value: '#FF6600' },
+    { label: '보라', value: '#6B21A8' },
+    { label: '진회색', value: '#1F2937' },
+];
+
 function ProductCardsEditor({
     cards,
     onChange,
@@ -671,6 +724,152 @@ function ProductCardsEditor({
                             style={INPUT}
                         />
                     </label>
+
+                    {/* 강조 색상 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={LBL}>강조 색상</span>
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {CARD_COLOR_PRESETS.map(({ label, value }) => (
+                                <button
+                                    key={value}
+                                    title={label}
+                                    onClick={() => update(idx, { accentColor: value })}
+                                    style={{
+                                        width: 24,
+                                        height: 24,
+                                        borderRadius: 5,
+                                        background: value,
+                                        border:
+                                            card.accentColor === value ? '2.5px solid #111' : '2px solid transparent',
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                        outline: 'none',
+                                        flexShrink: 0,
+                                        boxShadow: '0 0 0 1px rgba(0,0,0,0.15)',
+                                    }}
+                                />
+                            ))}
+                            <label
+                                title="직접 선택"
+                                style={{
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: 5,
+                                    border: '2px solid #d1d5db',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    overflow: 'hidden',
+                                    flexShrink: 0,
+                                    background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+                                }}
+                            >
+                                <input
+                                    type="color"
+                                    value={card.accentColor?.startsWith('#') ? card.accentColor : '#0046A4'}
+                                    onChange={(e) => update(idx, { accentColor: e.target.value })}
+                                    style={{ opacity: 0, width: 1, height: 1, padding: 0, border: 'none' }}
+                                />
+                            </label>
+                            {card.accentColor && (
+                                <button
+                                    onClick={() => update(idx, { accentColor: undefined })}
+                                    style={{
+                                        fontSize: 11,
+                                        color: '#6b7280',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '0 4px',
+                                    }}
+                                >
+                                    초기화
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 배경 이미지 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={LBL}>배경 이미지</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {card.bgImage ? (
+                                <>
+                                    <img
+                                        src={card.bgImage}
+                                        style={{
+                                            width: 64,
+                                            height: 44,
+                                            objectFit: 'cover',
+                                            borderRadius: 6,
+                                            border: '1px solid #e5e7eb',
+                                        }}
+                                        alt="배경 미리보기"
+                                    />
+                                    <button
+                                        onClick={() => update(idx, { bgImage: undefined })}
+                                        style={{
+                                            fontSize: 12,
+                                            color: '#ef4444',
+                                            background: 'none',
+                                            border: '1px solid #fca5a5',
+                                            borderRadius: 6,
+                                            padding: '4px 10px',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        삭제
+                                    </button>
+                                </>
+                            ) : (
+                                <label
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 6,
+                                        padding: '6px 12px',
+                                        border: '1px dashed #9ca3af',
+                                        borderRadius: 6,
+                                        cursor: 'pointer',
+                                        fontSize: 12,
+                                        color: '#374151',
+                                        background: '#f9fafb',
+                                    }}
+                                >
+                                    + 이미지 업로드
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const formData = new FormData();
+                                            formData.append('file', file);
+                                            try {
+                                                const res = await fetch('/api/builder/upload', {
+                                                    method: 'POST',
+                                                    body: formData,
+                                                });
+                                                const data = await res.json();
+                                                if (data.url) {
+                                                    // Windows 백슬래시 → 슬래시, 절대 경로 보정
+                                                    const rawUrl = (data.url as string).replace(/\\/g, '/');
+                                                    const absUrl = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
+                                                    update(idx, { bgImage: absUrl });
+                                                } else {
+                                                    alert('이미지 업로드에 실패했습니다.');
+                                                }
+                                            } catch {
+                                                alert('이미지 업로드에 실패했습니다.');
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            )}
+                        </div>
+                    </div>
                 </div>
             ))}
             <button
