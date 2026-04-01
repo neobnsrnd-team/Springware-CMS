@@ -44,7 +44,8 @@ const ICONS: Record<string, string> = {
 function buildIconHtml(iconKey: string, bgColor: string): string {
     const svg = ICONS[iconKey] ?? ICONS['check'];
     return (
-        `<span style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
+        `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
+        ` style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
         `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
@@ -74,7 +75,8 @@ function buildColumnHtml(col: FlexListColumn): string {
     });
 
     return (
-        `<span style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
+        `<span data-fl-type="text" data-fl-width="${col.width}"` +
+        ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
         lineHtmls.join('') +
         `</span>`
     );

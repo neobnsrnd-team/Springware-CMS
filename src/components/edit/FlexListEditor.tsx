@@ -120,7 +120,8 @@ const ICONS_20: Record<string, string> = {
 function buildIconHtml(iconKey: string, bgColor: string): string {
     const svg = ICONS_20[iconKey] ?? ICONS_20['check'];
     return (
-        `<span style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
+        `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
+        ` style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
         `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
@@ -147,7 +148,12 @@ function buildColumnHtml(col: FlexListColumn): string {
         return `<span style="font-size:13px;color:#6B7280;line-height:1.4;">${text}</span>`;
     });
 
-    return `<span style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` + lineHtmls.join('') + `</span>`;
+    return (
+        `<span data-fl-type="text" data-fl-width="${col.width}"` +
+        ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
+        lineHtmls.join('') +
+        `</span>`
+    );
 }
 
 function buildRowHtml(row: FlexListRow, isLast: boolean): string {
@@ -185,34 +191,19 @@ function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
 function parseRows(blockEl: HTMLElement): FlexListRow[] {
     const anchors = blockEl.querySelectorAll<HTMLElement>(':scope > a');
 
-    // DOM에서 직접 파싱 (인라인 편집 내용 반영)
+    // DOM에서 직접 파싱 — data-fl-* 속성 기반 (인라인 편집 내용 반영)
     if (anchors.length > 0) {
         const rows: FlexListRow[] = Array.from(anchors).map((anchor) => {
-            const colSpans = anchor.querySelectorAll<HTMLElement>(':scope > span');
+            const colSpans = anchor.querySelectorAll<HTMLElement>(':scope > span[data-fl-type]');
             const columns: FlexListColumn[] = Array.from(colSpans).map((span) => {
-                // 아이콘 컬럼 감지: 내부에 <svg>가 있고 border-radius:50%
-                const hasSvg = !!span.querySelector('svg');
-                const isCircle = span.style.borderRadius === '50%';
+                const type = span.getAttribute('data-fl-type');
 
-                if (hasSvg && isCircle) {
-                    // 아이콘 컬럼 — 아이콘 키를 SVG 내용으로 역매칭
-                    const svgEl = span.querySelector('svg');
-                    const svgContent = svgEl?.outerHTML ?? '';
-                    let iconKey = 'check';
-                    for (const [key, svg] of Object.entries(ICONS_20)) {
-                        // viewBox 기준으로 매칭 (path의 d 값 비교)
-                        const keyPaths = svg.match(/d="[^"]*"/g)?.join('') ?? '';
-                        const domPaths = svgContent.match(/d="[^"]*"/g)?.join('') ?? '';
-                        if (keyPaths && keyPaths === domPaths) {
-                            iconKey = key;
-                            break;
-                        }
-                    }
+                if (type === 'icon') {
                     return {
                         type: 'icon' as const,
                         width: 'fixed' as const,
-                        icon: iconKey,
-                        iconBg: span.style.background || span.style.backgroundColor || '#E8F0FC',
+                        icon: span.getAttribute('data-fl-icon') || 'check',
+                        iconBg: span.getAttribute('data-fl-icon-bg') || '#E8F0FC',
                     };
                 }
 
@@ -223,11 +214,7 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
                         : [span.textContent?.trim() ?? '텍스트'];
 
-                // 너비 판별
-                const flex = span.style.flex;
-                let width: 'fixed' | 'flex' | 'auto' = 'flex';
-                if (flex.startsWith('0 0 40px')) width = 'fixed';
-                else if (flex.startsWith('0 0 auto') || flex === '0 0 auto') width = 'auto';
+                const width = (span.getAttribute('data-fl-width') || 'flex') as 'fixed' | 'flex' | 'auto';
 
                 return { type: 'text' as const, width, lines };
             });
