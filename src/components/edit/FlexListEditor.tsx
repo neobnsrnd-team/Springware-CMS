@@ -191,14 +191,19 @@ function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
 function parseRows(blockEl: HTMLElement): FlexListRow[] {
     const anchors = blockEl.querySelectorAll<HTMLElement>(':scope > a');
 
-    // DOM에서 직접 파싱 — data-fl-* 속성 기반 (인라인 편집 내용 반영)
+    // DOM에서 직접 파싱 (인라인 편집 내용 반영)
     if (anchors.length > 0) {
         const rows: FlexListRow[] = Array.from(anchors).map((anchor) => {
-            const colSpans = anchor.querySelectorAll<HTMLElement>(':scope > span[data-fl-type]');
-            const columns: FlexListColumn[] = Array.from(colSpans).map((span) => {
-                const type = span.getAttribute('data-fl-type');
+            // data-fl-type 속성이 있으면 속성 기반, 없으면 모든 직계 span에서 heuristic 파싱
+            const hasDataAttrs = !!anchor.querySelector(':scope > span[data-fl-type]');
+            const colSpans = anchor.querySelectorAll<HTMLElement>(
+                hasDataAttrs ? ':scope > span[data-fl-type]' : ':scope > span',
+            );
 
-                if (type === 'icon') {
+            const columns: FlexListColumn[] = Array.from(colSpans).map((span) => {
+                // ── data-fl-* 속성 기반 (신규 HTML) ──
+                const flType = span.getAttribute('data-fl-type');
+                if (flType === 'icon') {
                     return {
                         type: 'icon' as const,
                         width: 'fixed' as const,
@@ -206,15 +211,50 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         iconBg: span.getAttribute('data-fl-icon-bg') || '#E8F0FC',
                     };
                 }
+                if (flType === 'text') {
+                    const lineSpans = span.querySelectorAll<HTMLElement>(':scope > span');
+                    const lines =
+                        lineSpans.length > 0
+                            ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
+                            : [span.textContent?.trim() ?? '텍스트'];
+                    const width = (span.getAttribute('data-fl-width') || 'flex') as 'fixed' | 'flex' | 'auto';
+                    return { type: 'text' as const, width, lines };
+                }
 
-                // 텍스트 컬럼 — 내부 <span> 행에서 텍스트 추출
+                // ── heuristic 폴백 (구버전 HTML — data-fl-* 없음) ──
+                const hasSvg = !!span.querySelector('svg');
+                const isCircle = span.style.borderRadius === '50%';
+
+                if (hasSvg && isCircle) {
+                    // 아이콘 컬럼 — SVG path로 아이콘 키 역매칭
+                    const svgContent = span.querySelector('svg')?.outerHTML ?? '';
+                    let iconKey = 'check';
+                    for (const [key, svg] of Object.entries(ICONS_20)) {
+                        const keyPaths = svg.match(/d="[^"]*"/g)?.join('') ?? '';
+                        const domPaths = svgContent.match(/d="[^"]*"/g)?.join('') ?? '';
+                        if (keyPaths && keyPaths === domPaths) {
+                            iconKey = key;
+                            break;
+                        }
+                    }
+                    return {
+                        type: 'icon' as const,
+                        width: 'fixed' as const,
+                        icon: iconKey,
+                        iconBg: span.style.background || span.style.backgroundColor || '#E8F0FC',
+                    };
+                }
+
+                // 텍스트 컬럼 heuristic
                 const lineSpans = span.querySelectorAll<HTMLElement>(':scope > span');
                 const lines =
                     lineSpans.length > 0
                         ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
                         : [span.textContent?.trim() ?? '텍스트'];
-
-                const width = (span.getAttribute('data-fl-width') || 'flex') as 'fixed' | 'flex' | 'auto';
+                const flex = span.style.flex;
+                let width: 'fixed' | 'flex' | 'auto' = 'flex';
+                if (flex.startsWith('0 0 40px')) width = 'fixed';
+                else if (flex.startsWith('0 0 auto') || flex === '0 0 auto') width = 'auto';
 
                 return { type: 'text' as const, width, lines };
             });
