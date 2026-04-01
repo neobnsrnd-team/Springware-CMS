@@ -66,6 +66,9 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
         })),
     );
 
+    // 삭제 예정인 select 인덱스 집합
+    const [deletedIndices, setDeletedIndices] = useState<Set<number>>(new Set());
+
     if (selects.length === 0) return null;
 
     // 라벨(첫 option) 변경
@@ -90,15 +93,26 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
         setData((prev) => prev.map((s, i) => (i === si ? { ...s, options: s.options.filter((_, j) => j !== oi) } : s)));
     };
 
+    // 드롭다운 섹션 전체 삭제 예약
+    const removeSelect = (si: number) => {
+        setDeletedIndices((prev) => new Set([...prev, si]));
+    };
+
     // DOM 반영 후 닫기
     const handleApply = () => {
+        const makeOpt = (text: string) => {
+            const o = document.createElement('option');
+            o.text = text;
+            return o;
+        };
+
         selects.forEach((sel, si) => {
+            if (deletedIndices.has(si)) {
+                // select 요소 자체를 DOM에서 제거
+                sel.remove();
+                return;
+            }
             while (sel.options.length > 0) sel.remove(0);
-            const makeOpt = (text: string) => {
-                const o = document.createElement('option');
-                o.text = text;
-                return o;
-            };
             sel.add(makeOpt(data[si].label));
             data[si].options.forEach((t) => sel.add(makeOpt(t)));
         });
@@ -106,6 +120,9 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
     };
 
     const SECTION_LABELS = ['계열사 바로가기', '패밀리사이트'];
+
+    // 삭제되지 않은 섹션만 렌더링
+    const visibleIndices = data.map((_, i) => i).filter((i) => !deletedIndices.has(i));
 
     return (
         <div
@@ -160,17 +177,84 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
 
             {/* 섹션 목록 */}
             <div style={{ padding: 12, maxHeight: 420, overflowY: 'auto' }}>
-                {data.map((sel, si) => (
-                    <div key={si} style={{ marginBottom: si < data.length - 1 ? 16 : 0 }}>
-                        {/* 섹션 제목 */}
-                        <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, marginBottom: 6 }}>
-                            {SECTION_LABELS[si] ?? `드롭다운 ${si + 1}`}
+                {visibleIndices.length === 0 && (
+                    <div
+                        style={{
+                            padding: '16px 0',
+                            textAlign: 'center',
+                            fontSize: 12,
+                            color: '#9ca3af',
+                        }}
+                    >
+                        드롭다운이 모두 삭제됩니다.
+                    </div>
+                )}
+                {visibleIndices.map((si, renderIdx) => (
+                    <div key={si} style={{ marginBottom: renderIdx < visibleIndices.length - 1 ? 16 : 0 }}>
+                        {/* 섹션 제목 + 섹션 삭제 버튼 */}
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginBottom: 6,
+                            }}
+                        >
+                            <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>
+                                {SECTION_LABELS[si] ?? `드롭다운 ${si + 1}`}
+                            </span>
+                            <button
+                                onClick={() => removeSelect(si)}
+                                title="드롭다운 섹션 삭제"
+                                style={{
+                                    width: 22,
+                                    height: 22,
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: 5,
+                                    background: '#fff',
+                                    color: '#9ca3af',
+                                    cursor: 'pointer',
+                                    fontSize: 12,
+                                    padding: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                }}
+                                onMouseEnter={(e) => {
+                                    (e.currentTarget as HTMLElement).style.borderColor = '#ef4444';
+                                    (e.currentTarget as HTMLElement).style.color = '#ef4444';
+                                    (e.currentTarget as HTMLElement).style.background = '#fef2f2';
+                                }}
+                                onMouseLeave={(e) => {
+                                    (e.currentTarget as HTMLElement).style.borderColor = '#e5e7eb';
+                                    (e.currentTarget as HTMLElement).style.color = '#9ca3af';
+                                    (e.currentTarget as HTMLElement).style.background = '#fff';
+                                }}
+                            >
+                                <svg
+                                    width="11"
+                                    height="11"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14H6L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
+                                    <path d="M9 6V4h6v2" />
+                                </svg>
+                            </button>
                         </div>
 
                         {/* 라벨 (첫 번째 option) */}
                         <div style={{ marginBottom: 4 }}>
                             <input
-                                value={sel.label}
+                                value={data[si].label}
                                 onChange={(e) => setLabel(si, e.target.value)}
                                 placeholder="드롭다운 제목"
                                 style={{
@@ -190,7 +274,7 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
                         </div>
 
                         {/* 옵션 목록 */}
-                        {sel.options.map((opt, oi) => (
+                        {data[si].options.map((opt, oi) => (
                             <div key={oi} style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
                                 <input
                                     value={opt}
