@@ -362,7 +362,10 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
             const urlPath = file.url.replace('/uploads/', '');
             setCurrentPath(urlPath);
         } else {
-            if (window.parent) window.parent.postMessage({ type: 'ASSET_SELECTED', url: file.url }, '*');
+            // iframe(window.parent) 또는 팝업(window.opener) 양쪽 지원
+            const msg = { type: 'ASSET_SELECTED', url: file.url };
+            if (window.opener) window.opener.postMessage(msg, '*');
+            else if (window.parent) window.parent.postMessage(msg, '*');
         }
     };
 
