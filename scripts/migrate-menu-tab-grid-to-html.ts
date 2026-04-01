@@ -1,5 +1,5 @@
 // scripts/migrate-menu-tab-grid-to-html.ts
-// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226)
+// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226, #232 스크롤 앵커링 + Sticky)
 // 금융 앱 전체 메뉴 탭 그리드 (접기/펼치기) 컴포넌트
 // 실행: npx tsx scripts/migrate-menu-tab-grid-to-html.ts
 
@@ -97,15 +97,18 @@ const TOGGLE_SCRIPT =
         `try{tabsData=JSON.parse(root.getAttribute('data-menu-tabs')||'[]');}catch(e){}` +
 
         // Sticky 모드 — .row 래퍼에 적용해야 .is-container 전체 높이 안에서 고정됨
-        `var stickyRow=null;` +
-        `if(root.getAttribute('data-menu-sticky')==='true'){` +
-            `stickyRow=root.closest('.row');` +
-            `if(stickyRow){` +
-                `stickyRow.style.position='sticky';` +
-                `stickyRow.style.top='0';` +
-                `stickyRow.style.zIndex='100';` +
-                `stickyRow.style.background='#ffffff';` +
-            `}` +
+        `var stickyRow=root.closest('.row');` +
+        `var isSticky=root.getAttribute('data-menu-sticky')==='true';` +
+        `if(isSticky&&stickyRow){` +
+            `stickyRow.style.position='sticky';` +
+            `stickyRow.style.top='0';` +
+            `stickyRow.style.zIndex='100';` +
+            `stickyRow.style.background='#ffffff';` +
+        `}else if(stickyRow){` +
+            `stickyRow.style.position='';` +
+            `stickyRow.style.top='';` +
+            `stickyRow.style.zIndex='';` +
+            `stickyRow.style.background='';` +
         `}` +
 
         // 스크롤바 숨김 (인라인 불가한 ::-webkit-scrollbar 대응)
@@ -142,9 +145,9 @@ const TOGGLE_SCRIPT =
             `var rows=container.querySelectorAll(':scope > .row');` +
             `var targetRow=rows[td.target];` +
             `if(!targetRow)return;` +
-            // Sticky 모드에서 row 높이만큼 오프셋 적용
-            `if(stickyRow){` +
-                `targetRow.style.scrollMarginTop=stickyRow.offsetHeight+'px';` +
+            // Sticky 모드에서 탭바 높이만큼 오프셋 적용 (row 높이는 그리드 포함 시 과대)
+            `if(isSticky&&tabBar){` +
+                `targetRow.style.scrollMarginTop=tabBar.offsetHeight+'px';` +
             `}` +
             `targetRow.scrollIntoView({behavior:'smooth',block:'start'});` +
         `}` +
@@ -169,8 +172,8 @@ const TOGGLE_SCRIPT =
                 `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
                 `g.style.fontWeight=isActive?'700':'400';` +
             `});` +
-            // 그리드에서 선택하면 접기 → 접힘 애니메이션(300ms) 완료 후 스크롤
-            `if(fromGrid&&expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
+            // 그리드 펼쳐져 있으면 접기 → 접힘 애니메이션(300ms) 완료 후 스크롤
+            `if(expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
             `else{scrollToTarget(idx);}` +
         `}` +
         `allTabs.forEach(function(t){` +

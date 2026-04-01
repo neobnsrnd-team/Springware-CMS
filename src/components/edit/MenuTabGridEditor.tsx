@@ -1,5 +1,5 @@
 // src/components/edit/MenuTabGridEditor.tsx
-// menu-tab-grid 블록의 탭 항목을 추가·삭제·순서변경·이름수정하는 모달 에디터 (Issue #226)
+// menu-tab-grid 블록의 탭 항목 편집 + 블록 연결 + Sticky 설정 모달 에디터 (Issue #226, #232)
 
 'use client';
 
@@ -71,15 +71,18 @@ const TOGGLE_SCRIPT =
     `var expanded=false;` +
     `var tabsData=[];` +
     `try{tabsData=JSON.parse(root.getAttribute('data-menu-tabs')||'[]');}catch(e){}` +
-    `var stickyRow=null;` +
-    `if(root.getAttribute('data-menu-sticky')==='true'){` +
-    `stickyRow=root.closest('.row');` +
-    `if(stickyRow){` +
+    `var stickyRow=root.closest('.row');` +
+    `var isSticky=root.getAttribute('data-menu-sticky')==='true';` +
+    `if(isSticky&&stickyRow){` +
     `stickyRow.style.position='sticky';` +
     `stickyRow.style.top='0';` +
     `stickyRow.style.zIndex='100';` +
     `stickyRow.style.background='#ffffff';` +
-    `}` +
+    `}else if(stickyRow){` +
+    `stickyRow.style.position='';` +
+    `stickyRow.style.top='';` +
+    `stickyRow.style.zIndex='';` +
+    `stickyRow.style.background='';` +
     `}` +
     `var styleId='mtg-scroll-hide-'+Math.random().toString(36).slice(2,8);` +
     `scrollWrap.setAttribute('data-mtg-id',styleId);` +
@@ -107,8 +110,8 @@ const TOGGLE_SCRIPT =
     `var rows=container.querySelectorAll(':scope > .row');` +
     `var targetRow=rows[td.target];` +
     `if(!targetRow)return;` +
-    `if(stickyRow){` +
-    `targetRow.style.scrollMarginTop=stickyRow.offsetHeight+'px';` +
+    `if(isSticky&&tabBar){` +
+    `targetRow.style.scrollMarginTop=tabBar.offsetHeight+'px';` +
     `}` +
     `targetRow.scrollIntoView({behavior:'smooth',block:'start'});` +
     `}` +
@@ -128,7 +131,7 @@ const TOGGLE_SCRIPT =
     `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
     `g.style.fontWeight=isActive?'700':'400';` +
     `});` +
-    `if(fromGrid&&expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
+    `if(expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
     `else{scrollToTarget(idx);}` +
     `}` +
     `allTabs.forEach(function(t){` +
@@ -334,7 +337,10 @@ export default function MenuTabGridEditor({ blockEl, canvasBlocks, onClose }: Pr
     const [sticky, setSticky] = useState(() => blockEl.getAttribute('data-menu-sticky') === 'true');
 
     // 메뉴 탭 그리드 자기 자신의 블록 인덱스 (드롭다운에서 제외용)
-    const selfBlockIdx = canvasBlocks.findIndex((b) => b.cbType === blockEl.getAttribute('data-component-id'));
+    // DOM에서 실제 .row 위치를 찾아야 동일 타입 복수 블록에서도 정확함
+    const selfBlockIdx = Array.from(blockEl.closest('.container')?.children ?? [])
+        .filter((el) => (el as HTMLElement).classList.contains('row'))
+        .indexOf(blockEl.closest('.row') as HTMLElement);
 
     const handleLabelChange = (idx: number, value: string) => {
         setTabs((prev) => prev.map((tab, i) => (i === idx ? { ...tab, label: value } : tab)));
