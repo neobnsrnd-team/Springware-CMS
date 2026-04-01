@@ -69,38 +69,7 @@ body.spw-slide-modal-open .is-rte-tool {
 .container .is-col:has(> [data-cb-type]),
 .container .column:has(> [data-cb-type]),
 .container [class*="col"]:has(> [data-cb-type]),
-.container .column.spw-finance-col {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    flex: 0 0 100% !important;
-}
-
-/* 일반 .row도 패딩 없이 꽉 채움 */
-.container .row {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-}
-
-/* spw-finance-col을 포함한 row는 복제 시 세로로 쌓이도록 강제
- * ContentBuilder 복제가 같은 row에 새 column을 추가할 때 가로 배치 방지 */
-.container .row:has(> .column.spw-finance-col) {
-    flex-wrap: wrap !important;
-}
-.container .row:has(> .column.spw-finance-col) > .column {
-    flex: 0 0 100% !important;
-    width: 100% !important;
-    max-width: 100% !important;
-}
-
-/* ── 미리보기 페이지(.is-container)도 동일하게 꽉 채움 ── */
-.is-container [data-cb-type] {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
+.container .column.spw-finance-col,
 .is-container .is-col:has(> [data-cb-type]),
 .is-container .column:has(> [data-cb-type]),
 .is-container [class*="col"]:has(> [data-cb-type]),
@@ -111,17 +80,33 @@ body.spw-slide-modal-open .is-rte-tool {
     max-width: 100% !important;
     flex: 0 0 100% !important;
 }
+
+/* 일반 .row도 패딩 없이 꽉 채움 */
+.container .row,
+.is-container .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* spw-finance-col을 포함한 row는 복제 시 세로로 쌓이도록 강제
+ * ContentBuilder 복제가 같은 row에 새 column을 추가할 때 가로 배치 방지 */
+.container .row:has(> .column.spw-finance-col),
 .is-container .row:has(> .column.spw-finance-col) {
     flex-wrap: wrap !important;
 }
+.container .row:has(> .column.spw-finance-col) > .column,
 .is-container .row:has(> .column.spw-finance-col) > .column {
     flex: 0 0 100% !important;
     width: 100% !important;
     max-width: 100% !important;
 }
-.is-container .row {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+
+/* ── 미리보기 페이지(.is-container) — [data-cb-type] 블록 레벨 보장 ── */
+.is-container [data-cb-type] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* ── ContentBuilder RTE 툴바(← → 🔍 ✨ ≡ ...) 위치 보정 ─────────────

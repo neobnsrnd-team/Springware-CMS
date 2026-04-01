@@ -41,6 +41,8 @@ export default function AppHeaderBorderEditor({ blockEl, onClose }: Props) {
     const initial = parseBorderBottom(blockEl);
     const [color, setColor] = useState(initial.color);
     const [width, setWidth] = useState(initial.width);
+    // 직접 입력 필드 전용 문자열 state — 소수점 입력 중 강제 변환 방지
+    const [widthInput, setWidthInput] = useState(String(initial.width));
 
     // 드래그
     const [pos, setPos] = useState(() => ({
@@ -95,6 +97,7 @@ export default function AppHeaderBorderEditor({ blockEl, onClose }: Props) {
     const applyWidth = useCallback(
         (w: number) => {
             setWidth(w);
+            setWidthInput(String(w));
             if (w === 0) {
                 blockEl.style.borderBottom = 'none';
             } else {
@@ -208,10 +211,17 @@ export default function AppHeaderBorderEditor({ blockEl, onClose }: Props) {
                             min={0}
                             max={20}
                             step={0.5}
-                            value={width}
+                            value={widthInput}
                             onChange={(e) => {
+                                // 입력 중 문자열 그대로 유지 — 소수점 입력 시 강제 변환 방지
+                                setWidthInput(e.target.value);
+                            }}
+                            onBlur={(e) => {
+                                // 포커스 아웃 시점에 DOM 반영
                                 const val = parseFloat(e.target.value);
-                                applyWidth(isNaN(val) ? 0 : Math.min(20, Math.max(0, val)));
+                                const clamped = isNaN(val) ? 0 : Math.min(20, Math.max(0, val));
+                                setWidthInput(String(clamped));
+                                applyWidth(clamped);
                             }}
                             style={{
                                 width: 60,
