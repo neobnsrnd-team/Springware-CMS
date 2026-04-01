@@ -259,12 +259,25 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     const currentTab = tabs.find((t) => t.id === bank);
     const viewMode: ViewMode = currentTab?.viewMode ?? 'mobile';
 
+    // ── 퀵 메뉴 아이콘 보호 패치 ────────────────────────────────────────
+    // .pm-icon-wrap에 contenteditable="false"가 없으면 동적 주입
+    // 탐색 범위를 .container로 제한하여 성능·안전성 확보
+    // (마이그레이션 이전에 저장된 페이지도 에디터 로드·삽입·이동·삭제 후 보호)
+    const patchPmIconWrap = useCallback(() => {
+        const container = document.querySelector('.container');
+        if (!container) return;
+        container.querySelectorAll<HTMLElement>('.pm-icon-wrap:not([contenteditable])').forEach((el) => {
+            el.contentEditable = 'false';
+        });
+    }, []);
+
     useEffect(() => {
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
         // reinitialize(): Runtime이 data-cb-type 플러그인 DOM을 재마운트
         // applyBehavior(): ContentBuilder가 모든 row에 편집 이벤트 핸들러 재연결
         //   → reinitialize()가 플러그인 DOM을 교체하면 ContentBuilder가 앞쪽 row 참조를
         //     잃어 move/delete 버튼이 마지막 row에만 동작하는 문제를 방지합니다.
+
         let reinitTimer: ReturnType<typeof setTimeout> | null = null;
         const debouncedReinit = () => {
             if (reinitTimer) clearTimeout(reinitTimer);
@@ -272,6 +285,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 // reinitialize()가 비동기(플러그인 JS/CSS lazy-load)이므로 완료 후 applyBehavior() 호출
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
+                patchPmIconWrap();
                 // ContentBuilder 자체 삭제/이동 후 순서 패널 동기화
                 const html = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
@@ -1406,6 +1420,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 setTimeout(async () => {
                     await runtimeRef.current?.reinitialize();
                     builderRef.current?.applyBehavior();
+                    patchPmIconWrap();
                     setContainerOpacity(1);
                     // 초기 블록 목록 파싱
                     const html = builderRef.current?.html() ?? '';
@@ -1534,43 +1549,47 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
      * 모든 삽입은 loadHtml()로 통일합니다.
      * (addSnippet은 내부 스니펫 레지스트리를 참조해 의도치 않은 컴포넌트를 함께 삽입하는 부작용이 있음)
      */
-    const handleInsertComponent = useCallback((html: string, insertIdx?: number) => {
-        const builder = builderRef.current;
-        if (!builder) return;
+    const handleInsertComponent = useCallback(
+        (html: string, insertIdx?: number) => {
+            const builder = builderRef.current;
+            if (!builder) return;
 
-        // canvasBlocksRef.current 대신 builder.html()로 현재 DOM 상태를 직접 읽음
-        // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
-        //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
-        const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
-        // 금융 컴포넌트(data-spw-block)는 컬럼 패딩 없이 캔버스 전체 너비를 채워야 함
-        // 루트 요소의 속성만 확인 — 텍스트 내용에 문자열이 포함되어도 오작동하지 않도록 파싱
-        const isSpwBlock = (() => {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html.trim();
-            const root = tempDiv.firstElementChild;
-            return root?.hasAttribute('data-spw-block') ?? false;
-        })();
-        const colClass = isSpwBlock ? 'column spw-finance-col' : 'column';
-        const wrappedHtml = `<div class="row"><div class="${colClass}">\n${html}\n</div></div>`;
-        const blockHtmls = liveBlocks.map((b) => b.outerHtml);
+            // canvasBlocksRef.current 대신 builder.html()로 현재 DOM 상태를 직접 읽음
+            // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
+            //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
+            const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
+            // 금융 컴포넌트(data-spw-block)는 컬럼 패딩 없이 캔버스 전체 너비를 채워야 함
+            // 루트 요소의 속성만 확인 — 텍스트 내용에 문자열이 포함되어도 오작동하지 않도록 파싱
+            const isSpwBlock = (() => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html.trim();
+                const root = tempDiv.firstElementChild;
+                return root?.hasAttribute('data-spw-block') ?? false;
+            })();
+            const colClass = isSpwBlock ? 'column spw-finance-col' : 'column';
+            const wrappedHtml = `<div class="row"><div class="${colClass}">\n${html}\n</div></div>`;
+            const blockHtmls = liveBlocks.map((b) => b.outerHtml);
 
-        // insertIdx가 유효하면 해당 위치에, 아니면 끝에 추가
-        // addSnippet 대신 loadHtml로 통일 — addSnippet은 내부 스니펫 레지스트리를
-        // 참조해 의도치 않은 컴포넌트를 함께 삽입하는 부작용이 있음
-        const targetIdx =
-            insertIdx !== undefined && insertIdx >= 0 ? Math.min(insertIdx, blockHtmls.length) : blockHtmls.length;
+            // insertIdx가 유효하면 해당 위치에, 아니면 끝에 추가
+            // addSnippet 대신 loadHtml로 통일 — addSnippet은 내부 스니펫 레지스트리를
+            // 참조해 의도치 않은 컴포넌트를 함께 삽입하는 부작용이 있음
+            const targetIdx =
+                insertIdx !== undefined && insertIdx >= 0 ? Math.min(insertIdx, blockHtmls.length) : blockHtmls.length;
 
-        blockHtmls.splice(targetIdx, 0, wrappedHtml);
-        builder.loadHtml(blockHtmls.join('\n'));
+            blockHtmls.splice(targetIdx, 0, wrappedHtml);
+            builder.loadHtml(blockHtmls.join('\n'));
 
-        // 플러그인 재초기화 + ContentBuilder 편집 핸들러 재연결 + 블록 목록 갱신
-        setTimeout(async () => {
-            await runtimeRef.current?.reinitialize();
-            builderRef.current?.applyBehavior();
-            const newHtml = builderRef.current?.html() ?? '';
-            setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
-        }, 300);
-    }, []);
+            // 플러그인 재초기화 + ContentBuilder 편집 핸들러 재연결 + 블록 목록 갱신
+            setTimeout(async () => {
+                await runtimeRef.current?.reinitialize();
+                builderRef.current?.applyBehavior();
+                patchPmIconWrap();
+                const newHtml = builderRef.current?.html() ?? '';
+                setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
+            }, 300);
+        },
+        [patchPmIconWrap],
+    );
 
     // ── 순서 탭 블록 클릭 → 캔버스 활성화 ──────────────────────────────
     /**
@@ -1598,22 +1617,26 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     /**
      * 순서 패널의 삭제 버튼으로 특정 인덱스의 블록을 제거합니다.
      */
-    const handleDelete = useCallback((idx: number) => {
-        const builder = builderRef.current;
-        if (!builder) return;
+    const handleDelete = useCallback(
+        (idx: number) => {
+            const builder = builderRef.current;
+            if (!builder) return;
 
-        const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
-        const next = liveBlocks.filter((_, i) => i !== idx);
-        const newHtml = next.map((b) => b.outerHtml).join('\n');
-        builder.loadHtml(newHtml);
+            const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
+            const next = liveBlocks.filter((_, i) => i !== idx);
+            const newHtml = next.map((b) => b.outerHtml).join('\n');
+            builder.loadHtml(newHtml);
 
-        setTimeout(async () => {
-            await runtimeRef.current?.reinitialize();
-            builderRef.current?.applyBehavior();
-            const updatedHtml = builderRef.current?.html() ?? '';
-            setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
-        }, 300);
-    }, []);
+            setTimeout(async () => {
+                await runtimeRef.current?.reinitialize();
+                builderRef.current?.applyBehavior();
+                patchPmIconWrap();
+                const updatedHtml = builderRef.current?.html() ?? '';
+                setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
+            }, 300);
+        },
+        [patchPmIconWrap],
+    );
 
     // ── 전체 블록 삭제 ──────────────────────────────────────────────────
     const handleDeleteAllBlocks = useCallback(() => {
@@ -1628,29 +1651,33 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
      * 순서 패널의 ▲▼ 버튼으로 블록을 이동합니다.
      * canvasBlocksRef 대신 builder.html()로 항상 최신 DOM 상태를 읽습니다.
      */
-    const handleMoveBlock = useCallback((from: number, to: number) => {
-        const builder = builderRef.current;
-        if (!builder) return;
+    const handleMoveBlock = useCallback(
+        (from: number, to: number) => {
+            const builder = builderRef.current;
+            if (!builder) return;
 
-        const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
-        if (from < 0 || from >= liveBlocks.length || to < 0 || to > liveBlocks.length) return;
-        if (from === to || from === to - 1) return; // 위치 변동 없음
+            const liveBlocks = parseBuilderBlocks(builder.html() ?? '', financeComponentsMapRef.current);
+            if (from < 0 || from >= liveBlocks.length || to < 0 || to > liveBlocks.length) return;
+            if (from === to || from === to - 1) return; // 위치 변동 없음
 
-        // "to"는 원본 배열 기준 "이 인덱스 앞에 삽입" 의미
-        // from 제거 후 배열이 짧아지므로 from < to일 때 to를 1 감소
-        const next = liveBlocks.filter((_, i) => i !== from);
-        const insertAt = from < to ? to - 1 : to;
-        next.splice(insertAt, 0, liveBlocks[from]);
-        builder.loadHtml(next.map((b) => b.outerHtml).join('\n'));
+            // "to"는 원본 배열 기준 "이 인덱스 앞에 삽입" 의미
+            // from 제거 후 배열이 짧아지므로 from < to일 때 to를 1 감소
+            const next = liveBlocks.filter((_, i) => i !== from);
+            const insertAt = from < to ? to - 1 : to;
+            next.splice(insertAt, 0, liveBlocks[from]);
+            builder.loadHtml(next.map((b) => b.outerHtml).join('\n'));
 
-        // 플러그인 재초기화 + ContentBuilder 편집 핸들러 재연결 + 블록 목록 갱신
-        setTimeout(async () => {
-            await runtimeRef.current?.reinitialize();
-            builderRef.current?.applyBehavior();
-            const updatedHtml = builderRef.current?.html() ?? '';
-            setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
-        }, 300);
-    }, []);
+            // 플러그인 재초기화 + ContentBuilder 편집 핸들러 재연결 + 블록 목록 갱신
+            setTimeout(async () => {
+                await runtimeRef.current?.reinitialize();
+                builderRef.current?.applyBehavior();
+                patchPmIconWrap();
+                const updatedHtml = builderRef.current?.html() ?? '';
+                setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
+            }, 300);
+        },
+        [patchPmIconWrap],
+    );
 
     // ── 오버레이 드롭 핸들러 ──────────────────────────────────────────────
     // 오버레이가 ContentBuilder DOM 위에 직접 렌더링되므로
