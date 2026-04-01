@@ -61,6 +61,14 @@ function parseCard(inner: HTMLElement | null): ProductGalleryCard {
     const rawColor = rateEl?.style.color ?? '';
     const accentColor = rawColor ? rgbToHex(rawColor) : undefined;
     const bgImageMatch = inner?.style.cssText.match(/url\(['"]?([^'"]+)['"]?\)/);
+    const rawBgImage = bgImageMatch?.[1];
+    // 백슬래시 → 슬래시, 절대 경로 보정 (Windows 환경 대응)
+    const bgImage = rawBgImage
+        ? (() => {
+              const s = rawBgImage.replace(/\\/g, '/');
+              return s.startsWith('/') ? s : '/' + s;
+          })()
+        : undefined;
     return {
         type: (inner?.getAttribute('data-type') ?? 'savings') as ProductGalleryCard['type'],
         badge: inner?.querySelector('[data-pg-field="badge"]')?.textContent ?? '',
@@ -70,7 +78,7 @@ function parseCard(inner: HTMLElement | null): ProductGalleryCard {
         detail: inner?.querySelector('[data-pg-field="detail"]')?.textContent ?? '',
         ctaHref: ctaEl?.getAttribute('href') ?? '#',
         accentColor,
-        bgImage: bgImageMatch?.[1] ?? undefined,
+        bgImage,
     };
 }
 
@@ -845,7 +853,14 @@ function ProductCardsEditor({
                                                     body: formData,
                                                 });
                                                 const data = await res.json();
-                                                if (data.url) update(idx, { bgImage: data.url });
+                                                if (data.url) {
+                                                    // Windows 백슬래시 → 슬래시, 절대 경로 보정
+                                                    const rawUrl = (data.url as string).replace(/\\/g, '/');
+                                                    const absUrl = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
+                                                    update(idx, { bgImage: absUrl });
+                                                } else {
+                                                    alert('이미지 업로드에 실패했습니다.');
+                                                }
                                             } catch {
                                                 alert('이미지 업로드에 실패했습니다.');
                                             }
