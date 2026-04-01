@@ -14,6 +14,7 @@ interface Props {
 interface SelectState {
     label: string; // 첫 번째 option (드롭다운 제목)
     options: string[]; // 이하 실제 항목
+    labelIdx: number; // SECTION_LABELS 인덱스 — data-label-idx 속성으로 DOM과 동기
 }
 
 export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
@@ -57,12 +58,15 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
     }, []);
 
     // select DOM → state 초기화
+    // labelIdx: data-label-idx 속성으로 읽어 섹션 라벨을 DOM 기반으로 유지
+    // (첫 드롭다운이 삭제·저장된 뒤 재열 시 순서 어긋남 방지)
     const [data, setData] = useState<SelectState[]>(() =>
-        selects.map((sel) => ({
+        selects.map((sel, i) => ({
             label: sel.options[0]?.text ?? '',
             options: Array.from(sel.options)
                 .slice(1)
                 .map((o) => o.text),
+            labelIdx: parseInt(sel.getAttribute('data-label-idx') ?? String(i), 10),
         })),
     );
 
@@ -108,7 +112,8 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
 
     // 새 드롭다운 섹션 추가
     const addSelect = () => {
-        setNewSelects((prev) => [...prev, { label: `새 드롭다운 ${prev.length + 1}`, options: [] }]);
+        // labelIdx: SECTION_LABELS 범위 밖 값으로 설정 → "새 드롭다운 N" 표시
+        setNewSelects((prev) => [...prev, { label: `새 드롭다운 ${prev.length + 1}`, options: [], labelIdx: -1 }]);
     };
 
     // 새 드롭다운 라벨 변경
@@ -178,6 +183,8 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
             }
         }
 
+        // DOM 조작 후 ContentBuilder 상태 동기화
+        (window as Window & { builderReinit?: () => void }).builderReinit?.();
         onClose();
     };
 
@@ -263,7 +270,7 @@ export default function SiteFooterSelectEditor({ blockEl, onClose }: Props) {
                             }}
                         >
                             <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>
-                                {SECTION_LABELS[si] ?? `드롭다운 ${si + 1}`}
+                                {SECTION_LABELS[data[si].labelIdx] ?? `드롭다운 ${si + 1}`}
                             </span>
                             <button
                                 onClick={() => removeSelect(si)}

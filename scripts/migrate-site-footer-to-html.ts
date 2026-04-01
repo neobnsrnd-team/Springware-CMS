@@ -37,13 +37,13 @@ function buildSelectBar(flexDir: 'row' | 'column' = 'row'): string {
     return (
         `<div style="display:flex;align-items:center;gap:8px;">` +
             `<div style="display:flex;flex-direction:${flexDir};gap:6px;flex:1;">` +
-                `<select style="${selectStyle}">` +
+                `<select style="${selectStyle}" data-label-idx="0">` +
                     `<option>선택 1</option>` +
                     `<option>계열사1</option>` +
                     `<option>계열사2</option>` +
                     `<option>계열사3</option>` +
                 `</select>` +
-                `<select style="${selectStyle}">` +
+                `<select style="${selectStyle}" data-label-idx="1">` +
                     `<option>선택 2</option>` +
                     `<option>패밀리사이트1</option>` +
                     `<option>패밀리사이트2</option>` +
