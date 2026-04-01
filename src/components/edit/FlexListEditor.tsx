@@ -1,5 +1,5 @@
 // src/components/edit/FlexListEditor.tsx
-// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지)
+// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지, #246 스타일)
 // 행 추가·삭제·순서변경, 컬럼 추가·삭제, 타입 토글, 너비 선택, 아이콘 프리셋, 텍스트 행 관리
 
 'use client';
@@ -10,18 +10,27 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 interface FlexListColumn {
     type: 'icon' | 'text' | 'image';
-    width: 'fixed' | 'flex' | 'auto';
+    width: 'fixed' | 'flex' | 'auto' | 'custom';
     icon?: string;
     iconBg?: string;
     lines?: string[];
     href?: string; // linkMode=column일 때 개별 링크 URL
     imageSrc?: string; // type=image: 이미지 URL
+    customWidth?: string; // width=custom일 때 값 (예: '30%')
 }
 
 interface FlexListRow {
     columns: FlexListColumn[];
-    linkMode?: 'row' | 'column' | 'none'; // 행 전체 / 컬럼 개별 / 링크 없음
-    rowHref?: string; // linkMode=row일 때 URL
+    linkMode?: 'row' | 'column' | 'none';
+    rowHref?: string;
+    bgColor?: string; // 행 배경색
+    padding?: string; // 행 패딩 (예: '16px 20px')
+    gap?: string; // 컬럼 간격 (예: '12px')
+    border?: {
+        show: boolean;
+        color?: string;
+        width?: number;
+    };
 }
 
 interface Props {
@@ -137,7 +146,7 @@ function sanitizeImageSrc(url: string): string {
     return '';
 }
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'): string {
     const safeSrc = sanitizeImageSrc(src);
     const widthStyle =
         width === 'fixed'
@@ -179,11 +188,15 @@ function buildColumnHtml(col: FlexListColumn): string {
     }
 
     const widthStyle =
-        col.width === 'fixed'
-            ? 'flex:0 0 40px;'
-            : col.width === 'auto'
-              ? 'flex:0 0 auto;text-align:right;'
-              : 'flex:1;min-width:0;';
+        col.width === 'custom' && col.customWidth
+            ? `flex:0 0 ${col.customWidth};min-width:0;`
+            : col.width === 'fixed'
+              ? 'flex:0 0 40px;'
+              : col.width === 'auto'
+                ? 'flex:0 0 auto;text-align:right;'
+                : 'flex:1;min-width:0;';
+    const customWidthAttr =
+        col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
 
     const lines = col.lines ?? ['텍스트'];
     const lineHtmls = lines.map((text, i) => {
@@ -194,7 +207,7 @@ function buildColumnHtml(col: FlexListColumn): string {
     });
 
     return (
-        `<span data-fl-type="text" data-fl-width="${col.width}"` +
+        `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
         ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
         lineHtmls.join('') +
         `</span>`
@@ -207,28 +220,49 @@ function wrapColumnWithLink(colHtml: string, href?: string): string {
 }
 
 function buildRowHtml(row: FlexListRow, isLast: boolean): string {
-    const borderStyle = isLast ? '' : 'border-bottom:1px solid #E5E7EB;';
+    const borderShow = row.border?.show !== false;
+    const borderColor = row.border?.color ?? '#E5E7EB';
+    const borderW = row.border?.width ?? 1;
+    const borderStyle = !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
+
+    const pad = row.padding ?? '16px 20px';
+    const gap = row.gap ?? '12px';
+    const bg = row.bgColor ? `background:${row.bgColor};` : '';
+
+    const dataAttrs =
+        (row.bgColor ? ` data-fl-bg="${row.bgColor}"` : '') +
+        (row.padding ? ` data-fl-padding="${row.padding}"` : '') +
+        (row.gap ? ` data-fl-gap="${row.gap}"` : '') +
+        (row.border
+            ? ` data-fl-border-show="${row.border.show}" data-fl-border-color="${row.border.color ?? '#E5E7EB'}" data-fl-border-width="${row.border.width ?? 1}"`
+            : '');
+
     const linkMode = row.linkMode ?? 'none';
-    const flexStyle = `display:flex;align-items:center;gap:12px;padding:16px 20px;${borderStyle}text-decoration:none;`;
+    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${bg}text-decoration:none;`;
 
     if (linkMode === 'row' && row.rowHref) {
         const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
-        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row" style="${flexStyle}">${columnsHtml}</a>`;
+        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
         const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col), col.href)).join('');
-        return `<div data-fl-link-mode="column" style="${flexStyle}">${columnsHtml}</div>`;
+        return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
     const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
-    return `<a href="#" data-fl-link-mode="none" style="${flexStyle}">${columnsHtml}</a>`;
+    return `<a href="#" data-fl-link-mode="none"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
 }
 
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
 
 function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
-    blockEl.setAttribute('data-fl-rows', JSON.stringify(rows));
+    // _showStyle 임시 필드 제거 후 저장
+    const cleanRows = rows.map(({ ...r }) => {
+        delete (r as Record<string, unknown>)['_showStyle'];
+        return r;
+    });
+    blockEl.setAttribute('data-fl-rows', JSON.stringify(cleanRows));
 
     // 기존 행 제거 (<a> 또는 <div data-fl-link-mode>)
     blockEl.querySelectorAll(':scope > a, :scope > div[data-fl-link-mode]').forEach((el) => el.remove());
@@ -304,8 +338,13 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         lineSpans.length > 0
                             ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
                             : [span.textContent?.trim() ?? '텍스트'];
-                    const width = (span.getAttribute('data-fl-width') || 'flex') as 'fixed' | 'flex' | 'auto';
-                    return { type: 'text' as const, width, lines, href: colHref };
+                    const width = (span.getAttribute('data-fl-width') || 'flex') as
+                        | 'fixed'
+                        | 'flex'
+                        | 'auto'
+                        | 'custom';
+                    const customWidth = span.getAttribute('data-fl-custom-width') || undefined;
+                    return { type: 'text' as const, width, customWidth, lines, href: colHref };
                 }
 
                 // ── heuristic 폴백 (구버전 HTML — data-fl-* 없음) ──
@@ -353,6 +392,16 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         : [{ type: 'text' as const, width: 'flex' as const, lines: ['텍스트'] }],
                 linkMode,
                 rowHref,
+                bgColor: rowEl.getAttribute('data-fl-bg') || undefined,
+                padding: rowEl.getAttribute('data-fl-padding') || undefined,
+                gap: rowEl.getAttribute('data-fl-gap') || undefined,
+                border: rowEl.hasAttribute('data-fl-border-show')
+                    ? {
+                          show: rowEl.getAttribute('data-fl-border-show') !== 'false',
+                          color: rowEl.getAttribute('data-fl-border-color') || '#E5E7EB',
+                          width: Number(rowEl.getAttribute('data-fl-border-width')) || 1,
+                      }
+                    : undefined,
             };
         });
 
@@ -494,6 +543,7 @@ const WIDTH_LABELS: Record<string, string> = {
     fixed: '고정 (40px)',
     flex: '유연 (flex)',
     auto: '자동 (auto)',
+    custom: '커스텀 (%)',
 };
 
 // ── 컬럼 편집 서브컴포넌트 ──────────────────────────────────────────────
@@ -562,7 +612,14 @@ function ColumnEditor({
                 {/* 너비 선택 */}
                 <select
                     value={col.width}
-                    onChange={(e) => onUpdate(colIdx, { ...col, width: e.target.value as 'fixed' | 'flex' | 'auto' })}
+                    onChange={(e) => {
+                        const w = e.target.value as 'fixed' | 'flex' | 'auto' | 'custom';
+                        onUpdate(colIdx, {
+                            ...col,
+                            width: w,
+                            customWidth: w === 'custom' ? col.customWidth || '33%' : undefined,
+                        });
+                    }}
                     style={{
                         padding: '3px 6px',
                         border: '1px solid #e5e7eb',
@@ -577,6 +634,25 @@ function ColumnEditor({
                         </option>
                     ))}
                 </select>
+
+                {/* 커스텀 너비 입력 */}
+                {col.width === 'custom' && (
+                    <input
+                        type="text"
+                        value={col.customWidth ?? '33%'}
+                        onChange={(e) => onUpdate(colIdx, { ...col, customWidth: e.target.value })}
+                        style={{
+                            width: 50,
+                            padding: '3px 6px',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontFamily: FONT_FAMILY,
+                            outline: 'none',
+                        }}
+                        placeholder="30%"
+                    />
+                )}
 
                 {/* 삭제 */}
                 <button
@@ -1169,6 +1245,261 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                             outline: 'none',
                                         }}
                                     />
+                                )}
+                            </div>
+
+                            {/* 스타일 설정 (접기/펼치기) */}
+                            <div style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        // 토글: _showStyle 필드를 state에서 관리
+                                        setRows((prev) =>
+                                            prev.map((r, ri) =>
+                                                ri === rowIdx
+                                                    ? ({
+                                                          ...r,
+                                                          _showStyle: !(r as FlexListRow & { _showStyle?: boolean })
+                                                              ._showStyle,
+                                                      } as FlexListRow)
+                                                    : r,
+                                            ),
+                                        );
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '6px 10px',
+                                        border: 'none',
+                                        background: '#f9fafb',
+                                        cursor: 'pointer',
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        color: '#6B7280',
+                                        textAlign: 'left',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            transform: (row as FlexListRow & { _showStyle?: boolean })._showStyle
+                                                ? 'rotate(90deg)'
+                                                : 'none',
+                                            transition: 'transform 0.15s',
+                                            fontSize: 10,
+                                        }}
+                                    >
+                                        ▸
+                                    </span>
+                                    스타일 설정
+                                </button>
+                                {(row as FlexListRow & { _showStyle?: boolean })._showStyle && (
+                                    <div
+                                        style={{
+                                            padding: '8px 10px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: 6,
+                                        }}
+                                    >
+                                        {/* 배경색 + 패딩 + 간격 */}
+                                        <div
+                                            style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+                                        >
+                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 36 }}>배경색</span>
+                                            <input
+                                                type="color"
+                                                value={row.bgColor ?? '#ffffff'}
+                                                onChange={(e) => {
+                                                    const v = e.target.value;
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx
+                                                                ? { ...r, bgColor: v === '#ffffff' ? undefined : v }
+                                                                : r,
+                                                        ),
+                                                    );
+                                                }}
+                                                style={{
+                                                    width: 26,
+                                                    height: 26,
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: 4,
+                                                    padding: 1,
+                                                    cursor: 'pointer',
+                                                }}
+                                            />
+                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 24 }}>패딩</span>
+                                            <input
+                                                type="text"
+                                                value={row.padding ?? '16px 20px'}
+                                                onChange={(e) =>
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx
+                                                                ? { ...r, padding: e.target.value || undefined }
+                                                                : r,
+                                                        ),
+                                                    )
+                                                }
+                                                style={{
+                                                    width: 80,
+                                                    padding: '3px 6px',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: 4,
+                                                    fontSize: 10,
+                                                    fontFamily: FONT_FAMILY,
+                                                    outline: 'none',
+                                                }}
+                                                placeholder="16px 20px"
+                                            />
+                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 24 }}>간격</span>
+                                            <input
+                                                type="text"
+                                                value={row.gap ?? '12px'}
+                                                onChange={(e) =>
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx
+                                                                ? { ...r, gap: e.target.value || undefined }
+                                                                : r,
+                                                        ),
+                                                    )
+                                                }
+                                                style={{
+                                                    width: 44,
+                                                    padding: '3px 6px',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: 4,
+                                                    fontSize: 10,
+                                                    fontFamily: FONT_FAMILY,
+                                                    outline: 'none',
+                                                }}
+                                                placeholder="12px"
+                                            />
+                                        </div>
+                                        {/* 구분선 */}
+                                        <div
+                                            style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+                                        >
+                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 36 }}>구분선</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const cur = row.border?.show !== false;
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx
+                                                                ? {
+                                                                      ...r,
+                                                                      border: {
+                                                                          ...r.border,
+                                                                          show: !cur,
+                                                                          color: r.border?.color ?? '#E5E7EB',
+                                                                          width: r.border?.width ?? 1,
+                                                                      },
+                                                                  }
+                                                                : r,
+                                                        ),
+                                                    );
+                                                }}
+                                                style={{
+                                                    width: 36,
+                                                    height: 20,
+                                                    borderRadius: 10,
+                                                    border: 'none',
+                                                    background: row.border?.show !== false ? '#0046A4' : '#d1d5db',
+                                                    cursor: 'pointer',
+                                                    position: 'relative',
+                                                    padding: 0,
+                                                    flexShrink: 0,
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 2,
+                                                        left: row.border?.show !== false ? 18 : 2,
+                                                        width: 16,
+                                                        height: 16,
+                                                        borderRadius: '50%',
+                                                        background: '#fff',
+                                                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                                                        transition: 'left 0.15s',
+                                                    }}
+                                                />
+                                            </button>
+                                            {row.border?.show !== false && (
+                                                <>
+                                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>색상</span>
+                                                    <input
+                                                        type="color"
+                                                        value={row.border?.color ?? '#E5E7EB'}
+                                                        onChange={(e) =>
+                                                            setRows((prev) =>
+                                                                prev.map((r, ri) =>
+                                                                    ri === rowIdx
+                                                                        ? {
+                                                                              ...r,
+                                                                              border: {
+                                                                                  ...r.border,
+                                                                                  show: true,
+                                                                                  color: e.target.value,
+                                                                                  width: r.border?.width ?? 1,
+                                                                              },
+                                                                          }
+                                                                        : r,
+                                                                ),
+                                                            )
+                                                        }
+                                                        style={{
+                                                            width: 22,
+                                                            height: 22,
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: 4,
+                                                            padding: 1,
+                                                            cursor: 'pointer',
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>굵기</span>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        max={10}
+                                                        value={row.border?.width ?? 1}
+                                                        onChange={(e) =>
+                                                            setRows((prev) =>
+                                                                prev.map((r, ri) =>
+                                                                    ri === rowIdx
+                                                                        ? {
+                                                                              ...r,
+                                                                              border: {
+                                                                                  ...r.border,
+                                                                                  show: true,
+                                                                                  color: r.border?.color ?? '#E5E7EB',
+                                                                                  width: Number(e.target.value) || 1,
+                                                                              },
+                                                                          }
+                                                                        : r,
+                                                                ),
+                                                            )
+                                                        }
+                                                        style={{
+                                                            width: 36,
+                                                            padding: '3px 4px',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: 4,
+                                                            fontSize: 10,
+                                                            fontFamily: FONT_FAMILY,
+                                                            outline: 'none',
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>px</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
