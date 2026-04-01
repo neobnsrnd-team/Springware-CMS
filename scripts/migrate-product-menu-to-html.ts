@@ -40,7 +40,7 @@ const ITEMS = [
 function buildItems(): string {
     return ITEMS.map(({ key, label }) =>
         `<a href="#" class="pm-item" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:12px;text-decoration:none;cursor:pointer;">` +
-            `<div class="pm-icon-wrap" style="width:60px;height:60px;border-radius:14px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ICONS[key]}</div>` +
+            `<div class="pm-icon-wrap" contenteditable="false" style="width:60px;height:60px;border-radius:14px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ICONS[key]}</div>` +
             `<span class="pm-label" style="font-size:12px;font-weight:500;color:#0046A4;text-align:center;line-height:1.3;word-break:keep-all;">${label}</span>` +
         `</a>`
     ).join('');
@@ -57,9 +57,9 @@ const PRODUCT_MENU_MOBILE_HTML =
     `</div>`;
 
 // ── web variant ─────────────────────────────────────────────────────────────
-// 데스크탑: 패딩 확장, max-width 중앙 정렬
+// 데스크탑: 패딩 확장, 에디터 캔버스 너비 기준 100% 채움
 const PRODUCT_MENU_WEB_HTML =
-    `<div data-component-id="product-menu-web" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);max-width:480px;margin:0 auto;">` +
+    `<div data-component-id="product-menu-web" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);width:100%;box-sizing:border-box;">` +
         `<div class="pm-header" style="padding:20px 20px 4px;">` +
             `<div class="pm-title" style="font-size:17px;font-weight:700;color:#0046A4;letter-spacing:-0.3px;">상품</div>` +
         `</div>` +

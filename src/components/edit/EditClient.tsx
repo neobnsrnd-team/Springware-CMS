@@ -265,6 +265,15 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         // applyBehavior(): ContentBuilder가 모든 row에 편집 이벤트 핸들러 재연결
         //   → reinitialize()가 플러그인 DOM을 교체하면 ContentBuilder가 앞쪽 row 참조를
         //     잃어 move/delete 버튼이 마지막 row에만 동작하는 문제를 방지합니다.
+        // 퀵 메뉴 아이콘 보호 패치 — 기존 저장 페이지 대응
+        // .pm-icon-wrap에 contenteditable="false"가 없으면 동적 주입
+        // (마이그레이션 이전에 저장된 페이지도 에디터 로드 시 즉시 보호)
+        const patchPmIconWrap = () => {
+            document.querySelectorAll<HTMLElement>('.pm-icon-wrap:not([contenteditable])').forEach((el) => {
+                el.contentEditable = 'false';
+            });
+        };
+
         let reinitTimer: ReturnType<typeof setTimeout> | null = null;
         const debouncedReinit = () => {
             if (reinitTimer) clearTimeout(reinitTimer);
@@ -272,6 +281,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 // reinitialize()가 비동기(플러그인 JS/CSS lazy-load)이므로 완료 후 applyBehavior() 호출
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
+                patchPmIconWrap();
                 // ContentBuilder 자체 삭제/이동 후 순서 패널 동기화
                 const html = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
@@ -1406,6 +1416,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 setTimeout(async () => {
                     await runtimeRef.current?.reinitialize();
                     builderRef.current?.applyBehavior();
+                    patchPmIconWrap();
                     setContainerOpacity(1);
                     // 초기 블록 목록 파싱
                     const html = builderRef.current?.html() ?? '';
@@ -1567,6 +1578,9 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         setTimeout(async () => {
             await runtimeRef.current?.reinitialize();
             builderRef.current?.applyBehavior();
+            document.querySelectorAll<HTMLElement>('.pm-icon-wrap:not([contenteditable])').forEach((el) => {
+                el.contentEditable = 'false';
+            });
             const newHtml = builderRef.current?.html() ?? '';
             setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
         }, 300);
