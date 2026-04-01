@@ -83,6 +83,17 @@ body.spw-slide-modal-open .is-rte-tool {
     margin-right: 0 !important;
 }
 
+/* spw-finance-col을 포함한 row는 복제 시 세로로 쌓이도록 강제
+ * ContentBuilder 복제가 같은 row에 새 column을 추가할 때 가로 배치 방지 */
+.container .row:has(> .column.spw-finance-col) {
+    flex-wrap: wrap !important;
+}
+.container .row:has(> .column.spw-finance-col) > .column {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
 /* ── 미리보기 페이지(.is-container)도 동일하게 꽉 채움 ── */
 .is-container [data-cb-type] {
     display: block;
@@ -99,6 +110,14 @@ body.spw-slide-modal-open .is-rte-tool {
     width: 100% !important;
     max-width: 100% !important;
     flex: 0 0 100% !important;
+}
+.is-container .row:has(> .column.spw-finance-col) {
+    flex-wrap: wrap !important;
+}
+.is-container .row:has(> .column.spw-finance-col) > .column {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 .is-container .row {
     margin-left: 0 !important;
