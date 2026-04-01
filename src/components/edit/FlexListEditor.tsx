@@ -1,5 +1,5 @@
 // src/components/edit/FlexListEditor.tsx
-// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234)
+// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크 기능)
 // 행 추가·삭제·순서변경, 컬럼 추가·삭제, 타입 토글, 너비 선택, 아이콘 프리셋, 텍스트 행 관리
 
 'use client';
@@ -14,10 +14,13 @@ interface FlexListColumn {
     icon?: string;
     iconBg?: string;
     lines?: string[];
+    href?: string; // linkMode=column일 때 개별 링크 URL
 }
 
 interface FlexListRow {
     columns: FlexListColumn[];
+    linkMode?: 'row' | 'column' | 'none'; // 행 전체 / 컬럼 개별 / 링크 없음
+    rowHref?: string; // linkMode=row일 때 URL
 }
 
 interface Props {
@@ -156,16 +159,28 @@ function buildColumnHtml(col: FlexListColumn): string {
     );
 }
 
+function wrapColumnWithLink(colHtml: string, href?: string): string {
+    if (!href) return colHtml;
+    return `<a href="${href}" data-fl-col-link style="text-decoration:none;display:contents;">${colHtml}</a>`;
+}
+
 function buildRowHtml(row: FlexListRow, isLast: boolean): string {
     const borderStyle = isLast ? '' : 'border-bottom:1px solid #E5E7EB;';
-    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    const linkMode = row.linkMode ?? 'none';
+    const flexStyle = `display:flex;align-items:center;gap:12px;padding:16px 20px;${borderStyle}text-decoration:none;`;
 
-    return (
-        `<a href="#" style="display:flex;align-items:center;gap:12px;` +
-        `padding:16px 20px;${borderStyle}text-decoration:none;">` +
-        columnsHtml +
-        `</a>`
-    );
+    if (linkMode === 'row' && row.rowHref) {
+        const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+        return `<a href="${row.rowHref}" data-fl-link-mode="row" style="${flexStyle}">${columnsHtml}</a>`;
+    }
+
+    if (linkMode === 'column') {
+        const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col), col.href)).join('');
+        return `<div data-fl-link-mode="column" style="${flexStyle}">${columnsHtml}</div>`;
+    }
+
+    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    return `<a href="#" data-fl-link-mode="none" style="${flexStyle}">${columnsHtml}</a>`;
 }
 
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
@@ -173,8 +188,8 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
 function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
     blockEl.setAttribute('data-fl-rows', JSON.stringify(rows));
 
-    // 기존 <a> 행 제거
-    blockEl.querySelectorAll(':scope > a').forEach((el) => el.remove());
+    // 기존 행 제거 (<a> 또는 <div data-fl-link-mode>)
+    blockEl.querySelectorAll(':scope > a, :scope > div[data-fl-link-mode]').forEach((el) => el.remove());
 
     // 새 행 삽입
     const html = rows.map((row, i) => buildRowHtml(row, i === rows.length - 1)).join('');
@@ -189,18 +204,39 @@ function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
  * 2. data-fl-rows 속성 — DOM 파싱 실패 또는 구버전 블록
  */
 function parseRows(blockEl: HTMLElement): FlexListRow[] {
-    const anchors = blockEl.querySelectorAll<HTMLElement>(':scope > a');
+    // <a> 또는 <div data-fl-link-mode> 행을 모두 수집
+    const rowEls = blockEl.querySelectorAll<HTMLElement>(':scope > a, :scope > div[data-fl-link-mode]');
 
     // DOM에서 직접 파싱 (인라인 편집 내용 반영)
-    if (anchors.length > 0) {
-        const rows: FlexListRow[] = Array.from(anchors).map((anchor) => {
-            // data-fl-type 속성이 있으면 속성 기반, 없으면 모든 직계 span에서 heuristic 파싱
-            const hasDataAttrs = !!anchor.querySelector(':scope > span[data-fl-type]');
-            const colSpans = anchor.querySelectorAll<HTMLElement>(
-                hasDataAttrs ? ':scope > span[data-fl-type]' : ':scope > span',
-            );
+    if (rowEls.length > 0) {
+        const rows: FlexListRow[] = Array.from(rowEls).map((rowEl) => {
+            // 링크 모드 파싱
+            const flLinkMode = rowEl.getAttribute('data-fl-link-mode');
+            let linkMode: 'row' | 'column' | 'none' = 'none';
+            let rowHref: string | undefined;
 
-            const columns: FlexListColumn[] = Array.from(colSpans).map((span) => {
+            if (flLinkMode === 'row' && rowEl.tagName === 'A') {
+                linkMode = 'row';
+                const href = rowEl.getAttribute('href');
+                if (href && href !== '#') rowHref = href;
+            } else if (flLinkMode === 'column') {
+                linkMode = 'column';
+            }
+
+            // 컬럼 파싱 — data-fl-type 속성이 있는 span을 탐색 (직계 또는 <a data-fl-col-link> 내부)
+            const hasDataAttrs = !!rowEl.querySelector('span[data-fl-type]');
+            let colSpans: HTMLElement[];
+            if (hasDataAttrs) {
+                colSpans = Array.from(rowEl.querySelectorAll<HTMLElement>('span[data-fl-type]'));
+            } else {
+                colSpans = Array.from(rowEl.querySelectorAll<HTMLElement>(':scope > span'));
+            }
+
+            const columns: FlexListColumn[] = colSpans.map((span) => {
+                // 개별 링크 href 추출 — 부모가 <a data-fl-col-link>인 경우
+                const colLinkAnchor = span.closest<HTMLAnchorElement>('a[data-fl-col-link]');
+                const colHref = colLinkAnchor?.getAttribute('href') || undefined;
+
                 // ── data-fl-* 속성 기반 (신규 HTML) ──
                 const flType = span.getAttribute('data-fl-type');
                 if (flType === 'icon') {
@@ -209,6 +245,7 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         width: 'fixed' as const,
                         icon: span.getAttribute('data-fl-icon') || 'check',
                         iconBg: span.getAttribute('data-fl-icon-bg') || '#E8F0FC',
+                        href: colHref,
                     };
                 }
                 if (flType === 'text') {
@@ -218,7 +255,7 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                             ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
                             : [span.textContent?.trim() ?? '텍스트'];
                     const width = (span.getAttribute('data-fl-width') || 'flex') as 'fixed' | 'flex' | 'auto';
-                    return { type: 'text' as const, width, lines };
+                    return { type: 'text' as const, width, lines, href: colHref };
                 }
 
                 // ── heuristic 폴백 (구버전 HTML — data-fl-* 없음) ──
@@ -264,6 +301,8 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                     columns.length > 0
                         ? columns
                         : [{ type: 'text' as const, width: 'flex' as const, lines: ['텍스트'] }],
+                linkMode,
+                rowHref,
             };
         });
 
@@ -412,12 +451,14 @@ const WIDTH_LABELS: Record<string, string> = {
 function ColumnEditor({
     col,
     colIdx,
+    linkMode,
     onUpdate,
     onDelete,
     canDelete,
 }: {
     col: FlexListColumn;
     colIdx: number;
+    linkMode: 'row' | 'column' | 'none';
     onUpdate: (colIdx: number, col: FlexListColumn) => void;
     onDelete: (colIdx: number) => void;
     canDelete: boolean;
@@ -658,6 +699,29 @@ function ColumnEditor({
                     </button>
                 </div>
             )}
+
+            {/* 컬럼 개별 링크 URL (linkMode=column일 때만 표시) */}
+            {linkMode === 'column' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                    <span style={{ fontSize: 10, color: '#6B7280', minWidth: 30 }}>URL</span>
+                    <input
+                        type="text"
+                        value={col.href ?? ''}
+                        onChange={(e) => onUpdate(colIdx, { ...col, href: e.target.value || undefined })}
+                        placeholder="https://... (선택)"
+                        style={{
+                            flex: 1,
+                            padding: '3px 8px',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontFamily: FONT_FAMILY,
+                            outline: 'none',
+                            minWidth: 0,
+                        }}
+                    />
+                </div>
+            )}
         </div>
     );
 }
@@ -871,6 +935,65 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                 </div>
                             </div>
 
+                            {/* 링크 설정 */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    padding: '6px 10px',
+                                    background: '#f9fafb',
+                                    borderBottom: '1px solid #f3f4f6',
+                                    flexWrap: 'wrap',
+                                }}
+                            >
+                                <span style={{ fontSize: 10, fontWeight: 600, color: '#6B7280' }}>링크</span>
+                                <select
+                                    value={row.linkMode ?? 'none'}
+                                    onChange={(e) => {
+                                        const mode = e.target.value as 'row' | 'column' | 'none';
+                                        setRows((prev) =>
+                                            prev.map((r, ri) => (ri === rowIdx ? { ...r, linkMode: mode } : r)),
+                                        );
+                                    }}
+                                    style={{
+                                        padding: '2px 6px',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: 4,
+                                        fontSize: 11,
+                                        fontFamily: FONT_FAMILY,
+                                    }}
+                                >
+                                    <option value="none">없음</option>
+                                    <option value="row">행 전체</option>
+                                    <option value="column">컬럼 개별</option>
+                                </select>
+                                {row.linkMode === 'row' && (
+                                    <input
+                                        type="text"
+                                        value={row.rowHref ?? ''}
+                                        onChange={(e) =>
+                                            setRows((prev) =>
+                                                prev.map((r, ri) =>
+                                                    ri === rowIdx ? { ...r, rowHref: e.target.value || undefined } : r,
+                                                ),
+                                            )
+                                        }
+                                        placeholder="https://..."
+                                        style={{
+                                            flex: 1,
+                                            minWidth: 120,
+                                            padding: '3px 8px',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: 4,
+                                            fontSize: 11,
+                                            fontFamily: FONT_FAMILY,
+                                            outline: 'none',
+                                        }}
+                                    />
+                                )}
+                            </div>
+
                             {/* 컬럼 목록 */}
                             <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 {row.columns.map((col, colIdx) => (
@@ -878,6 +1001,7 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                         key={colIdx}
                                         col={col}
                                         colIdx={colIdx}
+                                        linkMode={row.linkMode ?? 'none'}
                                         onUpdate={(ci, c) => updateColumn(rowIdx, ci, c)}
                                         onDelete={(ci) => deleteColumn(rowIdx, ci)}
                                         canDelete={row.columns.length > 1}
