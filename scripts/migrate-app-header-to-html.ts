@@ -24,7 +24,7 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 // ── mobile variant ──────────────────────────────────────────────────────────
 // 375px 기준 모바일 헤더: 54px 높이, 좌우 패딩 14px
 const APP_HEADER_MOBILE_HTML =
-    `<div data-component-id="app-header-mobile" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;">` +
+    `<div data-component-id="app-header-mobile" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;width:100%;box-sizing:border-box;">` +
         `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:54px;padding:0 14px;">` +
             `<a href="#" style="display:flex;align-items:center;gap:8px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:34px;height:34px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
@@ -36,8 +36,8 @@ const APP_HEADER_MOBILE_HTML =
 // ── web variant ─────────────────────────────────────────────────────────────
 // 데스크탑 기준: 60px 높이, 좌우 패딩 24px, 최대 너비 1200px 중앙 정렬
 const APP_HEADER_WEB_HTML =
-    `<div data-component-id="app-header-web" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;">` +
-        `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:60px;padding:0 24px;max-width:1200px;margin:0 auto;">` +
+    `<div data-component-id="app-header-web" data-spw-block style="font-family:${FONT_FAMILY};background:#ffffff;border-bottom:2.5px solid #0046A4;width:100%;box-sizing:border-box;">` +
+        `<div style="position:relative;display:flex;align-items:center;justify-content:flex-start;height:60px;padding:0 24px;max-width:1200px;margin:0 auto;">` +
             `<a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;">` +
                 `<img src="${DEFAULT_LOGO_SRC}" alt="은행 로고" style="width:38px;height:38px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block;">` +
                 `<span style="font-size:18px;font-weight:800;color:#1A1A2E;letter-spacing:-0.4px;white-space:nowrap;line-height:1;">금융사명</span>` +
