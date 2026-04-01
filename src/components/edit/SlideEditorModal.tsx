@@ -48,9 +48,9 @@ function parsePromoBannerSlides(root: HTMLElement): PromoBannerSlide[] {
     });
 }
 
-// rgb(r, g, b) → #rrggbb 변환 (DOM style 값 파싱용)
+// rgb(r, g, b) / rgba(r, g, b, a) → #rrggbb 변환 (DOM style 값 파싱용, 알파값 무시)
 function rgbToHex(rgb: string): string {
-    const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    const match = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
     if (!match) return rgb;
     return '#' + [match[1], match[2], match[3]].map((v) => parseInt(v).toString(16).padStart(2, '0')).join('');
 }
@@ -60,7 +60,7 @@ function parseCard(inner: HTMLElement | null): ProductGalleryCard {
     const rateEl = inner?.querySelector<HTMLElement>('[data-pg-field="rateValue"]');
     const rawColor = rateEl?.style.color ?? '';
     const accentColor = rawColor ? rgbToHex(rawColor) : undefined;
-    const bgImageMatch = inner?.style.cssText.match(/url\(['"]?([^'"]+)['"]?\)/);
+    const bgImageMatch = (inner?.style.backgroundImage ?? '').match(/url\(['"]?([^'"]+)['"]?\)/);
     const rawBgImage = bgImageMatch?.[1];
     // 백슬래시 → 슬래시, 절대 경로 보정 (Windows 환경 대응)
     const bgImage = rawBgImage
@@ -84,8 +84,8 @@ function parseCard(inner: HTMLElement | null): ProductGalleryCard {
 
 function parseProductGalleryCards(root: HTMLElement, componentId: string): ProductGalleryCard[] {
     if (componentId === 'product-gallery-web') {
-        // 웹: data-pg-slide 없음 — children[1] 그리드 내부 [data-type] 카드 직접 파싱
-        const gridDiv = root.children[1] as HTMLElement | null;
+        // 웹: data-pg-slide 없음 — data-pg-grid 그리드 컨테이너 내부 [data-type] 카드 직접 파싱
+        const gridDiv = root.querySelector<HTMLElement>('[data-pg-grid]');
         return Array.from(gridDiv?.querySelectorAll('[data-type]') ?? []).map((el) => parseCard(el as HTMLElement));
     }
     // 모바일/반응형: data-pg-slide 기준
@@ -158,8 +158,8 @@ function applyPromoBannerSlides(root: HTMLElement, slides: PromoBannerSlide[]) {
 
 function applyProductGalleryCards(root: HTMLElement, cards: ProductGalleryCard[], componentId: string) {
     if (componentId === 'product-gallery-web') {
-        // 웹: data-pg-track 없음 — 헤더 다음 그리드 컨테이너
-        const gridDiv = root.children[1] as HTMLElement | null;
+        // 웹: data-pg-track 없음 — data-pg-grid 그리드 컨테이너
+        const gridDiv = root.querySelector<HTMLElement>('[data-pg-grid]');
         if (gridDiv) {
             gridDiv.innerHTML = cards
                 .map((c, i) => `<div style="flex:1;min-width:0;">${buildCardHtml(c, `pg-${i + 1}`)}</div>`)

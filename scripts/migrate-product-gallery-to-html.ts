@@ -145,7 +145,7 @@ const PRODUCT_GALLERY_WEB_HTML =
         `<div style="padding:20px 20px 12px;">` +
             `<h3 style="font-size:18px;font-weight:700;color:#1A1A2E;margin:0;">주요 금융상품</h3>` +
         `</div>` +
-        `<div style="display:flex;flex-direction:row;gap:12px;padding:4px 20px 20px;">` +
+        `<div data-pg-grid style="display:flex;flex-direction:row;gap:12px;padding:4px 20px 20px;">` +
             CARDS.map((card, i) =>
                 `<div style="flex:1;min-width:0;">${buildCard(card, `pg-${i + 1}`)}</div>`,
             ).join('') +
