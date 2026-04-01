@@ -19,6 +19,7 @@ import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
 import BranchLocatorEditor from '@/components/edit/BranchLocatorEditor';
 import InfoAccordionEditor from '@/components/edit/InfoAccordionEditor';
 import MenuTabGridEditor from '@/components/edit/MenuTabGridEditor';
+import BenefitCardEditor from '@/components/edit/BenefitCardEditor';
 import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import SlideEditorModal from '@/components/edit/SlideEditorModal';
@@ -248,6 +249,8 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     const [infoAccordionBlock, setInfoAccordionBlock] = useState<HTMLElement | null>(null);
     // menu-tab-grid 탭 항목 편집 모달
     const [menuTabGridBlock, setMenuTabGridBlock] = useState<HTMLElement | null>(null);
+    // benefit-card 혜택 카드 편집 모달
+    const [benefitCardBlock, setBenefitCardBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -917,6 +920,37 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             });
         };
 
+        // ── benefit-card 혜택 카드 편집 버튼 — .is-row-tool 주입 ────────────────
+        const SPW_BC_ROW_BTN_CLASS = 'spw-bc-row-edit-btn';
+
+        const injectBcEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_BC_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_BC_ROW_BTN_CLASS;
+            btn.title = '혜택 카드 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="benefit-card"]');
+                if (block) setBenefitCardBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateBcRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_BC_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isBc = !!activeEl?.closest('[data-component-id^="benefit-card"]');
+                btn.style.display = isBc ? 'flex' : 'none';
+            });
+        };
+
         // ── info-accordion 항목 편집 버튼 — .is-row-tool 주입 ────────────────
         const SPW_IA_ROW_BTN_CLASS = 'spw-ia-row-edit-btn';
 
@@ -958,11 +992,13 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                         injectSlideEditToRowTool(node);
                         injectIaEditToRowTool(node);
                         injectMtgEditToRowTool(node);
+                        injectBcEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
                         injectIaEditToRowTool(t);
                         injectMtgEditToRowTool(t);
+                        injectBcEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -975,6 +1011,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 updateSlideToolBtnVisibility();
                 updateIaRowBtnVisibility();
                 updateMtgRowBtnVisibility();
+                updateBcRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -989,6 +1026,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             injectSlideEditToRowTool(t);
             injectIaEditToRowTool(t);
             injectMtgEditToRowTool(t);
+            injectBcEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
@@ -2204,6 +2242,11 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             {/* ── menu-tab-grid 탭 항목 편집 모달 ── */}
             {menuTabGridBlock && (
                 <MenuTabGridEditor blockEl={menuTabGridBlock} onClose={() => setMenuTabGridBlock(null)} />
+            )}
+
+            {/* ── benefit-card 혜택 카드 편집 모달 ── */}
+            {benefitCardBlock && (
+                <BenefitCardEditor blockEl={benefitCardBlock} onClose={() => setBenefitCardBlock(null)} />
             )}
 
             {/* ── site-footer 드롭다운 편집 패널 ── */}
