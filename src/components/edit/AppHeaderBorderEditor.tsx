@@ -201,6 +201,30 @@ export default function AppHeaderBorderEditor({ blockEl, onClose }: Props) {
                             </button>
                         ))}
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                        <span style={{ fontSize: 11, color: '#6b7280', flexShrink: 0 }}>직접 입력</span>
+                        <input
+                            type="number"
+                            min={0}
+                            max={20}
+                            step={0.5}
+                            value={width}
+                            onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                applyWidth(isNaN(val) ? 0 : Math.min(20, Math.max(0, val)));
+                            }}
+                            style={{
+                                width: 60,
+                                padding: '4px 8px',
+                                border: '1.5px solid #e5e7eb',
+                                borderRadius: 6,
+                                fontSize: 12,
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                            }}
+                        />
+                        <span style={{ fontSize: 11, color: '#6b7280' }}>px</span>
+                    </div>
                 </div>
 
                 {/* ── 색상 ── */}
