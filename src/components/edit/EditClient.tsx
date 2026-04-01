@@ -24,6 +24,7 @@ import MediaVideoEditor from '@/components/edit/MediaVideoEditor';
 import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import SlideEditorModal from '@/components/edit/SlideEditorModal';
 import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
+import FlexListEditor from '@/components/edit/FlexListEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
 
@@ -251,6 +252,8 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     const [menuTabGridBlock, setMenuTabGridBlock] = useState<HTMLElement | null>(null);
     // benefit-card 혜택 카드 편집 모달
     const [benefitCardBlock, setBenefitCardBlock] = useState<HTMLElement | null>(null);
+    // flex-list 가변 리스트 편집 모달
+    const [flexListBlock, setFlexListBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -996,6 +999,37 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             });
         };
 
+        // ── flex-list 가변 리스트 편집 버튼 — .is-row-tool 주입 ────────────────
+        const SPW_FL_ROW_BTN_CLASS = 'spw-fl-row-edit-btn';
+
+        const injectFlEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_FL_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_FL_ROW_BTN_CLASS;
+            btn.title = '가변 리스트 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="flex-list"]');
+                if (block) setFlexListBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateFlRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_FL_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isFl = !!activeEl?.closest('[data-component-id^="flex-list"]');
+                btn.style.display = isFl ? 'flex' : 'none';
+            });
+        };
+
         // 슬라이드·아코디언 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
         const slideToolObserver = new MutationObserver((mutations) => {
             let needsRowToolVisibility = false;
@@ -1007,12 +1041,14 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                         injectIaEditToRowTool(node);
                         injectMtgEditToRowTool(node);
                         injectBcEditToRowTool(node);
+                        injectFlEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
                         injectIaEditToRowTool(t);
                         injectMtgEditToRowTool(t);
                         injectBcEditToRowTool(t);
+                        injectFlEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -1026,6 +1062,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 updateIaRowBtnVisibility();
                 updateMtgRowBtnVisibility();
                 updateBcRowBtnVisibility();
+                updateFlRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -1041,6 +1078,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             injectIaEditToRowTool(t);
             injectMtgEditToRowTool(t);
             injectBcEditToRowTool(t);
+            injectFlEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
@@ -2279,6 +2317,9 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             {benefitCardBlock && (
                 <BenefitCardEditor blockEl={benefitCardBlock} onClose={() => setBenefitCardBlock(null)} />
             )}
+
+            {/* ── flex-list 가변 리스트 편집 모달 ── */}
+            {flexListBlock && <FlexListEditor blockEl={flexListBlock} onClose={() => setFlexListBlock(null)} />}
 
             {/* ── site-footer 드롭다운 편집 패널 ── */}
             {siteFooterBlock && (

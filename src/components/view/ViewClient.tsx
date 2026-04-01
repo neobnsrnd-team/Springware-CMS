@@ -230,7 +230,18 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             });
         });
 
-        return () => runtime.destroy();
+        // 금융 컴포넌트 내 더미 링크(href="#") 클릭 시 상단 이동 차단
+        // ContentBuilder가 onclick 속성을 제거하므로 이벤트 위임으로 처리
+        const handleDummyLink = (e: MouseEvent) => {
+            const anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>('[data-spw-block] a[href="#"]');
+            if (anchor) e.preventDefault();
+        };
+        document.addEventListener('click', handleDummyLink);
+
+        return () => {
+            document.removeEventListener('click', handleDummyLink);
+            runtime.destroy();
+        };
     }, [viewMode, embed]);
 
     // ── 반응형 모드: 툴바 + iframe ─────────────────────────────────────────
