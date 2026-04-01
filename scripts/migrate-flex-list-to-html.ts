@@ -1,5 +1,5 @@
 // scripts/migrate-flex-list-to-html.ts
-// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크 기능)
+// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크, #245 이미지)
 // 실행: npx tsx scripts/migrate-flex-list-to-html.ts
 
 import 'dotenv/config';
@@ -11,12 +11,13 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
 interface FlexListColumn {
-    type: 'icon' | 'text';
+    type: 'icon' | 'text' | 'image';
     width: 'fixed' | 'flex' | 'auto'; // 고정(40px) / 유연(flex:1) / 자동(auto)
-    icon?: string;    // type=icon: 아이콘 키
-    iconBg?: string;  // 아이콘 배경색
-    lines?: string[]; // type=text: 텍스트 행 배열
-    href?: string;    // linkMode=column일 때 개별 링크 URL
+    icon?: string;      // type=icon: 아이콘 키
+    iconBg?: string;    // 아이콘 배경색
+    lines?: string[];   // type=text: 텍스트 행 배열
+    href?: string;      // linkMode=column일 때 개별 링크 URL
+    imageSrc?: string;  // type=image: 이미지 URL
 }
 
 interface FlexListRow {
@@ -53,6 +54,34 @@ function sanitizeHref(url: string): string {
     return '#';
 }
 
+/** 이미지 URL 보안 처리 — javascript:, data: 차단 */
+function sanitizeImageSrc(url: string): string {
+    const trimmed = url.trim();
+    if (/^(https?:\/\/|\/|uploads\/)/.test(trimmed)) {
+        return trimmed.replace(/"/g, '&quot;');
+    }
+    return '';
+}
+
+// ── 이미지 HTML 빌더 ────────────────────────────────────────────────────
+
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
+    const safeSrc = sanitizeImageSrc(src);
+    const widthStyle =
+        width === 'fixed' ? 'flex:0 0 40px;width:40px;height:40px;' :
+        width === 'auto'  ? 'flex:0 0 auto;width:48px;height:48px;' :
+                            'flex:1;min-width:0;height:48px;';
+
+    return (
+        `<span data-fl-type="image" data-fl-width="${width}" data-fl-image-src="${safeSrc}"` +
+        ` style="${widthStyle}display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+        (safeSrc
+            ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="" />`
+            : `<span style="width:100%;height:100%;background:#F3F4F6;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:11px;">이미지</span>`) +
+        `</span>`
+    );
+}
+
 // ── 아이콘 HTML 빌더 ─────────────────────────────────────────────────────
 
 function buildIconHtml(iconKey: string, bgColor: string): string {
@@ -69,6 +98,10 @@ function buildIconHtml(iconKey: string, bgColor: string): string {
 // ── 컬럼 HTML 빌더 ──────────────────────────────────────────────────────
 
 function buildColumnHtml(col: FlexListColumn): string {
+    if (col.type === 'image') {
+        return buildImageHtml(col.imageSrc ?? '', col.width);
+    }
+
     const widthStyle =
         col.width === 'fixed' ? 'flex:0 0 40px;' :
         col.width === 'auto'  ? 'flex:0 0 auto;text-align:right;' :

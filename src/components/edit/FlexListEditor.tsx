@@ -1,20 +1,21 @@
 // src/components/edit/FlexListEditor.tsx
-// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크 기능)
+// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지)
 // 행 추가·삭제·순서변경, 컬럼 추가·삭제, 타입 토글, 너비 선택, 아이콘 프리셋, 텍스트 행 관리
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
 interface FlexListColumn {
-    type: 'icon' | 'text';
+    type: 'icon' | 'text' | 'image';
     width: 'fixed' | 'flex' | 'auto';
     icon?: string;
     iconBg?: string;
     lines?: string[];
     href?: string; // linkMode=column일 때 개별 링크 URL
+    imageSrc?: string; // type=image: 이미지 URL
 }
 
 interface FlexListRow {
@@ -128,6 +129,33 @@ function sanitizeHref(url: string): string {
     return '#';
 }
 
+function sanitizeImageSrc(url: string): string {
+    const trimmed = url.trim();
+    if (/^(https?:\/\/|\/|uploads\/)/.test(trimmed)) {
+        return trimmed.replace(/"/g, '&quot;');
+    }
+    return '';
+}
+
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
+    const safeSrc = sanitizeImageSrc(src);
+    const widthStyle =
+        width === 'fixed'
+            ? 'flex:0 0 40px;width:40px;height:40px;'
+            : width === 'auto'
+              ? 'flex:0 0 auto;width:48px;height:48px;'
+              : 'flex:1;min-width:0;height:48px;';
+
+    return (
+        `<span data-fl-type="image" data-fl-width="${width}" data-fl-image-src="${safeSrc}"` +
+        ` style="${widthStyle}display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+        (safeSrc
+            ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="" />`
+            : `<span style="width:100%;height:100%;background:#F3F4F6;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:11px;">이미지</span>`) +
+        `</span>`
+    );
+}
+
 // ── HTML 빌더 (마이그레이션 스크립트와 동기화) ──────────────────────────
 
 function buildIconHtml(iconKey: string, bgColor: string): string {
@@ -144,6 +172,10 @@ function buildIconHtml(iconKey: string, bgColor: string): string {
 function buildColumnHtml(col: FlexListColumn): string {
     if (col.type === 'icon') {
         return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC');
+    }
+
+    if (col.type === 'image') {
+        return buildImageHtml(col.imageSrc ?? '', col.width);
     }
 
     const widthStyle =
@@ -255,6 +287,14 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         width: 'fixed' as const,
                         icon: span.getAttribute('data-fl-icon') || 'check',
                         iconBg: span.getAttribute('data-fl-icon-bg') || '#E8F0FC',
+                        href: colHref,
+                    };
+                }
+                if (flType === 'image') {
+                    return {
+                        type: 'image' as const,
+                        width: (span.getAttribute('data-fl-width') || 'fixed') as 'fixed' | 'flex' | 'auto',
+                        imageSrc: span.getAttribute('data-fl-image-src') || '',
                         href: colHref,
                     };
                 }
@@ -464,6 +504,7 @@ function ColumnEditor({
     linkMode,
     onUpdate,
     onDelete,
+    onRequestImagePick,
     canDelete,
 }: {
     col: FlexListColumn;
@@ -471,6 +512,7 @@ function ColumnEditor({
     linkMode: 'row' | 'column' | 'none';
     onUpdate: (colIdx: number, col: FlexListColumn) => void;
     onDelete: (colIdx: number) => void;
+    onRequestImagePick: (colIdx: number) => void;
     canDelete: boolean;
 }) {
     const [showIconPicker, setShowIconPicker] = useState(false);
@@ -495,9 +537,11 @@ function ColumnEditor({
                 <select
                     value={col.type}
                     onChange={(e) => {
-                        const type = e.target.value as 'icon' | 'text';
+                        const type = e.target.value as 'icon' | 'text' | 'image';
                         if (type === 'icon') {
                             onUpdate(colIdx, { type, width: 'fixed', icon: 'check', iconBg: '#E8F0FC' });
+                        } else if (type === 'image') {
+                            onUpdate(colIdx, { type, width: 'fixed', imageSrc: '' });
                         } else {
                             onUpdate(colIdx, { type, width: 'flex', lines: ['텍스트'] });
                         }
@@ -512,6 +556,7 @@ function ColumnEditor({
                 >
                     <option value="icon">아이콘</option>
                     <option value="text">텍스트</option>
+                    <option value="image">이미지</option>
                 </select>
 
                 {/* 너비 선택 */}
@@ -637,6 +682,98 @@ function ColumnEditor({
                 </div>
             )}
 
+            {/* 이미지 컬럼 상세 */}
+            {col.type === 'image' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {/* 이미지 미리보기 */}
+                    {col.imageSrc ? (
+                        <img
+                            src={col.imageSrc}
+                            alt=""
+                            style={{
+                                width: 40,
+                                height: 40,
+                                objectFit: 'cover',
+                                borderRadius: 8,
+                                border: '1px solid #e5e7eb',
+                                flexShrink: 0,
+                            }}
+                        />
+                    ) : (
+                        <span
+                            style={{
+                                width: 40,
+                                height: 40,
+                                background: '#F3F4F6',
+                                borderRadius: 8,
+                                border: '1px solid #e5e7eb',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 9,
+                                color: '#9CA3AF',
+                                flexShrink: 0,
+                            }}
+                        >
+                            없음
+                        </span>
+                    )}
+
+                    {/* 파일 선택 버튼 */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onRequestImagePick(colIdx);
+                        }}
+                        style={{
+                            padding: '4px 10px',
+                            border: '1px solid #c7d8f4',
+                            borderRadius: 4,
+                            background: '#f0f4ff',
+                            color: '#0046A4',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                        }}
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
+                        파일 선택
+                    </button>
+
+                    {/* URL 직접 입력 */}
+                    <input
+                        type="text"
+                        value={col.imageSrc ?? ''}
+                        onChange={(e) => onUpdate(colIdx, { ...col, imageSrc: e.target.value || undefined })}
+                        placeholder="이미지 URL (직접 입력)"
+                        style={{
+                            flex: 1,
+                            minWidth: 100,
+                            padding: '4px 8px',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontFamily: FONT_FAMILY,
+                            outline: 'none',
+                        }}
+                    />
+                </div>
+            )}
+
             {/* 텍스트 컬럼 상세 */}
             {col.type === 'text' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -740,6 +877,37 @@ function ColumnEditor({
 
 export default function FlexListEditor({ blockEl, onClose }: Props) {
     const [rows, setRows] = useState<FlexListRow[]>(() => parseRows(blockEl));
+
+    // 이미지 파일 선택 대기 상태 — 어떤 행/컬럼이 파일 피커 결과를 기다리는지 추적
+    const pendingImagePick = useRef<{ rowIdx: number; colIdx: number } | null>(null);
+
+    const requestImagePick = useCallback((rowIdx: number, colIdx: number) => {
+        pendingImagePick.current = { rowIdx, colIdx };
+        window.open('/files', '_blank', 'width=900,height=600');
+    }, []);
+
+    // FileBrowser에서 ASSET_SELECTED 메시지 수신
+    useEffect(() => {
+        const handleMessage = (e: MessageEvent) => {
+            if (e.data?.type !== 'ASSET_SELECTED' || !pendingImagePick.current) return;
+            const { rowIdx, colIdx } = pendingImagePick.current;
+            pendingImagePick.current = null;
+
+            setRows((prev) =>
+                prev.map((row, ri) =>
+                    ri === rowIdx
+                        ? {
+                              ...row,
+                              columns: row.columns.map((c, ci) => (ci === colIdx ? { ...c, imageSrc: e.data.url } : c)),
+                          }
+                        : row,
+                ),
+            );
+            window.focus();
+        };
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, []);
 
     const updateColumn = useCallback((rowIdx: number, colIdx: number, col: FlexListColumn) => {
         setRows((prev) =>
@@ -1014,6 +1182,7 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                         linkMode={row.linkMode ?? 'none'}
                                         onUpdate={(ci, c) => updateColumn(rowIdx, ci, c)}
                                         onDelete={(ci) => deleteColumn(rowIdx, ci)}
+                                        onRequestImagePick={(ci) => requestImagePick(rowIdx, ci)}
                                         canDelete={row.columns.length > 1}
                                     />
                                 ))}
