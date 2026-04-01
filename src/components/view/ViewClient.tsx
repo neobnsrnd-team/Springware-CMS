@@ -215,6 +215,21 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             oldScript.parentNode?.replaceChild(newScript, oldScript);
         });
 
+        // benefit-card mobile scroll-snap 직접 변환
+        // dangerouslySetInnerHTML + replaceChild 환경에서 document.currentScript가
+        // null을 반환하는 경우를 대비해 ViewClient에서 직접 처리
+        document.querySelectorAll<HTMLElement>('[data-bc-track]').forEach((track) => {
+            track.className = (track.className || '').replace(/\bflex(?:-col)?\b/g, '').trim();
+            track.style.cssText =
+                'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;' +
+                '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                'gap:0;padding:4px 0 8px;';
+            track.querySelectorAll<HTMLElement>('[data-bc-slide]').forEach((slide) => {
+                slide.style.cssText =
+                    'flex-shrink:0;width:80%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;';
+            });
+        });
+
         return () => runtime.destroy();
     }, [viewMode, embed]);
 
