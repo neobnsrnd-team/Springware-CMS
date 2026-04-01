@@ -1,5 +1,5 @@
 // scripts/migrate-flex-list-to-html.ts
-// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234)
+// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크 기능)
 // 실행: npx tsx scripts/migrate-flex-list-to-html.ts
 
 import 'dotenv/config';
@@ -16,10 +16,13 @@ interface FlexListColumn {
     icon?: string;    // type=icon: 아이콘 키
     iconBg?: string;  // 아이콘 배경색
     lines?: string[]; // type=text: 텍스트 행 배열
+    href?: string;    // linkMode=column일 때 개별 링크 URL
 }
 
 interface FlexListRow {
     columns: FlexListColumn[];
+    linkMode?: 'row' | 'column' | 'none'; // 행 전체 / 컬럼 개별 / 링크 없음
+    rowHref?: string;                       // linkMode=row일 때 URL
 }
 
 // ── 프리셋 아이콘 SVG ────────────────────────────────────────────────────
@@ -38,6 +41,17 @@ const ICONS: Record<string, string> = {
     arrow: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0046A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>',
     won: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0046A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l4 16 4-12 4 12 4-16"/><path d="M3 10h18"/><path d="M3 14h18"/></svg>',
 };
+
+// ── href 보안 처리 ───────────────────────────────────────────────────────
+
+function sanitizeHref(url: string): string {
+    const trimmed = url.trim();
+    // 허용 프로토콜: http, https, 상대경로(/), 앵커(#)
+    if (/^(https?:\/\/|\/|#)/.test(trimmed)) {
+        return trimmed.replace(/"/g, '&quot;');
+    }
+    return '#';
+}
 
 // ── 아이콘 HTML 빌더 ─────────────────────────────────────────────────────
 
@@ -82,18 +96,37 @@ function buildColumnHtml(col: FlexListColumn): string {
     );
 }
 
+// ── 컬럼 래퍼 HTML (개별 링크용) ────────────────────────────────────────
+
+function wrapColumnWithLink(colHtml: string, href?: string): string {
+    if (!href) return colHtml;
+    return `<a href="${sanitizeHref(href)}" data-fl-col-link style="text-decoration:none;display:contents;">${colHtml}</a>`;
+}
+
 // ── 행(Row) HTML 빌더 ───────────────────────────────────────────────────
 
 function buildRowHtml(row: FlexListRow, isLast: boolean): string {
     const borderStyle = isLast ? '' : 'border-bottom:1px solid #E5E7EB;';
-    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    const linkMode = row.linkMode ?? 'none';
+    const flexStyle = `display:flex;align-items:center;gap:12px;padding:16px 20px;${borderStyle}text-decoration:none;`;
 
-    return (
-        `<a href="#" style="display:flex;align-items:center;gap:12px;` +
-        `padding:16px 20px;${borderStyle}text-decoration:none;">` +
-        columnsHtml +
-        `</a>`
-    );
+    if (linkMode === 'row' && row.rowHref) {
+        // 행 전체 링크 — <a> 래퍼에 실제 URL
+        const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row" style="${flexStyle}">${columnsHtml}</a>`;
+    }
+
+    if (linkMode === 'column') {
+        // 컬럼 개별 링크 — <div> 래퍼 + 각 컬럼을 <a>로 감싸기
+        const columnsHtml = row.columns.map((col) =>
+            wrapColumnWithLink(buildColumnHtml(col), col.href),
+        ).join('');
+        return `<div data-fl-link-mode="column" style="${flexStyle}">${columnsHtml}</div>`;
+    }
+
+    // 링크 없음 — 기존 더미 <a href="#">
+    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    return `<a href="#" data-fl-link-mode="none" style="${flexStyle}">${columnsHtml}</a>`;
 }
 
 // ── 전체 HTML 조립 ───────────────────────────────────────────────────────
