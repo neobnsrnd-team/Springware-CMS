@@ -162,7 +162,7 @@ export default function MediaVideoEditor({ blockEl, onClose }: Props) {
                                 outline: 'none',
                                 boxSizing: 'border-box',
                                 fontFamily: 'inherit',
-                                background: url ? '#fff' : '#f9fafb',
+                                background: url.trim() ? '#fff' : '#f9fafb',
                             }}
                         />
                     </div>
