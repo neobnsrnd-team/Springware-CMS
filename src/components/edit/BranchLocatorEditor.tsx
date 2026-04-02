@@ -90,30 +90,6 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
     const items = Array.from(blockEl.querySelectorAll<HTMLElement>('[data-bl-item]'));
     void tick;
 
-    // 유형 변경
-    const applyType = useCallback((itemEl: HTMLElement, type: 'branch' | 'atm') => {
-        itemEl.setAttribute('data-bl-item', type);
-        const iconEl = itemEl.querySelector<HTMLElement>('div:first-child');
-        if (iconEl) {
-            iconEl.style.background = type === 'atm' ? '#FF6600' : '#0046A4';
-            iconEl.style.fontSize = type === 'atm' ? '10px' : '14px';
-            iconEl.textContent = type === 'atm' ? 'ATM' : '영';
-        }
-        setTick((n) => n + 1);
-    }, []);
-
-    // 텍스트 필드 변경
-    const applyField = useCallback((itemEl: HTMLElement, selector: string, value: string) => {
-        const el = itemEl.querySelector<HTMLElement>(selector);
-        if (el) el.textContent = value;
-    }, []);
-
-    // 전화번호 변경
-    const applyPhone = useCallback((itemEl: HTMLElement, phone: string) => {
-        const a = itemEl.querySelector<HTMLAnchorElement>('a[href^="tel:"]');
-        if (a) a.setAttribute('href', `tel:${phone}`);
-    }, []);
-
     // 지점 추가
     const addItem = useCallback(
         (type: 'branch' | 'atm') => {
@@ -235,8 +211,11 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
                 </div>
 
                 {/* ── 지점 목록 ── */}
-                <div style={{ padding: '10px 14px 4px' }}>
+                <div style={{ padding: '10px 14px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>지점 목록</span>
+                    <span style={{ fontSize: 10, color: '#9ca3af' }}>
+                        지점명·주소·영업시간·전화번호는 블록에서 직접 클릭해 수정하세요
+                    </span>
                 </div>
 
                 {items.length === 0 && (
@@ -246,30 +225,7 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
                 {items.map((item, idx) => {
                     const type = (item.getAttribute('data-bl-item') ?? 'branch') as 'branch' | 'atm';
                     const name = item.querySelector('[data-bl-name]')?.textContent ?? '';
-                    const addr = item.querySelector('[data-bl-addr]')?.textContent ?? '';
-                    const hours = item.querySelector('[data-bl-hours]')?.textContent ?? '';
-                    const phone =
-                        item
-                            .querySelector<HTMLAnchorElement>('a[href^="tel:"]')
-                            ?.getAttribute('href')
-                            ?.replace('tel:', '') ?? '';
-
-                    return (
-                        <ItemRow
-                            key={idx}
-                            type={type}
-                            name={name}
-                            addr={addr}
-                            hours={hours}
-                            phone={phone}
-                            onTypeChange={(t) => applyType(item, t)}
-                            onNameChange={(v) => applyField(item, '[data-bl-name]', v)}
-                            onAddrChange={(v) => applyField(item, '[data-bl-addr]', v)}
-                            onHoursChange={(v) => applyField(item, '[data-bl-hours]', v)}
-                            onPhoneChange={(v) => applyPhone(item, v)}
-                            onDelete={() => deleteItem(item)}
-                        />
-                    );
+                    return <ItemRow key={idx} type={type} name={name} onDelete={() => deleteItem(item)} />;
                 })}
 
                 {/* ── 지점 추가 버튼 ── */}
@@ -301,189 +257,84 @@ function addBtnStyle(color: string): React.CSSProperties {
 }
 
 // ── 개별 지점 행 ────────────────────────────────────────────────────────────
-interface ItemRowProps {
-    type: 'branch' | 'atm';
-    name: string;
-    addr: string;
-    hours: string;
-    phone: string;
-    onTypeChange: (t: 'branch' | 'atm') => void;
-    onNameChange: (v: string) => void;
-    onAddrChange: (v: string) => void;
-    onHoursChange: (v: string) => void;
-    onPhoneChange: (v: string) => void;
-    onDelete: () => void;
-}
-
-function ItemRow({
-    type,
-    name,
-    addr,
-    hours,
-    phone,
-    onTypeChange,
-    onNameChange,
-    onAddrChange,
-    onHoursChange,
-    onPhoneChange,
-    onDelete,
-}: ItemRowProps) {
-    const [open, setOpen] = useState(false);
-
+// 추가/삭제만 담당 — 지점명·주소·영업시간·전화번호는 캔버스 인라인 직접 편집
+function ItemRow({ type, name, onDelete }: { type: 'branch' | 'atm'; name: string; onDelete: () => void }) {
     return (
-        <div style={{ margin: '0 14px 6px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff' }}>
-            {/* 헤더 행 */}
+        <div
+            style={{
+                margin: '0 14px 6px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '8px 10px',
+                border: '1px solid #e5e7eb',
+                borderRadius: 8,
+                background: '#f9fafb',
+                gap: 8,
+            }}
+        >
             <div
-                onClick={() => setOpen((o) => !o)}
                 style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    background: type === 'atm' ? '#FF6600' : '#0046A4',
+                    color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '8px 10px',
-                    background: '#f9fafb',
-                    cursor: 'pointer',
-                    borderRadius: open ? '8px 8px 0 0' : 8,
+                    justifyContent: 'center',
+                    fontSize: type === 'atm' ? 9 : 12,
+                    fontWeight: 800,
+                    flexShrink: 0,
                 }}
             >
-                <div
-                    style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 8,
-                        background: type === 'atm' ? '#FF6600' : '#0046A4',
-                        color: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: type === 'atm' ? 9 : 12,
-                        fontWeight: 800,
-                        flexShrink: 0,
-                        marginRight: 8,
-                    }}
-                >
-                    {type === 'atm' ? 'ATM' : '영'}
-                </div>
-                <span
-                    style={{
-                        flex: 1,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: '#374151',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    {name || '(이름 없음)'}
-                </span>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete();
-                    }}
-                    style={{
-                        width: 28,
-                        height: 28,
-                        border: 'none',
-                        background: 'transparent',
-                        color: '#dc2626',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                        <path d="M10 11v6" />
-                        <path d="M14 11v6" />
-                        <path d="M9 6V4h6v2" />
-                    </svg>
-                </button>
+                {type === 'atm' ? 'ATM' : '영'}
             </div>
-
-            {/* 필드 영역 */}
-            {open && (
-                <div style={{ padding: '10px 10px 8px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <Field label="유형">
-                        <select
-                            value={type}
-                            onChange={(e) => onTypeChange(e.target.value as 'branch' | 'atm')}
-                            style={inputStyle}
-                        >
-                            <option value="branch">영업점</option>
-                            <option value="atm">ATM</option>
-                        </select>
-                    </Field>
-                    <Field label="지점명">
-                        <input
-                            type="text"
-                            defaultValue={name}
-                            onBlur={(e) => onNameChange(e.target.value)}
-                            style={inputStyle}
-                        />
-                    </Field>
-                    <Field label="주소">
-                        <input
-                            type="text"
-                            defaultValue={addr}
-                            onBlur={(e) => onAddrChange(e.target.value)}
-                            style={inputStyle}
-                        />
-                    </Field>
-                    <Field label="영업시간">
-                        <input
-                            type="text"
-                            defaultValue={hours}
-                            onBlur={(e) => onHoursChange(e.target.value)}
-                            style={inputStyle}
-                        />
-                    </Field>
-                    <Field label="전화번호">
-                        <input
-                            type="text"
-                            defaultValue={phone}
-                            onBlur={(e) => onPhoneChange(e.target.value)}
-                            style={inputStyle}
-                            placeholder="1566-2566"
-                        />
-                    </Field>
-                </div>
-            )}
-        </div>
-    );
-}
-
-const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '5px 8px',
-    border: '1px solid #e5e7eb',
-    borderRadius: 5,
-    fontSize: 12,
-    color: '#111827',
-    outline: 'none',
-    background: '#fff',
-    boxSizing: 'border-box',
-};
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div>
-            <label style={{ display: 'block', fontSize: 10, color: '#6b7280', fontWeight: 600, marginBottom: 3 }}>
-                {label}
-            </label>
-            {children}
+            <span
+                style={{
+                    flex: 1,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: '#374151',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {name || '(이름 없음)'}
+            </span>
+            <button
+                onClick={onDelete}
+                style={{
+                    width: 28,
+                    height: 28,
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#dc2626',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
+                </svg>
+            </button>
         </div>
     );
 }
