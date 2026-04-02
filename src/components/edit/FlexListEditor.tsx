@@ -1,5 +1,5 @@
 // src/components/edit/FlexListEditor.tsx
-// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지, #246 스타일, #256 정렬)
+// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244, #245, #246, #256, #255 형태)
 // 행 추가·삭제·순서변경, 컬럼 추가·삭제, 타입 토글, 너비 선택, 아이콘 프리셋, 텍스트 행 관리
 
 'use client';
@@ -22,6 +22,7 @@ interface FlexListColumn {
     href?: string;
     imageSrc?: string;
     customWidth?: string;
+    shape?: 'circle' | 'round' | 'square' | 'none'; // 아이콘/이미지 형태 (기본 circle)
 }
 
 interface FlexListRow {
@@ -151,7 +152,12 @@ function sanitizeImageSrc(url: string): string {
     return '';
 }
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string): string {
+function buildImageHtml(
+    src: string,
+    width: 'fixed' | 'flex' | 'auto' | 'custom',
+    customWidth?: string,
+    shape?: string,
+): string {
     const safeSrc = sanitizeImageSrc(src);
     const widthStyle =
         width === 'custom' && customWidth
@@ -162,33 +168,43 @@ function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'
                 ? 'flex:0 0 auto;width:48px;height:48px;'
                 : 'flex:1;min-width:0;height:48px;';
     const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
+    const imgRadius = shapeToRadius(shape || 'round');
 
     return (
-        `<span data-fl-type="image" data-fl-width="${width}"${customAttr} data-fl-image-src="${safeSrc}"` +
+        `<span data-fl-type="image" data-fl-width="${width}"${customAttr} data-fl-image-src="${safeSrc}" data-fl-image-shape="${shape || 'round'}"` +
         ` style="${widthStyle}display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         (safeSrc
-            ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="" />`
-            : `<span style="width:100%;height:100%;background:#F3F4F6;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:11px;">이미지</span>`) +
+            ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:${imgRadius};" alt="" />`
+            : `<span style="width:100%;height:100%;background:#F3F4F6;border-radius:${imgRadius};display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:11px;">이미지</span>`) +
         `</span>`
     );
 }
 
 // ── HTML 빌더 (마이그레이션 스크립트와 동기화) ──────────────────────────
 
+function shapeToRadius(shape?: string): string {
+    if (shape === 'round') return '10px';
+    if (shape === 'square') return '0';
+    return '50%';
+}
+
 function buildIconHtml(
     iconKey: string,
     bgColor: string,
     width?: 'fixed' | 'flex' | 'auto' | 'custom',
     customWidth?: string,
+    shape?: string,
 ): string {
     const svg = ICONS_20[iconKey] ?? ICONS_20['check'];
     const size = width === 'custom' && customWidth ? customWidth : '40px';
     const flexBasis = width === 'custom' && customWidth ? customWidth : '40px';
+    const radius = shapeToRadius(shape);
+    const bg = shape === 'none' ? 'transparent' : bgColor;
     return (
-        `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
+        `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}" data-fl-icon-shape="${shape || 'circle'}"` +
         (width === 'custom' && customWidth ? ` data-fl-width="custom" data-fl-custom-width="${customWidth}"` : '') +
-        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:50%;` +
-        `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:${radius};` +
+        `background:${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
     );
@@ -196,11 +212,11 @@ function buildIconHtml(
 
 function buildColumnHtml(col: FlexListColumn): string {
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth);
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape);
     }
 
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape);
     }
 
     const widthStyle =
@@ -341,6 +357,9 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         customWidth: span.getAttribute('data-fl-custom-width') || undefined,
                         icon: span.getAttribute('data-fl-icon') || 'check',
                         iconBg: span.getAttribute('data-fl-icon-bg') || '#E8F0FC',
+                        shape:
+                            (span.getAttribute('data-fl-icon-shape') as 'circle' | 'round' | 'square' | 'none') ||
+                            undefined,
                         href: colHref,
                     };
                 }
@@ -350,6 +369,9 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         width: (span.getAttribute('data-fl-width') || 'fixed') as 'fixed' | 'flex' | 'auto' | 'custom',
                         customWidth: span.getAttribute('data-fl-custom-width') || undefined,
                         imageSrc: span.getAttribute('data-fl-image-src') || '',
+                        shape:
+                            (span.getAttribute('data-fl-image-shape') as 'circle' | 'round' | 'square' | 'none') ||
+                            undefined,
                         href: colHref,
                     };
                 }
@@ -689,9 +711,15 @@ function ColumnEditor({
                     onChange={(e) => {
                         const type = e.target.value as 'icon' | 'text' | 'image';
                         if (type === 'icon') {
-                            onUpdate(colIdx, { type, width: 'fixed', icon: 'check', iconBg: '#E8F0FC' });
+                            onUpdate(colIdx, {
+                                type,
+                                width: 'fixed',
+                                icon: 'check',
+                                iconBg: '#E8F0FC',
+                                shape: 'circle',
+                            });
                         } else if (type === 'image') {
-                            onUpdate(colIdx, { type, width: 'fixed', imageSrc: '' });
+                            onUpdate(colIdx, { type, width: 'fixed', imageSrc: '', shape: 'round' });
                         } else {
                             onUpdate(colIdx, { type, width: 'flex', lines: [{ text: '텍스트' }] });
                         }
@@ -808,6 +836,29 @@ function ColumnEditor({
                             cursor: 'pointer',
                         }}
                     />
+
+                    {/* 형태 선택 */}
+                    <select
+                        value={col.shape ?? 'circle'}
+                        onChange={(e) =>
+                            onUpdate(colIdx, {
+                                ...col,
+                                shape: e.target.value as 'circle' | 'round' | 'square' | 'none',
+                            })
+                        }
+                        style={{
+                            padding: '3px 6px',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontFamily: FONT_FAMILY,
+                        }}
+                    >
+                        <option value="circle">원형</option>
+                        <option value="round">라운드</option>
+                        <option value="square">사각</option>
+                        <option value="none">투명</option>
+                    </select>
 
                     {showIconPicker && (
                         <div
@@ -939,6 +990,29 @@ function ColumnEditor({
                             outline: 'none',
                         }}
                     />
+
+                    {/* 형태 선택 */}
+                    <select
+                        value={col.shape ?? 'round'}
+                        onChange={(e) =>
+                            onUpdate(colIdx, {
+                                ...col,
+                                shape: e.target.value as 'circle' | 'round' | 'square' | 'none',
+                            })
+                        }
+                        style={{
+                            padding: '3px 6px',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontFamily: FONT_FAMILY,
+                        }}
+                    >
+                        <option value="circle">원형</option>
+                        <option value="round">라운드</option>
+                        <option value="square">사각</option>
+                        <option value="none">투명</option>
+                    </select>
                 </div>
             )}
 

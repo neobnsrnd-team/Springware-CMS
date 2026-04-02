@@ -1,5 +1,5 @@
 // scripts/migrate-flex-list-to-html.ts
-// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244, #245, #246, #256, #262 통합)
+// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244, #245, #246, #256, #262, #255 형태)
 // 실행: npx tsx scripts/migrate-flex-list-to-html.ts
 
 import 'dotenv/config';
@@ -24,6 +24,7 @@ interface FlexListColumn {
     href?: string;        // linkMode=column일 때 개별 링크 URL
     imageSrc?: string;    // type=image: 이미지 URL
     customWidth?: string; // width=custom일 때 값 (예: '30%', '120px')
+    shape?: 'circle' | 'round' | 'square' | 'none'; // 아이콘/이미지 형태 (기본 circle)
 }
 
 interface FlexListRow {
@@ -79,7 +80,7 @@ function sanitizeImageSrc(url: string): string {
 
 // ── 이미지 HTML 빌더 ────────────────────────────────────────────────────
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string): string {
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string, shape?: string): string {
     const safeSrc = sanitizeImageSrc(src);
     const widthStyle =
         width === 'custom' && customWidth ? `flex:0 0 ${customWidth};width:${customWidth};height:auto;` :
@@ -87,28 +88,37 @@ function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'
         width === 'auto'  ? 'flex:0 0 auto;width:48px;height:48px;' :
                             'flex:1;min-width:0;height:48px;';
     const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
+    const imgRadius = shapeToRadius(shape || 'round');
 
     return (
-        `<span data-fl-type="image" data-fl-width="${width}"${customAttr} data-fl-image-src="${safeSrc}"` +
+        `<span data-fl-type="image" data-fl-width="${width}"${customAttr} data-fl-image-src="${safeSrc}" data-fl-image-shape="${shape || 'round'}"` +
         ` style="${widthStyle}display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         (safeSrc
-            ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="" />`
-            : `<span style="width:100%;height:100%;background:#F3F4F6;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:11px;">이미지</span>`) +
+            ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:${imgRadius};" alt="" />`
+            : `<span style="width:100%;height:100%;background:#F3F4F6;border-radius:${imgRadius};display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:11px;">이미지</span>`) +
         `</span>`
     );
 }
 
 // ── 아이콘 HTML 빌더 ─────────────────────────────────────────────────────
 
-function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string): string {
+function shapeToRadius(shape?: string): string {
+    if (shape === 'round') return '10px';
+    if (shape === 'square') return '0';
+    return '50%'; // circle (기본) 및 none
+}
+
+function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string, shape?: string): string {
     const svg = ICONS[iconKey] ?? ICONS['check'];
     const size = (width === 'custom' && customWidth) ? customWidth : '40px';
     const flexBasis = (width === 'custom' && customWidth) ? customWidth : '40px';
+    const radius = shapeToRadius(shape);
+    const bg = shape === 'none' ? 'transparent' : bgColor;
     return (
-        `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
+        `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}" data-fl-icon-shape="${shape || 'circle'}"` +
         (width === 'custom' && customWidth ? ` data-fl-width="custom" data-fl-custom-width="${customWidth}"` : '') +
-        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:50%;` +
-        `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:${radius};` +
+        `background:${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
     );
@@ -118,7 +128,7 @@ function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex
 
 function buildColumnHtml(col: FlexListColumn): string {
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape);
     }
 
     const widthStyle =
@@ -129,7 +139,7 @@ function buildColumnHtml(col: FlexListColumn): string {
     const customWidthAttr = col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
 
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth);
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape);
     }
 
     // 텍스트 컬럼 — 다층 행
