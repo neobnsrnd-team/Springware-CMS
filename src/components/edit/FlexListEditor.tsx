@@ -487,8 +487,8 @@ function UnitInput({
                     borderRadius: '0 4px 4px 0',
                     fontSize: 9,
                     fontFamily: FONT_FAMILY,
-                    background: '#f9fafb',
-                    color: '#6B7280',
+                    background: '#fff',
+                    color: '#374151',
                     outline: 'none',
                     cursor: 'pointer',
                 }}
