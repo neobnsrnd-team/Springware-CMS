@@ -6,6 +6,7 @@ import { updatePage, createPage, getPageById, resetApproveStateToWork } from '@/
 import { getCurrentUser } from '@/lib/current-user';
 import { isValidBankId } from '@/lib/validators';
 import { writePageHtml, isPageExpired } from '@/lib/page-file';
+import { commitAndPushPage } from '@/lib/git-utils';
 import { successResponse, contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 // 페이지 저장: 파일 먼저 쓰기 → 성공 시 DB에 FILE_PATH 기록
@@ -53,6 +54,15 @@ async function savePage(
             createUserName: userName,
         });
     }
+
+    // 5. git 자동 커밋·푸시 (fire-and-forget — 실패해도 저장 응답에 영향 없음)
+    const gitFilePaths = [
+        `public/uploads/pages/${bank}.html`,
+        ...(thumbnail ? [`public/uploads/pages/thumbnails/${bank}_thumb.jpg`] : []),
+    ];
+    commitAndPushPage({ filePaths: gitFilePaths, pageId: bank, userId }).catch((err: unknown) => {
+        console.warn('git 자동 커밋 실패 (저장 결과에는 영향 없음):', getErrorMessage(err));
+    });
 }
 
 export async function POST(req: NextRequest) {
