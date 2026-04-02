@@ -44,6 +44,17 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
     });
     const [tick, setTick] = useState(0);
 
+    // embed URL 여부 검사 — Google Maps embed / Kakao 지도 embed 형식만 허용
+    const isEmbedUrl = (url: string) => {
+        if (!url.trim()) return true; // 빈 값은 경고 없음
+        return (
+            url.includes('google.com/maps/embed') ||
+            url.includes('map.kakao.com/link/embed') ||
+            url.includes('maps.google.com/maps?')
+        );
+    };
+    const showUrlWarning = mapUrl.trim() !== '' && !isEmbedUrl(mapUrl);
+
     // 드래그
     const dragging = useRef(false);
     const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 });
@@ -180,12 +191,12 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
                             style={{
                                 flex: 1,
                                 padding: '6px 8px',
-                                border: '1px solid #e5e7eb',
+                                border: `1px solid ${showUrlWarning ? '#f87171' : '#e5e7eb'}`,
                                 borderRadius: 6,
                                 fontSize: 12,
                                 color: '#111827',
                                 outline: 'none',
-                                background: '#f9fafb',
+                                background: showUrlWarning ? '#fff5f5' : '#f9fafb',
                             }}
                         />
                         <button
@@ -205,9 +216,16 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
                             적용
                         </button>
                     </div>
-                    <p style={{ fontSize: 10, color: '#9ca3af', margin: '4px 0 0', lineHeight: 1.5 }}>
-                        Google Maps: 공유 → 지도 퍼가기 → embed URL 복사
-                    </p>
+                    {showUrlWarning ? (
+                        <p style={{ fontSize: 10, color: '#ef4444', margin: '4px 0 0', lineHeight: 1.5 }}>
+                            ⚠️ 일반 공유 링크는 iframe에서 차단됩니다. Google Maps: 공유 → <strong>지도 퍼가기</strong>{' '}
+                            탭의 embed URL을 사용하세요.
+                        </p>
+                    ) : (
+                        <p style={{ fontSize: 10, color: '#9ca3af', margin: '4px 0 0', lineHeight: 1.5 }}>
+                            Google Maps: 공유 → 지도 퍼가기 → embed URL 복사
+                        </p>
+                    )}
                 </div>
 
                 {/* ── 지점 목록 ── */}
