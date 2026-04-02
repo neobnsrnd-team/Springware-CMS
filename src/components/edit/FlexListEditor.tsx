@@ -151,17 +151,20 @@ function sanitizeImageSrc(url: string): string {
     return '';
 }
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'): string {
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string): string {
     const safeSrc = sanitizeImageSrc(src);
     const widthStyle =
-        width === 'fixed'
-            ? 'flex:0 0 40px;width:40px;height:40px;'
-            : width === 'auto'
-              ? 'flex:0 0 auto;width:48px;height:48px;'
-              : 'flex:1;min-width:0;height:48px;';
+        width === 'custom' && customWidth
+            ? `flex:0 0 ${customWidth};width:${customWidth};height:auto;`
+            : width === 'fixed'
+              ? 'flex:0 0 40px;width:40px;height:40px;'
+              : width === 'auto'
+                ? 'flex:0 0 auto;width:48px;height:48px;'
+                : 'flex:1;min-width:0;height:48px;';
+    const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
 
     return (
-        `<span data-fl-type="image" data-fl-width="${width}" data-fl-image-src="${safeSrc}"` +
+        `<span data-fl-type="image" data-fl-width="${width}"${customAttr} data-fl-image-src="${safeSrc}"` +
         ` style="${widthStyle}display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         (safeSrc
             ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="" />`
@@ -197,7 +200,7 @@ function buildColumnHtml(col: FlexListColumn): string {
     }
 
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth);
     }
 
     const widthStyle =
@@ -344,7 +347,8 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                 if (flType === 'image') {
                     return {
                         type: 'image' as const,
-                        width: (span.getAttribute('data-fl-width') || 'fixed') as 'fixed' | 'flex' | 'auto',
+                        width: (span.getAttribute('data-fl-width') || 'fixed') as 'fixed' | 'flex' | 'auto' | 'custom',
+                        customWidth: span.getAttribute('data-fl-custom-width') || undefined,
                         imageSrc: span.getAttribute('data-fl-image-src') || '',
                         href: colHref,
                     };
