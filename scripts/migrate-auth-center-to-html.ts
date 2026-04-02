@@ -61,8 +61,34 @@ const DEFAULT_CARDS: CardData[] = [
     { type: 'security-card', title: '보안카드',     desc: '보안카드 분실 · 재발급', isLast: true },
 ];
 
+// 모바일용 — 세로 목록
 function buildAuthCards(): string {
     return DEFAULT_CARDS.map(buildCard).join('');
+}
+
+// 웹 전용 — 2×2 CSS grid 레이아웃
+// 카드 테두리를 grid gap으로 대체하여 격자 구분
+function buildAuthCardsWeb(): string {
+    const webCard = (card: CardData): string => {
+        const iconStyle = CARD_ICON_STYLE[card.type] ?? CARD_ICON_STYLE['cert'];
+        return (
+            `<a href="${card.href ?? '#'}" class="ac-item" style="display:flex;align-items:center;gap:14px;padding:20px 24px;text-decoration:none;background:#fff;border-radius:12px;border:1px solid #F3F4F6;min-height:80px;">` +
+                `<div class="ac-icon-wrap" style="width:52px;height:52px;border-radius:14px;background:${iconStyle.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${iconStyle.color};">` +
+                    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">${CARD_ICONS[card.type]}</svg>` +
+                `</div>` +
+                `<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">` +
+                    `<span style="font-size:16px;font-weight:700;color:#1A1A2E;">${card.title}</span>` +
+                    `<span style="font-size:13px;color:#6B7280;">${card.desc}</span>` +
+                `</div>` +
+                ARROW_SVG +
+            `</a>`
+        );
+    };
+    return (
+        `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:20px 24px;">` +
+            DEFAULT_CARDS.map(webCard).join('') +
+        `</div>`
+    );
 }
 
 function buildHeader(): string {
@@ -70,6 +96,16 @@ function buildHeader(): string {
         `<div style="padding:20px 20px 12px;border-bottom:1px solid #F3F4F6;">` +
             `<h3 style="font-size:18px;font-weight:700;color:#1A1A2E;margin:0 0 4px;">인증센터</h3>` +
             `<p style="font-size:13px;color:#6B7280;margin:0;">안전한 금융거래를 위한 인증 서비스</p>` +
+        `</div>`
+    );
+}
+
+// 웹 전용 헤더 — 패딩·폰트 데스크탑 기준으로 확장
+function buildHeaderWeb(): string {
+    return (
+        `<div style="padding:28px 32px 16px;border-bottom:1px solid #F3F4F6;">` +
+            `<h3 style="font-size:20px;font-weight:700;color:#1A1A2E;margin:0 0 6px;">인증센터</h3>` +
+            `<p style="font-size:14px;color:#6B7280;margin:0;">안전한 금융거래를 위한 인증 서비스</p>` +
         `</div>`
     );
 }
@@ -95,11 +131,9 @@ const AUTH_CENTER_MOBILE_HTML =
 
 // ── web variant ─────────────────────────────────────────────────────────────
 const AUTH_CENTER_WEB_HTML =
-    `<div data-component-id="auth-center-web" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,70,164,0.07);max-width:480px;margin:0 auto;">` +
-        buildHeader() +
-        `<div style="padding:8px 0;">` +
-            buildAuthCards() +
-        `</div>` +
+    `<div data-component-id="auth-center-web" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,70,164,0.07);width:100%;box-sizing:border-box;">` +
+        buildHeaderWeb() +
+        buildAuthCardsWeb() +
         buildNotice() +
     `</div>`;
 

@@ -232,7 +232,7 @@ function buildMenuTabGridHtml(tabs: TabItem[], componentId: string, extraStyle: 
 // ── 3개 variant HTML ──────────────────────────────────────────────────────
 
 const MENU_TAB_GRID_MOBILE_HTML     = buildMenuTabGridHtml(DEFAULT_TABS, 'menu-tab-grid-mobile',     '');
-const MENU_TAB_GRID_WEB_HTML        = buildMenuTabGridHtml(DEFAULT_TABS, 'menu-tab-grid-web',        'max-width:480px;margin:0 auto;');
+const MENU_TAB_GRID_WEB_HTML        = buildMenuTabGridHtml(DEFAULT_TABS, 'menu-tab-grid-web',        'width:100%;box-sizing:border-box;');
 const MENU_TAB_GRID_RESPONSIVE_HTML = buildMenuTabGridHtml(DEFAULT_TABS, 'menu-tab-grid-responsive', 'width:100%;box-sizing:border-box;');
 
 // ── DB 등록 ───────────────────────────────────────────────────────────────
