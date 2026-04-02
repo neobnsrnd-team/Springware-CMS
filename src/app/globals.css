@@ -191,3 +191,11 @@ body.spw-slide-modal-open .is-rte-tool {
 #mv-url-input::placeholder {
     color: #9ca3af;
 }
+
+/* ── 에디터에서 media-video iframe — 클릭을 래퍼 div로 전달 ──
+ * pointer-events:none으로 iframe이 클릭을 흡수하지 않도록 차단
+ * 뷰어(.is-builder 없음)에서는 정상 재생 가능
+ */
+.is-builder [data-component-id^="media-video"] iframe {
+    pointer-events: none;
+}
