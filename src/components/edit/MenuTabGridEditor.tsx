@@ -114,15 +114,30 @@ const TOGGLE_SCRIPT =
     `root.appendChild(styleEl);` +
     `function toggle(){` +
     `expanded=!expanded;` +
+    `if(design==='chip'){` +
     `if(expanded){` +
-    `gridWrap.style.display=design==='chip'?'flex':'grid';` +
-    `if(design==='chip')gridWrap.style.flexWrap='wrap';` +
+    `scrollWrap.style.overflowX='visible';` +
+    `scrollWrap.style.whiteSpace='normal';` +
+    `scrollWrap.style.flexWrap='wrap';` +
+    `tabBar.style.overflow='visible';` +
+    `chevron.style.transform='rotate(180deg)';` +
+    `}else{` +
+    `scrollWrap.style.overflowX='auto';` +
+    `scrollWrap.style.whiteSpace='nowrap';` +
+    `scrollWrap.style.flexWrap='nowrap';` +
+    `tabBar.style.overflow='hidden';` +
+    `chevron.style.transform='rotate(0deg)';` +
+    `}` +
+    `}else{` +
+    `if(expanded){` +
+    `gridWrap.style.display='grid';` +
     `requestAnimationFrame(function(){gridWrap.style.maxHeight=gridWrap.scrollHeight+'px';});` +
     `chevron.style.transform='rotate(180deg)';` +
     `}else{` +
     `gridWrap.style.maxHeight='0';` +
     `setTimeout(function(){if(!expanded)gridWrap.style.display='none';},300);` +
     `chevron.style.transform='rotate(0deg)';` +
+    `}` +
     `}` +
     `}` +
     `if(toggleBtn)toggleBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle();});` +

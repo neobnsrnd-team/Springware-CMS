@@ -148,17 +148,34 @@ const TOGGLE_SCRIPT =
         // 펼치기/접기 토글
         `function toggle(){` +
             `expanded=!expanded;` +
-            `if(expanded){` +
-                `gridWrap.style.display=design==='chip'?'flex':'grid';` +
-                `if(design==='chip')gridWrap.style.flexWrap='wrap';` +
-                `requestAnimationFrame(function(){` +
-                    `gridWrap.style.maxHeight=gridWrap.scrollHeight+'px';` +
-                `});` +
-                `chevron.style.transform='rotate(180deg)';` +
+            `if(design==='chip'){` +
+                // 칩 모드: gridWrap 안 쓰고 scrollWrap 자체를 flex-wrap 전환
+                `if(expanded){` +
+                    `scrollWrap.style.overflowX='visible';` +
+                    `scrollWrap.style.whiteSpace='normal';` +
+                    `scrollWrap.style.flexWrap='wrap';` +
+                    `tabBar.style.overflow='visible';` +
+                    `chevron.style.transform='rotate(180deg)';` +
+                `}else{` +
+                    `scrollWrap.style.overflowX='auto';` +
+                    `scrollWrap.style.whiteSpace='nowrap';` +
+                    `scrollWrap.style.flexWrap='nowrap';` +
+                    `tabBar.style.overflow='hidden';` +
+                    `chevron.style.transform='rotate(0deg)';` +
+                `}` +
             `}else{` +
-                `gridWrap.style.maxHeight='0';` +
-                `setTimeout(function(){if(!expanded)gridWrap.style.display='none';},300);` +
-                `chevron.style.transform='rotate(0deg)';` +
+                // 탭 모드: 기존 gridWrap 펼침/접힘
+                `if(expanded){` +
+                    `gridWrap.style.display='grid';` +
+                    `requestAnimationFrame(function(){` +
+                        `gridWrap.style.maxHeight=gridWrap.scrollHeight+'px';` +
+                    `});` +
+                    `chevron.style.transform='rotate(180deg)';` +
+                `}else{` +
+                    `gridWrap.style.maxHeight='0';` +
+                    `setTimeout(function(){if(!expanded)gridWrap.style.display='none';},300);` +
+                    `chevron.style.transform='rotate(0deg)';` +
+                `}` +
             `}` +
         `}` +
         `if(toggleBtn)toggleBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggle();});` +
