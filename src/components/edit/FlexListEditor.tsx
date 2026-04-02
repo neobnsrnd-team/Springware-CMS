@@ -950,10 +950,8 @@ function ColumnEditor({
                                     type="text"
                                     value={lineObj.text}
                                     onChange={(e) => {
-                                        const newLines = [...(col.lines ?? [{ text: '텍스트' }])].map((l) =>
-                                            typeof l === 'string' ? { text: l } : l,
-                                        );
-                                        newLines[lineIdx] = { ...newLines[lineIdx], text: e.target.value };
+                                        const newLines = [...(col.lines ?? [{ text: '텍스트' }])];
+                                        newLines[lineIdx] = { ...lineObj, text: e.target.value };
                                         onUpdate(colIdx, { ...col, lines: newLines });
                                     }}
                                     style={{
@@ -975,10 +973,8 @@ function ColumnEditor({
                                         type="button"
                                         title={a === 'left' ? '좌측' : a === 'center' ? '가운데' : '우측'}
                                         onClick={() => {
-                                            const newLines = [...(col.lines ?? [{ text: '텍스트' }])].map((l) =>
-                                                typeof l === 'string' ? { text: l } : l,
-                                            );
-                                            newLines[lineIdx] = { ...newLines[lineIdx], align: a };
+                                            const newLines = [...(col.lines ?? [{ text: '텍스트' }])];
+                                            newLines[lineIdx] = { ...lineObj, align: a };
                                             onUpdate(colIdx, { ...col, lines: newLines });
                                         }}
                                         style={{
@@ -1006,9 +1002,9 @@ function ColumnEditor({
                                     title="행 삭제"
                                     disabled={(col.lines ?? []).length <= 1}
                                     onClick={() => {
-                                        const newLines = (col.lines ?? [{ text: '텍스트' }])
-                                            .map((l) => (typeof l === 'string' ? { text: l } : l))
-                                            .filter((_, i) => i !== lineIdx);
+                                        const newLines = (col.lines ?? [{ text: '텍스트' }]).filter(
+                                            (_, i) => i !== lineIdx,
+                                        );
                                         onUpdate(colIdx, { ...col, lines: newLines });
                                     }}
                                     style={{
@@ -1038,12 +1034,7 @@ function ColumnEditor({
                         onClick={() =>
                             onUpdate(colIdx, {
                                 ...col,
-                                lines: [
-                                    ...(col.lines ?? [{ text: '텍스트' }]).map((l) =>
-                                        typeof l === 'string' ? { text: l } : l,
-                                    ),
-                                    { text: '새 텍스트' },
-                                ],
+                                lines: [...(col.lines ?? [{ text: '텍스트' }]), { text: '새 텍스트' }],
                             })
                         }
                         style={{
