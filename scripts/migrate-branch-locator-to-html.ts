@@ -97,13 +97,14 @@ function buildHtml(componentId: string, extraStyle: string): string {
     return (
         `<div data-component-id="${componentId}" data-spw-block style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;display:flex;flex-direction:column;min-height:420px;${extraStyle}">` +
             // ── 지도 영역 ──
-            `<div style="position:relative;height:240px;border-radius:20px 20px 0 0;flex-shrink:0;background:#E8EFF8;">` +
+            `<div style="position:relative;aspect-ratio:16/9;border-radius:20px 20px 0 0;flex-shrink:0;background:#E8EFF8;">` +
                 // iframe: src="" 초기값, 편집 패널에서 지도 embed URL 입력
                 `<iframe data-bl-map src="about:blank" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:20px 20px 0 0;" title="지도" allowfullscreen=""></iframe>` +
                 // 플레이스홀더 (src 비어있을 때 표시)
                 `<div data-bl-map-ph style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(160deg,#E8F0FC 0%,#D1E3F8 100%);">` +
                     `<span style="font-size:40px;">📍</span>` +
-                    `<p style="font-size:13px;color:#6B7280;margin:0;font-weight:500;">편집 버튼을 눌러 지도 URL을 입력하세요</p>` +
+                    `<p style="font-size:13px;color:#6B7280;margin:0;font-weight:500;">블록을 클릭하면 지점 편집 패널이 열립니다</p>` +
+                    `<p style="font-size:11px;color:#9CA3AF;margin:0;">Google Maps / Kakao 지도 embed URL을 입력하세요</p>` +
                 `</div>` +
                 // 검색바 (시각 요소)
                 `<div style="position:absolute;top:12px;left:12px;right:12px;display:flex;gap:8px;z-index:10;">` +
@@ -132,7 +133,7 @@ function buildHtml(componentId: string, extraStyle: string): string {
 
 const VARIANTS = [
     { id: 'branch-locator-mobile',     html: buildHtml('branch-locator-mobile',     '') },
-    { id: 'branch-locator-web',        html: buildHtml('branch-locator-web',        'max-width:480px;margin:0 auto;') },
+    { id: 'branch-locator-web',        html: buildHtml('branch-locator-web',        'width:100%;box-sizing:border-box;') },
     { id: 'branch-locator-responsive', html: buildHtml('branch-locator-responsive', 'width:100%;box-sizing:border-box;') },
 ];
 
