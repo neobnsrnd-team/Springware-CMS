@@ -186,3 +186,8 @@ body.spw-slide-modal-open .is-rte-tool {
 .is-builder .row {
     margin-top: 48px;
 }
+
+/* ── 미디어 영상 URL 편집 모달 — placeholder 색상 ── */
+#mv-url-input::placeholder {
+    color: #9ca3af;
+}

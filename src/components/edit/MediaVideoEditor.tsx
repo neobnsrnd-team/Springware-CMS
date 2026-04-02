@@ -165,7 +165,6 @@ export default function MediaVideoEditor({ blockEl, onClose }: Props) {
                                 background: url ? '#fff' : '#f9fafb',
                             }}
                         />
-                        <style>{`#mv-url-input::placeholder { color: #9ca3af; }`}</style>
                     </div>
                     {error ? (
                         <p style={{ fontSize: 11, color: '#ef4444', margin: '5px 0 0' }}>{error}</p>
