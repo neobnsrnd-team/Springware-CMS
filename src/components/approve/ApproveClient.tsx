@@ -9,6 +9,7 @@ import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard'
 import type { ViewMode } from '@/components/ui/PageCard';
 import AdminNavTabs from '@/components/admin/AdminNavTabs';
 import StatsModal from './StatsModal';
+import RollbackModal from './RollbackModal';
 import { APPROVE_FILTERS } from '@/data/approve-config';
 import type { ApproveStateFilter } from '@/data/approve-config';
 
@@ -91,6 +92,10 @@ export default function ApproveClient({
     const [editBeginningDate, setEditBeginningDate] = useState('');
     const [editExpiredDate, setEditExpiredDate] = useState('');
     const [savingDates, setSavingDates] = useState(false);
+
+    // 롤백 모달 상태
+    const [rollbackModalPageId, setRollbackModalPageId] = useState<string | null>(null);
+    const [rollbackModalLabel, setRollbackModalLabel] = useState('');
 
     // 배포 상태
     const [deploying, setDeploying] = useState<string | null>(null); // 배포 중인 pageId
@@ -746,6 +751,16 @@ export default function ApproveClient({
                                                                     >
                                                                         배포 이력
                                                                     </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setRollbackModalPageId(page.id);
+                                                                            setRollbackModalLabel(page.label);
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-xs text-[#374151] hover:bg-[#f9fafb] cursor-pointer"
+                                                                    >
+                                                                        버전 롤백
+                                                                    </button>
                                                                     <div className="my-1 border-t border-[#f3f4f6]" />
                                                                     <button
                                                                         onClick={() => {
@@ -867,6 +882,16 @@ export default function ApproveClient({
                                                                         className="w-full text-left px-3 py-2 text-xs text-[#374151] hover:bg-[#f9fafb] cursor-pointer"
                                                                     >
                                                                         배포 이력
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setRollbackModalPageId(page.id);
+                                                                            setRollbackModalLabel(page.label);
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-xs text-[#374151] hover:bg-[#f9fafb] cursor-pointer"
+                                                                    >
+                                                                        버전 롤백
                                                                     </button>
                                                                     <div className="my-1 border-t border-[#f3f4f6]" />
                                                                     <button
@@ -1284,6 +1309,19 @@ export default function ApproveClient({
                         </Modal>
                     );
                 })()}
+
+            {/* ── 버전 롤백 모달 ── */}
+            {rollbackModalPageId && (
+                <RollbackModal
+                    pageId={rollbackModalPageId}
+                    pageLabel={rollbackModalLabel}
+                    onClose={() => setRollbackModalPageId(null)}
+                    onSuccess={() => {
+                        setRollbackModalPageId(null);
+                        router.refresh();
+                    }}
+                />
+            )}
         </div>
     );
 }

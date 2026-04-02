@@ -9,7 +9,7 @@ import oracledb from 'oracledb';
 import { getConnection } from '@/db/connection';
 import { PAGE_SELECT_BY_ID } from '@/db/queries/page.sql';
 import { upsertFileSend, getServerList } from '@/db/repository/file-send.repository';
-import { updatePageDeploy, getLatestHistory } from '@/db/repository/page.repository';
+import { updatePageDeploy, getLatestHistory, getHistoryVersionByFilePath } from '@/db/repository/page.repository';
 import type { CmsPage } from '@/db/types';
 import { getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
@@ -190,9 +190,11 @@ export async function POST(req: NextRequest) {
             return errorResponse('활성화된 배포 서버가 없습니다.', 400);
         }
 
-        // 4. 최신 승인 버전 조회 (FILE_ID 생성용)
+        // 4. 현재 FILE_PATH에 해당하는 HISTORY VERSION 조회 (롤백 대응)
+        // 롤백 상태에서 배포 시 FILE_SEND_HIS에 정확한 버전이 기록되도록 보정
+        const historyVersion = await getHistoryVersionByFilePath(pageId, page.FILE_PATH);
         const latestHistory = await getLatestHistory(pageId);
-        const version = latestHistory?.VERSION ?? 1;
+        const version = historyVersion ?? latestHistory?.VERSION ?? 1;
         const fileId = `${pageId}_v${version}.html`;
 
         // 5. 각 서버에 전송 + 이력 기록

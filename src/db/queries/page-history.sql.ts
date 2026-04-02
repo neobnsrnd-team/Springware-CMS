@@ -78,6 +78,14 @@ export const PAGE_HISTORY_SELECT_LIST = `
   ORDER BY VERSION DESC
 `;
 
+/** FILE_PATH로 HISTORY VERSION 역조회 (롤백 후 배포 fileId 결정용) */
+export const PAGE_HISTORY_SELECT_VERSION_BY_FILE_PATH = `
+  SELECT VERSION
+  FROM SPW_CMS_PAGE_HISTORY
+  WHERE PAGE_ID   = :pageId
+    AND FILE_PATH = :filePath
+`;
+
 /** 페이지별 이력 존재 여부 (삭제 정책 판단용) */
 export const PAGE_HISTORY_COUNT_BY_PAGE = `
   SELECT COUNT(*) AS CNT

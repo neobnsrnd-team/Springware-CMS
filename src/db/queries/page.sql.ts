@@ -228,6 +228,17 @@ export const PAGE_SET_WINNER = `
     AND USE_YN = 'Y'
 `;
 
+/** 버전 롤백 — 지정 버전의 FILE_PATH를 PAGE에 덮어쓰고 APPROVE_STATE = 'WORK' 전환 */
+export const PAGE_ROLLBACK = `
+  UPDATE SPW_CMS_PAGE
+  SET FILE_PATH        = (SELECT FILE_PATH FROM SPW_CMS_PAGE_HISTORY
+                          WHERE PAGE_ID = :pageId AND VERSION = :version),
+      APPROVE_STATE    = 'WORK',
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+    AND USE_YN  = 'Y'
+`;
+
 /** 배포 완료 후 무결성 값 갱신 — 시작일/만료일은 승인 시점에 이미 설정 */
 export const PAGE_UPDATE_DEPLOY = `
   UPDATE SPW_CMS_PAGE
