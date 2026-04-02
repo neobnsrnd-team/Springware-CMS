@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 72" width="390" height="72">
+  <rect width="390" height="72" fill="#fff"/>
+  <!-- 활성 칩 -->
+  <rect x="16" y="20" width="52" height="32" rx="16" fill="#7C5CFC"/>
+  <text x="42" y="41" font-size="12" fill="#fff" text-anchor="middle" font-family="sans-serif">전체</text>
+  <!-- 비활성 칩들 -->
+  <rect x="76" y="20" width="72" height="32" rx="16" fill="none" stroke="#ddd" stroke-width="1"/>
+  <text x="112" y="41" font-size="11" fill="#666" text-anchor="middle" font-family="sans-serif">찜한혜택</text>
+  <rect x="156" y="20" width="92" height="32" rx="16" fill="none" stroke="#ddd" stroke-width="1"/>
+  <text x="202" y="41" font-size="11" fill="#666" text-anchor="middle" font-family="sans-serif">종료된 이벤트</text>
+  <rect x="256" y="20" width="72" height="32" rx="16" fill="none" stroke="#ddd" stroke-width="1"/>
+  <text x="292" y="41" font-size="11" fill="#666" text-anchor="middle" font-family="sans-serif">응모현황</text>
+  <!-- 토글 버튼 -->
+  <text x="350" y="41" font-size="16" fill="#999" text-anchor="middle">∨</text>
+</svg>

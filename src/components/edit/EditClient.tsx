@@ -25,6 +25,7 @@ import ProductMenuIconEditor from '@/components/edit/ProductMenuIconEditor';
 import SlideEditorModal from '@/components/edit/SlideEditorModal';
 import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import FlexListEditor from '@/components/edit/FlexListEditor';
+import FilterChipGroupEditor from '@/components/edit/FilterChipGroupEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import ko from '@/data/ko';
 
@@ -254,6 +255,8 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
     const [benefitCardBlock, setBenefitCardBlock] = useState<HTMLElement | null>(null);
     // flex-list 가변 리스트 편집 모달
     const [flexListBlock, setFlexListBlock] = useState<HTMLElement | null>(null);
+    // filter-chip-group 필터 칩 편집 모달
+    const [filterChipBlock, setFilterChipBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -1034,6 +1037,37 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             });
         };
 
+        // ── filter-chip-group 필터 칩 편집 버튼 — .is-row-tool 주입 ────────────
+        const SPW_FCG_ROW_BTN_CLASS = 'spw-fcg-row-edit-btn';
+
+        const injectFcgEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_FCG_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_FCG_ROW_BTN_CLASS;
+            btn.title = '필터 칩 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M5 12H2"/><path d="M11 12h4"/><path d="M21 12h1"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="filter-chip-group"]');
+                if (block) setFilterChipBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateFcgRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_FCG_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isFcg = !!activeEl?.closest('[data-component-id^="filter-chip-group"]');
+                btn.style.display = isFcg ? 'flex' : 'none';
+            });
+        };
+
         // 슬라이드·아코디언 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
         const slideToolObserver = new MutationObserver((mutations) => {
             let needsRowToolVisibility = false;
@@ -1046,6 +1080,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                         injectMtgEditToRowTool(node);
                         injectBcEditToRowTool(node);
                         injectFlEditToRowTool(node);
+                        injectFcgEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
@@ -1053,6 +1088,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                         injectMtgEditToRowTool(t);
                         injectBcEditToRowTool(t);
                         injectFlEditToRowTool(t);
+                        injectFcgEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -1067,6 +1103,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                 updateMtgRowBtnVisibility();
                 updateBcRowBtnVisibility();
                 updateFlRowBtnVisibility();
+                updateFcgRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -1083,6 +1120,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             injectMtgEditToRowTool(t);
             injectBcEditToRowTool(t);
             injectFlEditToRowTool(t);
+            injectFcgEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
@@ -2342,6 +2380,11 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
 
             {/* ── flex-list 가변 리스트 편집 모달 ── */}
             {flexListBlock && <FlexListEditor blockEl={flexListBlock} onClose={() => setFlexListBlock(null)} />}
+
+            {/* ── filter-chip-group 필터 칩 편집 모달 ── */}
+            {filterChipBlock && (
+                <FilterChipGroupEditor blockEl={filterChipBlock} onClose={() => setFilterChipBlock(null)} />
+            )}
 
             {/* ── site-footer 드롭다운 편집 패널 ── */}
             {siteFooterBlock && (
