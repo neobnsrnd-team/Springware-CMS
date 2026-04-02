@@ -435,6 +435,74 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
     return [{ columns: [{ type: 'text', width: 'flex', lines: ['텍스트'] }] }];
 }
 
+// ── [숫자 input] + [단위 Select] 공용 컴포넌트 ──────────────────────────
+
+/** CSS 값 문자열("16px", "30%")에서 숫자와 단위를 분리 */
+function parseValueUnit(value: string, defaultUnit: string): { num: number; unit: string } {
+    const match = value.match(/^(-?\d*\.?\d+)\s*(px|%|rem|em|vw|vh)?$/);
+    if (match) {
+        return { num: parseFloat(match[1]), unit: match[2] || defaultUnit };
+    }
+    return { num: parseFloat(value) || 0, unit: defaultUnit };
+}
+
+function UnitInput({
+    value,
+    onChange,
+    units,
+    defaultUnit,
+    inputWidth = 42,
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    units: string[];
+    defaultUnit: string;
+    inputWidth?: number;
+}) {
+    const { num, unit } = parseValueUnit(value, defaultUnit);
+
+    return (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0 }}>
+            <input
+                type="number"
+                value={num}
+                onChange={(e) => onChange(`${e.target.value}${unit}`)}
+                style={{
+                    width: inputWidth,
+                    padding: '3px 4px',
+                    border: '1px solid #e5e7eb',
+                    borderRight: 'none',
+                    borderRadius: '4px 0 0 4px',
+                    fontSize: 10,
+                    fontFamily: FONT_FAMILY,
+                    outline: 'none',
+                }}
+            />
+            <select
+                value={unit}
+                onChange={(e) => onChange(`${num}${e.target.value}`)}
+                style={{
+                    padding: '3px 2px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0 4px 4px 0',
+                    fontSize: 9,
+                    fontFamily: FONT_FAMILY,
+                    background: '#f9fafb',
+                    color: '#6B7280',
+                    outline: 'none',
+                    cursor: 'pointer',
+                }}
+            >
+                {units.map((u) => (
+                    <option key={u} value={u}>
+                        {u}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+}
+
 // ── 스타일 상수 ───────────────────────────────────────────────────────────
 
 const S = {
@@ -649,27 +717,15 @@ function ColumnEditor({
                     ))}
                 </select>
 
-                {/* 커스텀 너비 입력 (숫자만 → 자동 %) */}
+                {/* 커스텀 너비 입력 — [숫자] + [단위 선택] */}
                 {col.width === 'custom' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <input
-                            type="number"
-                            min={1}
-                            max={100}
-                            value={parseInt(col.customWidth ?? '33', 10) || 33}
-                            onChange={(e) => onUpdate(colIdx, { ...col, customWidth: `${e.target.value}%` })}
-                            style={{
-                                width: 42,
-                                padding: '3px 4px',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: 4,
-                                fontSize: 11,
-                                fontFamily: FONT_FAMILY,
-                                outline: 'none',
-                            }}
-                        />
-                        <span style={{ fontSize: 10, color: '#9ca3af' }}>%</span>
-                    </div>
+                    <UnitInput
+                        value={col.customWidth ?? '33%'}
+                        onChange={(v) => onUpdate(colIdx, { ...col, customWidth: v })}
+                        units={['%', 'px', 'vw']}
+                        defaultUnit="%"
+                        inputWidth={42}
+                    />
                 )}
 
                 {/* 삭제 */}
@@ -1349,81 +1405,46 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                                 }}
                                             />
                                             <span style={{ fontSize: 10, color: '#6B7280' }}>상하</span>
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                max={100}
-                                                value={parseInt(row.padding?.split(' ')[0] ?? '16', 10) || 16}
-                                                onChange={(e) => {
-                                                    const tb = e.target.value || '16';
-                                                    const lr = parseInt(row.padding?.split(' ')[1] ?? '20', 10) || 20;
+                                            <UnitInput
+                                                value={row.padding?.split(' ')[0] ?? '16px'}
+                                                onChange={(v) => {
+                                                    const lr = row.padding?.split(' ')[1] ?? '20px';
                                                     setRows((prev) =>
                                                         prev.map((r, ri) =>
-                                                            ri === rowIdx ? { ...r, padding: `${tb}px ${lr}px` } : r,
+                                                            ri === rowIdx ? { ...r, padding: `${v} ${lr}` } : r,
                                                         ),
                                                     );
                                                 }}
-                                                style={{
-                                                    width: 36,
-                                                    padding: '3px 4px',
-                                                    border: '1px solid #e5e7eb',
-                                                    borderRadius: 4,
-                                                    fontSize: 10,
-                                                    fontFamily: FONT_FAMILY,
-                                                    outline: 'none',
-                                                }}
+                                                units={['px', '%', 'rem']}
+                                                defaultUnit="px"
+                                                inputWidth={36}
                                             />
                                             <span style={{ fontSize: 10, color: '#6B7280' }}>좌우</span>
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                max={100}
-                                                value={parseInt(row.padding?.split(' ')[1] ?? '20', 10) || 20}
-                                                onChange={(e) => {
-                                                    const tb = parseInt(row.padding?.split(' ')[0] ?? '16', 10) || 16;
-                                                    const lr = e.target.value || '20';
+                                            <UnitInput
+                                                value={row.padding?.split(' ')[1] ?? '20px'}
+                                                onChange={(v) => {
+                                                    const tb = row.padding?.split(' ')[0] ?? '16px';
                                                     setRows((prev) =>
                                                         prev.map((r, ri) =>
-                                                            ri === rowIdx ? { ...r, padding: `${tb}px ${lr}px` } : r,
+                                                            ri === rowIdx ? { ...r, padding: `${tb} ${v}` } : r,
                                                         ),
                                                     );
                                                 }}
-                                                style={{
-                                                    width: 36,
-                                                    padding: '3px 4px',
-                                                    border: '1px solid #e5e7eb',
-                                                    borderRadius: 4,
-                                                    fontSize: 10,
-                                                    fontFamily: FONT_FAMILY,
-                                                    outline: 'none',
-                                                }}
+                                                units={['px', '%', 'rem']}
+                                                defaultUnit="px"
+                                                inputWidth={36}
                                             />
-                                            <span style={{ fontSize: 9, color: '#9ca3af' }}>px</span>
                                             <span style={{ fontSize: 10, color: '#6B7280', marginLeft: 4 }}>간격</span>
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                max={100}
-                                                value={parseInt(row.gap ?? '12', 10) || 12}
-                                                onChange={(e) =>
+                                            <UnitInput
+                                                value={row.gap ?? '12px'}
+                                                onChange={(v) =>
                                                     setRows((prev) =>
-                                                        prev.map((r, ri) =>
-                                                            ri === rowIdx
-                                                                ? { ...r, gap: `${e.target.value || '12'}px` }
-                                                                : r,
-                                                        ),
+                                                        prev.map((r, ri) => (ri === rowIdx ? { ...r, gap: v } : r)),
                                                     )
                                                 }
-                                                style={{
-                                                    width: 36,
-                                                    padding: '3px 4px',
-                                                    border: '1px solid #e5e7eb',
-                                                    borderRadius: 4,
-                                                    fontSize: 10,
-                                                    fontFamily: FONT_FAMILY,
-                                                    outline: 'none',
-                                                }}
-                                                placeholder="12px"
+                                                units={['px', '%', 'rem']}
+                                                defaultUnit="px"
+                                                inputWidth={36}
                                             />
                                         </div>
                                         {/* 구분선 */}
