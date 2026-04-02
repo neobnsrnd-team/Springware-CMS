@@ -39,12 +39,7 @@ function parsePromoBannerSlides(root: HTMLElement): PromoBannerSlide[] {
         const ctaEl = inner?.querySelector('.pb-slide-cta') as HTMLAnchorElement | null;
         const bgImageMatch = (inner?.style.backgroundImage ?? '').match(/url\(['"]?([^'"]+)['"]?\)/);
         const rawBgImage = bgImageMatch?.[1];
-        const bgImage = rawBgImage
-            ? (() => {
-                  const s = rawBgImage.replace(/\\/g, '/');
-                  return s.startsWith('/') ? s : '/' + s;
-              })()
-            : undefined;
+        const bgImage = rawBgImage ? rawBgImage.replace(/\\/g, '/').replace(/^(?!\/)/, '/') : undefined;
         return {
             itemId: inner?.getAttribute('data-item-id') ?? `pb-${i + 1}`,
             bgColor: inner?.style.backgroundColor
@@ -110,7 +105,7 @@ function parseProductGalleryCards(root: HTMLElement, componentId: string): Produ
 
 function buildSlideHtml(slide: PromoBannerSlide): string {
     const bgImageStyle = slide.bgImage
-        ? `background-image:url('${slide.bgImage}');background-size:cover;background-position:center;`
+        ? `background-image:url("${slide.bgImage}");background-size:cover;background-position:center;`
         : '';
     return (
         `<div class="pb-slide" data-item-id="${slide.itemId}" style="position:relative;height:200px;border-radius:16px;background:${slide.bgColor};${bgImageStyle}">` +
@@ -650,8 +645,9 @@ function PromoSlidesEditor({
                                                 });
                                                 const data = await res.json();
                                                 if (data.url) {
-                                                    const rawUrl = (data.url as string).replace(/\\/g, '/');
-                                                    const absUrl = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
+                                                    const absUrl = (data.url as string)
+                                                        .replace(/\\/g, '/')
+                                                        .replace(/^(?!\/)/, '/');
                                                     update(idx, { bgImage: absUrl });
                                                 } else {
                                                     alert('이미지 업로드에 실패했습니다.');
