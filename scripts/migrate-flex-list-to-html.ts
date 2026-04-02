@@ -122,7 +122,7 @@ function buildColumnHtml(col: FlexListColumn): string {
     const widthStyle =
         col.width === 'custom' && col.customWidth ? `flex:0 0 ${col.customWidth};min-width:0;` :
         col.width === 'fixed' ? 'flex:0 0 40px;' :
-        col.width === 'auto'  ? 'flex:0 0 auto;text-align:right;' :
+        col.width === 'auto'  ? 'flex:0 0 auto;' :
                                 'flex:1;min-width:0;';
     const customWidthAttr = col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
 
@@ -135,7 +135,7 @@ function buildColumnHtml(col: FlexListColumn): string {
         typeof l === 'string' ? { text: l } : l,
     );
     const lineHtmls = lines.map((line, i) => {
-        const alignStyle = line.align && line.align !== 'left' ? `text-align:${line.align};` : '';
+        const alignStyle = `text-align:${line.align ?? 'left'};`;
         if (i === 0) {
             return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;${alignStyle}">${line.text}</span>`;
         }
