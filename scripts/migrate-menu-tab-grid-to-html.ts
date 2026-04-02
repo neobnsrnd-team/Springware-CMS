@@ -1,5 +1,5 @@
 // scripts/migrate-menu-tab-grid-to-html.ts
-// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226, #232 스크롤 앵커링 + Sticky)
+// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226, #232, #227 필터 칩 디자인)
 // 금융 앱 전체 메뉴 탭 그리드 (접기/펼치기) 컴포넌트
 // 실행: npx tsx scripts/migrate-menu-tab-grid-to-html.ts
 
@@ -46,8 +46,21 @@ const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" 
 
 // ── 탭바 항목 HTML ───────────────────────────────────────────────────────
 
-function buildTabBarItem(tab: TabItem, idx: number): string {
+function buildTabBarItem(tab: TabItem, idx: number, design: 'tab' | 'chip' = 'tab', chipColor = '#7C5CFC'): string {
     const isActive = idx === 0;
+
+    if (design === 'chip') {
+        const activeStyle = isActive
+            ? `background:${chipColor};color:#fff;border:none;`
+            : 'background:#fff;color:#666;border:1px solid #ddd;';
+        return (
+            `<span data-menu-tab data-tab-idx="${idx}"` +
+            ` ${isActive ? 'data-tab-active="true"' : ''}` +
+            ` style="display:inline-block;border-radius:20px;padding:8px 16px;font-size:14px;white-space:nowrap;cursor:pointer;${activeStyle}"` +
+            `>${tab.label}</span>`
+        );
+    }
+
     const activeStyle = isActive
         ? 'border-bottom:2px solid #1A1A2E;color:#1A1A2E;font-weight:700;'
         : 'border-bottom:2px solid transparent;color:#9CA3AF;font-weight:400;';
@@ -61,8 +74,20 @@ function buildTabBarItem(tab: TabItem, idx: number): string {
 
 // ── 그리드 항목 HTML ─────────────────────────────────────────────────────
 
-function buildGridItem(tab: TabItem, idx: number): string {
+function buildGridItem(tab: TabItem, idx: number, design: 'tab' | 'chip' = 'tab', chipColor = '#7C5CFC'): string {
     const isActive = idx === 0;
+
+    if (design === 'chip') {
+        const activeStyle = isActive
+            ? `background:${chipColor};color:#fff;border:none;`
+            : 'background:#fff;color:#666;border:1px solid #ddd;';
+        return (
+            `<span data-menu-grid-item data-grid-idx="${idx}"` +
+            ` style="display:inline-block;border-radius:20px;padding:8px 14px;font-size:13px;white-space:nowrap;cursor:pointer;${activeStyle}"` +
+            `>${tab.label}</span>`
+        );
+    }
+
     return (
         `<span data-menu-grid-item data-grid-idx="${idx}"` +
         ` style="display:block;padding:14px 4px;font-size:14px;color:${isActive ? '#1A1A2E' : '#4B5563'};` +
@@ -92,9 +117,11 @@ const TOGGLE_SCRIPT =
         `var tabBar=root.querySelector('[data-menu-tab-bar]');` +
         `var expanded=false;` +
 
-        // 탭 데이터 (앵커 스크롤용)
+        // 탭 데이터 (앵커 스크롤용) + 디자인 모드
         `var tabsData=[];` +
         `try{tabsData=JSON.parse(root.getAttribute('data-menu-tabs')||'[]');}catch(e){}` +
+        `var design=root.getAttribute('data-menu-design')||'tab';` +
+        `var chipColor=root.getAttribute('data-chip-active-color')||'#7C5CFC';` +
 
         // Sticky 모드 — .row 래퍼에 적용해야 .is-container 전체 높이 안에서 고정됨
         `var stickyRow=root.closest('.row');` +
@@ -122,8 +149,8 @@ const TOGGLE_SCRIPT =
         `function toggle(){` +
             `expanded=!expanded;` +
             `if(expanded){` +
-                `gridWrap.style.display='grid';` +
-                // requestAnimationFrame으로 display:grid 적용 후 maxHeight 설정
+                `gridWrap.style.display=design==='chip'?'flex':'grid';` +
+                `if(design==='chip')gridWrap.style.flexWrap='wrap';` +
                 `requestAnimationFrame(function(){` +
                     `gridWrap.style.maxHeight=gridWrap.scrollHeight+'px';` +
                 `});` +
@@ -158,19 +185,30 @@ const TOGGLE_SCRIPT =
         `function selectTab(idx,fromGrid){` +
             `allTabs.forEach(function(t){` +
                 `var isActive=t.getAttribute('data-tab-idx')===String(idx);` +
-                `t.style.borderBottomColor=isActive?'#1A1A2E':'transparent';` +
-                `t.style.color=isActive?'#1A1A2E':'#9CA3AF';` +
-                `t.style.fontWeight=isActive?'700':'400';` +
+                `if(design==='chip'){` +
+                    `t.style.background=isActive?chipColor:'#fff';` +
+                    `t.style.color=isActive?'#fff':'#666';` +
+                    `t.style.border=isActive?'none':'1px solid #ddd';` +
+                `}else{` +
+                    `t.style.borderBottomColor=isActive?'#1A1A2E':'transparent';` +
+                    `t.style.color=isActive?'#1A1A2E':'#9CA3AF';` +
+                    `t.style.fontWeight=isActive?'700':'400';` +
+                `}` +
                 `if(isActive){` +
                     `t.setAttribute('data-tab-active','true');` +
-                    // 선택된 탭이 보이도록 스크롤 (inline-start: 가능하면 왼쪽 정렬)
                     `t.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});` +
                 `}else{t.removeAttribute('data-tab-active');}` +
             `});` +
             `allGridItems.forEach(function(g){` +
                 `var isActive=g.getAttribute('data-grid-idx')===String(idx);` +
-                `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
-                `g.style.fontWeight=isActive?'700':'400';` +
+                `if(design==='chip'){` +
+                    `g.style.background=isActive?chipColor:'#fff';` +
+                    `g.style.color=isActive?'#fff':'#666';` +
+                    `g.style.border=isActive?'none':'1px solid #ddd';` +
+                `}else{` +
+                    `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
+                    `g.style.fontWeight=isActive?'700':'400';` +
+                `}` +
             `});` +
             // 그리드 펼쳐져 있으면 접기 → 접힘 애니메이션(300ms) 완료 후 스크롤
             `if(expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
@@ -194,6 +232,8 @@ function buildMenuTabGridHtml(tabs: TabItem[], componentId: string, extraStyle: 
         `<div data-component-id="${componentId}" data-spw-block` +
         ` data-menu-tabs="${tabsJson}"` +
         ` data-menu-sticky="false"` +
+        ` data-menu-design="tab"` +
+        ` data-chip-active-color="#7C5CFC"` +
         ` style="font-family:${FONT_FAMILY};background:#ffffff;${extraStyle}">` +
 
             // 탭바 래퍼 — overflow:hidden으로 스크롤 영역이 보이는 폭을 초과하지 않게 제한

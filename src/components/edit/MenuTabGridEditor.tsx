@@ -30,8 +30,19 @@ const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" 
 
 // ── 탭바 항목 HTML (마이그레이션 스크립트와 동일) ─────────────────────────
 
-function buildTabBarItem(tab: TabItem, idx: number): string {
+function buildTabBarItem(tab: TabItem, idx: number, design: 'tab' | 'chip' = 'tab', chipColor = '#7C5CFC'): string {
     const isActive = idx === 0;
+    if (design === 'chip') {
+        const activeStyle = isActive
+            ? `background:${chipColor};color:#fff;border:none;`
+            : 'background:#fff;color:#666;border:1px solid #ddd;';
+        return (
+            `<span data-menu-tab data-tab-idx="${idx}"` +
+            ` ${isActive ? 'data-tab-active="true"' : ''}` +
+            ` style="display:inline-block;border-radius:20px;padding:8px 16px;font-size:14px;white-space:nowrap;cursor:pointer;${activeStyle}"` +
+            `>${tab.label}</span>`
+        );
+    }
     const activeStyle = isActive
         ? 'border-bottom:2px solid #1A1A2E;color:#1A1A2E;font-weight:700;'
         : 'border-bottom:2px solid transparent;color:#9CA3AF;font-weight:400;';
@@ -43,8 +54,18 @@ function buildTabBarItem(tab: TabItem, idx: number): string {
     );
 }
 
-function buildGridItem(tab: TabItem, idx: number): string {
+function buildGridItem(tab: TabItem, idx: number, design: 'tab' | 'chip' = 'tab', chipColor = '#7C5CFC'): string {
     const isActive = idx === 0;
+    if (design === 'chip') {
+        const activeStyle = isActive
+            ? `background:${chipColor};color:#fff;border:none;`
+            : 'background:#fff;color:#666;border:1px solid #ddd;';
+        return (
+            `<span data-menu-grid-item data-grid-idx="${idx}"` +
+            ` style="display:inline-block;border-radius:20px;padding:8px 14px;font-size:13px;white-space:nowrap;cursor:pointer;${activeStyle}"` +
+            `>${tab.label}</span>`
+        );
+    }
     return (
         `<span data-menu-grid-item data-grid-idx="${idx}"` +
         ` style="display:block;padding:14px 4px;font-size:14px;color:${isActive ? '#1A1A2E' : '#4B5563'};` +
@@ -71,6 +92,8 @@ const TOGGLE_SCRIPT =
     `var expanded=false;` +
     `var tabsData=[];` +
     `try{tabsData=JSON.parse(root.getAttribute('data-menu-tabs')||'[]');}catch(e){}` +
+    `var design=root.getAttribute('data-menu-design')||'tab';` +
+    `var chipColor=root.getAttribute('data-chip-active-color')||'#7C5CFC';` +
     `var stickyRow=root.closest('.row');` +
     `var isSticky=root.getAttribute('data-menu-sticky')==='true';` +
     `if(isSticky&&stickyRow){` +
@@ -92,7 +115,8 @@ const TOGGLE_SCRIPT =
     `function toggle(){` +
     `expanded=!expanded;` +
     `if(expanded){` +
-    `gridWrap.style.display='grid';` +
+    `gridWrap.style.display=design==='chip'?'flex':'grid';` +
+    `if(design==='chip')gridWrap.style.flexWrap='wrap';` +
     `requestAnimationFrame(function(){gridWrap.style.maxHeight=gridWrap.scrollHeight+'px';});` +
     `chevron.style.transform='rotate(180deg)';` +
     `}else{` +
@@ -120,16 +144,28 @@ const TOGGLE_SCRIPT =
     `function selectTab(idx,fromGrid){` +
     `allTabs.forEach(function(t){` +
     `var isActive=t.getAttribute('data-tab-idx')===String(idx);` +
+    `if(design==='chip'){` +
+    `t.style.background=isActive?chipColor:'#fff';` +
+    `t.style.color=isActive?'#fff':'#666';` +
+    `t.style.border=isActive?'none':'1px solid #ddd';` +
+    `}else{` +
     `t.style.borderBottomColor=isActive?'#1A1A2E':'transparent';` +
     `t.style.color=isActive?'#1A1A2E':'#9CA3AF';` +
     `t.style.fontWeight=isActive?'700':'400';` +
+    `}` +
     `if(isActive){t.setAttribute('data-tab-active','true');t.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});}` +
     `else{t.removeAttribute('data-tab-active');}` +
     `});` +
     `allGridItems.forEach(function(g){` +
     `var isActive=g.getAttribute('data-grid-idx')===String(idx);` +
+    `if(design==='chip'){` +
+    `g.style.background=isActive?chipColor:'#fff';` +
+    `g.style.color=isActive?'#fff':'#666';` +
+    `g.style.border=isActive?'none':'1px solid #ddd';` +
+    `}else{` +
     `g.style.color=isActive?'#1A1A2E':'#4B5563';` +
     `g.style.fontWeight=isActive?'700':'400';` +
+    `}` +
     `});` +
     `if(expanded){toggle();setTimeout(function(){scrollToTarget(idx);},320);}` +
     `else{scrollToTarget(idx);}` +
@@ -146,21 +182,28 @@ const TOGGLE_SCRIPT =
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
 
 /** blockEl DOM을 새 탭 데이터로 갱신 */
-function applyToBlock(blockEl: HTMLElement, tabs: TabItem[], sticky: boolean) {
+function applyToBlock(
+    blockEl: HTMLElement,
+    tabs: TabItem[],
+    sticky: boolean,
+    design: 'tab' | 'chip' = 'tab',
+    chipColor = '#7C5CFC',
+) {
     blockEl.setAttribute('data-menu-tabs', JSON.stringify(tabs));
     blockEl.setAttribute('data-menu-sticky', String(sticky));
+    blockEl.setAttribute('data-menu-design', design);
+    blockEl.setAttribute('data-chip-active-color', chipColor);
 
-    // 탭바 갱신 — innerHTML로 완전 교체
-    // (insertAdjacentHTML을 쓰면 이전 구조의 잔여 요소 뒤에 탭이 추가되어 화면 밖으로 밀릴 수 있음)
+    // 탭바 갱신
     const scrollWrap = blockEl.querySelector<HTMLElement>('[data-menu-tab-scroll]');
     if (scrollWrap) {
-        scrollWrap.innerHTML = tabs.map((tab, i) => buildTabBarItem(tab, i)).join('');
+        scrollWrap.innerHTML = tabs.map((tab, i) => buildTabBarItem(tab, i, design, chipColor)).join('');
     }
 
     // 그리드 갱신
     const gridWrap = blockEl.querySelector<HTMLElement>('[data-menu-tab-grid]');
     if (gridWrap) {
-        gridWrap.innerHTML = tabs.map((tab, i) => buildGridItem(tab, i)).join('');
+        gridWrap.innerHTML = tabs.map((tab, i) => buildGridItem(tab, i, design, chipColor)).join('');
         gridWrap.style.display = 'none';
         gridWrap.style.maxHeight = '0';
     }
@@ -335,6 +378,10 @@ const S = {
 export default function MenuTabGridEditor({ blockEl, canvasBlocks, onClose }: Props) {
     const [tabs, setTabs] = useState<TabItem[]>(() => parseTabs(blockEl));
     const [sticky, setSticky] = useState(() => blockEl.getAttribute('data-menu-sticky') === 'true');
+    const [design, setDesign] = useState<'tab' | 'chip'>(
+        () => (blockEl.getAttribute('data-menu-design') as 'tab' | 'chip') || 'tab',
+    );
+    const [chipColor, setChipColor] = useState(() => blockEl.getAttribute('data-chip-active-color') || '#7C5CFC');
 
     // 메뉴 탭 그리드 자기 자신의 블록 인덱스 (드롭다운에서 제외용)
     // DOM에서 실제 .row 위치를 찾아야 동일 타입 복수 블록에서도 정확함
@@ -375,7 +422,7 @@ export default function MenuTabGridEditor({ blockEl, canvasBlocks, onClose }: Pr
     };
 
     const handleApply = () => {
-        applyToBlock(blockEl, tabs, sticky);
+        applyToBlock(blockEl, tabs, sticky, design, chipColor);
         onClose();
     };
 
@@ -419,6 +466,53 @@ export default function MenuTabGridEditor({ blockEl, canvasBlocks, onClose }: Pr
                     }}
                 >
                     탭 메뉴 항목을 추가·삭제·이름변경·순서변경하고, 연결할 블록을 선택합니다.
+                </div>
+
+                {/* 디자인 모드 선택 */}
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 14px',
+                        borderBottom: '1px solid #f3f4f6',
+                        flexShrink: 0,
+                    }}
+                >
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>디자인</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <select
+                            value={design}
+                            onChange={(e) => setDesign(e.target.value as 'tab' | 'chip')}
+                            style={{
+                                padding: '4px 8px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontFamily: FONT_FAMILY,
+                                background: '#fff',
+                            }}
+                        >
+                            <option value="tab">탭 메뉴</option>
+                            <option value="chip">필터 칩</option>
+                        </select>
+                        {design === 'chip' && (
+                            <input
+                                type="color"
+                                value={chipColor}
+                                onChange={(e) => setChipColor(e.target.value)}
+                                title="활성 색상"
+                                style={{
+                                    width: 28,
+                                    height: 28,
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: 6,
+                                    padding: 2,
+                                    cursor: 'pointer',
+                                }}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 {/* Sticky 토글 */}
