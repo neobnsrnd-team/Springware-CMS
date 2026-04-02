@@ -127,7 +127,7 @@ const PROMO_BANNER_MOBILE_HTML =
 
 // ── web variant ─────────────────────────────────────────────────────────────
 const PROMO_BANNER_WEB_HTML =
-    `<div data-component-id="promo-banner-web" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;max-width:960px;margin:0 auto;position:relative;">` +
+    `<div data-component-id="promo-banner-web" data-spw-block style="font-family:${FONT_FAMILY};background:#fff;border-radius:20px;width:100%;box-sizing:border-box;position:relative;">` +
         `<div data-pb-track style="display:flex;flex-direction:column;gap:12px;padding:12px;">` +
             SLIDES.map(slide =>
                 `<div data-pb-slide style="width:100%;">${buildSlide(slide)}</div>`,
