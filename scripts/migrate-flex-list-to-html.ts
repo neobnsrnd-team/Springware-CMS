@@ -1,9 +1,9 @@
 // scripts/migrate-flex-list-to-html.ts
-// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크, #245 이미지, #246 스타일, #256 정렬)
+// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244, #245, #246, #256, #262 통합)
 // 실행: npx tsx scripts/migrate-flex-list-to-html.ts
 
 import 'dotenv/config';
-import { getComponentById, updateComponent, createComponent } from '../src/db/repository/component.repository';
+import { getComponentById, updateComponent, createComponent, deleteComponent } from '../src/db/repository/component.repository';
 import { closePool } from '../src/db/connection';
 
 const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
@@ -79,15 +79,17 @@ function sanitizeImageSrc(url: string): string {
 
 // ── 이미지 HTML 빌더 ────────────────────────────────────────────────────
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'): string {
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string): string {
     const safeSrc = sanitizeImageSrc(src);
     const widthStyle =
+        width === 'custom' && customWidth ? `flex:0 0 ${customWidth};width:${customWidth};height:auto;` :
         width === 'fixed' ? 'flex:0 0 40px;width:40px;height:40px;' :
         width === 'auto'  ? 'flex:0 0 auto;width:48px;height:48px;' :
                             'flex:1;min-width:0;height:48px;';
+    const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
 
     return (
-        `<span data-fl-type="image" data-fl-width="${width}" data-fl-image-src="${safeSrc}"` +
+        `<span data-fl-type="image" data-fl-width="${width}"${customAttr} data-fl-image-src="${safeSrc}"` +
         ` style="${widthStyle}display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         (safeSrc
             ? `<img src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="" />`
@@ -116,7 +118,7 @@ function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex
 
 function buildColumnHtml(col: FlexListColumn): string {
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth);
     }
 
     const widthStyle =
@@ -213,32 +215,9 @@ function buildFlexListHtml(rows: FlexListRow[], componentId: string, extraStyle:
     );
 }
 
-// ── 프리셋 데이터 ────────────────────────────────────────────────────────
+// ── 기본 프리셋 데이터 (3컬럼: 아이콘 + 텍스트 + 금액/상태) ─────────────
 
-// 프리셋 1: 2컬럼 리스트 (아이콘 + 텍스트 3단)
-const PRESET_2COL: FlexListRow[] = [
-    {
-        columns: [
-            { type: 'icon', width: 'fixed', icon: 'card', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: [{ text: '신용카드 이용대금 결제' }, { text: '우리은행 1002-***-1234' }, { text: '2024.01.15' }] },
-        ],
-    },
-    {
-        columns: [
-            { type: 'icon', width: 'fixed', icon: 'transfer', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: [{ text: '이체 완료 알림' }, { text: '홍길동님에게 50,000원 이체' }, { text: '2024.01.14' }] },
-        ],
-    },
-    {
-        columns: [
-            { type: 'icon', width: 'fixed', icon: 'notification', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: [{ text: '적금 만기 안내' }, { text: 'IBK 자유적금 만기 D-7' }, { text: '2024.01.13' }] },
-        ],
-    },
-];
-
-// 프리셋 2: 3컬럼 리스트 (아이콘 + 텍스트 2단 + 금액/상태)
-const PRESET_3COL: FlexListRow[] = [
+const DEFAULT_ROWS: FlexListRow[] = [
     {
         columns: [
             { type: 'icon', width: 'fixed', icon: 'shopping', iconBg: '#E8F0FC' },
@@ -262,54 +241,10 @@ const PRESET_3COL: FlexListRow[] = [
     },
 ];
 
-// 프리셋 3: 텍스트 전용 (라벨 + 값)
-const PRESET_TEXT: FlexListRow[] = [
-    {
-        columns: [
-            { type: 'text', width: 'flex', lines: [{ text: '예금주' }] },
-            { type: 'text', width: 'auto', lines: [{ text: '홍길동' }] },
-        ],
-    },
-    {
-        columns: [
-            { type: 'text', width: 'flex', lines: [{ text: '계좌번호' }] },
-            { type: 'text', width: 'auto', lines: [{ text: '110-***-123456' }] },
-        ],
-    },
-    {
-        columns: [
-            { type: 'text', width: 'flex', lines: [{ text: '상품명' }] },
-            { type: 'text', width: 'auto', lines: [{ text: 'IBK 자유적금' }] },
-        ],
-    },
-    {
-        columns: [
-            { type: 'text', width: 'flex', lines: [{ text: '가입일' }] },
-            { type: 'text', width: 'auto', lines: [{ text: '2024.01.01' }] },
-        ],
-    },
-    {
-        columns: [
-            { type: 'text', width: 'flex', lines: [{ text: '만기일' }] },
-            { type: 'text', width: 'auto', lines: [{ text: '2025.01.01' }] },
-        ],
-    },
-];
+// ── 1종 × 3 viewmode = 3 variant ────────────────────────────────────────
 
-// ── 3 프리셋 × 3 viewmode = 9 variant ──────────────────────────────────
-
-interface Preset {
-    key: string;
-    label: string;
-    description: string;
-    rows: FlexListRow[];
-}
-
-const PRESETS: Preset[] = [
-    { key: 'flex-list-2col', label: '가변 리스트 (2컬럼)', description: '아이콘 + 텍스트 리스트', rows: PRESET_2COL },
-    { key: 'flex-list-3col', label: '가변 리스트 (3컬럼)', description: '아이콘 + 텍스트 + 금액 리스트', rows: PRESET_3COL },
-    { key: 'flex-list-text', label: '가변 리스트 (텍스트)', description: '라벨 + 값 텍스트 리스트', rows: PRESET_TEXT },
-];
+const COMPONENT_LABEL = '가변 리스트';
+const COMPONENT_DESC = '아이콘·텍스트·이미지 자유 조합 리스트';
 
 const VIEW_MODES = ['mobile', 'web', 'responsive'] as const;
 
@@ -319,29 +254,32 @@ const EXTRA_STYLES: Record<string, string> = {
     responsive: 'width:100%;box-sizing:border-box;',
 };
 
-interface Variant {
-    id: string;
-    html: string;
-    viewMode: typeof VIEW_MODES[number];
-    label: string;
-    description: string;
-    presetKey: string;
-}
+const VARIANTS = VIEW_MODES.map((viewMode) => ({
+    id: `flex-list-${viewMode}`,
+    html: buildFlexListHtml(DEFAULT_ROWS, `flex-list-${viewMode}`, EXTRA_STYLES[viewMode]),
+    viewMode,
+}));
 
-const VARIANTS: Variant[] = PRESETS.flatMap((preset) =>
-    VIEW_MODES.map((viewMode) => ({
-        id: `${preset.key}-${viewMode}`,
-        html: buildFlexListHtml(preset.rows, `${preset.key}-${viewMode}`, EXTRA_STYLES[viewMode]),
-        viewMode,
-        label: preset.label,
-        description: preset.description,
-        presetKey: preset.key,
-    })),
-);
+// 구버전 프리셋 컴포넌트 ID (DB에서 삭제 대상)
+const DEPRECATED_IDS = [
+    'flex-list-2col-mobile', 'flex-list-2col-web', 'flex-list-2col-responsive',
+    'flex-list-3col-mobile', 'flex-list-3col-web', 'flex-list-3col-responsive',
+    'flex-list-text-mobile', 'flex-list-text-web', 'flex-list-text-responsive',
+];
 
 // ── DB 등록 ───────────────────────────────────────────────────────────────
 
 async function main() {
+    // 구버전 프리셋 컴포넌트 삭제
+    for (const id of DEPRECATED_IDS) {
+        const exists = await getComponentById(id);
+        if (exists) {
+            await deleteComponent(id, 'system');
+            console.log(`🗑️ ${id} — 삭제 완료`);
+        }
+    }
+
+    // 신규/업데이트 등록
     for (const variant of VARIANTS) {
         const existing = await getComponentById(variant.id);
 
@@ -353,9 +291,9 @@ async function main() {
                 componentThumbnail: existing.COMPONENT_THUMBNAIL ?? undefined,
                 data: {
                     ...(existing.DATA ?? {}) as Record<string, unknown>,
-                    id:          variant.presetKey,
-                    label:       variant.label,
-                    description: variant.description,
+                    id:          'flex-list',
+                    label:       COMPONENT_LABEL,
+                    description: COMPONENT_DESC,
                     preview:     '/assets/minimalist-blocks/preview/ibk-flex-list.svg',
                     html:        variant.html,
                     viewMode:    variant.viewMode,
@@ -370,9 +308,9 @@ async function main() {
                 viewMode:           variant.viewMode,
                 componentThumbnail: '/assets/minimalist-blocks/preview/ibk-flex-list.svg',
                 data: {
-                    id:          variant.presetKey,
-                    label:       variant.label,
-                    description: variant.description,
+                    id:          'flex-list',
+                    label:       COMPONENT_LABEL,
+                    description: COMPONENT_DESC,
                     preview:     '/assets/minimalist-blocks/preview/ibk-flex-list.svg',
                     html:        variant.html,
                     viewMode:    variant.viewMode,
