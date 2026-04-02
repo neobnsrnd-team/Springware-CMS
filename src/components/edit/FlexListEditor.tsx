@@ -476,6 +476,7 @@ function UnitInput({
                     fontSize: 10,
                     fontFamily: FONT_FAMILY,
                     outline: 'none',
+                    background: '#fff',
                 }}
             />
             <select
@@ -1561,6 +1562,7 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                                             fontSize: 10,
                                                             fontFamily: FONT_FAMILY,
                                                             outline: 'none',
+                                                            background: '#fff',
                                                         }}
                                                     />
                                                     <span style={{ fontSize: 10, color: '#9ca3af' }}>px</span>
