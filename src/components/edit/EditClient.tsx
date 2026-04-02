@@ -853,6 +853,10 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                     const cl = (mutation.target as HTMLElement).classList;
                     if (cl.contains('icon-active') || cl.contains('elm-active')) {
                         needsVisibilityUpdate = true;
+                        // branch-locator 블록 활성 시 편집 패널 자동 오픈
+                        const target = mutation.target as HTMLElement;
+                        const block = target.closest<HTMLElement>('[data-component-id^="branch-locator"]');
+                        if (block) setBranchLocatorBlock(block);
                     }
                 }
             });
