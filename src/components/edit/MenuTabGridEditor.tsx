@@ -112,6 +112,10 @@ const TOGGLE_SCRIPT =
     `var styleEl=document.createElement('style');` +
     `styleEl.textContent='[data-mtg-id=\"'+styleId+'\"]::-webkit-scrollbar{display:none}';` +
     `root.appendChild(styleEl);` +
+    `if(design==='chip'){` +
+    `scrollWrap.style.padding='8px 48px 8px 16px';` +
+    `tabBar.style.borderBottom='none';` +
+    `}` +
     `function toggle(){` +
     `expanded=!expanded;` +
     `if(design==='chip'){` +
@@ -509,7 +513,7 @@ export default function MenuTabGridEditor({ blockEl, canvasBlocks, onClose }: Pr
                             }}
                         >
                             <option value="tab">탭 메뉴</option>
-                            <option value="chip">필터 칩</option>
+                            <option value="chip">칩 버튼</option>
                         </select>
                         {design === 'chip' && (
                             <input

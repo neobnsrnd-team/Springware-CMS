@@ -1,5 +1,5 @@
 // scripts/migrate-menu-tab-grid-to-html.ts
-// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226, #232, #227 필터 칩 디자인)
+// menu-tab-grid 컴포넌트 등록/업데이트 (Issue #226, #232, #227 칩 버튼 디자인)
 // 금융 앱 전체 메뉴 탭 그리드 (접기/펼치기) 컴포넌트
 // 실행: npx tsx scripts/migrate-menu-tab-grid-to-html.ts
 
@@ -145,11 +145,17 @@ const TOGGLE_SCRIPT =
         `styleEl.textContent='[data-mtg-id=\"'+styleId+'\"]::-webkit-scrollbar{display:none}';` +
         `root.appendChild(styleEl);` +
 
+        // 칩 버튼 모드: 접힌 상태에서 위아래 여백 추가
+        `if(design==='chip'){` +
+            `scrollWrap.style.padding='8px 48px 8px 16px';` +
+            `tabBar.style.borderBottom='none';` +
+        `}` +
+
         // 펼치기/접기 토글
         `function toggle(){` +
             `expanded=!expanded;` +
             `if(design==='chip'){` +
-                // 칩 모드: gridWrap 안 쓰고 scrollWrap 자체를 flex-wrap 전환
+                // 칩 버튼 모드: gridWrap 안 쓰고 scrollWrap 자체를 flex-wrap 전환
                 `if(expanded){` +
                     `scrollWrap.style.overflowX='visible';` +
                     `scrollWrap.style.whiteSpace='normal';` +
