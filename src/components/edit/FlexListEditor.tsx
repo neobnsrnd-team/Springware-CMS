@@ -265,12 +265,7 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
 
 function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
-    // _showStyle 임시 필드 제거 후 저장
-    const cleanRows = rows.map(({ ...r }) => {
-        delete (r as Record<string, unknown>)['_showStyle'];
-        return r;
-    });
-    blockEl.setAttribute('data-fl-rows', JSON.stringify(cleanRows));
+    blockEl.setAttribute('data-fl-rows', JSON.stringify(rows));
 
     // 기존 행 제거 (<a> 또는 <div data-fl-link-mode>)
     blockEl.querySelectorAll(':scope > a, :scope > div[data-fl-link-mode]').forEach((el) => el.remove());
@@ -441,9 +436,10 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
 function parseValueUnit(value: string, defaultUnit: string): { num: number; unit: string } {
     const match = value.match(/^(-?\d*\.?\d+)\s*(px|%|rem|em|vw|vh)?$/);
     if (match) {
-        return { num: parseFloat(match[1]), unit: match[2] || defaultUnit };
+        const num = Math.max(0, parseFloat(match[1])); // 음수 방어
+        return { num, unit: match[2] || defaultUnit };
     }
-    return { num: parseFloat(value) || 0, unit: defaultUnit };
+    return { num: Math.max(0, parseFloat(value) || 0), unit: defaultUnit };
 }
 
 function UnitInput({
@@ -466,7 +462,10 @@ function UnitInput({
             <input
                 type="number"
                 value={num}
-                onChange={(e) => onChange(`${e.target.value}${unit}`)}
+                onChange={(e) => {
+                    const v = Math.max(0, Number(e.target.value) || 0);
+                    onChange(`${v}${unit}`);
+                }}
                 style={{
                     width: inputWidth,
                     padding: '3px 4px',
@@ -1029,6 +1028,17 @@ function ColumnEditor({
 export default function FlexListEditor({ blockEl, onClose }: Props) {
     const [rows, setRows] = useState<FlexListRow[]>(() => parseRows(blockEl));
 
+    // 스타일 설정 펼침 상태 — UI 전용, 데이터 모델과 분리
+    const [expandedStyles, setExpandedStyles] = useState<Set<number>>(() => new Set());
+    const toggleStyleExpand = useCallback((rowIdx: number) => {
+        setExpandedStyles((prev) => {
+            const next = new Set(prev);
+            if (next.has(rowIdx)) next.delete(rowIdx);
+            else next.add(rowIdx);
+            return next;
+        });
+    }, []);
+
     // 이미지 파일 선택 대기 상태 — 어떤 행/컬럼이 파일 피커 결과를 기다리는지 추적
     const pendingImagePick = useRef<{ rowIdx: number; colIdx: number } | null>(null);
 
@@ -1327,20 +1337,7 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                             <div style={{ borderBottom: '1px solid #f3f4f6' }}>
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        // 토글: _showStyle 필드를 state에서 관리
-                                        setRows((prev) =>
-                                            prev.map((r, ri) =>
-                                                ri === rowIdx
-                                                    ? ({
-                                                          ...r,
-                                                          _showStyle: !(r as FlexListRow & { _showStyle?: boolean })
-                                                              ._showStyle,
-                                                      } as FlexListRow)
-                                                    : r,
-                                            ),
-                                        );
-                                    }}
+                                    onClick={() => toggleStyleExpand(rowIdx)}
                                     style={{
                                         width: '100%',
                                         padding: '6px 10px',
@@ -1358,9 +1355,7 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                 >
                                     <span
                                         style={{
-                                            transform: (row as FlexListRow & { _showStyle?: boolean })._showStyle
-                                                ? 'rotate(90deg)'
-                                                : 'none',
+                                            transform: expandedStyles.has(rowIdx) ? 'rotate(90deg)' : 'none',
                                             transition: 'transform 0.15s',
                                             fontSize: 10,
                                         }}
@@ -1369,7 +1364,7 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                     </span>
                                     스타일 설정
                                 </button>
-                                {(row as FlexListRow & { _showStyle?: boolean })._showStyle && (
+                                {expandedStyles.has(rowIdx) && (
                                     <div
                                         style={{
                                             padding: '8px 10px',
