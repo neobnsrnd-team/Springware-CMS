@@ -47,7 +47,9 @@ function parsePromoBannerSlides(root: HTMLElement): PromoBannerSlide[] {
             : undefined;
         return {
             itemId: inner?.getAttribute('data-item-id') ?? `pb-${i + 1}`,
-            bgColor: inner?.style.background ?? '',
+            bgColor: inner?.style.backgroundColor
+                ? rgbToHex(inner.style.backgroundColor)
+                : (inner?.style.background ?? '').replace(/url\(.*?\)\s*/g, '').trim(),
             bgImage,
             badge: inner?.querySelector('.pb-badge')?.textContent ?? '',
             title: inner?.querySelector('.pb-slide-title')?.textContent ?? '',
