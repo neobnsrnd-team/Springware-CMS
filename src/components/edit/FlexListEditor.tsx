@@ -1,5 +1,5 @@
 // src/components/edit/FlexListEditor.tsx
-// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지, #246 스타일)
+// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지, #246 스타일, #256 정렬)
 // 행 추가·삭제·순서변경, 컬럼 추가·삭제, 타입 토글, 너비 선택, 아이콘 프리셋, 텍스트 행 관리
 
 'use client';
@@ -8,15 +8,20 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
+interface FlexListLine {
+    text: string;
+    align?: 'left' | 'center' | 'right';
+}
+
 interface FlexListColumn {
     type: 'icon' | 'text' | 'image';
     width: 'fixed' | 'flex' | 'auto' | 'custom';
     icon?: string;
     iconBg?: string;
-    lines?: string[];
-    href?: string; // linkMode=column일 때 개별 링크 URL
-    imageSrc?: string; // type=image: 이미지 URL
-    customWidth?: string; // width=custom일 때 값 (예: '30%')
+    lines?: FlexListLine[];
+    href?: string;
+    imageSrc?: string;
+    customWidth?: string;
 }
 
 interface FlexListRow {
@@ -201,17 +206,20 @@ function buildColumnHtml(col: FlexListColumn): string {
             : col.width === 'fixed'
               ? 'flex:0 0 40px;'
               : col.width === 'auto'
-                ? 'flex:0 0 auto;text-align:right;'
+                ? 'flex:0 0 auto;'
                 : 'flex:1;min-width:0;';
     const customWidthAttr =
         col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
 
-    const lines = col.lines ?? ['텍스트'];
-    const lineHtmls = lines.map((text, i) => {
+    const lines: FlexListLine[] = (col.lines ?? [{ text: '텍스트' }]).map((l) =>
+        typeof l === 'string' ? { text: l } : l,
+    );
+    const lineHtmls = lines.map((line, i) => {
+        const alignStyle = `text-align:${line.align ?? 'left'};`;
         if (i === 0) {
-            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;">${text}</span>`;
+            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;${alignStyle}">${line.text}</span>`;
         }
-        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;">${text}</span>`;
+        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;${alignStyle}">${line.text}</span>`;
     });
 
     return (
@@ -343,10 +351,13 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                 }
                 if (flType === 'text') {
                     const lineSpans = span.querySelectorAll<HTMLElement>(':scope > span');
-                    const lines =
+                    const lines: FlexListLine[] =
                         lineSpans.length > 0
-                            ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
-                            : [span.textContent?.trim() ?? '텍스트'];
+                            ? Array.from(lineSpans).map((ls) => ({
+                                  text: ls.textContent?.trim() ?? '',
+                                  align: (ls.style.textAlign as 'left' | 'center' | 'right') || undefined,
+                              }))
+                            : [{ text: span.textContent?.trim() ?? '텍스트' }];
                     const width = (span.getAttribute('data-fl-width') || 'flex') as
                         | 'fixed'
                         | 'flex'
@@ -382,10 +393,13 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
 
                 // 텍스트 컬럼 heuristic
                 const lineSpans = span.querySelectorAll<HTMLElement>(':scope > span');
-                const lines =
+                const lines: FlexListLine[] =
                     lineSpans.length > 0
-                        ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
-                        : [span.textContent?.trim() ?? '텍스트'];
+                        ? Array.from(lineSpans).map((ls) => ({
+                              text: ls.textContent?.trim() ?? '',
+                              align: (ls.style.textAlign as 'left' | 'center' | 'right') || undefined,
+                          }))
+                        : [{ text: span.textContent?.trim() ?? '텍스트' }];
                 const flex = span.style.flex;
                 let width: 'fixed' | 'flex' | 'auto' = 'flex';
                 if (flex.startsWith('0 0 40px')) width = 'fixed';
@@ -398,7 +412,7 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                 columns:
                     columns.length > 0
                         ? columns
-                        : [{ type: 'text' as const, width: 'flex' as const, lines: ['텍스트'] }],
+                        : [{ type: 'text' as const, width: 'flex' as const, lines: [{ text: '텍스트' }] }],
                 linkMode,
                 rowHref,
                 bgColor: rowEl.getAttribute('data-fl-bg') || undefined,
@@ -427,7 +441,7 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
         }
     }
 
-    return [{ columns: [{ type: 'text', width: 'flex', lines: ['텍스트'] }] }];
+    return [{ columns: [{ type: 'text', width: 'flex', lines: [{ text: '텍스트' }] }] }];
 }
 
 // ── [숫자 input] + [단위 Select] 공용 컴포넌트 ──────────────────────────
@@ -675,7 +689,7 @@ function ColumnEditor({
                         } else if (type === 'image') {
                             onUpdate(colIdx, { type, width: 'fixed', imageSrc: '' });
                         } else {
-                            onUpdate(colIdx, { type, width: 'flex', lines: ['텍스트'] });
+                            onUpdate(colIdx, { type, width: 'flex', lines: [{ text: '텍스트' }] });
                         }
                     }}
                     style={{
@@ -927,61 +941,102 @@ function ColumnEditor({
             {/* 텍스트 컬럼 상세 */}
             {col.type === 'text' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {(col.lines ?? ['텍스트']).map((line, lineIdx) => (
-                        <div key={lineIdx} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <span style={{ fontSize: 10, color: '#9ca3af', minWidth: 14 }}>L{lineIdx + 1}</span>
-                            <input
-                                type="text"
-                                value={line}
-                                onChange={(e) => {
-                                    const newLines = [...(col.lines ?? ['텍스트'])];
-                                    newLines[lineIdx] = e.target.value;
-                                    onUpdate(colIdx, { ...col, lines: newLines });
-                                }}
-                                style={{
-                                    flex: 1,
-                                    padding: '4px 8px',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: 4,
-                                    fontSize: 12,
-                                    fontFamily: FONT_FAMILY,
-                                    outline: 'none',
-                                    minWidth: 0,
-                                }}
-                                placeholder="텍스트"
-                            />
-                            <button
-                                type="button"
-                                title="행 삭제"
-                                disabled={(col.lines ?? []).length <= 1}
-                                onClick={() => {
-                                    const newLines = (col.lines ?? ['텍스트']).filter((_, i) => i !== lineIdx);
-                                    onUpdate(colIdx, { ...col, lines: newLines });
-                                }}
-                                style={{
-                                    ...S.deleteBtn,
-                                    width: 20,
-                                    height: 20,
-                                    opacity: (col.lines ?? []).length <= 1 ? 0.35 : 1,
-                                }}
-                            >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    width="9"
-                                    height="9"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
+                    {(col.lines ?? [{ text: '텍스트' }]).map((line, lineIdx) => {
+                        const lineObj: FlexListLine = typeof line === 'string' ? { text: line } : line;
+                        return (
+                            <div key={lineIdx} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ fontSize: 10, color: '#9ca3af', minWidth: 14 }}>L{lineIdx + 1}</span>
+                                <input
+                                    type="text"
+                                    value={lineObj.text}
+                                    onChange={(e) => {
+                                        const newLines = [...(col.lines ?? [{ text: '텍스트' }])];
+                                        newLines[lineIdx] = { ...lineObj, text: e.target.value };
+                                        onUpdate(colIdx, { ...col, lines: newLines });
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '4px 8px',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: 4,
+                                        fontSize: 12,
+                                        fontFamily: FONT_FAMILY,
+                                        outline: 'none',
+                                        minWidth: 0,
+                                    }}
+                                    placeholder="텍스트"
+                                />
+                                {/* 정렬 버튼 L / C / R */}
+                                {(['left', 'center', 'right'] as const).map((a) => (
+                                    <button
+                                        key={a}
+                                        type="button"
+                                        title={a === 'left' ? '좌측' : a === 'center' ? '가운데' : '우측'}
+                                        onClick={() => {
+                                            const newLines = [...(col.lines ?? [{ text: '텍스트' }])];
+                                            newLines[lineIdx] = { ...lineObj, align: a };
+                                            onUpdate(colIdx, { ...col, lines: newLines });
+                                        }}
+                                        style={{
+                                            width: 18,
+                                            height: 18,
+                                            border: 'none',
+                                            borderRadius: 3,
+                                            background: (lineObj.align ?? 'left') === a ? '#0046A4' : '#e5e7eb',
+                                            color: (lineObj.align ?? 'left') === a ? '#fff' : '#6B7280',
+                                            cursor: 'pointer',
+                                            fontSize: 9,
+                                            fontWeight: 700,
+                                            padding: 0,
+                                            flexShrink: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        {a === 'left' ? 'L' : a === 'center' ? 'C' : 'R'}
+                                    </button>
+                                ))}
+                                <button
+                                    type="button"
+                                    title="행 삭제"
+                                    disabled={(col.lines ?? []).length <= 1}
+                                    onClick={() => {
+                                        const newLines = (col.lines ?? [{ text: '텍스트' }]).filter(
+                                            (_, i) => i !== lineIdx,
+                                        );
+                                        onUpdate(colIdx, { ...col, lines: newLines });
+                                    }}
+                                    style={{
+                                        ...S.deleteBtn,
+                                        width: 20,
+                                        height: 20,
+                                        opacity: (col.lines ?? []).length <= 1 ? 0.35 : 1,
+                                    }}
                                 >
-                                    <path d="M18 6 6 18M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    ))}
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        width="9"
+                                        height="9"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                    >
+                                        <path d="M18 6 6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        );
+                    })}
                     <button
                         type="button"
-                        onClick={() => onUpdate(colIdx, { ...col, lines: [...(col.lines ?? ['텍스트']), '새 텍스트'] })}
+                        onClick={() =>
+                            onUpdate(colIdx, {
+                                ...col,
+                                lines: [...(col.lines ?? [{ text: '텍스트' }]), { text: '새 텍스트' }],
+                            })
+                        }
                         style={{
                             fontSize: 11,
                             color: '#0046A4',
@@ -1090,14 +1145,17 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         setRows((prev) =>
             prev.map((row, ri) =>
                 ri === rowIdx
-                    ? { ...row, columns: [...row.columns, { type: 'text', width: 'flex', lines: ['새 텍스트'] }] }
+                    ? {
+                          ...row,
+                          columns: [...row.columns, { type: 'text', width: 'flex', lines: [{ text: '새 텍스트' }] }],
+                      }
                     : row,
             ),
         );
     }, []);
 
     const handleAddRow = () => {
-        setRows((prev) => [...prev, { columns: [{ type: 'text', width: 'flex', lines: ['새 항목'] }] }]);
+        setRows((prev) => [...prev, { columns: [{ type: 'text', width: 'flex', lines: [{ text: '새 항목' }] }] }]);
     };
 
     const handleDeleteRow = (idx: number) => {
