@@ -323,7 +323,7 @@ export async function updatePageRollback(pageId: string, version: number, lastMo
         throw new Error(`버전 ${version}에 해당하는 이력이 존재하지 않습니다.`);
     }
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_ROLLBACK, { pageId, version, lastModifierId });
+        await conn.execute(PAGE_ROLLBACK, { pageId, filePath: history.FILE_PATH, lastModifierId });
     });
 }
 
