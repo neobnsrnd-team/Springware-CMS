@@ -78,12 +78,17 @@ export const PAGE_HISTORY_SELECT_LIST = `
   ORDER BY VERSION DESC
 `;
 
-/** FILE_PATH로 HISTORY VERSION 역조회 (롤백 후 배포 fileId 결정용) */
+/** FILE_PATH로 HISTORY VERSION 역조회 (롤백 후 배포 fileId 결정용) — 동일 FILE_PATH가 여러 버전에 존재할 경우 최신 버전 반환 */
 export const PAGE_HISTORY_SELECT_VERSION_BY_FILE_PATH = `
   SELECT VERSION
-  FROM SPW_CMS_PAGE_HISTORY
-  WHERE PAGE_ID   = :pageId
-    AND FILE_PATH = :filePath
+  FROM (
+    SELECT VERSION
+    FROM SPW_CMS_PAGE_HISTORY
+    WHERE PAGE_ID   = :pageId
+      AND FILE_PATH = :filePath
+    ORDER BY VERSION DESC
+  )
+  WHERE ROWNUM = 1
 `;
 
 /** 페이지별 이력 존재 여부 (삭제 정책 판단용) */
