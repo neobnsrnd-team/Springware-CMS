@@ -853,11 +853,13 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                     const cl = (mutation.target as HTMLElement).classList;
                     if (cl.contains('icon-active') || cl.contains('elm-active')) {
                         needsVisibilityUpdate = true;
+                        const activeEl = mutation.target as HTMLElement;
                         // branch-locator 블록 활성 시 편집 패널 자동 오픈
-                        const block = (mutation.target as HTMLElement).closest<HTMLElement>(
-                            '[data-component-id^="branch-locator"]',
-                        );
-                        if (block) setBranchLocatorBlock(block);
+                        const branchBlock = activeEl.closest<HTMLElement>('[data-component-id^="branch-locator"]');
+                        if (branchBlock) setBranchLocatorBlock(branchBlock);
+                        // media-video 블록 활성 시 영상 URL 편집 모달 자동 오픈
+                        const mediaBlock = activeEl.closest<HTMLElement>('[data-component-id^="media-video"]');
+                        if (mediaBlock) setMediaVideoBlock(mediaBlock);
                     }
                 }
             });
