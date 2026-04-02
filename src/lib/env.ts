@@ -31,6 +31,11 @@ export const GEMINI_API_KEY = optionalEnv('GEMINI_API_KEY');
 export const UPLOAD_PATH_ENV = optionalEnv('UPLOAD_PATH', 'public/uploads/');
 export const UPLOAD_URL_ENV = optionalEnv('UPLOAD_URL', 'uploads/');
 
+// ── git 자동 커밋·푸시 ──
+export const GIT_AUTO_COMMIT = optionalEnv('GIT_AUTO_COMMIT', 'false');
+export const GIT_USER_NAME = optionalEnv('GIT_USER_NAME', 'Springware CMS');
+export const GIT_USER_EMAIL = optionalEnv('GIT_USER_EMAIL', 'cms@springware.local');
+
 // ── Oracle DB ──
 export const ORACLE_USER = optionalEnv('ORACLE_USER');
 export const ORACLE_PASSWORD = optionalEnv('ORACLE_PASSWORD');
