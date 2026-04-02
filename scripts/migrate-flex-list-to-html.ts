@@ -93,11 +93,14 @@ function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'
 
 // ── 아이콘 HTML 빌더 ─────────────────────────────────────────────────────
 
-function buildIconHtml(iconKey: string, bgColor: string): string {
+function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string): string {
     const svg = ICONS[iconKey] ?? ICONS['check'];
+    const size = (width === 'custom' && customWidth) ? customWidth : '40px';
+    const flexBasis = (width === 'custom' && customWidth) ? customWidth : '40px';
     return (
         `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
-        ` style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
+        (width === 'custom' && customWidth ? ` data-fl-width="custom" data-fl-custom-width="${customWidth}"` : '') +
+        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:50%;` +
         `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
@@ -119,7 +122,7 @@ function buildColumnHtml(col: FlexListColumn): string {
     const customWidthAttr = col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
 
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC');
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth);
     }
 
     // 텍스트 컬럼 — 다층 행

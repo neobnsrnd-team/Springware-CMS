@@ -167,11 +167,19 @@ function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'
 
 // ── HTML 빌더 (마이그레이션 스크립트와 동기화) ──────────────────────────
 
-function buildIconHtml(iconKey: string, bgColor: string): string {
+function buildIconHtml(
+    iconKey: string,
+    bgColor: string,
+    width?: 'fixed' | 'flex' | 'auto' | 'custom',
+    customWidth?: string,
+): string {
     const svg = ICONS_20[iconKey] ?? ICONS_20['check'];
+    const size = width === 'custom' && customWidth ? customWidth : '40px';
+    const flexBasis = width === 'custom' && customWidth ? customWidth : '40px';
     return (
         `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
-        ` style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
+        (width === 'custom' && customWidth ? ` data-fl-width="custom" data-fl-custom-width="${customWidth}"` : '') +
+        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:50%;` +
         `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
@@ -180,7 +188,7 @@ function buildIconHtml(iconKey: string, bgColor: string): string {
 
 function buildColumnHtml(col: FlexListColumn): string {
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC');
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth);
     }
 
     if (col.type === 'image') {
@@ -316,9 +324,15 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                 // ── data-fl-* 속성 기반 (신규 HTML) ──
                 const flType = span.getAttribute('data-fl-type');
                 if (flType === 'icon') {
+                    const iconWidth = (span.getAttribute('data-fl-width') || 'fixed') as
+                        | 'fixed'
+                        | 'flex'
+                        | 'auto'
+                        | 'custom';
                     return {
                         type: 'icon' as const,
-                        width: 'fixed' as const,
+                        width: iconWidth,
+                        customWidth: span.getAttribute('data-fl-custom-width') || undefined,
                         icon: span.getAttribute('data-fl-icon') || 'check',
                         iconBg: span.getAttribute('data-fl-icon-bg') || '#E8F0FC',
                         href: colHref,
@@ -635,23 +649,27 @@ function ColumnEditor({
                     ))}
                 </select>
 
-                {/* 커스텀 너비 입력 */}
+                {/* 커스텀 너비 입력 (숫자만 → 자동 %) */}
                 {col.width === 'custom' && (
-                    <input
-                        type="text"
-                        value={col.customWidth ?? '33%'}
-                        onChange={(e) => onUpdate(colIdx, { ...col, customWidth: e.target.value })}
-                        style={{
-                            width: 50,
-                            padding: '3px 6px',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            fontFamily: FONT_FAMILY,
-                            outline: 'none',
-                        }}
-                        placeholder="30%"
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={parseInt(col.customWidth ?? '33', 10) || 33}
+                            onChange={(e) => onUpdate(colIdx, { ...col, customWidth: `${e.target.value}%` })}
+                            style={{
+                                width: 42,
+                                padding: '3px 4px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: 4,
+                                fontSize: 11,
+                                fontFamily: FONT_FAMILY,
+                                outline: 'none',
+                            }}
+                        />
+                        <span style={{ fontSize: 10, color: '#9ca3af' }}>%</span>
+                    </div>
                 )}
 
                 {/* 삭제 */}
@@ -1330,46 +1348,75 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                                     cursor: 'pointer',
                                                 }}
                                             />
-                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 24 }}>패딩</span>
+                                            <span style={{ fontSize: 10, color: '#6B7280' }}>상하</span>
                                             <input
-                                                type="text"
-                                                value={row.padding ?? '16px 20px'}
-                                                onChange={(e) =>
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={parseInt(row.padding?.split(' ')[0] ?? '16', 10) || 16}
+                                                onChange={(e) => {
+                                                    const tb = e.target.value || '16';
+                                                    const lr = parseInt(row.padding?.split(' ')[1] ?? '20', 10) || 20;
                                                     setRows((prev) =>
                                                         prev.map((r, ri) =>
-                                                            ri === rowIdx
-                                                                ? { ...r, padding: e.target.value || undefined }
-                                                                : r,
+                                                            ri === rowIdx ? { ...r, padding: `${tb}px ${lr}px` } : r,
                                                         ),
-                                                    )
-                                                }
+                                                    );
+                                                }}
                                                 style={{
-                                                    width: 80,
-                                                    padding: '3px 6px',
+                                                    width: 36,
+                                                    padding: '3px 4px',
                                                     border: '1px solid #e5e7eb',
                                                     borderRadius: 4,
                                                     fontSize: 10,
                                                     fontFamily: FONT_FAMILY,
                                                     outline: 'none',
                                                 }}
-                                                placeholder="16px 20px"
                                             />
-                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 24 }}>간격</span>
+                                            <span style={{ fontSize: 10, color: '#6B7280' }}>좌우</span>
                                             <input
-                                                type="text"
-                                                value={row.gap ?? '12px'}
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={parseInt(row.padding?.split(' ')[1] ?? '20', 10) || 20}
+                                                onChange={(e) => {
+                                                    const tb = parseInt(row.padding?.split(' ')[0] ?? '16', 10) || 16;
+                                                    const lr = e.target.value || '20';
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx ? { ...r, padding: `${tb}px ${lr}px` } : r,
+                                                        ),
+                                                    );
+                                                }}
+                                                style={{
+                                                    width: 36,
+                                                    padding: '3px 4px',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: 4,
+                                                    fontSize: 10,
+                                                    fontFamily: FONT_FAMILY,
+                                                    outline: 'none',
+                                                }}
+                                            />
+                                            <span style={{ fontSize: 9, color: '#9ca3af' }}>px</span>
+                                            <span style={{ fontSize: 10, color: '#6B7280', marginLeft: 4 }}>간격</span>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={parseInt(row.gap ?? '12', 10) || 12}
                                                 onChange={(e) =>
                                                     setRows((prev) =>
                                                         prev.map((r, ri) =>
                                                             ri === rowIdx
-                                                                ? { ...r, gap: e.target.value || undefined }
+                                                                ? { ...r, gap: `${e.target.value || '12'}px` }
                                                                 : r,
                                                         ),
                                                     )
                                                 }
                                                 style={{
-                                                    width: 44,
-                                                    padding: '3px 6px',
+                                                    width: 36,
+                                                    padding: '3px 4px',
                                                     border: '1px solid #e5e7eb',
                                                     borderRadius: 4,
                                                     fontSize: 10,
