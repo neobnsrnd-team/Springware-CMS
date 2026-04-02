@@ -35,6 +35,7 @@ export const UPLOAD_URL_ENV = optionalEnv('UPLOAD_URL', 'uploads/');
 export const GIT_AUTO_COMMIT = optionalEnv('GIT_AUTO_COMMIT', 'false');
 export const GIT_USER_NAME = optionalEnv('GIT_USER_NAME', 'Springware CMS');
 export const GIT_USER_EMAIL = optionalEnv('GIT_USER_EMAIL', 'cms@springware.local');
+export const GIT_BRANCH = optionalEnv('GIT_BRANCH', 'main');
 
 // ── Oracle DB ──
 export const ORACLE_USER = optionalEnv('ORACLE_USER');

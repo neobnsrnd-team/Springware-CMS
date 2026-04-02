@@ -5,7 +5,7 @@
 import { execFile as execFileCb } from 'child_process';
 import { promisify } from 'util';
 
-import { GIT_AUTO_COMMIT, GIT_USER_EMAIL, GIT_USER_NAME } from '@/lib/env';
+import { GIT_AUTO_COMMIT, GIT_BRANCH, GIT_USER_EMAIL, GIT_USER_NAME } from '@/lib/env';
 
 const execFile = promisify(execFileCb);
 
@@ -24,6 +24,10 @@ async function runGit(args: string[], cwd: string): Promise<string> {
     return stdout.trim();
 }
 
+// 허용 경로 패턴: public/uploads/pages/ 하위 파일만 허용
+// pageId는 isValidBankId(/^[a-z0-9-]{1,64}$/)를 통과한 값이지만 이중 방어
+const ALLOWED_PATH_RE = /^public\/uploads\/pages\/[a-z0-9/_-]+\.(html|jpg)$/;
+
 interface GitCommitOptions {
     /** git add 대상 경로 배열 (CWD 기준 상대경로) */
     filePaths: string[];
@@ -41,10 +45,14 @@ interface GitCommitOptions {
 export async function commitAndPushPage({ filePaths, pageId, userId }: GitCommitOptions): Promise<void> {
     if (GIT_AUTO_COMMIT !== 'true') return;
 
+    // 허용된 경로 패턴만 통과 — 경로 조작 방지
+    const safePaths = filePaths.filter((p) => ALLOWED_PATH_RE.test(p));
+    if (safePaths.length === 0) return;
+
     const cwd = process.cwd();
 
     // 스테이징
-    await runGit(['add', ...filePaths], cwd);
+    await runGit(['add', ...safePaths], cwd);
 
     // 변경 없으면 커밋 불필요 (exit 0 = 변경 없음)
     try {
@@ -57,5 +65,6 @@ export async function commitAndPushPage({ filePaths, pageId, userId }: GitCommit
 
     const message = `[CMS] 페이지 저장: pageId=${pageId}, userId=${userId}`;
     await runGit(['commit', '-m', message], cwd);
-    await runGit(['push'], cwd);
+    // remote(origin)와 branch를 명시하여 환경별 push.default 설정에 무관하게 동작
+    await runGit(['push', 'origin', GIT_BRANCH], cwd);
 }
