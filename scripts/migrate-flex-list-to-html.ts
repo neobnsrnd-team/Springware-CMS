@@ -1,5 +1,5 @@
 // scripts/migrate-flex-list-to-html.ts
-// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크, #245 이미지)
+// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크, #245 이미지, #246 스타일)
 // 실행: npx tsx scripts/migrate-flex-list-to-html.ts
 
 import 'dotenv/config';
@@ -12,18 +12,27 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 
 interface FlexListColumn {
     type: 'icon' | 'text' | 'image';
-    width: 'fixed' | 'flex' | 'auto'; // 고정(40px) / 유연(flex:1) / 자동(auto)
-    icon?: string;      // type=icon: 아이콘 키
-    iconBg?: string;    // 아이콘 배경색
-    lines?: string[];   // type=text: 텍스트 행 배열
-    href?: string;      // linkMode=column일 때 개별 링크 URL
-    imageSrc?: string;  // type=image: 이미지 URL
+    width: 'fixed' | 'flex' | 'auto' | 'custom'; // 고정(40px) / 유연(flex:1) / 자동(auto) / 커스텀(%)
+    icon?: string;        // type=icon: 아이콘 키
+    iconBg?: string;      // 아이콘 배경색
+    lines?: string[];     // type=text: 텍스트 행 배열
+    href?: string;        // linkMode=column일 때 개별 링크 URL
+    imageSrc?: string;    // type=image: 이미지 URL
+    customWidth?: string; // width=custom일 때 값 (예: '30%', '120px')
 }
 
 interface FlexListRow {
     columns: FlexListColumn[];
     linkMode?: 'row' | 'column' | 'none'; // 행 전체 / 컬럼 개별 / 링크 없음
     rowHref?: string;                       // linkMode=row일 때 URL
+    bgColor?: string;   // 행 배경색 (기본 투명)
+    padding?: string;   // 행 패딩 (기본 '16px 20px')
+    gap?: string;       // 컬럼 간격 (기본 '12px')
+    border?: {
+        show: boolean;  // 구분선 표시 여부 (기본 true)
+        color?: string; // 구분선 색상 (기본 '#E5E7EB')
+        width?: number; // 구분선 굵기 px (기본 1)
+    };
 }
 
 // ── 프리셋 아이콘 SVG ────────────────────────────────────────────────────
@@ -65,7 +74,7 @@ function sanitizeImageSrc(url: string): string {
 
 // ── 이미지 HTML 빌더 ────────────────────────────────────────────────────
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'): string {
     const safeSrc = sanitizeImageSrc(src);
     const widthStyle =
         width === 'fixed' ? 'flex:0 0 40px;width:40px;height:40px;' :
@@ -84,11 +93,14 @@ function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
 
 // ── 아이콘 HTML 빌더 ─────────────────────────────────────────────────────
 
-function buildIconHtml(iconKey: string, bgColor: string): string {
+function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string): string {
     const svg = ICONS[iconKey] ?? ICONS['check'];
+    const size = (width === 'custom' && customWidth) ? customWidth : '40px';
+    const flexBasis = (width === 'custom' && customWidth) ? customWidth : '40px';
     return (
         `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
-        ` style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
+        (width === 'custom' && customWidth ? ` data-fl-width="custom" data-fl-custom-width="${customWidth}"` : '') +
+        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:50%;` +
         `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
@@ -103,12 +115,14 @@ function buildColumnHtml(col: FlexListColumn): string {
     }
 
     const widthStyle =
+        col.width === 'custom' && col.customWidth ? `flex:0 0 ${col.customWidth};min-width:0;` :
         col.width === 'fixed' ? 'flex:0 0 40px;' :
         col.width === 'auto'  ? 'flex:0 0 auto;text-align:right;' :
                                 'flex:1;min-width:0;';
+    const customWidthAttr = col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
 
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC');
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth);
     }
 
     // 텍스트 컬럼 — 다층 행
@@ -122,7 +136,7 @@ function buildColumnHtml(col: FlexListColumn): string {
     });
 
     return (
-        `<span data-fl-type="text" data-fl-width="${col.width}"` +
+        `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
         ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
         lineHtmls.join('') +
         `</span>`
@@ -139,27 +153,41 @@ function wrapColumnWithLink(colHtml: string, href?: string): string {
 // ── 행(Row) HTML 빌더 ───────────────────────────────────────────────────
 
 function buildRowHtml(row: FlexListRow, isLast: boolean): string {
-    const borderStyle = isLast ? '' : 'border-bottom:1px solid #E5E7EB;';
+    // 구분선 스타일 — border 설정 또는 기본값
+    const borderShow = row.border?.show !== false;
+    const borderColor = row.border?.color ?? '#E5E7EB';
+    const borderWidth = row.border?.width ?? 1;
+    const borderStyle = (!isLast && borderShow) ? `border-bottom:${borderWidth}px solid ${borderColor};` : '';
+
+    // 행 스타일 — 패딩, 간격, 배경색
+    const pad = row.padding ?? '16px 20px';
+    const gap = row.gap ?? '12px';
+    const bg = row.bgColor ? `background:${row.bgColor};` : '';
+
+    // 데이터 속성 (파싱용)
+    const dataAttrs =
+        (row.bgColor ? ` data-fl-bg="${row.bgColor}"` : '') +
+        (row.padding ? ` data-fl-padding="${row.padding}"` : '') +
+        (row.gap ? ` data-fl-gap="${row.gap}"` : '') +
+        (row.border ? ` data-fl-border-show="${row.border.show}" data-fl-border-color="${row.border.color ?? '#E5E7EB'}" data-fl-border-width="${row.border.width ?? 1}"` : '');
+
     const linkMode = row.linkMode ?? 'none';
-    const flexStyle = `display:flex;align-items:center;gap:12px;padding:16px 20px;${borderStyle}text-decoration:none;`;
+    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${bg}text-decoration:none;`;
 
     if (linkMode === 'row' && row.rowHref) {
-        // 행 전체 링크 — <a> 래퍼에 실제 URL
         const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
-        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row" style="${flexStyle}">${columnsHtml}</a>`;
+        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
-        // 컬럼 개별 링크 — <div> 래퍼 + 각 컬럼을 <a>로 감싸기
         const columnsHtml = row.columns.map((col) =>
             wrapColumnWithLink(buildColumnHtml(col), col.href),
         ).join('');
-        return `<div data-fl-link-mode="column" style="${flexStyle}">${columnsHtml}</div>`;
+        return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
-    // 링크 없음 — 기존 더미 <a href="#">
     const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
-    return `<a href="#" data-fl-link-mode="none" style="${flexStyle}">${columnsHtml}</a>`;
+    return `<a href="#" data-fl-link-mode="none"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
 }
 
 // ── 전체 HTML 조립 ───────────────────────────────────────────────────────

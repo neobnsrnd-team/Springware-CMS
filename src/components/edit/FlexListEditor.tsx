@@ -1,5 +1,5 @@
 // src/components/edit/FlexListEditor.tsx
-// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지)
+// flex-list 가변형 멀티 컬럼 컴포넌트 편집 모달 (Issue #234, #244 링크, #245 이미지, #246 스타일)
 // 행 추가·삭제·순서변경, 컬럼 추가·삭제, 타입 토글, 너비 선택, 아이콘 프리셋, 텍스트 행 관리
 
 'use client';
@@ -10,18 +10,27 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 interface FlexListColumn {
     type: 'icon' | 'text' | 'image';
-    width: 'fixed' | 'flex' | 'auto';
+    width: 'fixed' | 'flex' | 'auto' | 'custom';
     icon?: string;
     iconBg?: string;
     lines?: string[];
     href?: string; // linkMode=column일 때 개별 링크 URL
     imageSrc?: string; // type=image: 이미지 URL
+    customWidth?: string; // width=custom일 때 값 (예: '30%')
 }
 
 interface FlexListRow {
     columns: FlexListColumn[];
-    linkMode?: 'row' | 'column' | 'none'; // 행 전체 / 컬럼 개별 / 링크 없음
-    rowHref?: string; // linkMode=row일 때 URL
+    linkMode?: 'row' | 'column' | 'none';
+    rowHref?: string;
+    bgColor?: string; // 행 배경색
+    padding?: string; // 행 패딩 (예: '16px 20px')
+    gap?: string; // 컬럼 간격 (예: '12px')
+    border?: {
+        show: boolean;
+        color?: string;
+        width?: number;
+    };
 }
 
 interface Props {
@@ -137,7 +146,7 @@ function sanitizeImageSrc(url: string): string {
     return '';
 }
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
+function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom'): string {
     const safeSrc = sanitizeImageSrc(src);
     const widthStyle =
         width === 'fixed'
@@ -158,11 +167,19 @@ function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto'): string {
 
 // ── HTML 빌더 (마이그레이션 스크립트와 동기화) ──────────────────────────
 
-function buildIconHtml(iconKey: string, bgColor: string): string {
+function buildIconHtml(
+    iconKey: string,
+    bgColor: string,
+    width?: 'fixed' | 'flex' | 'auto' | 'custom',
+    customWidth?: string,
+): string {
     const svg = ICONS_20[iconKey] ?? ICONS_20['check'];
+    const size = width === 'custom' && customWidth ? customWidth : '40px';
+    const flexBasis = width === 'custom' && customWidth ? customWidth : '40px';
     return (
         `<span data-fl-type="icon" data-fl-icon="${iconKey}" data-fl-icon-bg="${bgColor}"` +
-        ` style="flex:0 0 40px;width:40px;height:40px;border-radius:50%;` +
+        (width === 'custom' && customWidth ? ` data-fl-width="custom" data-fl-custom-width="${customWidth}"` : '') +
+        ` style="flex:0 0 ${flexBasis};width:${size};height:${size};border-radius:50%;` +
         `background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
         svg +
         `</span>`
@@ -171,7 +188,7 @@ function buildIconHtml(iconKey: string, bgColor: string): string {
 
 function buildColumnHtml(col: FlexListColumn): string {
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC');
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth);
     }
 
     if (col.type === 'image') {
@@ -179,11 +196,15 @@ function buildColumnHtml(col: FlexListColumn): string {
     }
 
     const widthStyle =
-        col.width === 'fixed'
-            ? 'flex:0 0 40px;'
-            : col.width === 'auto'
-              ? 'flex:0 0 auto;text-align:right;'
-              : 'flex:1;min-width:0;';
+        col.width === 'custom' && col.customWidth
+            ? `flex:0 0 ${col.customWidth};min-width:0;`
+            : col.width === 'fixed'
+              ? 'flex:0 0 40px;'
+              : col.width === 'auto'
+                ? 'flex:0 0 auto;text-align:right;'
+                : 'flex:1;min-width:0;';
+    const customWidthAttr =
+        col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
 
     const lines = col.lines ?? ['텍스트'];
     const lineHtmls = lines.map((text, i) => {
@@ -194,7 +215,7 @@ function buildColumnHtml(col: FlexListColumn): string {
     });
 
     return (
-        `<span data-fl-type="text" data-fl-width="${col.width}"` +
+        `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
         ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
         lineHtmls.join('') +
         `</span>`
@@ -207,22 +228,38 @@ function wrapColumnWithLink(colHtml: string, href?: string): string {
 }
 
 function buildRowHtml(row: FlexListRow, isLast: boolean): string {
-    const borderStyle = isLast ? '' : 'border-bottom:1px solid #E5E7EB;';
+    const borderShow = row.border?.show !== false;
+    const borderColor = row.border?.color ?? '#E5E7EB';
+    const borderW = row.border?.width ?? 1;
+    const borderStyle = !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
+
+    const pad = row.padding ?? '16px 20px';
+    const gap = row.gap ?? '12px';
+    const bg = row.bgColor ? `background:${row.bgColor};` : '';
+
+    const dataAttrs =
+        (row.bgColor ? ` data-fl-bg="${row.bgColor}"` : '') +
+        (row.padding ? ` data-fl-padding="${row.padding}"` : '') +
+        (row.gap ? ` data-fl-gap="${row.gap}"` : '') +
+        (row.border
+            ? ` data-fl-border-show="${row.border.show}" data-fl-border-color="${row.border.color ?? '#E5E7EB'}" data-fl-border-width="${row.border.width ?? 1}"`
+            : '');
+
     const linkMode = row.linkMode ?? 'none';
-    const flexStyle = `display:flex;align-items:center;gap:12px;padding:16px 20px;${borderStyle}text-decoration:none;`;
+    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${bg}text-decoration:none;`;
 
     if (linkMode === 'row' && row.rowHref) {
         const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
-        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row" style="${flexStyle}">${columnsHtml}</a>`;
+        return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
         const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col), col.href)).join('');
-        return `<div data-fl-link-mode="column" style="${flexStyle}">${columnsHtml}</div>`;
+        return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
     const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
-    return `<a href="#" data-fl-link-mode="none" style="${flexStyle}">${columnsHtml}</a>`;
+    return `<a href="#" data-fl-link-mode="none"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
 }
 
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
@@ -282,9 +319,15 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                 // ── data-fl-* 속성 기반 (신규 HTML) ──
                 const flType = span.getAttribute('data-fl-type');
                 if (flType === 'icon') {
+                    const iconWidth = (span.getAttribute('data-fl-width') || 'fixed') as
+                        | 'fixed'
+                        | 'flex'
+                        | 'auto'
+                        | 'custom';
                     return {
                         type: 'icon' as const,
-                        width: 'fixed' as const,
+                        width: iconWidth,
+                        customWidth: span.getAttribute('data-fl-custom-width') || undefined,
                         icon: span.getAttribute('data-fl-icon') || 'check',
                         iconBg: span.getAttribute('data-fl-icon-bg') || '#E8F0FC',
                         href: colHref,
@@ -304,8 +347,13 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         lineSpans.length > 0
                             ? Array.from(lineSpans).map((ls) => ls.textContent?.trim() ?? '')
                             : [span.textContent?.trim() ?? '텍스트'];
-                    const width = (span.getAttribute('data-fl-width') || 'flex') as 'fixed' | 'flex' | 'auto';
-                    return { type: 'text' as const, width, lines, href: colHref };
+                    const width = (span.getAttribute('data-fl-width') || 'flex') as
+                        | 'fixed'
+                        | 'flex'
+                        | 'auto'
+                        | 'custom';
+                    const customWidth = span.getAttribute('data-fl-custom-width') || undefined;
+                    return { type: 'text' as const, width, customWidth, lines, href: colHref };
                 }
 
                 // ── heuristic 폴백 (구버전 HTML — data-fl-* 없음) ──
@@ -353,6 +401,16 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
                         : [{ type: 'text' as const, width: 'flex' as const, lines: ['텍스트'] }],
                 linkMode,
                 rowHref,
+                bgColor: rowEl.getAttribute('data-fl-bg') || undefined,
+                padding: rowEl.getAttribute('data-fl-padding') || undefined,
+                gap: rowEl.getAttribute('data-fl-gap') || undefined,
+                border: rowEl.hasAttribute('data-fl-border-show')
+                    ? {
+                          show: rowEl.getAttribute('data-fl-border-show') !== 'false',
+                          color: rowEl.getAttribute('data-fl-border-color') || '#E5E7EB',
+                          width: Number(rowEl.getAttribute('data-fl-border-width')) || 1,
+                      }
+                    : undefined,
             };
         });
 
@@ -370,6 +428,79 @@ function parseRows(blockEl: HTMLElement): FlexListRow[] {
     }
 
     return [{ columns: [{ type: 'text', width: 'flex', lines: ['텍스트'] }] }];
+}
+
+// ── [숫자 input] + [단위 Select] 공용 컴포넌트 ──────────────────────────
+
+/** CSS 값 문자열("16px", "30%")에서 숫자와 단위를 분리 */
+function parseValueUnit(value: string, defaultUnit: string): { num: number; unit: string } {
+    const match = value.match(/^(-?\d*\.?\d+)\s*(px|%|rem|em|vw|vh)?$/);
+    if (match) {
+        const num = Math.max(0, parseFloat(match[1])); // 음수 방어
+        return { num, unit: match[2] || defaultUnit };
+    }
+    return { num: Math.max(0, parseFloat(value) || 0), unit: defaultUnit };
+}
+
+function UnitInput({
+    value,
+    onChange,
+    units,
+    defaultUnit,
+    inputWidth = 42,
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    units: string[];
+    defaultUnit: string;
+    inputWidth?: number;
+}) {
+    const { num, unit } = parseValueUnit(value, defaultUnit);
+
+    return (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0 }}>
+            <input
+                type="number"
+                value={num}
+                onChange={(e) => {
+                    const v = Math.max(0, Number(e.target.value) || 0);
+                    onChange(`${v}${unit}`);
+                }}
+                style={{
+                    width: inputWidth,
+                    padding: '3px 4px',
+                    border: '1px solid #e5e7eb',
+                    borderRight: 'none',
+                    borderRadius: '4px 0 0 4px',
+                    fontSize: 10,
+                    fontFamily: FONT_FAMILY,
+                    outline: 'none',
+                    background: '#fff',
+                }}
+            />
+            <select
+                value={unit}
+                onChange={(e) => onChange(`${num}${e.target.value}`)}
+                style={{
+                    padding: '3px 2px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0 4px 4px 0',
+                    fontSize: 9,
+                    fontFamily: FONT_FAMILY,
+                    background: '#fff',
+                    color: '#374151',
+                    outline: 'none',
+                    cursor: 'pointer',
+                }}
+            >
+                {units.map((u) => (
+                    <option key={u} value={u}>
+                        {u}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
 }
 
 // ── 스타일 상수 ───────────────────────────────────────────────────────────
@@ -494,6 +625,7 @@ const WIDTH_LABELS: Record<string, string> = {
     fixed: '고정 (40px)',
     flex: '유연 (flex)',
     auto: '자동 (auto)',
+    custom: '커스텀 (%)',
 };
 
 // ── 컬럼 편집 서브컴포넌트 ──────────────────────────────────────────────
@@ -562,7 +694,14 @@ function ColumnEditor({
                 {/* 너비 선택 */}
                 <select
                     value={col.width}
-                    onChange={(e) => onUpdate(colIdx, { ...col, width: e.target.value as 'fixed' | 'flex' | 'auto' })}
+                    onChange={(e) => {
+                        const w = e.target.value as 'fixed' | 'flex' | 'auto' | 'custom';
+                        onUpdate(colIdx, {
+                            ...col,
+                            width: w,
+                            customWidth: w === 'custom' ? col.customWidth || '33%' : undefined,
+                        });
+                    }}
                     style={{
                         padding: '3px 6px',
                         border: '1px solid #e5e7eb',
@@ -577,6 +716,17 @@ function ColumnEditor({
                         </option>
                     ))}
                 </select>
+
+                {/* 커스텀 너비 입력 — [숫자] + [단위 선택] */}
+                {col.width === 'custom' && (
+                    <UnitInput
+                        value={col.customWidth ?? '33%'}
+                        onChange={(v) => onUpdate(colIdx, { ...col, customWidth: v })}
+                        units={['%', 'px', 'vw']}
+                        defaultUnit="%"
+                        inputWidth={42}
+                    />
+                )}
 
                 {/* 삭제 */}
                 <button
@@ -878,6 +1028,17 @@ function ColumnEditor({
 export default function FlexListEditor({ blockEl, onClose }: Props) {
     const [rows, setRows] = useState<FlexListRow[]>(() => parseRows(blockEl));
 
+    // 스타일 설정 펼침 상태 — UI 전용, 데이터 모델과 분리
+    const [expandedStyles, setExpandedStyles] = useState<Set<number>>(() => new Set());
+    const toggleStyleExpand = useCallback((rowIdx: number) => {
+        setExpandedStyles((prev) => {
+            const next = new Set(prev);
+            if (next.has(rowIdx)) next.delete(rowIdx);
+            else next.add(rowIdx);
+            return next;
+        });
+    }, []);
+
     // 이미지 파일 선택 대기 상태 — 어떤 행/컬럼이 파일 피커 결과를 기다리는지 추적
     const pendingImagePick = useRef<{ rowIdx: number; colIdx: number } | null>(null);
 
@@ -1169,6 +1330,241 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                             outline: 'none',
                                         }}
                                     />
+                                )}
+                            </div>
+
+                            {/* 스타일 설정 (접기/펼치기) */}
+                            <div style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => toggleStyleExpand(rowIdx)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '6px 10px',
+                                        border: 'none',
+                                        background: '#f9fafb',
+                                        cursor: 'pointer',
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        color: '#6B7280',
+                                        textAlign: 'left',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            transform: expandedStyles.has(rowIdx) ? 'rotate(90deg)' : 'none',
+                                            transition: 'transform 0.15s',
+                                            fontSize: 10,
+                                        }}
+                                    >
+                                        ▸
+                                    </span>
+                                    스타일 설정
+                                </button>
+                                {expandedStyles.has(rowIdx) && (
+                                    <div
+                                        style={{
+                                            padding: '8px 10px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: 6,
+                                        }}
+                                    >
+                                        {/* 배경색 + 패딩 + 간격 */}
+                                        <div
+                                            style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+                                        >
+                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 36 }}>배경색</span>
+                                            <input
+                                                type="color"
+                                                value={row.bgColor ?? '#ffffff'}
+                                                onChange={(e) => {
+                                                    const v = e.target.value;
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx
+                                                                ? { ...r, bgColor: v === '#ffffff' ? undefined : v }
+                                                                : r,
+                                                        ),
+                                                    );
+                                                }}
+                                                style={{
+                                                    width: 26,
+                                                    height: 26,
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: 4,
+                                                    padding: 1,
+                                                    cursor: 'pointer',
+                                                }}
+                                            />
+                                            <span style={{ fontSize: 10, color: '#6B7280' }}>상하</span>
+                                            <UnitInput
+                                                value={row.padding?.split(' ')[0] ?? '16px'}
+                                                onChange={(v) => {
+                                                    const lr = row.padding?.split(' ')[1] ?? '20px';
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx ? { ...r, padding: `${v} ${lr}` } : r,
+                                                        ),
+                                                    );
+                                                }}
+                                                units={['px', '%', 'rem']}
+                                                defaultUnit="px"
+                                                inputWidth={36}
+                                            />
+                                            <span style={{ fontSize: 10, color: '#6B7280' }}>좌우</span>
+                                            <UnitInput
+                                                value={row.padding?.split(' ')[1] ?? '20px'}
+                                                onChange={(v) => {
+                                                    const tb = row.padding?.split(' ')[0] ?? '16px';
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx ? { ...r, padding: `${tb} ${v}` } : r,
+                                                        ),
+                                                    );
+                                                }}
+                                                units={['px', '%', 'rem']}
+                                                defaultUnit="px"
+                                                inputWidth={36}
+                                            />
+                                            <span style={{ fontSize: 10, color: '#6B7280', marginLeft: 4 }}>간격</span>
+                                            <UnitInput
+                                                value={row.gap ?? '12px'}
+                                                onChange={(v) =>
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) => (ri === rowIdx ? { ...r, gap: v } : r)),
+                                                    )
+                                                }
+                                                units={['px', '%', 'rem']}
+                                                defaultUnit="px"
+                                                inputWidth={36}
+                                            />
+                                        </div>
+                                        {/* 구분선 */}
+                                        <div
+                                            style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+                                        >
+                                            <span style={{ fontSize: 10, color: '#6B7280', minWidth: 36 }}>구분선</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const cur = row.border?.show !== false;
+                                                    setRows((prev) =>
+                                                        prev.map((r, ri) =>
+                                                            ri === rowIdx
+                                                                ? {
+                                                                      ...r,
+                                                                      border: {
+                                                                          ...r.border,
+                                                                          show: !cur,
+                                                                          color: r.border?.color ?? '#E5E7EB',
+                                                                          width: r.border?.width ?? 1,
+                                                                      },
+                                                                  }
+                                                                : r,
+                                                        ),
+                                                    );
+                                                }}
+                                                style={{
+                                                    width: 36,
+                                                    height: 20,
+                                                    borderRadius: 10,
+                                                    border: 'none',
+                                                    background: row.border?.show !== false ? '#0046A4' : '#d1d5db',
+                                                    cursor: 'pointer',
+                                                    position: 'relative',
+                                                    padding: 0,
+                                                    flexShrink: 0,
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 2,
+                                                        left: row.border?.show !== false ? 18 : 2,
+                                                        width: 16,
+                                                        height: 16,
+                                                        borderRadius: '50%',
+                                                        background: '#fff',
+                                                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                                                        transition: 'left 0.15s',
+                                                    }}
+                                                />
+                                            </button>
+                                            {row.border?.show !== false && (
+                                                <>
+                                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>색상</span>
+                                                    <input
+                                                        type="color"
+                                                        value={row.border?.color ?? '#E5E7EB'}
+                                                        onChange={(e) =>
+                                                            setRows((prev) =>
+                                                                prev.map((r, ri) =>
+                                                                    ri === rowIdx
+                                                                        ? {
+                                                                              ...r,
+                                                                              border: {
+                                                                                  ...r.border,
+                                                                                  show: true,
+                                                                                  color: e.target.value,
+                                                                                  width: r.border?.width ?? 1,
+                                                                              },
+                                                                          }
+                                                                        : r,
+                                                                ),
+                                                            )
+                                                        }
+                                                        style={{
+                                                            width: 22,
+                                                            height: 22,
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: 4,
+                                                            padding: 1,
+                                                            cursor: 'pointer',
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>굵기</span>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        max={10}
+                                                        value={row.border?.width ?? 1}
+                                                        onChange={(e) =>
+                                                            setRows((prev) =>
+                                                                prev.map((r, ri) =>
+                                                                    ri === rowIdx
+                                                                        ? {
+                                                                              ...r,
+                                                                              border: {
+                                                                                  ...r.border,
+                                                                                  show: true,
+                                                                                  color: r.border?.color ?? '#E5E7EB',
+                                                                                  width: Number(e.target.value) || 1,
+                                                                              },
+                                                                          }
+                                                                        : r,
+                                                                ),
+                                                            )
+                                                        }
+                                                        style={{
+                                                            width: 36,
+                                                            padding: '3px 4px',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: 4,
+                                                            fontSize: 10,
+                                                            fontFamily: FONT_FAMILY,
+                                                            outline: 'none',
+                                                            background: '#fff',
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>px</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
