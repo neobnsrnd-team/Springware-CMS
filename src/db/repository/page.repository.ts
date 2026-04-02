@@ -25,6 +25,7 @@ import {
     PAGE_UPDATE_IS_PUBLIC,
     PAGE_EXPIRE,
     PAGE_UPDATE_DEPLOY,
+    PAGE_ROLLBACK,
     PAGE_SELECT_AB_GROUP,
     PAGE_UPDATE_AB_GROUP,
     PAGE_CLEAR_AB_GROUP,
@@ -39,6 +40,7 @@ import {
     PAGE_HISTORY_SELECT_BY_VERSION,
     PAGE_HISTORY_SELECT_LIST,
     PAGE_HISTORY_COUNT_BY_PAGE,
+    PAGE_HISTORY_SELECT_VERSION_BY_FILE_PATH,
 } from '@/db/queries/page-history.sql';
 import { COMP_MAP_DELETE_BY_PAGE_VERSION, COMP_MAP_INSERT } from '@/db/queries/component-map.sql';
 import { readPageHtml } from '@/lib/page-file';
@@ -304,6 +306,40 @@ export async function updatePageDeploy(pageId: string, fileCrcValue: string, las
     await withTransaction(async (conn) => {
         await conn.execute(PAGE_UPDATE_DEPLOY, { pageId, fileCrcValue, lastModifierId });
     });
+}
+
+// ═══════════════════════════════════════════════
+// 롤백
+// ═══════════════════════════════════════════════
+
+/**
+ * 버전 롤백 — 지정 버전의 FILE_PATH를 PAGE에 덮어쓰고 APPROVE_STATE = 'WORK' 전환
+ * - 이슈 #26 설계: HISTORY INSERT 없음, FILE_PATH UPDATE만 수행
+ * - 롤백 후 재승인 절차 필요
+ */
+export async function updatePageRollback(pageId: string, version: number, lastModifierId: string): Promise<void> {
+    const history = await getHistoryByVersion(pageId, version);
+    if (!history) {
+        throw new Error(`버전 ${version}에 해당하는 이력이 존재하지 않습니다.`);
+    }
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_ROLLBACK, { pageId, filePath: history.FILE_PATH, lastModifierId });
+    });
+}
+
+/** FILE_PATH로 HISTORY VERSION 역조회 — 롤백 후 배포 fileId 결정용 */
+export async function getHistoryVersionByFilePath(pageId: string, filePath: string): Promise<number | null> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<{ VERSION: number }>(
+            PAGE_HISTORY_SELECT_VERSION_BY_FILE_PATH,
+            { pageId, filePath },
+            OBJ,
+        );
+        return result.rows?.[0]?.VERSION ?? null;
+    } finally {
+        await conn.close();
+    }
 }
 
 // ═══════════════════════════════════════════════
