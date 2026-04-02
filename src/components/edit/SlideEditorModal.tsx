@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 interface PromoBannerSlide {
     itemId: string;
     bgColor: string;
+    bgImage?: string;
     badge: string;
     title: string;
     desc: string;
@@ -36,9 +37,15 @@ function parsePromoBannerSlides(root: HTMLElement): PromoBannerSlide[] {
     return Array.from(root.querySelectorAll('[data-pb-slide]')).map((wrapper, i) => {
         const inner = wrapper.querySelector<HTMLElement>('.pb-slide');
         const ctaEl = inner?.querySelector('.pb-slide-cta') as HTMLAnchorElement | null;
+        const bgImageMatch = (inner?.style.backgroundImage ?? '').match(/url\(['"]?([^'"]+)['"]?\)/);
+        const rawBgImage = bgImageMatch?.[1];
+        const bgImage = rawBgImage ? rawBgImage.replace(/\\/g, '/').replace(/^(?!\/)/, '/') : undefined;
         return {
             itemId: inner?.getAttribute('data-item-id') ?? `pb-${i + 1}`,
-            bgColor: inner?.style.background ?? '',
+            bgColor: inner?.style.backgroundColor
+                ? rgbToHex(inner.style.backgroundColor)
+                : (inner?.style.background ?? '').replace(/url\(.*?\)\s*/g, '').trim(),
+            bgImage,
             badge: inner?.querySelector('.pb-badge')?.textContent ?? '',
             title: inner?.querySelector('.pb-slide-title')?.textContent ?? '',
             desc: inner?.querySelector('.pb-slide-desc')?.textContent ?? '',
@@ -97,8 +104,11 @@ function parseProductGalleryCards(root: HTMLElement, componentId: string): Produ
 // ── HTML 재생성 ───────────────────────────────────────────────────────────
 
 function buildSlideHtml(slide: PromoBannerSlide): string {
+    const bgImageStyle = slide.bgImage
+        ? `background-image:url("${slide.bgImage}");background-size:cover;background-position:center;`
+        : '';
     return (
-        `<div class="pb-slide" data-item-id="${slide.itemId}" style="position:relative;height:200px;border-radius:16px;background:${slide.bgColor};">` +
+        `<div class="pb-slide" data-item-id="${slide.itemId}" style="position:relative;height:200px;border-radius:16px;background:${slide.bgColor};${bgImageStyle}">` +
         `<div class="pb-slide-content" style="position:relative;z-index:1;padding:24px 20px;display:flex;flex-direction:column;gap:6px;height:100%;box-sizing:border-box;justify-content:center;">` +
         `<span class="pb-badge" style="display:inline-block;background:rgba(255,255,255,0.25);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;width:fit-content;border:1px solid rgba(255,255,255,0.4);">${slide.badge}</span>` +
         `<h3 class="pb-slide-title" style="font-size:22px;font-weight:800;color:#fff;margin:0;line-height:1.2;letter-spacing:-0.5px;">${slide.title}</h3>` +
@@ -569,6 +579,86 @@ function PromoSlidesEditor({
                                     style={{ opacity: 0, width: 1, height: 1, padding: 0, border: 'none' }}
                                 />
                             </label>
+                        </div>
+                    </div>
+                    {/* 배경 이미지 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={LBL}>배경 이미지</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {slide.bgImage ? (
+                                <>
+                                    <img
+                                        src={slide.bgImage}
+                                        style={{
+                                            width: 64,
+                                            height: 44,
+                                            objectFit: 'cover',
+                                            borderRadius: 6,
+                                            border: '1px solid #e5e7eb',
+                                        }}
+                                        alt="배경 미리보기"
+                                    />
+                                    <button
+                                        onClick={() => update(idx, { bgImage: undefined })}
+                                        style={{
+                                            fontSize: 12,
+                                            color: '#ef4444',
+                                            background: 'none',
+                                            border: '1px solid #fca5a5',
+                                            borderRadius: 6,
+                                            padding: '4px 10px',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        삭제
+                                    </button>
+                                </>
+                            ) : (
+                                <label
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 6,
+                                        padding: '6px 12px',
+                                        border: '1px dashed #9ca3af',
+                                        borderRadius: 6,
+                                        cursor: 'pointer',
+                                        fontSize: 12,
+                                        color: '#374151',
+                                        background: '#f9fafb',
+                                    }}
+                                >
+                                    + 이미지 업로드
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const formData = new FormData();
+                                            formData.append('file', file);
+                                            try {
+                                                const res = await fetch('/api/builder/upload', {
+                                                    method: 'POST',
+                                                    body: formData,
+                                                });
+                                                const data = await res.json();
+                                                if (data.url) {
+                                                    const absUrl = (data.url as string)
+                                                        .replace(/\\/g, '/')
+                                                        .replace(/^(?!\/)/, '/');
+                                                    update(idx, { bgImage: absUrl });
+                                                } else {
+                                                    alert('이미지 업로드에 실패했습니다.');
+                                                }
+                                            } catch {
+                                                alert('이미지 업로드에 실패했습니다.');
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            )}
                         </div>
                     </div>
                 </div>
