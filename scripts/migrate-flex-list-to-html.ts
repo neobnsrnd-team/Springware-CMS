@@ -1,5 +1,5 @@
 // scripts/migrate-flex-list-to-html.ts
-// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크, #245 이미지, #246 스타일)
+// flex-list 가변형 멀티 컬럼 컴포넌트 등록/업데이트 (Issue #234, #244 링크, #245 이미지, #246 스타일, #256 정렬)
 // 실행: npx tsx scripts/migrate-flex-list-to-html.ts
 
 import 'dotenv/config';
@@ -10,12 +10,17 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
+interface FlexListLine {
+    text: string;
+    align?: 'left' | 'center' | 'right'; // 수평 정렬 (기본 left)
+}
+
 interface FlexListColumn {
     type: 'icon' | 'text' | 'image';
     width: 'fixed' | 'flex' | 'auto' | 'custom'; // 고정(40px) / 유연(flex:1) / 자동(auto) / 커스텀(%)
     icon?: string;        // type=icon: 아이콘 키
     iconBg?: string;      // 아이콘 배경색
-    lines?: string[];     // type=text: 텍스트 행 배열
+    lines?: FlexListLine[]; // type=text: 텍스트 행 배열
     href?: string;        // linkMode=column일 때 개별 링크 URL
     imageSrc?: string;    // type=image: 이미지 URL
     customWidth?: string; // width=custom일 때 값 (예: '30%', '120px')
@@ -126,13 +131,15 @@ function buildColumnHtml(col: FlexListColumn): string {
     }
 
     // 텍스트 컬럼 — 다층 행
-    const lines = col.lines ?? ['텍스트'];
-    const lineHtmls = lines.map((text, i) => {
-        // 첫 줄: 제목 스타일, 나머지: 보조 스타일
+    const lines: FlexListLine[] = (col.lines ?? [{ text: '텍스트' }]).map((l) =>
+        typeof l === 'string' ? { text: l } : l,
+    );
+    const lineHtmls = lines.map((line, i) => {
+        const alignStyle = line.align && line.align !== 'left' ? `text-align:${line.align};` : '';
         if (i === 0) {
-            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;">${text}</span>`;
+            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;${alignStyle}">${line.text}</span>`;
         }
-        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;">${text}</span>`;
+        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;${alignStyle}">${line.text}</span>`;
     });
 
     return (
@@ -213,19 +220,19 @@ const PRESET_2COL: FlexListRow[] = [
     {
         columns: [
             { type: 'icon', width: 'fixed', icon: 'card', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: ['신용카드 이용대금 결제', '우리은행 1002-***-1234', '2024.01.15'] },
+            { type: 'text', width: 'flex', lines: [{ text: '신용카드 이용대금 결제' }, { text: '우리은행 1002-***-1234' }, { text: '2024.01.15' }] },
         ],
     },
     {
         columns: [
             { type: 'icon', width: 'fixed', icon: 'transfer', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: ['이체 완료 알림', '홍길동님에게 50,000원 이체', '2024.01.14'] },
+            { type: 'text', width: 'flex', lines: [{ text: '이체 완료 알림' }, { text: '홍길동님에게 50,000원 이체' }, { text: '2024.01.14' }] },
         ],
     },
     {
         columns: [
             { type: 'icon', width: 'fixed', icon: 'notification', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: ['적금 만기 안내', 'IBK 자유적금 만기 D-7', '2024.01.13'] },
+            { type: 'text', width: 'flex', lines: [{ text: '적금 만기 안내' }, { text: 'IBK 자유적금 만기 D-7' }, { text: '2024.01.13' }] },
         ],
     },
 ];
@@ -235,22 +242,22 @@ const PRESET_3COL: FlexListRow[] = [
     {
         columns: [
             { type: 'icon', width: 'fixed', icon: 'shopping', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: ['스타벅스 코리아', '01.15 14:30 · 본인'] },
-            { type: 'text', width: 'auto', lines: ['-4,500원', '승인완료'] },
+            { type: 'text', width: 'flex', lines: [{ text: '스타벅스 코리아' }, { text: '01.15 14:30 · 본인' }] },
+            { type: 'text', width: 'auto', lines: [{ text: '-4,500원' }, { text: '승인완료' }] },
         ],
     },
     {
         columns: [
             { type: 'icon', width: 'fixed', icon: 'shopping', iconBg: '#E8F0FC' },
-            { type: 'text', width: 'flex', lines: ['네이버페이', '01.14 11:20 · 본인'] },
-            { type: 'text', width: 'auto', lines: ['-32,000원', '승인완료'] },
+            { type: 'text', width: 'flex', lines: [{ text: '네이버페이' }, { text: '01.14 11:20 · 본인' }] },
+            { type: 'text', width: 'auto', lines: [{ text: '-32,000원' }, { text: '승인완료' }] },
         ],
     },
     {
         columns: [
             { type: 'icon', width: 'fixed', icon: 'transfer', iconBg: '#FEF3C7' },
-            { type: 'text', width: 'flex', lines: ['홍길동', '01.13 09:15 · 이체'] },
-            { type: 'text', width: 'auto', lines: ['+500,000원', '입금'] },
+            { type: 'text', width: 'flex', lines: [{ text: '홍길동' }, { text: '01.13 09:15 · 이체' }] },
+            { type: 'text', width: 'auto', lines: [{ text: '+500,000원' }, { text: '입금' }] },
         ],
     },
 ];
@@ -259,32 +266,32 @@ const PRESET_3COL: FlexListRow[] = [
 const PRESET_TEXT: FlexListRow[] = [
     {
         columns: [
-            { type: 'text', width: 'flex', lines: ['예금주'] },
-            { type: 'text', width: 'auto', lines: ['홍길동'] },
+            { type: 'text', width: 'flex', lines: [{ text: '예금주' }] },
+            { type: 'text', width: 'auto', lines: [{ text: '홍길동' }] },
         ],
     },
     {
         columns: [
-            { type: 'text', width: 'flex', lines: ['계좌번호'] },
-            { type: 'text', width: 'auto', lines: ['110-***-123456'] },
+            { type: 'text', width: 'flex', lines: [{ text: '계좌번호' }] },
+            { type: 'text', width: 'auto', lines: [{ text: '110-***-123456' }] },
         ],
     },
     {
         columns: [
-            { type: 'text', width: 'flex', lines: ['상품명'] },
-            { type: 'text', width: 'auto', lines: ['IBK 자유적금'] },
+            { type: 'text', width: 'flex', lines: [{ text: '상품명' }] },
+            { type: 'text', width: 'auto', lines: [{ text: 'IBK 자유적금' }] },
         ],
     },
     {
         columns: [
-            { type: 'text', width: 'flex', lines: ['가입일'] },
-            { type: 'text', width: 'auto', lines: ['2024.01.01'] },
+            { type: 'text', width: 'flex', lines: [{ text: '가입일' }] },
+            { type: 'text', width: 'auto', lines: [{ text: '2024.01.01' }] },
         ],
     },
     {
         columns: [
-            { type: 'text', width: 'flex', lines: ['만기일'] },
-            { type: 'text', width: 'auto', lines: ['2025.01.01'] },
+            { type: 'text', width: 'flex', lines: [{ text: '만기일' }] },
+            { type: 'text', width: 'auto', lines: [{ text: '2025.01.01' }] },
         ],
     },
 ];
