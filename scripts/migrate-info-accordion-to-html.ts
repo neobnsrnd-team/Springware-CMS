@@ -148,7 +148,7 @@ function buildAccordionHtml(items: AccordionItem[], componentId: string, extraSt
 // ── 3개 variant HTML ──────────────────────────────────────────────────────────
 
 const INFO_ACCORDION_MOBILE_HTML     = buildAccordionHtml(DEFAULT_ITEMS, 'info-accordion-mobile',     '');
-const INFO_ACCORDION_WEB_HTML        = buildAccordionHtml(DEFAULT_ITEMS, 'info-accordion-web',        'max-width:640px;margin:0 auto;');
+const INFO_ACCORDION_WEB_HTML        = buildAccordionHtml(DEFAULT_ITEMS, 'info-accordion-web',        'width:100%;box-sizing:border-box;');
 const INFO_ACCORDION_RESPONSIVE_HTML = buildAccordionHtml(DEFAULT_ITEMS, 'info-accordion-responsive', 'width:100%;box-sizing:border-box;');
 
 // ── DB 등록 ───────────────────────────────────────────────────────────────────
