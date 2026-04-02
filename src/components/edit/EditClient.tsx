@@ -853,11 +853,10 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
                     const cl = (mutation.target as HTMLElement).classList;
                     if (cl.contains('icon-active') || cl.contains('elm-active')) {
                         needsVisibilityUpdate = true;
+                        const activeEl = mutation.target as HTMLElement;
                         // branch-locator 블록 활성 시 편집 패널 자동 오픈
-                        const block = (mutation.target as HTMLElement).closest<HTMLElement>(
-                            '[data-component-id^="branch-locator"]',
-                        );
-                        if (block) setBranchLocatorBlock(block);
+                        const branchBlock = activeEl.closest<HTMLElement>('[data-component-id^="branch-locator"]');
+                        if (branchBlock) setBranchLocatorBlock(branchBlock);
                     }
                 }
             });
@@ -1167,6 +1166,23 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
         };
         // document 레벨 캡처 단계에서 가로채기 — ContentBuilder 이벤트는 그대로 전달
         document.addEventListener('click', blockCanvasLinkNavigation, true);
+
+        // ── media-video 영상 래퍼(검정 박스) 클릭 → 영상 URL 편집 모달 오픈 ─
+        // pointer-events:none(globals.css)으로 iframe 클릭을 래퍼 div에 전달받음
+        const handleMediaVideoAreaClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const container = document.querySelector('.container');
+            if (!container?.contains(target)) return;
+            // <a> 클릭은 제목 편집용 — 모달 오픈 제외
+            if (target.closest('a')) return;
+            const mediaBlock = target.closest<HTMLElement>('[data-component-id^="media-video"]');
+            if (!mediaBlock) return;
+            // iframe 또는 iframe의 직접 부모(래퍼 div)인 경우에만 오픈
+            if (target.tagName === 'IFRAME' || target.querySelector(':scope > iframe')) {
+                setMediaVideoBlock(mediaBlock);
+            }
+        };
+        document.addEventListener('click', handleMediaVideoAreaClick, true);
 
         // ── 행 활성화 보조 핸들러 (mousedown 캡처 단계) ─────────────────────
         // ContentBuilder의 handleCellClick이 quick-banking 등 플러그인 내부 클릭에서
@@ -1484,6 +1500,7 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             colToolObserver.disconnect();
             slideToolObserver.disconnect();
             document.removeEventListener('click', blockCanvasLinkNavigation, true);
+            document.removeEventListener('click', handleMediaVideoAreaClick, true);
             document.removeEventListener('click', redirectCellAddToRowAdd, true);
             document.removeEventListener('click', markKorean, true);
             document.removeEventListener('click', handleSiteFooterSelectClick, true);
