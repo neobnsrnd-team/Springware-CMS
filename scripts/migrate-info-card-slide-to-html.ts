@@ -50,11 +50,13 @@ function buildCardHtml(card: CardSlide, idx: number): string {
         ? `<div style="display:flex;align-items:center;justify-content:space-between;">${tagHtml}${moreHtml}</div>`
         : '';
 
-    // 제목 + 복사 버튼
+    // 제목 + 복사 아이콘
     const copyBtnHtml = card.copyable
-        ? `<button data-card-copy style="background:none;border:1px solid #E5E7EB;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#6B7280;flex-shrink:0;font-family:${FONT_FAMILY};">📋 복사</button>`
+        ? `<button data-card-copy style="background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;display:flex;align-items:center;">` +
+          `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
+          `</button>`
         : '';
-    const titleHtml = `<div style="display:flex;align-items:center;gap:8px;">` +
+    const titleHtml = `<div style="display:flex;align-items:center;gap:4px;">` +
         `<span data-card-title style="font-size:18px;font-weight:700;color:#1A1A2E;flex:1;">${card.title}</span>` +
         copyBtnHtml +
         `</div>`;
@@ -82,9 +84,9 @@ function buildCardHtml(card: CardSlide, idx: number): string {
 
     return (
         `<div data-card-item data-card-idx="${idx}"` +
-        ` style="flex-shrink:0;width:85%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;">` +
+        ` style="flex-shrink:0;width:100%;padding:0 8px;box-sizing:border-box;">` +
             `<div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;` +
-            `padding:20px;display:flex;flex-direction:column;gap:12px;">` +
+            `padding:20px;display:flex;flex-direction:column;gap:12px;min-height:180px;">` +
                 headerHtml +
                 titleHtml +
                 subtitleHtml +
@@ -105,11 +107,15 @@ const SLIDE_SCRIPT =
     `if(root.closest('.is-builder'))return;` +
     `root.setAttribute('data-card-slide-inited','1');` +
 
-    // scroll-snap 변환
+    // scroll-snap 변환 — 세로 나열 → 가로 스와이프 + 가운데 정렬
     `var track=root.querySelector('[data-card-track]');` +
     `if(track){` +
     `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;` +
-    `-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:4px 0 8px;';` +
+    `-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:8px 10% 12px;';` +
+    // 카드 너비를 80% + snap center로 설정
+    `track.querySelectorAll('[data-card-item]').forEach(function(card){` +
+    `card.style.flex='0 0 80%';card.style.width='80%';card.style.scrollSnapAlign='center';` +
+    `});` +
     `var styleId='ics-hide-'+Math.random().toString(36).slice(2,8);` +
     `track.setAttribute('data-ics-id',styleId);` +
     `var styleEl=document.createElement('style');` +
@@ -125,8 +131,9 @@ const SLIDE_SCRIPT =
     `var titleEl=card&&card.querySelector('[data-card-title]');` +
     `if(titleEl&&navigator.clipboard){` +
     `navigator.clipboard.writeText(titleEl.textContent||'');` +
-    `btn.textContent='✓ 복사됨';` +
-    `setTimeout(function(){btn.textContent='📋 복사';},1500);` +
+    `var origHtml=btn.innerHTML;` +
+    `btn.innerHTML='<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"#059669\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6L9 17l-5-5\"/></svg>';` +
+    `setTimeout(function(){btn.innerHTML=origHtml;},1500);` +
     `}` +
     `});` +
     `});` +
@@ -143,7 +150,7 @@ function buildInfoCardSlideHtml(slides: CardSlide[], componentId: string, extraS
         `<div data-component-id="${componentId}" data-spw-block` +
         ` data-card-slides="${slidesJson}"` +
         ` style="font-family:${FONT_FAMILY};background:#ffffff;${extraStyle}">` +
-            `<div data-card-track style="display:flex;gap:0;padding:4px 0 8px;">` +
+            `<div data-card-track style="display:flex;flex-direction:column;gap:12px;padding:8px 0;">` +
                 cardsHtml +
             `</div>` +
             SLIDE_SCRIPT +
