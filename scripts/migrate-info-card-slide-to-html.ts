@@ -44,7 +44,7 @@ function buildCardHtml(card: CardSlide, idx: number): string {
         ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;">${card.tag}</span>`
         : '';
     const moreHtml = card.showMore
-        ? `<a href="${sanitizeHref(card.moreHref || '#')}" onclick="return false" style="color:#9CA3AF;font-size:18px;text-decoration:none;line-height:1;">⋮</a>`
+        ? `<a href="${sanitizeHref(card.moreHref || '#')}" style="color:#9CA3AF;font-size:18px;text-decoration:none;line-height:1;">⋮</a>`
         : '';
     const headerHtml = (tagHtml || moreHtml)
         ? `<div style="display:flex;align-items:center;justify-content:space-between;">${tagHtml}${moreHtml}</div>`
@@ -75,7 +75,7 @@ function buildCardHtml(card: CardSlide, idx: number): string {
     const buttonsHtml = (card.buttons ?? []).length > 0
         ? `<div style="display:flex;gap:8px;margin-top:4px;">` +
           (card.buttons ?? []).map((b) =>
-              `<a href="${sanitizeHref(b.href || '#')}" onclick="return false"` +
+              `<a href="${sanitizeHref(b.href || '#')}"` +
               ` style="flex:1;text-align:center;padding:10px;border-radius:8px;` +
               `background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;">${b.label}</a>`,
           ).join('') +
@@ -111,10 +111,19 @@ const SLIDE_SCRIPT =
     `var track=root.querySelector('[data-card-track]');` +
     `if(track){` +
     `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;` +
-    `-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:8px 10% 12px;';` +
-    // 카드 너비를 80% + snap center로 설정
+    `-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:8px 5% 12px;';` +
+    // 카드 높이 균등화 — 가장 높은 카드 기준
+    `var maxH=0;` +
+    `track.querySelectorAll('[data-card-item] > div').forEach(function(inner){` +
+    `inner.style.minHeight='0';` +
+    `if(inner.scrollHeight>maxH)maxH=inner.scrollHeight;` +
+    `});` +
+    `track.querySelectorAll('[data-card-item] > div').forEach(function(inner){` +
+    `inner.style.minHeight=maxH+'px';` +
+    `});` +
+    // 카드 너비 90% + snap center
     `track.querySelectorAll('[data-card-item]').forEach(function(card){` +
-    `card.style.flex='0 0 80%';card.style.width='80%';card.style.scrollSnapAlign='center';` +
+    `card.style.flex='0 0 90%';card.style.width='90%';card.style.scrollSnapAlign='center';` +
     `});` +
     `var styleId='ics-hide-'+Math.random().toString(36).slice(2,8);` +
     `track.setAttribute('data-ics-id',styleId);` +
@@ -131,9 +140,8 @@ const SLIDE_SCRIPT =
     `var titleEl=card&&card.querySelector('[data-card-title]');` +
     `if(titleEl&&navigator.clipboard){` +
     `navigator.clipboard.writeText(titleEl.textContent||'');` +
-    `var origHtml=btn.innerHTML;` +
-    `btn.innerHTML='<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"#059669\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6L9 17l-5-5\"/></svg>';` +
-    `setTimeout(function(){btn.innerHTML=origHtml;},1500);` +
+    `var svg=btn.querySelector('svg');` +
+    `if(svg){svg.setAttribute('stroke','#059669');setTimeout(function(){svg.setAttribute('stroke','#9CA3AF');},1500);}` +
     `}` +
     `});` +
     `});` +
