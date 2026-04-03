@@ -26,6 +26,7 @@ import SlideEditorModal from '@/components/edit/SlideEditorModal';
 import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import FlexListEditor from '@/components/edit/FlexListEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
+import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
 
 // 기본 블록 타입 — DB SPW_CMS_COMPONENT에서 로드
@@ -175,9 +176,39 @@ const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon
     responsive: { label: '반응형', maxWidth: '100%', icon: '🔄' },
 };
 
-export default function EditClient({ bank = 'ibk', userId }: { bank?: string; userId: string }) {
+/** hex 색상(#RRGGBB)을 "R,G,B" 문자열로 변환 — rgba() 치환용 */
+function hexToRgbValues(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `${r},${g},${b}`;
+}
+
+/** IBK 기본 색상을 brandTheme 팔레트로 치환 */
+function applyBrandTheme(html: string, theme: BrandTheme): string {
+    return (
+        html
+            .replace(/#0046A4/gi, theme.primary)
+            .replace(/#FF6600/gi, theme.secondary)
+            .replace(/#E8F0FC/gi, theme.primaryLight)
+            .replace(/#FFF3EC/gi, theme.secondaryLight)
+            // product-gallery rgba(0,70,164,…) 슬라이더 dots 색상 치환
+            .replace(/rgba\(0,70,164,/g, `rgba(${hexToRgbValues(theme.primary)},`)
+    );
+}
+
+export default function EditClient({
+    bank = 'ibk',
+    userId,
+    brandTheme,
+}: {
+    bank?: string;
+    userId: string;
+    brandTheme?: BrandTheme | null;
+}) {
     const builderRef = useRef<ContentBuilder | null>(null); // ContentBuilder 인스턴스
     const runtimeRef = useRef<ContentBuilderRuntime | null>(null); // Runtime 인스턴스
+    const brandThemeRef = useRef(brandTheme ?? null); // onAdd 콜백에서 최신 테마 참조용
     const [containerOpacity, setContainerOpacity] = useState(0);
 
     // 컴포넌트 패널 드래그 상태
@@ -313,8 +344,16 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             // 삽입 HTML 앞뒤 공백 제거 — ContentBuilder 'row' 모드에서
             // 선행 개행이 childNodes[0]을 텍스트 노드로 만들어
             // element.tagName.toLowerCase() 크래시가 발생하는 버그 방지
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder onAdd 타입이 (html: string) => string을 허용하지 않아 불가피하게 사용
-            onAdd: ((html: string) => html.trim()) as any,
+            // ContentBuilder onAdd 타입이 (html: string) => string을 허용하지 않아 불가피하게 any 사용
+            /* eslint-disable @typescript-eslint/no-explicit-any */
+            onAdd: ((html: string) => {
+                const trimmed = html.trim();
+                const theme = brandThemeRef.current;
+                // brandTheme 미설정 시 원본 색상 그대로 사용
+                if (!theme) return trimmed;
+                return applyBrandTheme(trimmed, theme);
+            }) as any,
+            /* eslint-enable @typescript-eslint/no-explicit-any */
             upload,
 
             // Enable Code Chat (supports OpenAI or OpenRouter)

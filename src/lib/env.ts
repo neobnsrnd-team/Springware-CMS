@@ -31,6 +31,9 @@ export const GEMINI_API_KEY = optionalEnv('GEMINI_API_KEY');
 export const UPLOAD_PATH_ENV = optionalEnv('UPLOAD_PATH', 'public/uploads/');
 export const UPLOAD_URL_ENV = optionalEnv('UPLOAD_URL', 'uploads/');
 
+// ── 브랜드 테마 ──
+export const BANK_BRAND = optionalEnv('BANK_BRAND', '');
+
 // ── git 자동 커밋·푸시 ──
 export const GIT_AUTO_COMMIT = optionalEnv('GIT_AUTO_COMMIT', 'false');
 export const GIT_USER_NAME = optionalEnv('GIT_USER_NAME', 'Springware CMS');
