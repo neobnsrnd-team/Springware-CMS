@@ -200,6 +200,9 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         document.querySelectorAll<HTMLElement>('[data-spw-block][data-menu-tab-inited]').forEach((el) => {
             el.removeAttribute('data-menu-tab-inited');
         });
+        document.querySelectorAll<HTMLElement>('[data-spw-block][data-card-slide-inited]').forEach((el) => {
+            el.removeAttribute('data-card-slide-inited');
+        });
 
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
             // 외부 스크립트(src), 비 JS 타입(type="text/html" 등), HTML 템플릿 스크립트를 제외합니다.
