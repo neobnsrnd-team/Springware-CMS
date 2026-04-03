@@ -118,7 +118,7 @@ Usage:
 export default {
     name: 'loan-calculator',
     displayName: '금융 계산기',
-    version: '1.1.0',
+    version: '1.2.0',
 
     settings: {
         // ── 기본 탭 ──────────────────────────────────────────────
@@ -126,7 +126,7 @@ export default {
             type: 'select',
             label: '기본 탭',
             options: [
-                { value: 'loan', label: '대출' },
+                { value: 'loan',    label: '대출' },
                 { value: 'deposit', label: '예금' },
                 { value: 'savings', label: '적금' },
             ],
@@ -173,174 +173,199 @@ export default {
             label: '강조 색상',
             default: '#0046A4',
         },
-
-        // ── [대출] 기본값 ────────────────────────────────────────
-        loanDefaultPrincipal: {
-            type: 'number',
-            label: '[대출] 기본 금액 (만원)',
-            default: 10000,
-        },
-        loanDefaultRate: {
-            type: 'number',
-            label: '[대출] 기본 금리 (%)',
-            default: 5.0,
-        },
-        loanDefaultPeriod: {
-            type: 'number',
-            label: '[대출] 기본 기간 (개월)',
-            default: 12,
-        },
-
-        // ── [대출] 슬라이더 범위 ─────────────────────────────────
-        loanPrincipalMin: {
-            type: 'number',
-            label: '[대출] 금액 최소 (만원)',
-            default: 100,
-        },
-        loanPrincipalMax: {
-            type: 'number',
-            label: '[대출] 금액 최대 (만원)',
-            default: 500000,
-        },
-        loanRateMin: {
-            type: 'number',
-            label: '[대출] 금리 최소 (%)',
-            default: 0.1,
-        },
-        loanRateMax: {
-            type: 'number',
-            label: '[대출] 금리 최대 (%)',
-            default: 30,
-        },
-        loanPeriodMin: {
-            type: 'number',
-            label: '[대출] 기간 최소 (개월)',
-            default: 1,
-        },
-        loanPeriodMax: {
-            type: 'number',
-            label: '[대출] 기간 최대 (개월)',
-            default: 360,
-        },
-
-        // ── [예금] 기본값 ────────────────────────────────────────
-        depositDefaultPrincipal: {
-            type: 'number',
-            label: '[예금] 기본 금액 (만원)',
-            default: 1000,
-        },
-        depositDefaultRate: {
-            type: 'number',
-            label: '[예금] 기본 금리 (%)',
-            default: 3.5,
-        },
-        depositDefaultPeriod: {
-            type: 'number',
-            label: '[예금] 기본 기간 (개월)',
-            default: 12,
-        },
-
-        // ── [예금] 슬라이더 범위 ─────────────────────────────────
-        depositPrincipalMin: {
-            type: 'number',
-            label: '[예금] 금액 최소 (만원)',
-            default: 10,
-        },
-        depositPrincipalMax: {
-            type: 'number',
-            label: '[예금] 금액 최대 (만원)',
-            default: 1000000,
-        },
-        depositRateMin: {
-            type: 'number',
-            label: '[예금] 금리 최소 (%)',
-            default: 0.1,
-        },
-        depositRateMax: {
-            type: 'number',
-            label: '[예금] 금리 최대 (%)',
-            default: 20,
-        },
-        depositPeriodMin: {
-            type: 'number',
-            label: '[예금] 기간 최소 (개월)',
-            default: 1,
-        },
-        depositPeriodMax: {
-            type: 'number',
-            label: '[예금] 기간 최대 (개월)',
-            default: 60,
-        },
-
-        // ── [적금] 기본값 ────────────────────────────────────────
-        savingsDefaultMonthly: {
-            type: 'number',
-            label: '[적금] 기본 월납입금 (만원)',
-            default: 100,
-        },
-        savingsDefaultRate: {
-            type: 'number',
-            label: '[적금] 기본 금리 (%)',
-            default: 4.0,
-        },
-        savingsDefaultPeriod: {
-            type: 'number',
-            label: '[적금] 기본 기간 (개월)',
-            default: 24,
-        },
-
-        // ── [적금] 슬라이더 범위 ─────────────────────────────────
-        savingsMonthlyMin: {
-            type: 'number',
-            label: '[적금] 월납입금 최소 (만원)',
-            default: 1,
-        },
-        savingsMonthlyMax: {
-            type: 'number',
-            label: '[적금] 월납입금 최대 (만원)',
-            default: 10000,
-        },
-        savingsRateMin: {
-            type: 'number',
-            label: '[적금] 금리 최소 (%)',
-            default: 0.1,
-        },
-        savingsRateMax: {
-            type: 'number',
-            label: '[적금] 금리 최대 (%)',
-            default: 20,
-        },
-        savingsPeriodMin: {
-            type: 'number',
-            label: '[적금] 기간 최소 (개월)',
-            default: 1,
-        },
-        savingsPeriodMax: {
-            type: 'number',
-            label: '[적금] 기간 최대 (개월)',
-            default: 60,
-        },
     },
 
     editor: {
         openContentEditor: function(element, builder, onChange) {
-            const container = document.createElement('div');
-            container.style.marginBottom = '23px';
+            // ── 탭별 필드 정의 ────────────────────────────────────
+            const TAB_DEFS = [
+                {
+                    type: 'loan',
+                    label: '대출',
+                    defaults: [
+                        { dsKey: 'lcLoanPrincipal', label: '기본 금액(만원)', fallback: 10000, step: 100 },
+                        { dsKey: 'lcLoanRate',      label: '기본 금리(%)',    fallback: 5.0,   step: 0.1 },
+                        { dsKey: 'lcLoanPeriod',    label: '기본 기간(개월)', fallback: 12,    step: 1,   fullWidth: true },
+                    ],
+                    ranges: [
+                        { minKey: 'lcLoanPrincipalMin', maxKey: 'lcLoanPrincipalMax', label: '금액(만원)', fallbackMin: 100,  fallbackMax: 500000, step: 100 },
+                        { minKey: 'lcLoanRateMin',      maxKey: 'lcLoanRateMax',      label: '금리(%)',    fallbackMin: 0.1,  fallbackMax: 30,     step: 0.1 },
+                        { minKey: 'lcLoanPeriodMin',    maxKey: 'lcLoanPeriodMax',    label: '기간(개월)', fallbackMin: 1,    fallbackMax: 360,    step: 1 },
+                    ],
+                },
+                {
+                    type: 'deposit',
+                    label: '예금',
+                    defaults: [
+                        { dsKey: 'lcDepositPrincipal', label: '기본 금액(만원)', fallback: 1000, step: 10 },
+                        { dsKey: 'lcDepositRate',      label: '기본 금리(%)',    fallback: 3.5,  step: 0.1 },
+                        { dsKey: 'lcDepositPeriod',    label: '기본 기간(개월)', fallback: 12,   step: 1,   fullWidth: true },
+                    ],
+                    ranges: [
+                        { minKey: 'lcDepositPrincipalMin', maxKey: 'lcDepositPrincipalMax', label: '금액(만원)', fallbackMin: 10,  fallbackMax: 1000000, step: 10 },
+                        { minKey: 'lcDepositRateMin',      maxKey: 'lcDepositRateMax',      label: '금리(%)',    fallbackMin: 0.1, fallbackMax: 20,      step: 0.1 },
+                        { minKey: 'lcDepositPeriodMin',    maxKey: 'lcDepositPeriodMax',    label: '기간(개월)', fallbackMin: 1,   fallbackMax: 60,      step: 1 },
+                    ],
+                },
+                {
+                    type: 'savings',
+                    label: '적금',
+                    defaults: [
+                        { dsKey: 'lcSavingsMonthly', label: '기본 월납입금(만원)', fallback: 100, step: 1 },
+                        { dsKey: 'lcSavingsRate',    label: '기본 금리(%)',        fallback: 4.0, step: 0.1 },
+                        { dsKey: 'lcSavingsPeriod',  label: '기본 기간(개월)',     fallback: 24,  step: 1,   fullWidth: true },
+                    ],
+                    ranges: [
+                        { minKey: 'lcSavingsMonthlyMin', maxKey: 'lcSavingsMonthlyMax', label: '월납입금(만원)', fallbackMin: 1,   fallbackMax: 10000, step: 1 },
+                        { minKey: 'lcSavingsRateMin',    maxKey: 'lcSavingsRateMax',    label: '금리(%)',        fallbackMin: 0.1, fallbackMax: 20,    step: 0.1 },
+                        { minKey: 'lcSavingsPeriodMin',  maxKey: 'lcSavingsPeriodMax',  label: '기간(개월)',     fallbackMin: 1,   fallbackMax: 60,    step: 1 },
+                    ],
+                },
+            ];
 
+            // dataset에서 숫자값 읽기 헬퍼
+            const dsNum = (key, fallback) => {
+                const v = parseFloat(element.dataset[key]);
+                return isNaN(v) ? fallback : v;
+            };
+
+            // 섹션 헤더 생성 헬퍼 (제목 + 구분선)
+            const makeSectionHeader = (title) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:0 0 10px;';
+                const span = document.createElement('span');
+                span.textContent = title;
+                span.style.cssText = 'font-size:11px;font-weight:700;color:#9CA3AF;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;';
+                const line = document.createElement('hr');
+                line.style.cssText = 'flex:1;border:none;border-top:1px solid #E5E7EB;margin:0;';
+                row.appendChild(span);
+                row.appendChild(line);
+                return row;
+            };
+
+            // 라벨 + 숫자 입력 필드 생성 헬퍼
+            const makeField = (labelText, dsKey, fallback, step, fullWidth) => {
+                const wrap = document.createElement('div');
+                if (fullWidth) wrap.style.gridColumn = '1 / -1';
+
+                const lbl = document.createElement('label');
+                lbl.textContent = labelText;
+                lbl.style.cssText = 'display:block;font-size:11px;font-weight:600;color:#6B7280;margin-bottom:4px;';
+
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.step = step;
+                inp.value = dsNum(dsKey, fallback);
+                inp.style.cssText = 'width:100%;box-sizing:border-box;border:1.5px solid #E5E7EB;border-radius:6px;padding:6px 10px;font-size:13px;color:#1A1A2E;background:#fff;outline:none;font-family:inherit;';
+                inp.addEventListener('focus', () => {
+                    inp.style.borderColor = '#0046A4';
+                    inp.style.background = '#F0F4FF';
+                });
+                inp.addEventListener('blur', () => {
+                    inp.style.borderColor = '#E5E7EB';
+                    inp.style.background = '#fff';
+                });
+                inp.addEventListener('input', () => {
+                    const v = parseFloat(inp.value);
+                    if (!isNaN(v)) {
+                        element.dataset[dsKey] = v;
+                        onChange();
+                    }
+                });
+
+                wrap.appendChild(lbl);
+                wrap.appendChild(inp);
+                return wrap;
+            };
+
+            // ── 최상위 컨테이너 ───────────────────────────────────
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:13px;color:#374151;margin-bottom:16px;';
+
+            // 안내 노트
             const note = document.createElement('div');
-            note.style.cssText = 'background:#FFF3EC;border-radius:8px;padding:12px;font-size:13px;color:#FF6600;line-height:1.5;';
-            note.innerHTML = '<strong>계산기 안내</strong><br>슬라이더와 숫자 입력으로 실시간 계산됩니다.<br>신청 버튼 URL 및 탭별 기본값·범위는 설정 패널(⚙)에서 변경하세요.';
-            container.appendChild(note);
+            note.style.cssText = 'background:#EFF6FF;border-radius:8px;padding:10px 12px;font-size:12px;color:#1E40AF;line-height:1.6;margin-bottom:14px;';
+            note.innerHTML = '각 탭의 <strong>기본값</strong>과 <strong>슬라이더 범위</strong>를 설정합니다.<br>탭 노출 여부·신청 버튼은 <strong>⚙ 설정 패널</strong>에서 변경하세요.';
+            wrap.appendChild(note);
 
-            return container;
-        }
+            // ── 탭 바 ─────────────────────────────────────────────
+            const tabBar = document.createElement('div');
+            tabBar.style.cssText = 'display:flex;gap:4px;background:#F3F4F6;padding:4px;border-radius:10px;margin-bottom:14px;';
+            wrap.appendChild(tabBar);
+
+            // 탭 패널 영역
+            const panelContainer = document.createElement('div');
+            wrap.appendChild(panelContainer);
+
+            const panelMap = {};
+
+            TAB_DEFS.forEach((tabDef, idx) => {
+                const isFirst = idx === 0;
+
+                // ── 탭 버튼 ──────────────────────────────────────
+                const btn = document.createElement('button');
+                btn.textContent = tabDef.label;
+                btn.dataset.lcEditorTab = tabDef.type;
+                btn.style.cssText = [
+                    'flex:1;height:32px;border:none;border-radius:7px;',
+                    'font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;',
+                    `background:${isFirst ? '#fff' : 'transparent'};`,
+                    `color:${isFirst ? '#0046A4' : '#6B7280'};`,
+                    `box-shadow:${isFirst ? '0 1px 4px rgba(0,70,164,0.15)' : 'none'};`,
+                ].join('');
+
+                btn.addEventListener('click', () => {
+                    // 탭 버튼 스타일 갱신
+                    tabBar.querySelectorAll('[data-lc-editor-tab]').forEach(b => {
+                        const active = b.dataset.lcEditorTab === tabDef.type;
+                        b.style.background = active ? '#fff' : 'transparent';
+                        b.style.color = active ? '#0046A4' : '#6B7280';
+                        b.style.boxShadow = active ? '0 1px 4px rgba(0,70,164,0.15)' : 'none';
+                    });
+                    // 패널 표시/숨김
+                    Object.entries(panelMap).forEach(([type, panel]) => {
+                        panel.style.display = type === tabDef.type ? 'block' : 'none';
+                    });
+                });
+                tabBar.appendChild(btn);
+
+                // ── 탭 패널 ──────────────────────────────────────
+                const panel = document.createElement('div');
+                panel.style.display = isFirst ? 'block' : 'none';
+                panelMap[tabDef.type] = panel;
+
+                // 섹션: 기본값
+                panel.appendChild(makeSectionHeader('기본값'));
+                const defaultGrid = document.createElement('div');
+                defaultGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;';
+                tabDef.defaults.forEach(f => {
+                    defaultGrid.appendChild(makeField(f.label, f.dsKey, f.fallback, f.step, f.fullWidth));
+                });
+                panel.appendChild(defaultGrid);
+
+                // 섹션: 슬라이더 범위
+                panel.appendChild(makeSectionHeader('슬라이더 범위'));
+                const rangeGrid = document.createElement('div');
+                rangeGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
+                tabDef.ranges.forEach(r => {
+                    rangeGrid.appendChild(makeField(`${r.label} 최소`, r.minKey, r.fallbackMin, r.step, false));
+                    rangeGrid.appendChild(makeField(`${r.label} 최대`, r.maxKey, r.fallbackMax, r.step, false));
+                });
+                panel.appendChild(rangeGrid);
+
+                panelContainer.appendChild(panel);
+            });
+
+            return wrap;
+        },
     },
 
     mount: function(element, options) {
+        // accent 색상 적용
         const accent = element.getAttribute('data-cb-accent-color') || element.dataset.lcAccent || element.style.getPropertyValue('--lc-accent').trim() || '#0046A4';
         element.style.setProperty('--lc-accent', accent);
 
-        const tabs = element.querySelectorAll('.lc-tab');
+        const tabs   = element.querySelectorAll('.lc-tab');
         const panels = element.querySelectorAll('.lc-panel');
 
         // ── 1. 탭 노출 여부 계산 (최소 1개 보장) ─────────────────
@@ -349,8 +374,7 @@ export default {
             deposit: options.showDepositTab !== false,
             savings: options.showSavingsTab !== false,
         };
-        const visibleCount = Object.values(tabVisibility).filter(Boolean).length;
-        if (visibleCount === 0) tabVisibility.loan = true;
+        if (Object.values(tabVisibility).every(v => !v)) tabVisibility.loan = true;
 
         // ── 2. 탭 버튼 / 패널 숨김 처리 ─────────────────────────
         tabs.forEach(tab => {
@@ -366,7 +390,13 @@ export default {
             currentType = Object.keys(tabVisibility).find(k => tabVisibility[k]) || 'loan';
         }
 
-        // ── 4. 범위 레이블 텍스트 포맷 헬퍼 ─────────────────────
+        // ── 4. dataset에서 숫자값 읽기 헬퍼 ─────────────────────
+        const ds = (key, fallback) => {
+            const v = parseFloat(element.dataset[key]);
+            return isNaN(v) ? fallback : v;
+        };
+
+        // ── 5. 범위 레이블 텍스트 포맷 헬퍼 ─────────────────────
         const formatRangeLabel = (key, val) => {
             const v = Number(val);
             if (key === 'rate') return `${v}%`;
@@ -379,28 +409,28 @@ export default {
             return `${v}만원`;
         };
 
-        // ── 5. 슬라이더 범위 → DOM 반영 (syncPair 등록 전 필수) ──
+        // ── 6. 슬라이더 범위 → DOM 반영 (syncPair 등록 전 필수) ──
         const rangeConfig = {
             loan: {
-                principal: { min: options.loanPrincipalMin, max: options.loanPrincipalMax },
-                rate:      { min: options.loanRateMin,      max: options.loanRateMax },
-                period:    { min: options.loanPeriodMin,    max: options.loanPeriodMax },
+                principal: { min: ds('lcLoanPrincipalMin', null), max: ds('lcLoanPrincipalMax', null) },
+                rate:      { min: ds('lcLoanRateMin',      null), max: ds('lcLoanRateMax',      null) },
+                period:    { min: ds('lcLoanPeriodMin',    null), max: ds('lcLoanPeriodMax',    null) },
             },
             deposit: {
-                principal: { min: options.depositPrincipalMin, max: options.depositPrincipalMax },
-                rate:      { min: options.depositRateMin,      max: options.depositRateMax },
-                period:    { min: options.depositPeriodMin,    max: options.depositPeriodMax },
+                principal: { min: ds('lcDepositPrincipalMin', null), max: ds('lcDepositPrincipalMax', null) },
+                rate:      { min: ds('lcDepositRateMin',      null), max: ds('lcDepositRateMax',      null) },
+                period:    { min: ds('lcDepositPeriodMin',    null), max: ds('lcDepositPeriodMax',    null) },
             },
             savings: {
-                monthly: { min: options.savingsMonthlyMin, max: options.savingsMonthlyMax },
-                rate:    { min: options.savingsRateMin,    max: options.savingsRateMax },
-                period:  { min: options.savingsPeriodMin,  max: options.savingsPeriodMax },
+                monthly: { min: ds('lcSavingsMonthlyMin', null), max: ds('lcSavingsMonthlyMax', null) },
+                rate:    { min: ds('lcSavingsRateMin',    null), max: ds('lcSavingsRateMax',    null) },
+                period:  { min: ds('lcSavingsPeriodMin',  null), max: ds('lcSavingsPeriodMax',  null) },
             },
         };
 
         panels.forEach(panel => {
             const tabType = panel.dataset.type;
-            const config = rangeConfig[tabType] || {};
+            const config  = rangeConfig[tabType] || {};
             Object.entries(config).forEach(([key, { min, max }]) => {
                 if (min == null && max == null) return;
                 const numInput   = panel.querySelector(`.lc-input[data-key="${key}"]`);
@@ -422,27 +452,27 @@ export default {
             });
         });
 
-        // ── 6. 탭별 기본값 → DOM 반영 (syncPair 등록 전 필수) ────
+        // ── 7. 탭별 기본값 → DOM 반영 (syncPair 등록 전 필수) ────
         const defaultValues = {
             loan: {
-                principal: options.loanDefaultPrincipal,
-                rate:      options.loanDefaultRate,
-                period:    options.loanDefaultPeriod,
+                principal: ds('lcLoanPrincipal', 10000),
+                rate:      ds('lcLoanRate',      5.0),
+                period:    ds('lcLoanPeriod',    12),
             },
             deposit: {
-                principal: options.depositDefaultPrincipal,
-                rate:      options.depositDefaultRate,
-                period:    options.depositDefaultPeriod,
+                principal: ds('lcDepositPrincipal', 1000),
+                rate:      ds('lcDepositRate',      3.5),
+                period:    ds('lcDepositPeriod',    12),
             },
             savings: {
-                monthly: options.savingsDefaultMonthly,
-                rate:    options.savingsDefaultRate,
-                period:  options.savingsDefaultPeriod,
+                monthly: ds('lcSavingsMonthly', 100),
+                rate:    ds('lcSavingsRate',    4.0),
+                period:  ds('lcSavingsPeriod',  24),
             },
         };
 
         panels.forEach(panel => {
-            const tabType = panel.dataset.type;
+            const tabType  = panel.dataset.type;
             const defaults = defaultValues[tabType] || {};
             Object.entries(defaults).forEach(([key, val]) => {
                 if (val == null) return;
@@ -453,7 +483,7 @@ export default {
             });
         });
 
-        // ── 7. 탭 전환 ───────────────────────────────────────────
+        // ── 8. 탭 전환 ───────────────────────────────────────────
         const switchTab = (type) => {
             currentType = type;
             tabs.forEach(t => t.classList.toggle('active', t.dataset.type === type));
@@ -470,11 +500,11 @@ export default {
             tab.addEventListener('click', () => switchTab(tab.dataset.type));
         });
 
-        // ── 8. 신청 버튼 ─────────────────────────────────────────
+        // ── 9. 신청 버튼 ─────────────────────────────────────────
         const applyBtn = element.querySelector('.lc-apply-btn');
         if (applyBtn) {
             applyBtn.style.display = options.showApplyBtn !== false ? 'flex' : 'none';
-            if (options.applyUrl) applyBtn.setAttribute('href', options.applyUrl);
+            if (options.applyUrl)      applyBtn.setAttribute('href', options.applyUrl);
             if (options.applyBtnLabel) applyBtn.textContent = options.applyBtnLabel;
             applyBtn.addEventListener('click', (e) => {
                 const href = applyBtn.getAttribute('href');
@@ -482,11 +512,11 @@ export default {
             });
         }
 
-        // ── 9. 금액 포맷 헬퍼 ────────────────────────────────────
+        // ── 10. 금액 포맷 헬퍼 ───────────────────────────────────
         const formatWon = (n) => {
             if (!isFinite(n) || isNaN(n)) return '계산 불가';
             if (n >= 100000000) return `${(n / 100000000).toFixed(1)}억원`;
-            if (n >= 10000) return `${Math.round(n / 10000).toLocaleString()}만원`;
+            if (n >= 10000)     return `${Math.round(n / 10000).toLocaleString()}만원`;
             return `${Math.round(n).toLocaleString()}원`;
         };
 
@@ -496,7 +526,7 @@ export default {
             return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
         };
 
-        // ── 10. 계산 함수 — getVal은 min/max 클램핑으로 극단값 방지
+        // ── 11. 계산 함수 — getVal은 min/max 클램핑으로 극단값 방지
         const calculate = () => {
             const panel = element.querySelector(`.lc-panel[data-type="${currentType}"]`);
             if (!panel) return;
@@ -504,68 +534,64 @@ export default {
             const getVal = (key) => {
                 const el = panel.querySelector(`.lc-input[data-key="${key}"]`);
                 if (!el) return 0;
-                const v = parseFloat(el.value);
+                const v   = parseFloat(el.value);
                 if (isNaN(v)) return 0;
                 const min = parseFloat(el.min);
                 const max = parseFloat(el.max);
                 return Math.min(Math.max(v, min), max);
             };
 
-            const monthly = element.querySelector('.lc-val-monthly');
-            const interest = element.querySelector('.lc-val-interest');
-            const total = element.querySelector('.lc-val-total');
+            const monthly    = element.querySelector('.lc-val-monthly');
+            const interest   = element.querySelector('.lc-val-interest');
+            const total      = element.querySelector('.lc-val-total');
             const lblMonthly = element.querySelector('.lc-label-monthly');
-            const lblTotal = element.querySelector('.lc-label-total');
+            const lblTotal   = element.querySelector('.lc-label-total');
 
             if (currentType === 'loan') {
                 if (lblMonthly) lblMonthly.textContent = '월 납입금';
-                if (lblTotal) lblTotal.textContent = '총 상환금액';
+                if (lblTotal)   lblTotal.textContent   = '총 상환금액';
                 const P = getVal('principal') * 10000;
                 const r = getVal('rate') / 100 / 12;
                 const n = getVal('period');
                 if (P <= 0 || n <= 0) return;
-                let monthlyAmt = 0;
-                if (r === 0) { monthlyAmt = P / n; }
-                else { monthlyAmt = P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1); }
-                const totalAmt = monthlyAmt * n;
+                let monthlyAmt = r === 0 ? P / n : P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+                const totalAmt    = monthlyAmt * n;
                 const interestAmt = totalAmt - P;
-                if (monthly) monthly.textContent = formatWon(monthlyAmt);
+                if (monthly)  monthly.textContent  = formatWon(monthlyAmt);
                 if (interest) interest.textContent = formatWon(interestAmt);
-                if (total) total.textContent = formatWon(totalAmt);
+                if (total)    total.textContent    = formatWon(totalAmt);
             } else if (currentType === 'deposit') {
                 if (lblMonthly) lblMonthly.textContent = '세전 이자';
-                if (lblTotal) lblTotal.textContent = '만기 수령액';
+                if (lblTotal)   lblTotal.textContent   = '만기 수령액';
                 const P = getVal('principal') * 10000;
                 const r = getVal('rate') / 100;
                 const n = getVal('period') / 12;
                 if (P <= 0 || n <= 0) return;
                 const interestAmt = P * r * n;
-                const totalAmt = P + interestAmt;
-                if (monthly) monthly.textContent = formatWon(interestAmt);
-                if (interest) interest.textContent = formatWon(interestAmt * 0.846); // after 15.4% tax
-                if (total) total.textContent = formatWon(totalAmt - interestAmt * 0.154);
+                const totalAmt    = P + interestAmt;
+                if (monthly)  monthly.textContent  = formatWon(interestAmt);
+                if (interest) interest.textContent = formatWon(interestAmt * 0.846); // 이자소득세 15.4% 차감
+                if (total)    total.textContent    = formatWon(totalAmt - interestAmt * 0.154);
             } else if (currentType === 'savings') {
                 if (lblMonthly) lblMonthly.textContent = '총 납입원금';
-                if (lblTotal) lblTotal.textContent = '만기 수령액';
+                if (lblTotal)   lblTotal.textContent   = '만기 수령액';
                 const m = getVal('monthly') * 10000;
                 const r = getVal('rate') / 100 / 12;
                 const n = getVal('period');
                 if (m <= 0 || n <= 0) return;
-                const principal = m * n;
-                let totalAmt = 0;
-                if (r === 0) { totalAmt = principal; }
-                else { totalAmt = m * (Math.pow(1 + r, n) - 1) / r * (1 + r); }
+                const principal   = m * n;
+                const totalAmt    = r === 0 ? principal : m * (Math.pow(1 + r, n) - 1) / r * (1 + r);
                 const interestAmt = totalAmt - principal;
-                if (monthly) monthly.textContent = formatWon(principal);
+                if (monthly)  monthly.textContent  = formatWon(principal);
                 if (interest) interest.textContent = formatWon(interestAmt);
-                if (total) total.textContent = formatWon(totalAmt - interestAmt * 0.154);
+                if (total)    total.textContent    = formatWon(totalAmt - interestAmt * 0.154);
             }
         };
 
-        // ── 11. range ↔ number input 동기화 ─────────────────────
+        // ── 12. range ↔ number input 동기화 ─────────────────────
         const debouncedCalculate = debounce(calculate, 300);
 
-        // 범위 초과 시 테두리 색상 변경용 스타일 (한 번만 주입, DOM 추가 없음)
+        // 범위 초과 시 테두리 색상 변경용 스타일 (한 번만 주입)
         if (!document.getElementById('lc-overrange-style')) {
             const style = document.createElement('style');
             style.id = 'lc-overrange-style';
@@ -585,7 +611,6 @@ export default {
                 // number input: debounce로 타이핑 중 깜빡임 방지
                 inputEl.addEventListener('input', () => {
                     const raw = inputEl.value;
-                    // 빈 값이면 계산하지 않고 대기
                     if (raw === '' || raw === '-') return;
                     const v = parseFloat(raw);
                     if (isNaN(v)) return;
@@ -597,30 +622,24 @@ export default {
 
                 // blur 시 min/max 클램핑
                 inputEl.addEventListener('blur', () => {
-                    // 브라우저가 무효 입력 시 .value를 빈 문자열로 반환 → lastValidValue로 복원
-                    if (inputEl.value === '') {
-                        inputEl.value = lastValidValue;
-                    }
+                    if (inputEl.value === '') inputEl.value = lastValidValue;
                     const v = parseFloat(inputEl.value);
                     const clamped = isNaN(v) ? parseFloat(inputEl.defaultValue) : Math.min(Math.max(v, min), max);
-                    inputEl.value = clamped;
-                    lastValidValue = String(clamped);
-                    rangeEl.value = inputEl.value;
+                    inputEl.value      = clamped;
+                    lastValidValue     = String(clamped);
+                    rangeEl.value      = inputEl.value;
                     inputEl.closest('.lc-input-wrap')?.classList.remove('lc-out-of-range');
                     calculate();
                 });
 
                 // Enter 키로 즉시 확정
                 inputEl.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        inputEl.blur();
-                    }
+                    if (e.key === 'Enter') { e.preventDefault(); inputEl.blur(); }
                 });
 
-                // range 슬라이더: 즉시 반영 (debounce 불필요)
+                // range 슬라이더: 즉시 반영
                 rangeEl.addEventListener('input', () => {
-                    inputEl.value = rangeEl.value;
+                    inputEl.value  = rangeEl.value;
                     lastValidValue = rangeEl.value;
                     calculate();
                 });
@@ -634,12 +653,12 @@ export default {
             });
         });
 
-        // ── 12. 초기 탭 활성화 ───────────────────────────────────
+        // ── 13. 초기 탭 활성화 ───────────────────────────────────
         switchTab(currentType);
 
         return {};
     },
 
     unmount: function(element, instance) {
-    }
+    },
 };
