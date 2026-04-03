@@ -1653,6 +1653,10 @@ export default function EditClient({
             const builder = builderRef.current;
             if (!builder) return;
 
+            // 브랜드 테마 색상 치환 (금융 컴포넌트 삽입 시)
+            const theme = brandThemeRef.current;
+            const themedHtml = theme ? applyBrandTheme(html, theme) : html;
+
             // canvasBlocksRef.current 대신 builder.html()로 현재 DOM 상태를 직접 읽음
             // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
             //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
@@ -1661,12 +1665,12 @@ export default function EditClient({
             // 루트 요소의 속성만 확인 — 텍스트 내용에 문자열이 포함되어도 오작동하지 않도록 파싱
             const isSpwBlock = (() => {
                 const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html.trim();
+                tempDiv.innerHTML = themedHtml.trim();
                 const root = tempDiv.firstElementChild;
                 return root?.hasAttribute('data-spw-block') ?? false;
             })();
             const colClass = isSpwBlock ? 'column spw-finance-col' : 'column';
-            const wrappedHtml = `<div class="row"><div class="${colClass}">\n${html}\n</div></div>`;
+            const wrappedHtml = `<div class="row"><div class="${colClass}">\n${themedHtml}\n</div></div>`;
             const blockHtmls = liveBlocks.map((b) => b.outerHtml);
 
             // insertIdx가 유효하면 해당 위치에, 아니면 끝에 추가
