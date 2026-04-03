@@ -26,6 +26,7 @@ import SlideEditorModal from '@/components/edit/SlideEditorModal';
 import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import FlexListEditor from '@/components/edit/FlexListEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
+import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
 
 // 기본 블록 타입 — DB SPW_CMS_COMPONENT에서 로드
@@ -175,9 +176,53 @@ const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon
     responsive: { label: '반응형', maxWidth: '100%', icon: '🔄' },
 };
 
-export default function EditClient({ bank = 'ibk', userId }: { bank?: string; userId: string }) {
+/** hex 색상(#RRGGBB)을 "R,G,B" 문자열로 변환 — rgba() 치환용 */
+function hexToRgbValues(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `${r},${g},${b}`;
+}
+
+/** IBK 기본 색상을 brandTheme 팔레트로 치환 */
+function applyBrandTheme(html: string, theme: BrandTheme): string {
+    const p = hexToRgbValues(theme.primary);
+    const s = hexToRgbValues(theme.secondary);
+    const pl = hexToRgbValues(theme.primaryLight);
+    const sl = hexToRgbValues(theme.secondaryLight);
+
+    return (
+        html
+            .replace(/#0046A4/gi, theme.primary)
+            .replace(/#FF6600/gi, theme.secondary)
+            .replace(/#E8F0FC/gi, theme.primaryLight)
+            .replace(/#FFF3EC/gi, theme.secondaryLight)
+            // rgb() 치환 — 컴포넌트 내부에 rgb 형태로 정의된 경우 대응 (공백 허용)
+            .replace(/rgb\(\s*0\s*,\s*70\s*,\s*164\s*\)/gi, `rgb(${p})`)
+            .replace(/rgb\(\s*255\s*,\s*102\s*,\s*0\s*\)/gi, `rgb(${s})`)
+            .replace(/rgb\(\s*232\s*,\s*240\s*,\s*252\s*\)/gi, `rgb(${pl})`)
+            .replace(/rgb\(\s*255\s*,\s*243\s*,\s*236\s*\)/gi, `rgb(${sl})`)
+            // rgba() 치환 — 투명도 포함 색상 대응 (공백 허용)
+            .replace(/rgba\(\s*0\s*,\s*70\s*,\s*164\s*,/gi, `rgba(${p},`)
+            .replace(/rgba\(\s*255\s*,\s*102\s*,\s*0\s*,/gi, `rgba(${s},`)
+    );
+}
+
+export default function EditClient({
+    bank = 'ibk',
+    userId,
+    brandTheme,
+}: {
+    bank?: string;
+    userId: string;
+    brandTheme?: BrandTheme | null;
+}) {
     const builderRef = useRef<ContentBuilder | null>(null); // ContentBuilder 인스턴스
     const runtimeRef = useRef<ContentBuilderRuntime | null>(null); // Runtime 인스턴스
+    const brandThemeRef = useRef(brandTheme ?? null); // onAdd 콜백에서 최신 테마 참조용
+    useEffect(() => {
+        brandThemeRef.current = brandTheme ?? null;
+    }, [brandTheme]);
     const [containerOpacity, setContainerOpacity] = useState(0);
 
     // 컴포넌트 패널 드래그 상태
@@ -313,8 +358,16 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             // 삽입 HTML 앞뒤 공백 제거 — ContentBuilder 'row' 모드에서
             // 선행 개행이 childNodes[0]을 텍스트 노드로 만들어
             // element.tagName.toLowerCase() 크래시가 발생하는 버그 방지
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder onAdd 타입이 (html: string) => string을 허용하지 않아 불가피하게 사용
-            onAdd: ((html: string) => html.trim()) as any,
+            // ContentBuilder onAdd 타입이 (html: string) => string을 허용하지 않아 불가피하게 any 사용
+            /* eslint-disable @typescript-eslint/no-explicit-any */
+            onAdd: ((html: string) => {
+                const trimmed = html.trim();
+                const theme = brandThemeRef.current;
+                // brandTheme 미설정 시 원본 색상 그대로 사용
+                if (!theme) return trimmed;
+                return applyBrandTheme(trimmed, theme);
+            }) as any,
+            /* eslint-enable @typescript-eslint/no-explicit-any */
             upload,
 
             // Enable Code Chat (supports OpenAI or OpenRouter)
@@ -1614,6 +1667,10 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             const builder = builderRef.current;
             if (!builder) return;
 
+            // 브랜드 테마 색상 치환 (금융 컴포넌트 삽입 시)
+            const theme = brandThemeRef.current;
+            const themedHtml = theme ? applyBrandTheme(html, theme) : html;
+
             // canvasBlocksRef.current 대신 builder.html()로 현재 DOM 상태를 직접 읽음
             // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
             //   항상 실제 DOM 기준의 최신 블록 목록을 사용합니다.
@@ -1622,12 +1679,12 @@ export default function EditClient({ bank = 'ibk', userId }: { bank?: string; us
             // 루트 요소의 속성만 확인 — 텍스트 내용에 문자열이 포함되어도 오작동하지 않도록 파싱
             const isSpwBlock = (() => {
                 const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html.trim();
+                tempDiv.innerHTML = themedHtml.trim();
                 const root = tempDiv.firstElementChild;
                 return root?.hasAttribute('data-spw-block') ?? false;
             })();
             const colClass = isSpwBlock ? 'column spw-finance-col' : 'column';
-            const wrappedHtml = `<div class="row"><div class="${colClass}">\n${html}\n</div></div>`;
+            const wrappedHtml = `<div class="row"><div class="${colClass}">\n${themedHtml}\n</div></div>`;
             const blockHtmls = liveBlocks.map((b) => b.outerHtml);
 
             // insertIdx가 유효하면 해당 위치에, 아니면 끝에 추가
