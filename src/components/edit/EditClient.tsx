@@ -186,14 +186,25 @@ function hexToRgbValues(hex: string): string {
 
 /** IBK 기본 색상을 brandTheme 팔레트로 치환 */
 function applyBrandTheme(html: string, theme: BrandTheme): string {
+    const p = hexToRgbValues(theme.primary);
+    const s = hexToRgbValues(theme.secondary);
+    const pl = hexToRgbValues(theme.primaryLight);
+    const sl = hexToRgbValues(theme.secondaryLight);
+
     return (
         html
             .replace(/#0046A4/gi, theme.primary)
             .replace(/#FF6600/gi, theme.secondary)
             .replace(/#E8F0FC/gi, theme.primaryLight)
             .replace(/#FFF3EC/gi, theme.secondaryLight)
-            // product-gallery rgba(0,70,164,…) 슬라이더 dots 색상 치환
-            .replace(/rgba\(0,70,164,/g, `rgba(${hexToRgbValues(theme.primary)},`)
+            // rgb() 치환 — 컴포넌트 내부에 rgb 형태로 정의된 경우 대응 (공백 허용)
+            .replace(/rgb\(\s*0\s*,\s*70\s*,\s*164\s*\)/gi, `rgb(${p})`)
+            .replace(/rgb\(\s*255\s*,\s*102\s*,\s*0\s*\)/gi, `rgb(${s})`)
+            .replace(/rgb\(\s*232\s*,\s*240\s*,\s*252\s*\)/gi, `rgb(${pl})`)
+            .replace(/rgb\(\s*255\s*,\s*243\s*,\s*236\s*\)/gi, `rgb(${sl})`)
+            // rgba() 치환 — 투명도 포함 색상 대응 (공백 허용)
+            .replace(/rgba\(\s*0\s*,\s*70\s*,\s*164\s*,/gi, `rgba(${p},`)
+            .replace(/rgba\(\s*255\s*,\s*102\s*,\s*0\s*,/gi, `rgba(${s},`)
     );
 }
 
@@ -209,6 +220,9 @@ export default function EditClient({
     const builderRef = useRef<ContentBuilder | null>(null); // ContentBuilder 인스턴스
     const runtimeRef = useRef<ContentBuilderRuntime | null>(null); // Runtime 인스턴스
     const brandThemeRef = useRef(brandTheme ?? null); // onAdd 콜백에서 최신 테마 참조용
+    useEffect(() => {
+        brandThemeRef.current = brandTheme ?? null;
+    }, [brandTheme]);
     const [containerOpacity, setContainerOpacity] = useState(0);
 
     // 컴포넌트 패널 드래그 상태
