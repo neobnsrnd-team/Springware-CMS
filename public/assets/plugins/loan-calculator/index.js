@@ -1,3 +1,4 @@
+// public/assets/plugins/loan-calculator/index.js
 
 /*
 Usage:
@@ -109,7 +110,7 @@ Usage:
                 <span class="lc-result-value lc-val-total">0원</span>
             </div>
         </div>
-        <a href="#" class="lc-apply-btn">상담 신청하기</a>
+        <a href="#" class="lc-apply-btn">신청</a>
     </div>
 </div>
 */
@@ -117,39 +118,208 @@ Usage:
 export default {
     name: 'loan-calculator',
     displayName: '금융 계산기',
-    version: '1.0.0',
+    version: '1.1.0',
 
     settings: {
+        // ── 기본 탭 ──────────────────────────────────────────────
         defaultType: {
             type: 'select',
             label: '기본 탭',
             options: [
                 { value: 'loan', label: '대출' },
                 { value: 'deposit', label: '예금' },
-                { value: 'savings', label: '적금' }
+                { value: 'savings', label: '적금' },
             ],
-            default: 'loan'
+            default: 'loan',
         },
+
+        // ── 탭 노출 여부 ─────────────────────────────────────────
+        showLoanTab: {
+            type: 'boolean',
+            label: '[대출] 탭 표시',
+            default: true,
+        },
+        showDepositTab: {
+            type: 'boolean',
+            label: '[예금] 탭 표시',
+            default: true,
+        },
+        showSavingsTab: {
+            type: 'boolean',
+            label: '[적금] 탭 표시',
+            default: true,
+        },
+
+        // ── 신청 버튼 ────────────────────────────────────────────
         showApplyBtn: {
             type: 'boolean',
-            label: '상담 신청 버튼 표시',
-            default: true
+            label: '신청 버튼 표시',
+            default: true,
         },
         applyUrl: {
             type: 'text',
-            label: '상담 신청 URL',
-            default: '#'
+            label: '신청 버튼 URL',
+            default: '#',
         },
         applyBtnLabel: {
             type: 'text',
-            label: '상담 신청 버튼 텍스트',
-            default: '상담 신청하기'
+            label: '신청 버튼 텍스트',
+            default: '신청',
         },
+
+        // ── 강조 색상 ────────────────────────────────────────────
         accentColor: {
             type: 'color',
             label: '강조 색상',
-            default: '#0046A4'
-        }
+            default: '#0046A4',
+        },
+
+        // ── [대출] 기본값 ────────────────────────────────────────
+        loanDefaultPrincipal: {
+            type: 'number',
+            label: '[대출] 기본 금액 (만원)',
+            default: 10000,
+        },
+        loanDefaultRate: {
+            type: 'number',
+            label: '[대출] 기본 금리 (%)',
+            default: 5.0,
+        },
+        loanDefaultPeriod: {
+            type: 'number',
+            label: '[대출] 기본 기간 (개월)',
+            default: 12,
+        },
+
+        // ── [대출] 슬라이더 범위 ─────────────────────────────────
+        loanPrincipalMin: {
+            type: 'number',
+            label: '[대출] 금액 최소 (만원)',
+            default: 100,
+        },
+        loanPrincipalMax: {
+            type: 'number',
+            label: '[대출] 금액 최대 (만원)',
+            default: 500000,
+        },
+        loanRateMin: {
+            type: 'number',
+            label: '[대출] 금리 최소 (%)',
+            default: 0.1,
+        },
+        loanRateMax: {
+            type: 'number',
+            label: '[대출] 금리 최대 (%)',
+            default: 30,
+        },
+        loanPeriodMin: {
+            type: 'number',
+            label: '[대출] 기간 최소 (개월)',
+            default: 1,
+        },
+        loanPeriodMax: {
+            type: 'number',
+            label: '[대출] 기간 최대 (개월)',
+            default: 360,
+        },
+
+        // ── [예금] 기본값 ────────────────────────────────────────
+        depositDefaultPrincipal: {
+            type: 'number',
+            label: '[예금] 기본 금액 (만원)',
+            default: 1000,
+        },
+        depositDefaultRate: {
+            type: 'number',
+            label: '[예금] 기본 금리 (%)',
+            default: 3.5,
+        },
+        depositDefaultPeriod: {
+            type: 'number',
+            label: '[예금] 기본 기간 (개월)',
+            default: 12,
+        },
+
+        // ── [예금] 슬라이더 범위 ─────────────────────────────────
+        depositPrincipalMin: {
+            type: 'number',
+            label: '[예금] 금액 최소 (만원)',
+            default: 10,
+        },
+        depositPrincipalMax: {
+            type: 'number',
+            label: '[예금] 금액 최대 (만원)',
+            default: 1000000,
+        },
+        depositRateMin: {
+            type: 'number',
+            label: '[예금] 금리 최소 (%)',
+            default: 0.1,
+        },
+        depositRateMax: {
+            type: 'number',
+            label: '[예금] 금리 최대 (%)',
+            default: 20,
+        },
+        depositPeriodMin: {
+            type: 'number',
+            label: '[예금] 기간 최소 (개월)',
+            default: 1,
+        },
+        depositPeriodMax: {
+            type: 'number',
+            label: '[예금] 기간 최대 (개월)',
+            default: 60,
+        },
+
+        // ── [적금] 기본값 ────────────────────────────────────────
+        savingsDefaultMonthly: {
+            type: 'number',
+            label: '[적금] 기본 월납입금 (만원)',
+            default: 100,
+        },
+        savingsDefaultRate: {
+            type: 'number',
+            label: '[적금] 기본 금리 (%)',
+            default: 4.0,
+        },
+        savingsDefaultPeriod: {
+            type: 'number',
+            label: '[적금] 기본 기간 (개월)',
+            default: 24,
+        },
+
+        // ── [적금] 슬라이더 범위 ─────────────────────────────────
+        savingsMonthlyMin: {
+            type: 'number',
+            label: '[적금] 월납입금 최소 (만원)',
+            default: 1,
+        },
+        savingsMonthlyMax: {
+            type: 'number',
+            label: '[적금] 월납입금 최대 (만원)',
+            default: 10000,
+        },
+        savingsRateMin: {
+            type: 'number',
+            label: '[적금] 금리 최소 (%)',
+            default: 0.1,
+        },
+        savingsRateMax: {
+            type: 'number',
+            label: '[적금] 금리 최대 (%)',
+            default: 20,
+        },
+        savingsPeriodMin: {
+            type: 'number',
+            label: '[적금] 기간 최소 (개월)',
+            default: 1,
+        },
+        savingsPeriodMax: {
+            type: 'number',
+            label: '[적금] 기간 최대 (개월)',
+            default: 60,
+        },
     },
 
     editor: {
@@ -159,7 +329,7 @@ export default {
 
             const note = document.createElement('div');
             note.style.cssText = 'background:#FFF3EC;border-radius:8px;padding:12px;font-size:13px;color:#FF6600;line-height:1.5;';
-            note.innerHTML = '<strong>계산기 안내</strong><br>슬라이더와 숫자 입력으로 실시간 계산됩니다.<br>상담 신청 버튼 URL은 설정 패널에서 변경하세요.';
+            note.innerHTML = '<strong>계산기 안내</strong><br>슬라이더와 숫자 입력으로 실시간 계산됩니다.<br>신청 버튼 URL 및 탭별 기본값·범위는 설정 패널(⚙)에서 변경하세요.';
             container.appendChild(note);
 
             return container;
@@ -170,23 +340,137 @@ export default {
         const accent = element.getAttribute('data-cb-accent-color') || element.dataset.lcAccent || element.style.getPropertyValue('--lc-accent').trim() || '#0046A4';
         element.style.setProperty('--lc-accent', accent);
 
-        // Tab switching
         const tabs = element.querySelectorAll('.lc-tab');
         const panels = element.querySelectorAll('.lc-panel');
-        let currentType = options.defaultType || 'loan';
 
+        // ── 1. 탭 노출 여부 계산 (최소 1개 보장) ─────────────────
+        const tabVisibility = {
+            loan:    options.showLoanTab !== false,
+            deposit: options.showDepositTab !== false,
+            savings: options.showSavingsTab !== false,
+        };
+        const visibleCount = Object.values(tabVisibility).filter(Boolean).length;
+        if (visibleCount === 0) tabVisibility.loan = true;
+
+        // ── 2. 탭 버튼 / 패널 숨김 처리 ─────────────────────────
+        tabs.forEach(tab => {
+            tab.style.display = tabVisibility[tab.dataset.type] ? '' : 'none';
+        });
+        panels.forEach(panel => {
+            if (!tabVisibility[panel.dataset.type]) panel.style.display = 'none';
+        });
+
+        // ── 3. currentType — 숨겨진 탭이면 첫 번째 노출 탭으로 보정
+        let currentType = options.defaultType || 'loan';
+        if (!tabVisibility[currentType]) {
+            currentType = Object.keys(tabVisibility).find(k => tabVisibility[k]) || 'loan';
+        }
+
+        // ── 4. 범위 레이블 텍스트 포맷 헬퍼 ─────────────────────
+        const formatRangeLabel = (key, val) => {
+            const v = Number(val);
+            if (key === 'rate') return `${v}%`;
+            if (key === 'period') {
+                if (v % 12 === 0 && v > 0) return `${v / 12}년`;
+                return `${v}개월`;
+            }
+            // principal, monthly (단위: 만원)
+            if (v >= 10000) return `${v / 10000}억원`;
+            return `${v}만원`;
+        };
+
+        // ── 5. 슬라이더 범위 → DOM 반영 (syncPair 등록 전 필수) ──
+        const rangeConfig = {
+            loan: {
+                principal: { min: options.loanPrincipalMin, max: options.loanPrincipalMax },
+                rate:      { min: options.loanRateMin,      max: options.loanRateMax },
+                period:    { min: options.loanPeriodMin,    max: options.loanPeriodMax },
+            },
+            deposit: {
+                principal: { min: options.depositPrincipalMin, max: options.depositPrincipalMax },
+                rate:      { min: options.depositRateMin,      max: options.depositRateMax },
+                period:    { min: options.depositPeriodMin,    max: options.depositPeriodMax },
+            },
+            savings: {
+                monthly: { min: options.savingsMonthlyMin, max: options.savingsMonthlyMax },
+                rate:    { min: options.savingsRateMin,    max: options.savingsRateMax },
+                period:  { min: options.savingsPeriodMin,  max: options.savingsPeriodMax },
+            },
+        };
+
+        panels.forEach(panel => {
+            const tabType = panel.dataset.type;
+            const config = rangeConfig[tabType] || {};
+            Object.entries(config).forEach(([key, { min, max }]) => {
+                if (min == null && max == null) return;
+                const numInput   = panel.querySelector(`.lc-input[data-key="${key}"]`);
+                const rangeInput = panel.querySelector(`.lc-range[data-key="${key}"]`);
+                if (numInput) {
+                    if (min != null) numInput.min = min;
+                    if (max != null) numInput.max = max;
+                }
+                if (rangeInput) {
+                    if (min != null) rangeInput.min = min;
+                    if (max != null) rangeInput.max = max;
+                    // 범위 레이블 갱신
+                    const labelSpans = rangeInput.closest('.lc-field')?.querySelectorAll('.lc-range-labels span');
+                    if (labelSpans) {
+                        if (labelSpans[0] && min != null) labelSpans[0].textContent = formatRangeLabel(key, min);
+                        if (labelSpans[1] && max != null) labelSpans[1].textContent = formatRangeLabel(key, max);
+                    }
+                }
+            });
+        });
+
+        // ── 6. 탭별 기본값 → DOM 반영 (syncPair 등록 전 필수) ────
+        const defaultValues = {
+            loan: {
+                principal: options.loanDefaultPrincipal,
+                rate:      options.loanDefaultRate,
+                period:    options.loanDefaultPeriod,
+            },
+            deposit: {
+                principal: options.depositDefaultPrincipal,
+                rate:      options.depositDefaultRate,
+                period:    options.depositDefaultPeriod,
+            },
+            savings: {
+                monthly: options.savingsDefaultMonthly,
+                rate:    options.savingsDefaultRate,
+                period:  options.savingsDefaultPeriod,
+            },
+        };
+
+        panels.forEach(panel => {
+            const tabType = panel.dataset.type;
+            const defaults = defaultValues[tabType] || {};
+            Object.entries(defaults).forEach(([key, val]) => {
+                if (val == null) return;
+                const numInput   = panel.querySelector(`.lc-input[data-key="${key}"]`);
+                const rangeInput = panel.querySelector(`.lc-range[data-key="${key}"]`);
+                if (numInput)   numInput.value   = val;
+                if (rangeInput) rangeInput.value = val;
+            });
+        });
+
+        // ── 7. 탭 전환 ───────────────────────────────────────────
         const switchTab = (type) => {
             currentType = type;
             tabs.forEach(t => t.classList.toggle('active', t.dataset.type === type));
-            panels.forEach(p => p.style.display = p.dataset.type === type ? 'block' : 'none');
+            panels.forEach(p => {
+                // 숨긴 탭 패널은 건드리지 않음
+                if (!tabVisibility[p.dataset.type]) return;
+                p.style.display = p.dataset.type === type ? 'block' : 'none';
+            });
             calculate();
         };
 
         tabs.forEach(tab => {
+            if (!tabVisibility[tab.dataset.type]) return;
             tab.addEventListener('click', () => switchTab(tab.dataset.type));
         });
 
-        // Apply button
+        // ── 8. 신청 버튼 ─────────────────────────────────────────
         const applyBtn = element.querySelector('.lc-apply-btn');
         if (applyBtn) {
             applyBtn.style.display = options.showApplyBtn !== false ? 'flex' : 'none';
@@ -198,6 +482,7 @@ export default {
             });
         }
 
+        // ── 9. 금액 포맷 헬퍼 ────────────────────────────────────
         const formatWon = (n) => {
             if (!isFinite(n) || isNaN(n)) return '계산 불가';
             if (n >= 100000000) return `${(n / 100000000).toFixed(1)}억원`;
@@ -211,7 +496,7 @@ export default {
             return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
         };
 
-        // Calculate — getVal은 min/max 범위로 클램핑하여 극단값 계산 방지
+        // ── 10. 계산 함수 — getVal은 min/max 클램핑으로 극단값 방지
         const calculate = () => {
             const panel = element.querySelector(`.lc-panel[data-type="${currentType}"]`);
             if (!panel) return;
@@ -277,7 +562,7 @@ export default {
             }
         };
 
-        // Sync range <-> number input within each panel
+        // ── 11. range ↔ number input 동기화 ─────────────────────
         const debouncedCalculate = debounce(calculate, 300);
 
         // 범위 초과 시 테두리 색상 변경용 스타일 (한 번만 주입, DOM 추가 없음)
@@ -349,7 +634,7 @@ export default {
             });
         });
 
-        // Init
+        // ── 12. 초기 탭 활성화 ───────────────────────────────────
         switchTab(currentType);
 
         return {};
