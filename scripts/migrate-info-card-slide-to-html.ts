@@ -36,12 +36,17 @@ function sanitizeHref(url: string): string {
     return '#';
 }
 
+/** HTML 특수문자 이스케이프 — XSS 방지 */
+function escapeHtml(str: string): string {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // ── 카드 HTML 빌더 ───────────────────────────────────────────────────────
 
 function buildCardHtml(card: CardSlide, idx: number): string {
     // 상단: 태그 + 더보기
     const tagHtml = card.tag
-        ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;">${card.tag}</span>`
+        ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;">${escapeHtml(card.tag)}</span>`
         : '';
     const moreHtml = card.showMore
         ? `<a href="${sanitizeHref(card.moreHref || '#')}" style="color:#9CA3AF;font-size:18px;text-decoration:none;line-height:1;">⋮</a>`
@@ -57,18 +62,18 @@ function buildCardHtml(card: CardSlide, idx: number): string {
           `</button>`
         : '';
     const titleHtml = `<div style="display:flex;align-items:center;gap:4px;">` +
-        `<span data-card-title style="font-size:18px;font-weight:700;color:#1A1A2E;flex:1;">${card.title}</span>` +
+        `<span data-card-title style="font-size:18px;font-weight:700;color:#1A1A2E;flex:1;">${escapeHtml(card.title)}</span>` +
         copyBtnHtml +
         `</div>`;
 
     // 부제목
     const subtitleHtml = card.subtitle
-        ? `<span style="font-size:14px;color:#6B7280;">${card.subtitle}</span>`
+        ? `<span style="font-size:14px;color:#6B7280;">${escapeHtml(card.subtitle)}</span>`
         : '';
 
     // 보조 텍스트
     const infoHtml = (card.infoLines ?? [])
-        .map((line) => `<span style="font-size:13px;color:#6B7280;text-align:right;">${line}</span>`)
+        .map((line) => `<span style="font-size:13px;color:#6B7280;text-align:right;">${escapeHtml(line)}</span>`)
         .join('');
 
     // 하단 버튼
@@ -77,7 +82,7 @@ function buildCardHtml(card: CardSlide, idx: number): string {
           (card.buttons ?? []).map((b) =>
               `<a href="${sanitizeHref(b.href || '#')}"` +
               ` style="flex:1;text-align:center;padding:10px;border-radius:8px;` +
-              `background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;">${b.label}</a>`,
+              `background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;">${escapeHtml(b.label)}</a>`,
           ).join('') +
           `</div>`
         : '';
@@ -131,11 +136,13 @@ const SLIDE_SCRIPT =
     `btn.style.whiteSpace='nowrap';btn.style.overflow='hidden';` +
     `var fs=13;while(btn.scrollWidth>btn.clientWidth&&fs>9){fs--;btn.style.fontSize=fs+'px';}` +
     `});` +
+    `if(!track.getAttribute('data-ics-id')){` +
     `var styleId='ics-hide-'+Math.random().toString(36).slice(2,8);` +
     `track.setAttribute('data-ics-id',styleId);` +
     `var styleEl=document.createElement('style');` +
     `styleEl.textContent='[data-ics-id=\"'+styleId+'\"]::-webkit-scrollbar{display:none}';` +
     `root.appendChild(styleEl);` +
+    `}` +
     `}` +
 
     // 복사 버튼

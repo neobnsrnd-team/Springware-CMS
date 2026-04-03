@@ -41,11 +41,15 @@ function sanitizeHref(url: string): string {
     return '#';
 }
 
+function escapeHtml(str: string): string {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // ── 카드 HTML 빌더 (마이그레이션 스크립트와 동기화) ──────────────────────
 
 function buildCardHtml(card: CardSlide, idx: number): string {
     const tagHtml = card.tag
-        ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;">${card.tag}</span>`
+        ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;">${escapeHtml(card.tag)}</span>`
         : '';
     const moreHtml = card.showMore
         ? `<a href="${sanitizeHref(card.moreHref || '#')}" style="color:#9CA3AF;font-size:18px;text-decoration:none;line-height:1;">⋮</a>`
@@ -62,14 +66,16 @@ function buildCardHtml(card: CardSlide, idx: number): string {
         : '';
     const titleHtml =
         `<div style="display:flex;align-items:center;gap:4px;">` +
-        `<span data-card-title style="font-size:18px;font-weight:700;color:#1A1A2E;flex:1;">${card.title}</span>` +
+        `<span data-card-title style="font-size:18px;font-weight:700;color:#1A1A2E;flex:1;">${escapeHtml(card.title)}</span>` +
         copyBtnHtml +
         `</div>`;
 
-    const subtitleHtml = card.subtitle ? `<span style="font-size:14px;color:#6B7280;">${card.subtitle}</span>` : '';
+    const subtitleHtml = card.subtitle
+        ? `<span style="font-size:14px;color:#6B7280;">${escapeHtml(card.subtitle)}</span>`
+        : '';
 
     const infoHtml = (card.infoLines ?? [])
-        .map((line) => `<span style="font-size:13px;color:#6B7280;text-align:right;">${line}</span>`)
+        .map((line) => `<span style="font-size:13px;color:#6B7280;text-align:right;">${escapeHtml(line)}</span>`)
         .join('');
 
     const buttonsHtml =
@@ -79,7 +85,7 @@ function buildCardHtml(card: CardSlide, idx: number): string {
                   .map(
                       (b) =>
                           `<a href="${sanitizeHref(b.href || '#')}"` +
-                          ` style="flex:1;text-align:center;padding:10px;border-radius:8px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;">${b.label}</a>`,
+                          ` style="flex:1;text-align:center;padding:10px;border-radius:8px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;">${escapeHtml(b.label)}</a>`,
                   )
                   .join('') +
               `</div>`
@@ -127,11 +133,13 @@ const SLIDE_SCRIPT =
     `btn.style.whiteSpace='nowrap';btn.style.overflow='hidden';` +
     `var fs=13;while(btn.scrollWidth>btn.clientWidth&&fs>9){fs--;btn.style.fontSize=fs+'px';}` +
     `});` +
+    `if(!track.getAttribute('data-ics-id')){` +
     `var styleId='ics-hide-'+Math.random().toString(36).slice(2,8);` +
     `track.setAttribute('data-ics-id',styleId);` +
     `var styleEl=document.createElement('style');` +
     `styleEl.textContent='[data-ics-id=\"'+styleId+'\"]::-webkit-scrollbar{display:none}';` +
     `root.appendChild(styleEl);` +
+    `}` +
     `}` +
     `root.querySelectorAll('[data-card-copy]').forEach(function(btn){` +
     `btn.addEventListener('click',function(e){` +
@@ -178,10 +186,30 @@ function parseSlides(blockEl: HTMLElement): CardSlide[] {
     // 2순위: DOM에서 추출
     const items = blockEl.querySelectorAll('[data-card-item]');
     if (items.length > 0) {
-        return Array.from(items).map((item) => ({
-            title: item.querySelector('[data-card-title]')?.textContent?.trim() ?? '제목',
-            copyable: !!item.querySelector('[data-card-copy]'),
-        }));
+        return Array.from(items).map((item) => {
+            const tagEl = item.querySelector('span[style*="border-radius:12px"]');
+            const tag = tagEl?.textContent?.trim() || undefined;
+            const moreEl = item.querySelector('a[style*="font-size:18px"]');
+            const showMore = !!moreEl;
+            const moreHref = moreEl?.getAttribute('href') || undefined;
+            const title = item.querySelector('[data-card-title]')?.textContent?.trim() ?? '제목';
+            const copyable = !!item.querySelector('[data-card-copy]');
+            const subtitleEl = item.querySelector('span[style*="font-size:14px"]');
+            const subtitle = subtitleEl?.textContent?.trim() || undefined;
+            const infoEls = item.querySelectorAll('span[style*="text-align:right"]');
+            const infoLines =
+                infoEls.length > 0 ? Array.from(infoEls).map((el) => el.textContent?.trim() ?? '') : undefined;
+            const btnEls = item.querySelectorAll('a[style*="border-radius:8px"]');
+            const buttons =
+                btnEls.length > 0
+                    ? Array.from(btnEls).map((el) => ({
+                          label: el.textContent?.trim() ?? '',
+                          href: el.getAttribute('href') || undefined,
+                      }))
+                    : undefined;
+
+            return { tag, showMore, moreHref, title, copyable, subtitle, infoLines, buttons };
+        });
     }
 
     return [{ title: '새 카드' }];
