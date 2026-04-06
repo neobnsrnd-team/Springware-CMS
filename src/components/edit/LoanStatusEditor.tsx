@@ -40,12 +40,13 @@ export interface LoanStatusEditorProps {
 
 // ── 블록 파싱 ─────────────────────────────────────────────────────────────
 
-function parseBlock(blockEl: HTMLElement): { loanName: string; btnLabel: string; rows: LoanRow[] } {
+function parseBlock(blockEl: HTMLElement): { loanName: string; btnLabel: string; btnHref: string; rows: LoanRow[] } {
     const badge = blockEl.querySelector<HTMLElement>('[data-ls-badge]');
     const loanName = badge?.textContent?.trim() ?? 'IBK 신용대출';
 
     const btn = blockEl.querySelector<HTMLElement>('[data-ls-btn]');
     const btnLabel = btn?.textContent?.trim() ?? '상환하기';
+    const btnHref = btn?.getAttribute('href') ?? '#';
 
     const rowEls = blockEl.querySelectorAll<HTMLElement>('[data-ls-row]');
     const rows: LoanRow[] = Array.from(rowEls).map((row) => {
@@ -59,7 +60,7 @@ function parseBlock(blockEl: HTMLElement): { loanName: string; btnLabel: string;
         };
     });
 
-    return { loanName, btnLabel, rows };
+    return { loanName, btnLabel, btnHref, rows };
 }
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────────────
@@ -70,24 +71,29 @@ export default function LoanStatusEditor({ blockEl, onClose }: LoanStatusEditorP
     // ── state ──
     const [loanName, setLoanName] = useState(parsed.loanName);
     const [btnLabel, setBtnLabel] = useState(parsed.btnLabel);
+    const [btnHref, setBtnHref] = useState(parsed.btnHref);
     const [rows, setRows] = useState<LoanRow[]>(parsed.rows);
 
     // ── callback ──
     const handleApply = useCallback(() => {
-        // 대출명 뱃지
+        // 대출명 뱃지 (textContent는 XSS 방지 내장 — escapeHtml 불필요)
         const badge = blockEl.querySelector<HTMLElement>('[data-ls-badge]');
-        if (badge) badge.textContent = escapeHtml(loanName);
+        if (badge) badge.textContent = loanName;
 
-        // 버튼 레이블
+        // 버튼 레이블·링크
         const btn = blockEl.querySelector<HTMLElement>('[data-ls-btn]');
-        if (btn) btn.textContent = escapeHtml(btnLabel);
+        if (btn) {
+            btn.textContent = btnLabel;
+            btn.setAttribute('href', btnHref);
+        }
 
-        // 행 목록
+        // 행 목록 — 마지막 행만 border 없음 (위치 기준, isDue 무관)
         const rowContainer = blockEl.querySelector<HTMLElement>('[data-ls-rows]');
         if (rowContainer) {
             rowContainer.innerHTML = rows
-                .map((row) => {
-                    const borderStyle = row.isDue ? '' : 'border-bottom:1px solid #F3F4F6;';
+                .map((row, idx) => {
+                    const isLast = idx === rows.length - 1;
+                    const borderStyle = isLast ? '' : 'border-bottom:1px solid #F3F4F6;';
                     const dueAttr = row.isDue ? ' data-ls-due' : '';
                     return (
                         `<div data-ls-row${dueAttr} style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;${borderStyle}">` +
@@ -100,7 +106,7 @@ export default function LoanStatusEditor({ blockEl, onClose }: LoanStatusEditorP
         }
 
         onClose();
-    }, [blockEl, loanName, btnLabel, rows, onClose]);
+    }, [blockEl, loanName, btnLabel, btnHref, rows, onClose]);
 
     // ── effect ──
     useEffect(() => {
@@ -248,25 +254,46 @@ export default function LoanStatusEditor({ blockEl, onClose }: LoanStatusEditorP
                     </button>
                 </div>
 
-                {/* 버튼 레이블 */}
-                <label style={{ display: 'block', marginBottom: 20 }}>
-                    <span style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
-                        버튼 텍스트
-                    </span>
-                    <input
-                        type="text"
-                        value={btnLabel}
-                        onChange={(e) => setBtnLabel(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '8px 10px',
-                            borderRadius: 6,
-                            border: '1px solid #E5E7EB',
-                            fontSize: 14,
-                            boxSizing: 'border-box',
-                        }}
-                    />
-                </label>
+                {/* 버튼 텍스트·링크 */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                    <label style={{ flex: 1 }}>
+                        <span style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                            버튼 텍스트
+                        </span>
+                        <input
+                            type="text"
+                            value={btnLabel}
+                            onChange={(e) => setBtnLabel(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: 6,
+                                border: '1px solid #E5E7EB',
+                                fontSize: 14,
+                                boxSizing: 'border-box',
+                            }}
+                        />
+                    </label>
+                    <label style={{ flex: 1 }}>
+                        <span style={{ fontSize: 13, color: '#6B7280', display: 'block', marginBottom: 4 }}>
+                            링크 (URL)
+                        </span>
+                        <input
+                            type="text"
+                            value={btnHref}
+                            onChange={(e) => setBtnHref(e.target.value)}
+                            placeholder="#"
+                            style={{
+                                width: '100%',
+                                padding: '8px 10px',
+                                borderRadius: 6,
+                                border: '1px solid #E5E7EB',
+                                fontSize: 14,
+                                boxSizing: 'border-box',
+                            }}
+                        />
+                    </label>
+                </div>
 
                 {/* 액션 버튼 */}
                 <div style={{ display: 'flex', gap: 8 }}>
