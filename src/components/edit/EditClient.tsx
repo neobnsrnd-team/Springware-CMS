@@ -26,6 +26,7 @@ import SlideEditorModal from '@/components/edit/SlideEditorModal';
 import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import FlexListEditor from '@/components/edit/FlexListEditor';
 import InfoCardSlideEditor from '@/components/edit/InfoCardSlideEditor';
+import PopupBannerEditor from '@/components/edit/PopupBannerEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
@@ -302,6 +303,8 @@ export default function EditClient({
     const [flexListBlock, setFlexListBlock] = useState<HTMLElement | null>(null);
     // info-card-slide 정보 카드 슬라이드 편집 모달
     const [infoCardBlock, setInfoCardBlock] = useState<HTMLElement | null>(null);
+    // popup-banner 이미지 팝업 배너 편집 패널
+    const [popupBannerBlock, setPopupBannerBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -579,6 +582,10 @@ export default function EditClient({
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
                         css: basePath + '/assets/plugins/loan-calculator/style.css',
                     },
+                    'popup-banner': {
+                        url: basePath + '/assets/plugins/popup-banner/index.js',
+                        css: basePath + '/assets/plugins/popup-banner/style.css',
+                    },
                     'sticky-floating-bar': {
                         url: basePath + '/assets/plugins/sticky-floating-bar/index.js',
                         css: basePath + '/assets/plugins/sticky-floating-bar/style.css',
@@ -726,6 +733,7 @@ export default function EditClient({
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
         const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
         const SPW_BL_BTN_CLASS = 'spw-bl-edit-btn';
+        const SPW_PB_BTN_CLASS = 'spw-pb-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -851,6 +859,30 @@ export default function EditClient({
                 });
                 linkTool.appendChild(btn);
             }
+
+            // ⑥ popup-banner 이미지 팝업 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_PB_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_PB_BTN_CLASS;
+                btn.title = '팝업 배너 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-cb-type="popup-banner"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-cb-type="popup-banner"]');
+                    if (block) setPopupBannerBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
         };
 
         // 활성 요소 위치에 따라 각 버튼 가시성 갱신
@@ -892,6 +924,13 @@ export default function EditClient({
                     !!iconActive?.closest('[data-component-id^="branch-locator"]') ||
                     !!elmActive?.closest('[data-component-id^="branch-locator"]');
                 blBtn.style.display = isInBl ? 'flex' : 'none';
+            }
+            const pbBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PB_BTN_CLASS}`);
+            if (pbBtn) {
+                const isInPb =
+                    !!iconActive?.closest('[data-cb-type="popup-banner"]') ||
+                    !!elmActive?.closest('[data-cb-type="popup-banner"]');
+                pbBtn.style.display = isInPb ? 'flex' : 'none';
             }
         };
 
@@ -2439,6 +2478,11 @@ export default function EditClient({
 
             {/* ── info-card-slide 정보 카드 편집 모달 ── */}
             {infoCardBlock && <InfoCardSlideEditor blockEl={infoCardBlock} onClose={() => setInfoCardBlock(null)} />}
+
+            {/* ── popup-banner 이미지 팝업 편집 패널 ── */}
+            {popupBannerBlock && (
+                <PopupBannerEditor blockEl={popupBannerBlock} onClose={() => setPopupBannerBlock(null)} />
+            )}
 
             {/* ── site-footer 드롭다운 편집 패널 ── */}
             {siteFooterBlock && (
