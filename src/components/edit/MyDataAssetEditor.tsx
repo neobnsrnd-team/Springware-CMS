@@ -129,11 +129,11 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const [title, setTitle] = useState(parsed.title);
     const [dateText, setDateText] = useState(parsed.dateText);
     const [dateVisible, setDateVisible] = useState(parsed.dateVisible);
-    const [totalAmount, setTotalAmount] = useState(String(parsed.totalAmount));
     const [rows, setRows] = useState<AssetRow[]>(parsed.rows);
     const [btn, setBtn] = useState<BtnConfig>(parsed.btn);
 
-    // 순자산 실시간 계산 (읽기 전용)
+    // 총자산·순자산 실시간 자동 계산 (읽기 전용)
+    const totalAsset = rows.filter((r) => r.type === 'asset').reduce((sum, r) => sum + r.amount, 0);
     const netAsset = rows.reduce((sum, r) => sum + r.amount, 0);
 
     // ── callback ──
@@ -150,10 +150,9 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
             dateEl.style.display = dateVisible ? '' : 'none';
         }
 
-        // 총자산
+        // 총자산 (자동 계산값 반영)
         const totalEl = blockEl.querySelector<HTMLElement>('[data-ma-total]');
-        const totalNum = parseAmount(totalAmount);
-        if (totalEl) totalEl.textContent = formatAmount(totalNum);
+        if (totalEl) totalEl.textContent = formatAmount(totalAsset);
 
         // 항목 + 비율 계산
         const totalAbs = rows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
@@ -219,7 +218,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         }
 
         onClose();
-    }, [blockEl, title, dateText, dateVisible, totalAmount, rows, btn, netAsset, onClose]);
+    }, [blockEl, title, dateText, dateVisible, totalAsset, rows, btn, netAsset, onClose]);
 
     // ── effect ──
     useEffect(() => {
@@ -278,8 +277,6 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const sectionStyle: React.CSSProperties = { marginBottom: 16 };
 
     // 미리보기용 순자산 표시
-    const netDisplay = (netAsset < 0 ? '-' : '') + formatAmount(netAsset);
-
     // ── 렌더 ──
     return (
         <div
@@ -348,21 +345,6 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                         />
                         <span style={{ fontSize: 13, color: '#6B7280' }}>표시</span>
                     </label>
-                </div>
-
-                {/* 총자산 */}
-                <div style={sectionStyle}>
-                    <span style={labelStyle}>총 자산 금액</span>
-                    <input
-                        type="number"
-                        value={totalAmount}
-                        onChange={(e) => setTotalAmount(e.target.value)}
-                        placeholder="예: 42500000"
-                        style={inputStyle}
-                    />
-                    <span style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4, display: 'block' }}>
-                        표시: {formatAmount(parseAmount(totalAmount))}
-                    </span>
                 </div>
 
                 {/* 자산/부채 항목 */}
@@ -562,6 +544,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                 </div>
 
                 {/* 순자산 (읽기 전용) */}
+                {/* 총자산·순자산 자동 계산 (읽기 전용) */}
                 <div
                     style={{
                         ...sectionStyle,
@@ -569,22 +552,36 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                         borderRadius: 8,
                         border: '1px solid #E8F0FC',
                         background: '#F5F8FF',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
                     }}
                 >
-                    <span style={{ fontSize: 13, color: '#6B7280' }}>순자산 (자동 계산)</span>
-                    <span
+                    <div
                         style={{
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: netAsset < 0 ? '#EF4444' : '#0046A4',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 8,
                         }}
                     >
-                        {netAsset < 0 ? '-' : ''}
-                        {formatAmount(netAsset)}
-                    </span>
+                        <span style={{ fontSize: 13, color: '#6B7280' }}>총 자산 (자동 계산)</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }}>
+                            {formatAmount(totalAsset)}
+                        </span>
+                    </div>
+                    <div
+                        style={{
+                            borderTop: '1px solid #D1DFF5',
+                            paddingTop: 8,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <span style={{ fontSize: 13, color: '#6B7280' }}>순자산 (자동 계산)</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: netAsset < 0 ? '#EF4444' : '#0046A4' }}>
+                            {netAsset < 0 ? '-' : ''}
+                            {formatAmount(netAsset)}
+                        </span>
+                    </div>
                 </div>
 
                 {/* 버튼 */}
