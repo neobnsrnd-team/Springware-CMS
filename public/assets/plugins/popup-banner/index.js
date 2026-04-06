@@ -63,13 +63,23 @@ export default {
     editor: {
         openContentEditor(element, builder, onChange) {
             // 편집은 EditClient.tsx의 #divLinkTool 버튼 주입 방식으로 처리
-            // ContentBuilder가 appendChild하도록 빈 div 반환 (null 반환 시 에러 발생)
-            return document.createElement('div');
+            // ContentBuilder가 appendChild 할 수 있도록 안내 UI 반환
+            const container = document.createElement('div');
+            container.style.cssText = 'padding:20px 16px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\'Malgun Gothic\',sans-serif;';
+            container.innerHTML = `
+                <div style="font-size:32px;margin-bottom:12px;">🖼️</div>
+                <div style="font-size:14px;font-weight:700;color:#1A1A2E;margin-bottom:6px;">이미지 팝업 배너</div>
+                <div style="font-size:12px;color:#6B7280;line-height:1.6;">
+                    블록 내 링크 영역을 클릭하면<br>
+                    나타나는 편집 버튼(⊞)을 이용하세요.
+                </div>`;
+            return container;
         },
     },
 
     mount(element, options) {
-        const isEditor = !!window.builder;
+        // window.__spwEditor: EditClient.tsx 런타임 초기화 시 true로 설정
+        const isEditor = !!window.__spwEditor;
         const images = parseImages(element);
         const hideDays = parseInt(element.getAttribute('data-hide-days') || '3', 10);
         const pageId = getPageId();

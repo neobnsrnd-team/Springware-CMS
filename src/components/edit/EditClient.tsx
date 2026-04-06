@@ -594,6 +594,8 @@ export default function EditClient({
             });
             // Make runtime available globally for ContentBuilder editor
             window.builderRuntime = runtimeRef.current;
+            // 플러그인에서 에디터/뷰어 환경 구분에 사용
+            window.__spwEditor = true;
         } catch (err: unknown) {
             console.error('런타임 초기화 오류:', err);
         }
@@ -1642,6 +1644,7 @@ export default function EditClient({
             runtimeRef.current = null;
             window.builderRuntime = undefined;
             window.builderReinit = undefined;
+            window.__spwEditor = undefined;
         };
     }, []);
 
