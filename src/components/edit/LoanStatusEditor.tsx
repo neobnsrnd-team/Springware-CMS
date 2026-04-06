@@ -149,7 +149,7 @@ export default function LoanStatusEditor({ blockEl, onClose }: LoanStatusEditorP
                     maxHeight: '80vh',
                     overflowY: 'auto',
                     boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                    fontFamily: "-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif",
+                    fontFamily: "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif",
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
