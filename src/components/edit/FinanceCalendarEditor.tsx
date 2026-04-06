@@ -442,7 +442,7 @@ export default function FinanceCalendarEditor({ blockEl, onClose }: FinanceCalen
                                 {ev.amount !== undefined && (
                                     <>
                                         <select
-                                            value={ev.amount < 0 ? '-' : '+'}
+                                            value={ev.amount < 0 || Object.is(ev.amount, -0) ? '-' : '+'}
                                             onChange={(e) =>
                                                 updateEvent(idx, {
                                                     amount:
@@ -464,10 +464,10 @@ export default function FinanceCalendarEditor({ blockEl, onClose }: FinanceCalen
                                         <input
                                             type="number"
                                             min={0}
-                                            value={Math.abs(ev.amount)}
+                                            value={Math.round(Math.abs(ev.amount ?? 0))}
                                             onChange={(e) => {
-                                                const abs = Math.round(Math.abs(Number(e.target.value) || 0));
-                                                const sign = (ev.amount ?? 0) < 0 ? -1 : 1;
+                                                const abs = Math.round(Math.abs(parseInt(e.target.value, 10) || 0));
+                                                const sign = ev.amount < 0 || Object.is(ev.amount, -0) ? -1 : 1;
                                                 updateEvent(idx, { amount: sign * abs });
                                             }}
                                             placeholder="금액 (원)"
