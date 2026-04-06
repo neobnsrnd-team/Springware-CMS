@@ -122,7 +122,14 @@ export default {
         const closeBtn = document.createElement('button');
         closeBtn.className = 'pb-close-btn';
         closeBtn.setAttribute('aria-label', '닫기');
-        closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+        if (isEditor) {
+            // 에디터 모드: 닫기 버튼 대신 "미리보기" 라벨 표시
+            closeBtn.innerHTML = `<span style="font-size:11px;font-weight:600;color:#0046A4;background:#E8F0FC;padding:3px 8px;border-radius:10px;white-space:nowrap;">미리보기</span>`;
+            closeBtn.style.cursor = 'default';
+        } else {
+            closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        }
 
         header.appendChild(indicatorWrap);
         header.appendChild(closeBtn);
@@ -183,8 +190,9 @@ export default {
             syncIndicators(dots, currentIndex);
         }
 
-        // ── 팝업 닫기 ──
+        // ── 팝업 닫기 (뷰어 전용) ──
         function closePopup() {
+            if (isEditor) return; // 에디터에서는 시트를 제거하지 않음 — 재편집 진입점 유지
             if (checkbox.checked) {
                 saveHideUntil(pageId, hideDays);
             }

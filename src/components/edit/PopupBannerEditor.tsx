@@ -76,7 +76,7 @@ export default function PopupBannerEditor({ blockEl, onClose }: Props) {
         };
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, []);  
+    }, []);
 
     // ── 이미지 필드 변경 ─────────────────────────────────────────────────
 
@@ -197,7 +197,7 @@ export default function PopupBannerEditor({ blockEl, onClose }: Props) {
                     left: '50%',
                     top: '50%',
                     transform: 'translate(-50%,-50%)',
-                    width: 380,
+                    width: 'min(380px, calc(100vw - 24px))',
                     maxHeight: '80vh',
                     zIndex: 99999,
                     background: '#fff',
