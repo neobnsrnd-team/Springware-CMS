@@ -5,10 +5,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-// ── 유틸 ──────────────────────────────────────────────────────────────────
+import { escapeHtml } from '@/lib/html-utils';
 
-const escapeHtml = (str: string) =>
-    str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m] ?? m);
+// ── 유틸 ──────────────────────────────────────────────────────────────────
 
 const rgbToHex = (rgb: string, fallback = '#1A1A2E'): string => {
     if (!rgb || !rgb.startsWith('rgb')) return /^#[0-9A-Fa-f]{6}$/.test(rgb) ? rgb : fallback;

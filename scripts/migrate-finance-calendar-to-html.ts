@@ -4,6 +4,7 @@
 import 'dotenv/config';
 import { getComponentById, updateComponent, createComponent } from '../src/db/repository/component.repository';
 import { closePool } from '../src/db/connection';
+import { escapeHtml } from '../src/lib/html-utils';
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
 const THUMBNAIL = '/assets/minimalist-blocks/preview/ibk-finance-calendar.svg';
@@ -65,7 +66,7 @@ function buildGridHTML(year: number, month: number, events: FcEvent[]): string {
         dayCells +=
             `<div style="width:${CELL_W};text-align:center;padding:4px 0 2px;">` +
             `<span style="font-size:12px;${isToday ? '' : `color:${dayColor};`}${isValid ? '' : 'visibility:hidden;'}">` +
-            (isToday ? `<span style="${todayStyle}font-size:12px;">${day}</span>` : (isValid ? String(day) : '0')) +
+            (isToday ? `<span style="${todayStyle}font-size:12px;">${day}</span>` : (isValid ? String(day) : '')) +
             `</span>` +
             (dots ? `<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">${dots}</div>` : '<div style="height:9px;"></div>') +
             `</div>`;
@@ -80,9 +81,11 @@ function buildGridHTML(year: number, month: number, events: FcEvent[]): string {
 // ── 이벤트 목록 생성 ──────────────────────────────────────────────────────
 
 function buildEventListHTML(year: number, month: number, events: FcEvent[]): string {
-    if (events.length === 0) return '';
+    const lastDay = new Date(year, month, 0).getDate();
+    const validEvents = events.filter((ev) => ev.day >= 1 && ev.day <= lastDay);
+    if (validEvents.length === 0) return '';
 
-    const sorted = [...events].sort((a, b) => a.day - b.day);
+    const sorted = [...validEvents].sort((a, b) => a.day - b.day);
     const mm = String(month).padStart(2, '0');
 
     return sorted
@@ -96,7 +99,7 @@ function buildEventListHTML(year: number, month: number, events: FcEvent[]): str
                 `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F9FAFB;">` +
                 `<span style="width:8px;height:8px;border-radius:50%;background:${ev.color};flex-shrink:0;"></span>` +
                 `<span style="font-size:12px;color:#9CA3AF;flex-shrink:0;">${year}.${mm}.${dd}</span>` +
-                `<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.label}</span>` +
+                `<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(ev.label)}</span>` +
                 amountStr +
                 `</div>`
             );

@@ -5,10 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-// ── 유틸 ──────────────────────────────────────────────────────────────────
-
-const escapeHtml = (str: string) =>
-    str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m] ?? m);
+import { escapeHtml } from '@/lib/html-utils';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -71,7 +68,7 @@ function buildGridHTML(year: number, month: number, events: FcEvent[]): string {
         dayCells +=
             `<div style="width:${CELL_W};text-align:center;padding:4px 0 2px;">` +
             `<span style="font-size:12px;${isValid ? '' : 'visibility:hidden;'}${isToday ? '' : `color:${dayColor};`}">` +
-            (isToday ? `<span style="${todayStyle}font-size:12px;">${day}</span>` : isValid ? String(day) : '0') +
+            (isToday ? `<span style="${todayStyle}font-size:12px;">${day}</span>` : isValid ? String(day) : '') +
             `</span>` +
             (dots
                 ? `<div style="display:flex;justify-content:center;gap:2px;margin-top:2px;">${dots}</div>`
@@ -88,8 +85,10 @@ function buildGridHTML(year: number, month: number, events: FcEvent[]): string {
 // ── 이벤트 목록 생성 ──────────────────────────────────────────────────────
 
 function buildEventListHTML(year: number, month: number, events: FcEvent[]): string {
-    if (events.length === 0) return '';
-    const sorted = [...events].sort((a, b) => a.day - b.day);
+    const lastDay = new Date(year, month, 0).getDate();
+    const validEvents = events.filter((ev) => ev.day >= 1 && ev.day <= lastDay);
+    if (validEvents.length === 0) return '';
+    const sorted = [...validEvents].sort((a, b) => a.day - b.day);
     const mm = String(month).padStart(2, '0');
 
     return sorted
@@ -132,7 +131,8 @@ function parseBlock(blockEl: HTMLElement): {
     try {
         const raw = gridEl?.getAttribute('data-fc-events') ?? '[]';
         events = JSON.parse(raw) as FcEvent[];
-    } catch {
+    } catch (err: unknown) {
+        console.warn('금융 일정 이벤트 JSON 파싱 실패, 빈 목록으로 초기화:', err);
         events = [];
     }
 
