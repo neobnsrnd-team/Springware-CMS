@@ -27,6 +27,7 @@ import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import FlexListEditor from '@/components/edit/FlexListEditor';
 import InfoCardSlideEditor from '@/components/edit/InfoCardSlideEditor';
 import PointRewardEditor from '@/components/edit/PointRewardEditor';
+import LoanStatusEditor from '@/components/edit/LoanStatusEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
@@ -305,6 +306,8 @@ export default function EditClient({
     const [infoCardBlock, setInfoCardBlock] = useState<HTMLElement | null>(null);
     // point-reward 포인트·리워드 현황 편집 모달
     const [pointRewardBlock, setPointRewardBlock] = useState<HTMLElement | null>(null);
+    // loan-status 대출 현황 카드 편집 모달
+    const [loanStatusBlock, setLoanStatusBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -1126,6 +1129,37 @@ export default function EditClient({
         // ── point-reward 포인트·리워드 편집 버튼 — .is-row-tool 주입 ──────────
         const SPW_PR_ROW_BTN_CLASS = 'spw-pr-row-edit-btn';
 
+        // ── loan-status 대출 현황 편집 버튼 — .is-row-tool 주입 ──────────────
+        const SPW_LS_ROW_BTN_CLASS = 'spw-ls-row-edit-btn';
+
+        const injectLsEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_LS_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_LS_ROW_BTN_CLASS;
+            btn.title = '대출 현황 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 10h3m4 0h2"/><path d="M7 14h2"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="loan-status"]');
+                if (block) setLoanStatusBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateLsRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_LS_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isLs = !!activeEl?.closest('[data-component-id^="loan-status"]');
+                btn.style.display = isLs ? 'flex' : 'none';
+            });
+        };
+
         const injectPrEditToRowTool = (rowTool: HTMLElement) => {
             if (rowTool.querySelector(`.${SPW_PR_ROW_BTN_CLASS}`)) return;
 
@@ -1168,6 +1202,7 @@ export default function EditClient({
                         injectFlEditToRowTool(node);
                         injectIcsEditToRowTool(node);
                         injectPrEditToRowTool(node);
+                        injectLsEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
@@ -1177,6 +1212,7 @@ export default function EditClient({
                         injectFlEditToRowTool(t);
                         injectIcsEditToRowTool(t);
                         injectPrEditToRowTool(t);
+                        injectLsEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -1193,6 +1229,7 @@ export default function EditClient({
                 updateFlRowBtnVisibility();
                 updateIcsRowBtnVisibility();
                 updatePrRowBtnVisibility();
+                updateLsRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -1211,6 +1248,7 @@ export default function EditClient({
             injectFlEditToRowTool(t);
             injectIcsEditToRowTool(t);
             injectPrEditToRowTool(t);
+            injectLsEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
@@ -2479,6 +2517,9 @@ export default function EditClient({
             {pointRewardBlock && (
                 <PointRewardEditor blockEl={pointRewardBlock} onClose={() => setPointRewardBlock(null)} />
             )}
+
+            {/* ── loan-status 대출 현황 카드 편집 모달 ── */}
+            {loanStatusBlock && <LoanStatusEditor blockEl={loanStatusBlock} onClose={() => setLoanStatusBlock(null)} />}
 
             {/* ── info-card-slide 정보 카드 편집 모달 ── */}
             {infoCardBlock && <InfoCardSlideEditor blockEl={infoCardBlock} onClose={() => setInfoCardBlock(null)} />}
