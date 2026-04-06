@@ -131,6 +131,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const [dateVisible, setDateVisible] = useState(parsed.dateVisible);
     const [rows, setRows] = useState<AssetRow[]>(parsed.rows);
     const [btn, setBtn] = useState<BtnConfig>(parsed.btn);
+    const [sortByAmount, setSortByAmount] = useState(false);
 
     // 총자산·순자산 실시간 자동 계산 (읽기 전용) — Math.round로 부동소수점 오차 방지
     const totalAsset = rows.filter((r) => r.type === 'asset').reduce((sum, r) => sum + Math.round(r.amount), 0);
@@ -154,11 +155,19 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const totalEl = blockEl.querySelector<HTMLElement>('[data-ma-total]');
         if (totalEl) totalEl.textContent = formatAmount(totalAsset);
 
+        // 정렬 옵션 적용 — 자산만 금액 내림차순, 부채는 원래 순서 유지
+        const sortedRows = sortByAmount
+            ? [
+                  ...rows.filter((r) => r.type === 'asset').sort((a, b) => b.amount - a.amount),
+                  ...rows.filter((r) => r.type === 'debt'),
+              ]
+            : rows;
+
         // 항목 + 비율 계산
-        const totalAbs = rows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
+        const totalAbs = sortedRows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
         const rowContainer = blockEl.querySelector<HTMLElement>('[data-ma-rows]');
         if (rowContainer) {
-            rowContainer.innerHTML = rows
+            rowContainer.innerHTML = sortedRows
                 .map((row, idx) => {
                     const isLast = idx === rows.length - 1;
                     const borderStyle = isLast ? '' : 'border-bottom:1px solid #F3F4F6;';
@@ -185,15 +194,15 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         // 도넛 차트
         const chartEl = blockEl.querySelector<HTMLElement>('[data-ma-chart]');
         if (chartEl) {
-            const gradient = buildConicGradient(rows);
+            const gradient = buildConicGradient(sortedRows);
             chartEl.style.background = gradient;
         }
 
         // 범례 재생성
         const legendEl = blockEl.querySelector<HTMLElement>('[data-ma-legend]');
         if (legendEl) {
-            const totalAbsForLegend = rows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
-            legendEl.innerHTML = rows
+            const totalAbsForLegend = sortedRows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
+            legendEl.innerHTML = sortedRows
                 .map((r) => {
                     const pct = totalAbsForLegend > 0 ? Math.round((Math.abs(r.amount) / totalAbsForLegend) * 100) : 0;
                     return (
@@ -218,7 +227,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         }
 
         onClose();
-    }, [blockEl, title, dateText, dateVisible, totalAsset, rows, btn, netAsset, onClose]);
+    }, [blockEl, title, dateText, dateVisible, totalAsset, rows, btn, netAsset, sortByAmount, onClose]);
 
     // ── effect ──
     useEffect(() => {
@@ -289,7 +298,6 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                 alignItems: 'center',
                 justifyContent: 'center',
             }}
-            onClick={onClose}
         >
             <div
                 style={{
@@ -302,11 +310,34 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
                     fontFamily: "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif",
                 }}
-                onClick={(e) => e.stopPropagation()}
             >
-                <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>
-                    마이데이터 자산 요약 편집
-                </h3>
+                {/* 헤더: 제목 + 닫기 버튼 */}
+                <div
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}
+                >
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>
+                        마이데이터 자산 요약 편집
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        title="닫기"
+                        style={{
+                            width: 28,
+                            height: 28,
+                            border: 'none',
+                            borderRadius: 4,
+                            background: 'transparent',
+                            color: '#9CA3AF',
+                            cursor: 'pointer',
+                            fontSize: 18,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        ×
+                    </button>
+                </div>
 
                 {/* 제목 */}
                 <div style={sectionStyle}>
@@ -349,7 +380,33 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
 
                 {/* 자산/부채 항목 */}
                 <div style={sectionStyle}>
-                    <span style={labelStyle}>항목</span>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 4,
+                        }}
+                    >
+                        <span style={labelStyle}>항목</span>
+                        <label
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 5,
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={sortByAmount}
+                                onChange={(e) => setSortByAmount(e.target.checked)}
+                                style={{ width: 14, height: 14 }}
+                            />
+                            <span style={{ fontSize: 12, color: '#6B7280' }}>자산 금액순 정렬</span>
+                        </label>
+                    </div>
                     {rows.map((row, idx) => (
                         <div
                             key={idx}
