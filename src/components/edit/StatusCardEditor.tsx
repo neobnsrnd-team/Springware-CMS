@@ -220,6 +220,22 @@ export default function StatusCardEditor({ blockEl, onClose }: StatusCardEditorP
 
     const removeRow = (idx: number) => setRows((prev) => prev.filter((_, i) => i !== idx));
 
+    const moveRowUp = (idx: number) =>
+        setRows((prev) => {
+            if (idx === 0) return prev;
+            const next = [...prev];
+            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+            return next;
+        });
+
+    const moveRowDown = (idx: number) =>
+        setRows((prev) => {
+            if (idx === prev.length - 1) return prev;
+            const next = [...prev];
+            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+            return next;
+        });
+
     // ── 스타일 공통 ──
     const inputStyle: React.CSSProperties = {
         width: '100%',
@@ -336,6 +352,42 @@ export default function StatusCardEditor({ blockEl, onClose }: StatusCardEditorP
                                         fontSize: 13,
                                     }}
                                 />
+                                <button
+                                    onClick={() => moveRowUp(idx)}
+                                    disabled={idx === 0}
+                                    title="위로"
+                                    style={{
+                                        width: 28,
+                                        height: 28,
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 4,
+                                        background: '#fff',
+                                        color: idx === 0 ? '#D1D5DB' : '#6B7280',
+                                        cursor: idx === 0 ? 'default' : 'pointer',
+                                        fontSize: 12,
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    ▲
+                                </button>
+                                <button
+                                    onClick={() => moveRowDown(idx)}
+                                    disabled={idx === rows.length - 1}
+                                    title="아래로"
+                                    style={{
+                                        width: 28,
+                                        height: 28,
+                                        border: '1px solid #E5E7EB',
+                                        borderRadius: 4,
+                                        background: '#fff',
+                                        color: idx === rows.length - 1 ? '#D1D5DB' : '#6B7280',
+                                        cursor: idx === rows.length - 1 ? 'default' : 'pointer',
+                                        fontSize: 12,
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    ▼
+                                </button>
                                 <button
                                     onClick={() => removeRow(idx)}
                                     style={{
