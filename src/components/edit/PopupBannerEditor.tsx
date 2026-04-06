@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
@@ -55,6 +55,28 @@ export default function PopupBannerEditor({ blockEl, onClose }: Props) {
         return parsed.length > 0 ? parsed : [{ url: '', link: '#', alt: '' }];
     });
     const [hideDays, setHideDays] = useState<number>(() => parseHideDays(blockEl));
+
+    // ── 파일 피커 연동 ────────────────────────────────────────────────────
+    // 어떤 슬롯의 이미지 URL 선택을 기다리는지 추적
+    const pendingPickIdx = useRef<number | null>(null);
+
+    const requestImagePick = useCallback((idx: number) => {
+        pendingPickIdx.current = idx;
+        window.open('/files', '_blank', 'width=900,height=600');
+    }, []);
+
+    // FileBrowser에서 ASSET_SELECTED postMessage 수신 → 해당 슬롯 URL 갱신
+    useEffect(() => {
+        const handleMessage = (e: MessageEvent) => {
+            if (e.data?.type !== 'ASSET_SELECTED' || pendingPickIdx.current === null) return;
+            const idx = pendingPickIdx.current;
+            pendingPickIdx.current = null;
+            updateImage(idx, 'url', e.data.url as string);
+            window.focus();
+        };
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, []);  
 
     // ── 이미지 필드 변경 ─────────────────────────────────────────────────
 
@@ -336,16 +358,38 @@ export default function PopupBannerEditor({ blockEl, onClose }: Props) {
                                     </div>
                                 </div>
 
-                                {/* 이미지 URL */}
+                                {/* 이미지 URL + 파일 선택 버튼 */}
                                 <div style={{ marginBottom: '6px' }}>
                                     <label style={labelStyle}>이미지 URL</label>
-                                    <input
-                                        type="text"
-                                        value={img.url}
-                                        onChange={(e) => updateImage(idx, 'url', e.target.value)}
-                                        placeholder="https://... 또는 /uploads/..."
-                                        style={inputStyle}
-                                    />
+                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                        <input
+                                            type="text"
+                                            value={img.url}
+                                            onChange={(e) => updateImage(idx, 'url', e.target.value)}
+                                            placeholder="https://... 또는 /uploads/..."
+                                            style={{ ...inputStyle, flex: 1 }}
+                                        />
+                                        <button
+                                            onClick={() => requestImagePick(idx)}
+                                            title="파일 선택"
+                                            style={{
+                                                flexShrink: 0,
+                                                height: '34px',
+                                                padding: '0 10px',
+                                                border: '1px solid #E5E7EB',
+                                                borderRadius: '8px',
+                                                background: '#F9FAFB',
+                                                color: '#374151',
+                                                fontSize: '12px',
+                                                fontWeight: 500,
+                                                cursor: 'pointer',
+                                                fontFamily: FONT,
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            파일 선택
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* 링크 URL */}
