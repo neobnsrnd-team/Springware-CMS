@@ -28,6 +28,7 @@ import FlexListEditor from '@/components/edit/FlexListEditor';
 import InfoCardSlideEditor from '@/components/edit/InfoCardSlideEditor';
 import PopupBannerEditor from '@/components/edit/PopupBannerEditor';
 import StatusCardEditor from '@/components/edit/StatusCardEditor';
+import MyDataAssetEditor from '@/components/edit/MyDataAssetEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
@@ -308,6 +309,7 @@ export default function EditClient({
     const [popupBannerBlock, setPopupBannerBlock] = useState<HTMLElement | null>(null);
     // status-card 현황 카드 편집 모달
     const [statusCardBlock, setStatusCardBlock] = useState<HTMLElement | null>(null);
+    const [myDataAssetBlock, setMyDataAssetBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -1195,6 +1197,36 @@ export default function EditClient({
             });
         };
 
+        const SPW_MA_ROW_BTN_CLASS = 'spw-ma-row-edit-btn';
+
+        const injectMaEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_MA_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_MA_ROW_BTN_CLASS;
+            btn.title = '자산 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="mydata-asset"]');
+                if (block) setMyDataAssetBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateMaRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_MA_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isMa = !!activeEl?.closest('[data-component-id^="mydata-asset"]');
+                btn.style.display = isMa ? 'flex' : 'none';
+            });
+        };
+
         // 슬라이드·아코디언 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
         const slideToolObserver = new MutationObserver((mutations) => {
             let needsRowToolVisibility = false;
@@ -1209,6 +1241,7 @@ export default function EditClient({
                         injectFlEditToRowTool(node);
                         injectIcsEditToRowTool(node);
                         injectScEditToRowTool(node);
+                        injectMaEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
@@ -1218,6 +1251,7 @@ export default function EditClient({
                         injectFlEditToRowTool(t);
                         injectIcsEditToRowTool(t);
                         injectScEditToRowTool(t);
+                        injectMaEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -1234,6 +1268,7 @@ export default function EditClient({
                 updateFlRowBtnVisibility();
                 updateIcsRowBtnVisibility();
                 updateScRowBtnVisibility();
+                updateMaRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -1252,6 +1287,7 @@ export default function EditClient({
             injectFlEditToRowTool(t);
             injectIcsEditToRowTool(t);
             injectScEditToRowTool(t);
+            injectMaEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
@@ -2529,6 +2565,9 @@ export default function EditClient({
 
             {/* ── status-card 현황 카드 편집 모달 ── */}
             {statusCardBlock && <StatusCardEditor blockEl={statusCardBlock} onClose={() => setStatusCardBlock(null)} />}
+            {myDataAssetBlock && (
+                <MyDataAssetEditor blockEl={myDataAssetBlock} onClose={() => setMyDataAssetBlock(null)} />
+            )}
 
             {/* ── info-card-slide 정보 카드 편집 모달 ── */}
             {infoCardBlock && <InfoCardSlideEditor blockEl={infoCardBlock} onClose={() => setInfoCardBlock(null)} />}
