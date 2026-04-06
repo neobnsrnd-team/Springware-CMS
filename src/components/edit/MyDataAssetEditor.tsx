@@ -26,7 +26,7 @@ const rgbToHex = (rgb: string, fallback = '#1A1A2E'): string => {
 
 /** "42,500,000 원" → 42500000 */
 const parseAmount = (str: string): number => {
-    const n = Number(str.replace(/[^0-9.-]/g, ''));
+    const n = Math.round(Number(str.replace(/[^0-9.-]/g, '')));
     return isNaN(n) ? 0 : n;
 };
 
@@ -132,9 +132,9 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const [rows, setRows] = useState<AssetRow[]>(parsed.rows);
     const [btn, setBtn] = useState<BtnConfig>(parsed.btn);
 
-    // 총자산·순자산 실시간 자동 계산 (읽기 전용)
-    const totalAsset = rows.filter((r) => r.type === 'asset').reduce((sum, r) => sum + r.amount, 0);
-    const netAsset = rows.reduce((sum, r) => sum + r.amount, 0);
+    // 총자산·순자산 실시간 자동 계산 (읽기 전용) — Math.round로 부동소수점 오차 방지
+    const totalAsset = rows.filter((r) => r.type === 'asset').reduce((sum, r) => sum + Math.round(r.amount), 0);
+    const netAsset = rows.reduce((sum, r) => sum + Math.round(r.amount), 0);
 
     // ── callback ──
     const handleApply = useCallback(() => {
@@ -459,7 +459,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                                     type="number"
                                     value={Math.abs(row.amount)}
                                     onChange={(e) => {
-                                        const abs = Math.abs(Number(e.target.value) || 0);
+                                        const abs = Math.round(Math.abs(Number(e.target.value) || 0));
                                         updateRow(idx, { amount: row.type === 'debt' ? -abs : abs });
                                     }}
                                     placeholder="금액 (원)"
