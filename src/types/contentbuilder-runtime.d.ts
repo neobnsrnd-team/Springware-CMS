@@ -3,6 +3,10 @@ declare global {
     interface ContentBuilderRuntimeOptions {
         onReInit?: () => void;
     }
+    interface Window {
+        __spwEditor?: boolean;
+        builderReinit?: () => void;
+    }
 }
 
 export {};

@@ -26,6 +26,7 @@ import SlideEditorModal from '@/components/edit/SlideEditorModal';
 import SiteFooterSelectEditor from '@/components/edit/SiteFooterSelectEditor';
 import FlexListEditor from '@/components/edit/FlexListEditor';
 import InfoCardSlideEditor from '@/components/edit/InfoCardSlideEditor';
+import PopupBannerEditor from '@/components/edit/PopupBannerEditor';
 import StatusCardEditor from '@/components/edit/StatusCardEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
@@ -303,6 +304,8 @@ export default function EditClient({
     const [flexListBlock, setFlexListBlock] = useState<HTMLElement | null>(null);
     // info-card-slide 정보 카드 슬라이드 편집 모달
     const [infoCardBlock, setInfoCardBlock] = useState<HTMLElement | null>(null);
+    // popup-banner 이미지 팝업 배너 편집 패널
+    const [popupBannerBlock, setPopupBannerBlock] = useState<HTMLElement | null>(null);
     // status-card 현황 카드 편집 모달
     const [statusCardBlock, setStatusCardBlock] = useState<HTMLElement | null>(null);
 
@@ -582,6 +585,10 @@ export default function EditClient({
                         url: basePath + '/assets/plugins/loan-calculator/index.js',
                         css: basePath + '/assets/plugins/loan-calculator/style.css',
                     },
+                    'popup-banner': {
+                        url: basePath + '/assets/plugins/popup-banner/index.js',
+                        css: basePath + '/assets/plugins/popup-banner/style.css',
+                    },
                     'sticky-floating-bar': {
                         url: basePath + '/assets/plugins/sticky-floating-bar/index.js',
                         css: basePath + '/assets/plugins/sticky-floating-bar/style.css',
@@ -590,6 +597,8 @@ export default function EditClient({
             });
             // Make runtime available globally for ContentBuilder editor
             window.builderRuntime = runtimeRef.current;
+            // 플러그인에서 에디터/뷰어 환경 구분에 사용
+            window.__spwEditor = true;
         } catch (err: unknown) {
             console.error('런타임 초기화 오류:', err);
         }
@@ -729,6 +738,7 @@ export default function EditClient({
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
         const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
         const SPW_BL_BTN_CLASS = 'spw-bl-edit-btn';
+        const SPW_PB_BTN_CLASS = 'spw-pb-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -854,6 +864,30 @@ export default function EditClient({
                 });
                 linkTool.appendChild(btn);
             }
+
+            // ⑥ popup-banner 이미지 팝업 편집 버튼
+            if (!linkTool.querySelector(`.${SPW_PB_BTN_CLASS}`)) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = SPW_PB_BTN_CLASS;
+                btn.title = '팝업 배너 편집';
+                btn.style.cssText =
+                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
+                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const block =
+                        document
+                            .querySelector<HTMLElement>('.icon-active')
+                            ?.closest<HTMLElement>('[data-cb-type="popup-banner"]') ??
+                        document
+                            .querySelector<HTMLElement>('.elm-active')
+                            ?.closest<HTMLElement>('[data-cb-type="popup-banner"]');
+                    if (block) setPopupBannerBlock(block);
+                });
+                linkTool.appendChild(btn);
+            }
         };
 
         // 활성 요소 위치에 따라 각 버튼 가시성 갱신
@@ -895,6 +929,13 @@ export default function EditClient({
                     !!iconActive?.closest('[data-component-id^="branch-locator"]') ||
                     !!elmActive?.closest('[data-component-id^="branch-locator"]');
                 blBtn.style.display = isInBl ? 'flex' : 'none';
+            }
+            const pbBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PB_BTN_CLASS}`);
+            if (pbBtn) {
+                const isInPb =
+                    !!iconActive?.closest('[data-cb-type="popup-banner"]') ||
+                    !!elmActive?.closest('[data-cb-type="popup-banner"]');
+                pbBtn.style.display = isInPb ? 'flex' : 'none';
             }
         };
 
@@ -1641,6 +1682,7 @@ export default function EditClient({
             runtimeRef.current = null;
             window.builderRuntime = undefined;
             window.builderReinit = undefined;
+            window.__spwEditor = undefined;
         };
     }, []);
 
@@ -1660,6 +1702,16 @@ export default function EditClient({
         return () => {
             window.removeEventListener('message', handleMessage);
         };
+    }, []);
+
+    // popup-banner 편집 버튼 클릭 이벤트 수신 (index.js → CustomEvent → 패널 오픈)
+    useEffect(() => {
+        const handleEditEvent = (e: Event) => {
+            const block = (e as CustomEvent<{ element: HTMLElement }>).detail?.element;
+            if (block) setPopupBannerBlock(block);
+        };
+        document.addEventListener('spw:popup-banner:edit', handleEditEvent);
+        return () => document.removeEventListener('spw:popup-banner:edit', handleEditEvent);
     }, []);
 
     // ── 세션에서 탭 목록 복구 ──────────────────────────────────────────
@@ -2119,7 +2171,7 @@ export default function EditClient({
         }
         try {
             await save();
-            window.open(`/view?bank=${bank}`, '_blank');
+            window.open(`/view?bank=${bank}&preview=1`, '_blank');
         } catch (err: unknown) {
             console.error('저장 실패:', err);
             alert('저장에 실패했습니다.\n다시 시도해 주세요.');
@@ -2480,6 +2532,11 @@ export default function EditClient({
 
             {/* ── info-card-slide 정보 카드 편집 모달 ── */}
             {infoCardBlock && <InfoCardSlideEditor blockEl={infoCardBlock} onClose={() => setInfoCardBlock(null)} />}
+
+            {/* ── popup-banner 이미지 팝업 편집 패널 ── */}
+            {popupBannerBlock && (
+                <PopupBannerEditor blockEl={popupBannerBlock} onClose={() => setPopupBannerBlock(null)} />
+            )}
 
             {/* ── site-footer 드롭다운 편집 패널 ── */}
             {siteFooterBlock && (
