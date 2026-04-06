@@ -5,6 +5,7 @@ declare global {
     }
     interface Window {
         __spwEditor?: boolean;
+        builderReinit?: () => void;
     }
 }
 

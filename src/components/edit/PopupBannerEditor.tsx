@@ -111,29 +111,10 @@ export default function PopupBannerEditor({ blockEl, onClose }: Props) {
             alt: img.alt.trim(),
         }));
 
+        // data 속성 업데이트 후 런타임 reinit — 플러그인 mount()를 다시 실행해 미리보기 갱신
         blockEl.setAttribute('data-images', JSON.stringify(validated));
         blockEl.setAttribute('data-hide-days', String(hideDays));
-
-        // 에디터 내 미리보기 시트 이미지 즉시 갱신
-        const sheetEl = blockEl.querySelector<HTMLElement>('.pb-sheet--editor');
-        if (sheetEl) {
-            const track = sheetEl.querySelector<HTMLElement>('.pb-slide-track');
-            if (track) {
-                track.innerHTML = '';
-                validated.forEach((img) => {
-                    const a = document.createElement('a');
-                    a.className = 'pb-slide-item';
-                    a.href = img.link;
-                    const imgEl = document.createElement('img');
-                    imgEl.src = img.url;
-                    imgEl.alt = img.alt;
-                    a.appendChild(imgEl);
-                    track.appendChild(a);
-                });
-            }
-            const label = sheetEl.querySelector<HTMLElement>('.pb-hide-label');
-            if (label) label.textContent = `${hideDays}일간 보지 않기`;
-        }
+        window.builderReinit?.();
 
         onClose();
     }

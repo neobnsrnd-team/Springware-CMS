@@ -78,17 +78,13 @@ export default {
 
     editor: {
         openContentEditor(element, builder, onChange) {
-            // 편집은 EditClient.tsx의 #divLinkTool 버튼 주입 방식으로 처리
-            // ContentBuilder가 appendChild 할 수 있도록 안내 UI 반환
+            // 설정 버튼 클릭 → CustomEvent dispatch → EditClient.tsx에서 PopupBannerEditor 모달 오픈
+            document.dispatchEvent(
+                new CustomEvent('spw:popup-banner:edit', { detail: { element } })
+            );
+            // ContentBuilder가 appendChild할 수 있도록 빈 container 반환 (숨김)
             const container = document.createElement('div');
-            container.style.cssText = 'padding:20px 16px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\'Malgun Gothic\',sans-serif;';
-            container.innerHTML = `
-                <div style="font-size:32px;margin-bottom:12px;">🖼️</div>
-                <div style="font-size:14px;font-weight:700;color:#1A1A2E;margin-bottom:6px;">이미지 팝업 배너</div>
-                <div style="font-size:12px;color:#6B7280;line-height:1.6;">
-                    블록 내 링크 영역을 클릭하면<br>
-                    나타나는 편집 버튼(⊞)을 이용하세요.
-                </div>`;
+            container.style.cssText = 'display:none;';
             return container;
         },
     },
@@ -126,19 +122,10 @@ export default {
                     'overflow:hidden',
                 ].join(';');
 
-                // 상단 식별 배너 + 편집 버튼
+                // 상단 식별 배너 (제목만)
                 const emptyBadge = document.createElement('div');
-                emptyBadge.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#E8F0FC;border-bottom:1px solid #C7D8F4;';
-                const emptyEditBtn = document.createElement('button');
-                emptyEditBtn.type = 'button';
-                emptyEditBtn.style.cssText = "display:flex;align-items:center;gap:4px;padding:5px 12px;background:#0046A4;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;cursor:pointer;";
-                emptyEditBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>이미지 편집`;
-                emptyEditBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    document.dispatchEvent(new CustomEvent('spw:popup-banner:edit', { detail: { element } }));
-                });
+                emptyBadge.style.cssText = 'display:flex;align-items:center;padding:8px 14px;background:#E8F0FC;border-bottom:1px solid #C7D8F4;';
                 emptyBadge.innerHTML = `<span style="font-size:11px;font-weight:700;color:#0046A4;">이미지 팝업 배너</span>`;
-                emptyBadge.appendChild(emptyEditBtn);
 
                 // 안내 영역
                 const emptyBody = document.createElement('div');
@@ -146,7 +133,7 @@ export default {
                 emptyBody.innerHTML = `
                     <div style="font-size:28px;margin-bottom:10px;">🖼️</div>
                     <div style="font-weight:600;color:#1A1A2E;margin-bottom:6px;">이미지가 없습니다</div>
-                    <div style="line-height:1.6;">위의 <b style="color:#0046A4;">이미지 편집</b> 버튼을 클릭해<br>이미지를 추가하세요.</div>`;
+                    <div style="line-height:1.6;">블록을 클릭한 후 상단 <b style="color:#0046A4;">설정 버튼</b>을 눌러<br>이미지를 추가하세요.</div>`;
 
                 emptyEl.appendChild(emptyBadge);
                 emptyEl.appendChild(emptyBody);
@@ -182,61 +169,16 @@ export default {
             sheetEl.className = 'pb-sheet';
         }
 
-        // ── 에디터 전용: 상단 식별 배너 + 이미지 편집 버튼 ──
+        // ── 에디터 전용: 상단 식별 배너 (제목만, 편집 버튼 없음) ──
         if (isEditor) {
             const editorBadge = document.createElement('div');
-            editorBadge.style.cssText = [
-                'display:flex',
-                'align-items:center',
-                'justify-content:space-between',
-                'padding:8px 14px',
-                'background:#E8F0FC',
-                'border-bottom:1px solid #C7D8F4',
-            ].join(';');
-
-            const badgeLeft = document.createElement('div');
-            badgeLeft.style.cssText = 'display:flex;align-items:center;gap:6px;';
-            badgeLeft.innerHTML = `
+            editorBadge.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px 14px;background:#E8F0FC;border-bottom:1px solid #C7D8F4;';
+            editorBadge.innerHTML = `
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0046A4" stroke-width="2" stroke-linecap="round">
                     <rect x="3" y="3" width="18" height="18" rx="2"/>
                     <path d="M3 9h18"/>
                 </svg>
                 <span style="font-size:11px;font-weight:700;color:#0046A4;">이미지 팝업 배너</span>`;
-
-            const editBtn = document.createElement('button');
-            editBtn.type = 'button';
-            editBtn.style.cssText = [
-                'display:flex',
-                'align-items:center',
-                'gap:4px',
-                'padding:5px 12px',
-                'background:#0046A4',
-                'color:#fff',
-                'border:none',
-                'border-radius:6px',
-                'font-size:12px',
-                'font-weight:600',
-                "font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif",
-                'cursor:pointer',
-                'white-space:nowrap',
-            ].join(';');
-            editBtn.innerHTML = `
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                이미지 편집`;
-
-            // 클릭 시 CustomEvent 발행 → EditClient.tsx에서 수신해 PopupBannerEditor 오픈
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.dispatchEvent(
-                    new CustomEvent('spw:popup-banner:edit', { detail: { element } })
-                );
-            });
-
-            editorBadge.appendChild(badgeLeft);
-            editorBadge.appendChild(editBtn);
             sheetEl.appendChild(editorBadge);
         }
 
@@ -378,6 +320,11 @@ export default {
             isSwiping = false;
         }
 
+        // ── 창 크기 변경 시 슬라이드 위치 재계산 ──
+        function onResize() { goTo(currentIndex); }
+        window.addEventListener('resize', onResize);
+        handlers.push(() => window.removeEventListener('resize', onResize));
+
         // ── ESC 키 닫기 ──
         function onKeyDown(e) { if (e.key === 'Escape') closePopup(); }
 
@@ -403,12 +350,12 @@ export default {
             slideWrapper.removeEventListener('touchend', onTouchEnd);
         });
 
-        // ── 팝업 표시 (뷰어만) — CSS 로드 대기 후 애니메이션 적용 ──
+        // ── 팝업 표시 (뷰어만) — 현재 실행 컨텍스트 완료 후 즉시 애니메이션 적용 ──
         if (!isEditor) {
             setTimeout(() => {
                 overlay.classList.add('pb-visible');
                 sheetEl.classList.add('pb-visible');
-            }, 150);
+            }, 0);
         }
 
         return { closePopup, handlers, overlay, sheetEl };
