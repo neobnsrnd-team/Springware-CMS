@@ -1666,6 +1666,16 @@ export default function EditClient({
         };
     }, []);
 
+    // popup-banner 편집 버튼 클릭 이벤트 수신 (index.js → CustomEvent → 패널 오픈)
+    useEffect(() => {
+        const handleEditEvent = (e: Event) => {
+            const block = (e as CustomEvent<{ element: HTMLElement }>).detail?.element;
+            if (block) setPopupBannerBlock(block);
+        };
+        document.addEventListener('spw:popup-banner:edit', handleEditEvent);
+        return () => document.removeEventListener('spw:popup-banner:edit', handleEditEvent);
+    }, []);
+
     // ── 세션에서 탭 목록 복구 ──────────────────────────────────────────
     useEffect(() => {
         try {

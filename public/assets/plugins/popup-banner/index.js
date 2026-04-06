@@ -103,21 +103,37 @@ export default {
                 emptyEl.className = 'pb-sheet--editor';
                 emptyEl.style.cssText = [
                     'position:relative',
-                    "border-radius:20px 20px 0 0",
+                    'border-radius:20px 20px 0 0',
                     'box-shadow:0 -4px 24px rgba(0,0,0,0.08)',
                     'background:#fff',
                     "font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif",
                     'overflow:hidden',
-                    'padding:24px 20px',
-                    'text-align:center',
-                    'color:#6B7280',
-                    'font-size:13px',
                 ].join(';');
-                emptyEl.innerHTML = `
-                    <div style="margin-bottom:8px;font-size:20px;">🖼️</div>
-                    <div style="font-weight:600;color:#1A1A2E;margin-bottom:4px;">이미지 팝업 배너</div>
-                    <div>편집 버튼을 클릭해 이미지를 추가하세요.</div>
-                    <a href="#" style="display:none;"></a>`;
+
+                // 상단 식별 배너 + 편집 버튼
+                const emptyBadge = document.createElement('div');
+                emptyBadge.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#E8F0FC;border-bottom:1px solid #C7D8F4;';
+                const emptyEditBtn = document.createElement('button');
+                emptyEditBtn.type = 'button';
+                emptyEditBtn.style.cssText = "display:flex;align-items:center;gap:4px;padding:5px 12px;background:#0046A4;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;cursor:pointer;";
+                emptyEditBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>이미지 편집`;
+                emptyEditBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.dispatchEvent(new CustomEvent('spw:popup-banner:edit', { detail: { element } }));
+                });
+                emptyBadge.innerHTML = `<span style="font-size:11px;font-weight:700;color:#0046A4;">이미지 팝업 배너</span>`;
+                emptyBadge.appendChild(emptyEditBtn);
+
+                // 안내 영역
+                const emptyBody = document.createElement('div');
+                emptyBody.style.cssText = 'padding:28px 20px;text-align:center;color:#6B7280;font-size:13px;';
+                emptyBody.innerHTML = `
+                    <div style="font-size:28px;margin-bottom:10px;">🖼️</div>
+                    <div style="font-weight:600;color:#1A1A2E;margin-bottom:6px;">이미지가 없습니다</div>
+                    <div style="line-height:1.6;">위의 <b style="color:#0046A4;">이미지 편집</b> 버튼을 클릭해<br>이미지를 추가하세요.</div>`;
+
+                emptyEl.appendChild(emptyBadge);
+                emptyEl.appendChild(emptyBody);
                 element.appendChild(emptyEl);
                 return { sheetEl: emptyEl, handlers: [] };
             }
@@ -150,23 +166,61 @@ export default {
             sheetEl.className = 'pb-sheet';
         }
 
-        // ── 에디터 전용: 상단 식별 배너 ──
+        // ── 에디터 전용: 상단 식별 배너 + 이미지 편집 버튼 ──
         if (isEditor) {
             const editorBadge = document.createElement('div');
             editorBadge.style.cssText = [
                 'display:flex',
                 'align-items:center',
-                'gap:6px',
-                'padding:6px 14px',
+                'justify-content:space-between',
+                'padding:8px 14px',
                 'background:#E8F0FC',
                 'border-bottom:1px solid #C7D8F4',
             ].join(';');
-            editorBadge.innerHTML = `
+
+            const badgeLeft = document.createElement('div');
+            badgeLeft.style.cssText = 'display:flex;align-items:center;gap:6px;';
+            badgeLeft.innerHTML = `
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0046A4" stroke-width="2" stroke-linecap="round">
                     <rect x="3" y="3" width="18" height="18" rx="2"/>
                     <path d="M3 9h18"/>
                 </svg>
-                <span style="font-size:11px;font-weight:700;color:#0046A4;letter-spacing:0.02em;">이미지 팝업 배너 — 편집 버튼으로 이미지 수정</span>`;
+                <span style="font-size:11px;font-weight:700;color:#0046A4;">이미지 팝업 배너</span>`;
+
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.style.cssText = [
+                'display:flex',
+                'align-items:center',
+                'gap:4px',
+                'padding:5px 12px',
+                'background:#0046A4',
+                'color:#fff',
+                'border:none',
+                'border-radius:6px',
+                'font-size:12px',
+                'font-weight:600',
+                "font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif",
+                'cursor:pointer',
+                'white-space:nowrap',
+            ].join(';');
+            editBtn.innerHTML = `
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                이미지 편집`;
+
+            // 클릭 시 CustomEvent 발행 → EditClient.tsx에서 수신해 PopupBannerEditor 오픈
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.dispatchEvent(
+                    new CustomEvent('spw:popup-banner:edit', { detail: { element } })
+                );
+            });
+
+            editorBadge.appendChild(badgeLeft);
+            editorBadge.appendChild(editBtn);
             sheetEl.appendChild(editorBadge);
         }
 
