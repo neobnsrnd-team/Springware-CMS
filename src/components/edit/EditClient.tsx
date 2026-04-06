@@ -2133,7 +2133,7 @@ export default function EditClient({
         }
         try {
             await save();
-            window.open(`/view?bank=${bank}`, '_blank');
+            window.open(`/view?bank=${bank}&preview=1`, '_blank');
         } catch (err: unknown) {
             console.error('저장 실패:', err);
             alert('저장에 실패했습니다.\n다시 시도해 주세요.');

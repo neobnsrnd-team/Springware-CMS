@@ -39,6 +39,16 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         }
     }, [viewMode, embed]);
 
+    // 뷰 모드를 body 속성으로 노출 — 플러그인(popup-banner 등)에서 CSS로 감지
+    useEffect(() => {
+        // responsive + !embed는 iframe 껍데기 — 실제 콘텐츠는 embed iframe 내부에서 처리
+        if (viewMode === 'responsive' && !embed) return;
+        document.body.setAttribute('data-view-mode', viewMode);
+        return () => {
+            document.body.removeAttribute('data-view-mode');
+        };
+    }, [viewMode, embed]);
+
     const applyWidth = useCallback((width: number) => {
         setResponsiveWidth(width);
         if (iframeWrapperRef.current) iframeWrapperRef.current.style.width = `${width}px`;

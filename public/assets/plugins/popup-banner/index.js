@@ -16,6 +16,15 @@ function getPageId() {
     }
 }
 
+/** 미리보기 모드 여부 — ?preview=1 파라미터 */
+function isPreviewMode() {
+    try {
+        return new URLSearchParams(window.location.search).get('preview') === '1';
+    } catch {
+        return false;
+    }
+}
+
 /** N일간 보지 않기 유효 여부 확인 */
 function isHiddenUntil(pageId) {
     try {
@@ -37,12 +46,19 @@ function saveHideUntil(pageId, days) {
     }
 }
 
-/** data-images JSON 파싱 */
+/** data-images JSON 파싱 — ContentBuilder 저장 시 HTML 엔티티 인코딩 대응 */
 function parseImages(element) {
     try {
         const raw = element.getAttribute('data-images');
         if (!raw) return [];
-        return JSON.parse(raw);
+        // ContentBuilder가 속성값을 HTML 엔티티로 인코딩한 경우 복원
+        const decoded = raw
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>');
+        return JSON.parse(decoded);
     } catch {
         return [];
     }
@@ -92,8 +108,8 @@ export default {
         if (!isEditor) {
             const allBanners = document.querySelectorAll('[data-cb-type="popup-banner"]');
             if (allBanners[0] !== element) return {};
-            // "N일간 보지 않기" 기간 내이면 미표시
-            if (isHiddenUntil(pageId)) return {};
+            // "N일간 보지 않기" 기간 내이면 미표시 (미리보기 모드에서는 항상 표시)
+            if (!isPreviewMode() && isHiddenUntil(pageId)) return {};
         }
 
         // 이미지가 없으면 에디터에서도 안내 UI 표시 후 종료
@@ -228,15 +244,6 @@ export default {
         const header = document.createElement('div');
         header.className = 'pb-header';
 
-        const indicatorWrap = document.createElement('div');
-        indicatorWrap.className = 'pb-indicators';
-        const dots = images.map(() => {
-            const dot = document.createElement('span');
-            dot.className = 'pb-dot';
-            indicatorWrap.appendChild(dot);
-            return dot;
-        });
-
         const closeBtn = document.createElement('button');
         closeBtn.className = 'pb-close-btn';
         closeBtn.setAttribute('aria-label', isEditor ? '미리보기' : '닫기');
@@ -248,7 +255,6 @@ export default {
             closeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         }
 
-        header.appendChild(indicatorWrap);
         header.appendChild(closeBtn);
 
         // ── 슬라이드 ──
@@ -256,6 +262,16 @@ export default {
         slideWrapper.className = 'pb-slide-wrapper';
         const slideTrack = document.createElement('div');
         slideTrack.className = 'pb-slide-track';
+
+        // 인디케이터 — 슬라이드 이미지 하단 중간 (절대 위치)
+        const indicatorWrap = document.createElement('div');
+        indicatorWrap.className = 'pb-indicators';
+        const dots = images.map(() => {
+            const dot = document.createElement('span');
+            dot.className = 'pb-dot';
+            indicatorWrap.appendChild(dot);
+            return dot;
+        });
 
         images.forEach((img) => {
             const item = document.createElement('a');
@@ -281,6 +297,7 @@ export default {
         });
 
         slideWrapper.appendChild(slideTrack);
+        slideWrapper.appendChild(indicatorWrap);
 
         // ── 푸터 ("N일간 보지 않기") ──
         const footer = document.createElement('div');
@@ -310,10 +327,10 @@ export default {
         // ── 초기 인디케이터 ──
         syncIndicators(dots, 0);
 
-        // ── 슬라이드 이동 ──
+        // ── 슬라이드 이동 ── (px 단위: slideWrapper 너비 기준)
         function goTo(index) {
             currentIndex = Math.max(0, Math.min(index, images.length - 1));
-            slideTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
+            slideTrack.style.transform = `translateX(-${currentIndex * slideWrapper.offsetWidth}px)`;
             syncIndicators(dots, currentIndex);
         }
 
@@ -331,13 +348,34 @@ export default {
 
         // ── 터치 스와이프 ──
         let touchStartX = 0;
+        let touchStartY = 0;
         let touchDeltaX = 0;
+        let isSwiping = false;
 
-        function onTouchStart(e) { touchStartX = e.touches[0].clientX; touchDeltaX = 0; }
-        function onTouchMove(e) { touchDeltaX = e.touches[0].clientX - touchStartX; }
-        function onTouchEnd() {
-            if (Math.abs(touchDeltaX) > 40) goTo(touchDeltaX < 0 ? currentIndex + 1 : currentIndex - 1);
+        function onTouchStart(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
             touchDeltaX = 0;
+            isSwiping = false;
+        }
+        function onTouchMove(e) {
+            const dx = e.touches[0].clientX - touchStartX;
+            const dy = e.touches[0].clientY - touchStartY;
+            // 수평 스와이프 판별 후 스크롤 차단
+            if (!isSwiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
+                isSwiping = true;
+            }
+            if (isSwiping) {
+                e.preventDefault();
+                touchDeltaX = dx;
+            }
+        }
+        function onTouchEnd() {
+            if (isSwiping && Math.abs(touchDeltaX) > 40) {
+                goTo(touchDeltaX < 0 ? currentIndex + 1 : currentIndex - 1);
+            }
+            touchDeltaX = 0;
+            isSwiping = false;
         }
 
         // ── ESC 키 닫기 ──
@@ -357,7 +395,7 @@ export default {
         handlers.push(() => closeBtn.removeEventListener('click', closePopup));
 
         slideWrapper.addEventListener('touchstart', onTouchStart, { passive: true });
-        slideWrapper.addEventListener('touchmove', onTouchMove, { passive: true });
+        slideWrapper.addEventListener('touchmove', onTouchMove, { passive: false }); // 수평 스와이프 시 스크롤 차단
         slideWrapper.addEventListener('touchend', onTouchEnd);
         handlers.push(() => {
             slideWrapper.removeEventListener('touchstart', onTouchStart);
@@ -365,12 +403,12 @@ export default {
             slideWrapper.removeEventListener('touchend', onTouchEnd);
         });
 
-        // ── 팝업 표시 (뷰어만) ──
+        // ── 팝업 표시 (뷰어만) — CSS 로드 대기 후 애니메이션 적용 ──
         if (!isEditor) {
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 overlay.classList.add('pb-visible');
                 sheetEl.classList.add('pb-visible');
-            });
+            }, 150);
         }
 
         return { closePopup, handlers, overlay, sheetEl };
