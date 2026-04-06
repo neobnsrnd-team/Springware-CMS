@@ -515,9 +515,9 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                 <input
                                     type="number"
-                                    value={Math.abs(row.amount)}
+                                    value={Math.round(Math.abs(row.amount ?? 0))}
                                     onChange={(e) => {
-                                        const abs = Math.round(Math.abs(Number(e.target.value) || 0));
+                                        const abs = Math.round(Math.abs(parseInt(e.target.value, 10) || 0));
                                         updateRow(idx, { amount: row.type === 'debt' ? -abs : abs });
                                     }}
                                     placeholder="금액 (원)"
