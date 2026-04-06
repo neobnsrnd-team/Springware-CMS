@@ -179,10 +179,10 @@ export default function FinanceCalendarEditor({ blockEl, onClose }: FinanceCalen
             ymEl.textContent = `${year}.${String(month).padStart(2, '0')}`;
         }
 
-        // 이벤트 JSON 저장
+        // 이벤트 JSON 저장 (setAttribute는 브라우저가 인코딩 처리하므로 raw JSON 사용)
         const gridEl = blockEl.querySelector<HTMLElement>('[data-fc-grid]');
         if (gridEl) {
-            gridEl.setAttribute('data-fc-events', JSON.stringify(events).replace(/"/g, '&quot;'));
+            gridEl.setAttribute('data-fc-events', JSON.stringify(events));
             gridEl.innerHTML = buildGridHTML(year, month, events);
         }
 
