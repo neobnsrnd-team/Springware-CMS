@@ -6,6 +6,27 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
+// ── 유틸리티 ─────────────────────────────────────────────────────────────
+
+/** XSS 방지 — innerHTML 삽입 전 특수문자 이스케이프 */
+const escapeHtml = (str: string) =>
+    str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m] ?? m);
+
+/** rgb(r,g,b) → #RRGGBB 변환 — <input type="color">는 hex 필요 */
+const rgbToHex = (rgb: string): string => {
+    if (!rgb || !rgb.startsWith('rgb')) return rgb || '#E53E3E';
+    const parts = rgb.match(/\d+/g);
+    if (!parts || parts.length < 3) return '#E53E3E';
+    return (
+        '#' +
+        parts
+            .slice(0, 3)
+            .map((x) => Number(x).toString(16).padStart(2, '0'))
+            .join('')
+            .toUpperCase()
+    );
+};
+
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
 interface PointRow {
@@ -21,7 +42,7 @@ interface PointButton {
     variant: 'primary' | 'secondary';
 }
 
-interface Props {
+export interface PointRewardEditorProps {
     blockEl: HTMLElement;
     onClose: () => void;
 }
@@ -45,7 +66,7 @@ function parseBlock(blockEl: HTMLElement): {
             label: rowEl.querySelector<HTMLElement>('[data-pr-label]')?.textContent?.trim() ?? '',
             value: valueEl?.textContent?.trim() ?? '',
             isExpire,
-            expireColor: isExpire ? valueEl?.style.color || '#E53E3E' : '#E53E3E',
+            expireColor: isExpire ? rgbToHex(valueEl?.style.color || '#E53E3E') : '#E53E3E',
         };
     });
 
@@ -94,8 +115,8 @@ function applyToBlock(blockEl: HTMLElement, header: string, rows: PointRow[], bt
                 const expireAttr = row.isExpire ? ' data-pr-expire' : '';
                 return (
                     `<div data-pr-row${expireAttr} style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;${borderStyle}">` +
-                    `<span data-pr-label style="font-size:14px;color:#6B7280;">${row.label}</span>` +
-                    `<span data-pr-value style="font-size:14px;font-weight:600;color:${valueColor};">${row.value}</span>` +
+                    `<span data-pr-label style="font-size:14px;color:#6B7280;">${escapeHtml(row.label)}</span>` +
+                    `<span data-pr-value style="font-size:14px;font-weight:600;color:${valueColor};">${escapeHtml(row.value)}</span>` +
                     `</div>`
                 );
             })
@@ -145,14 +166,22 @@ const sectionTitleStyle: React.CSSProperties = {
 
 // ── 컴포넌트 ─────────────────────────────────────────────────────────────
 
-export default function PointRewardEditor({ blockEl, onClose }: Props) {
+export default function PointRewardEditor({ blockEl, onClose }: PointRewardEditorProps) {
     const parsed = parseBlock(blockEl);
 
+    // 1. state
     const [header, setHeader] = useState(parsed.header);
     const [rows, setRows] = useState<PointRow[]>(parsed.rows);
     const [btn1, setBtn1] = useState<PointButton>(parsed.btn1);
     const [btn2, setBtn2] = useState<PointButton>(parsed.btn2);
 
+    // 3. callback
+    const handleApply = useCallback(() => {
+        applyToBlock(blockEl, header, rows, btn1, btn2);
+        onClose();
+    }, [blockEl, header, rows, btn1, btn2, onClose]);
+
+    // 5. effect
     // ESC 닫기
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
@@ -161,11 +190,6 @@ export default function PointRewardEditor({ blockEl, onClose }: Props) {
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
     }, [onClose]);
-
-    const handleApply = useCallback(() => {
-        applyToBlock(blockEl, header, rows, btn1, btn2);
-        onClose();
-    }, [blockEl, header, rows, btn1, btn2, onClose]);
 
     // 행 조작
     const updateRow = (idx: number, patch: Partial<PointRow>) =>
