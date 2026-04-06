@@ -1235,15 +1235,17 @@ export default function EditClient({
             if (rowTool.querySelector(`.${SPW_FC_ROW_BTN_CLASS}`)) return;
 
             const btn = document.createElement('button');
+            btn.type = 'button';
             btn.className = SPW_FC_ROW_BTN_CLASS;
             btn.title = '금융 일정 캘린더 편집';
-            btn.innerHTML = '✏';
             btn.style.cssText =
-                'display:none;align-items:center;justify-content:center;width:28px;height:28px;' +
-                'border:none;background:transparent;cursor:pointer;font-size:14px;padding:0;color:#374151;';
-            btn.addEventListener('mousedown', (e) => {
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;
+            btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const block = rowTool.closest<HTMLElement>('[data-component-id^="finance-calendar"]');
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="finance-calendar"]');
                 if (block) setFinanceCalendarBlock(block);
             });
             rowTool.appendChild(btn);

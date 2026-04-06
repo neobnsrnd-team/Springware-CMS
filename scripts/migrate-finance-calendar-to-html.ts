@@ -36,7 +36,7 @@ function buildGridHTML(year: number, month: number, events: FcEvent[]): string {
 
     const CELL_W = `${(100 / 7).toFixed(4)}%`;
     const DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-    const DOW_COLORS = ['#EF4444', '#374151', '#374151', '#374151', '#374151', '#374151', '#0046A4'];
+    const DOW_COLORS = ['#EF4444', '#374151', '#374151', '#374151', '#374151', '#374151', '#3B82F6'];
 
     // 요일 헤더
     const headerCells = DOW_LABELS.map((d, i) =>
@@ -51,7 +51,7 @@ function buildGridHTML(year: number, month: number, events: FcEvent[]): string {
         const dow = i % 7; // 0=일, 6=토
         const isValid = day >= 1 && day <= lastDay;
         const isToday = isValid && day === todayDay;
-        const dayColor = dow === 0 ? '#EF4444' : dow === 6 ? '#0046A4' : '#374151';
+        const dayColor = dow === 0 ? '#EF4444' : dow === 6 ? '#3B82F6' : '#374151';
         const dayEvents = isValid ? (eventMap.get(day) ?? []) : [];
 
         const todayStyle = isToday
