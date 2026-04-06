@@ -123,14 +123,15 @@ function parseBlock(blockEl: HTMLElement): {
 // ── 컴포넌트 ──────────────────────────────────────────────────────────────
 
 export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEditorProps) {
-    const parsed = parseBlock(blockEl);
+    // parseBlock을 매 렌더마다 호출하지 않도록 useState 초기화 함수로 실행
+    const [initialData] = useState(() => parseBlock(blockEl));
 
     // ── state ──
-    const [title, setTitle] = useState(parsed.title);
-    const [dateText, setDateText] = useState(parsed.dateText);
-    const [dateVisible, setDateVisible] = useState(parsed.dateVisible);
-    const [rows, setRows] = useState<AssetRow[]>(parsed.rows);
-    const [btn, setBtn] = useState<BtnConfig>(parsed.btn);
+    const [title, setTitle] = useState(initialData.title);
+    const [dateText, setDateText] = useState(initialData.dateText);
+    const [dateVisible, setDateVisible] = useState(initialData.dateVisible);
+    const [rows, setRows] = useState<AssetRow[]>(initialData.rows);
+    const [btn, setBtn] = useState<BtnConfig>(initialData.btn);
     const [sortByAmount, setSortByAmount] = useState(false);
 
     // 총자산·순자산 실시간 자동 계산 (읽기 전용) — Math.round로 부동소수점 오차 방지
@@ -173,7 +174,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     const borderStyle = isLast ? '' : 'border-bottom:1px solid #F3F4F6;';
                     const pct = totalAbs > 0 ? Math.round((Math.abs(row.amount) / totalAbs) * 100) : 0;
                     const amountStr = row.type === 'debt' ? `-${formatAmount(row.amount)}` : formatAmount(row.amount);
-                    const amountColor = row.type === 'debt' ? row.color : row.color;
+                    const amountColor = row.color;
 
                     return (
                         `<div data-ma-row data-ma-row-type="${row.type}" style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;${borderStyle}">` +
@@ -201,7 +202,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         // 범례 재생성
         const legendEl = blockEl.querySelector<HTMLElement>('[data-ma-legend]');
         if (legendEl) {
-            const totalAbsForLegend = sortedRows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
+            const totalAbsForLegend = totalAbs;
             legendEl.innerHTML = sortedRows
                 .map((r) => {
                     const pct = totalAbsForLegend > 0 ? Math.round((Math.abs(r.amount) / totalAbsForLegend) * 100) : 0;
@@ -223,7 +224,8 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const btnEl = blockEl.querySelector<HTMLAnchorElement>('[data-ma-btn]');
         if (btnEl) {
             btnEl.textContent = btn.label;
-            btnEl.setAttribute('href', btn.href);
+            const safeHref = btn.href.trim().toLowerCase().startsWith('javascript:') ? '#' : btn.href;
+            btnEl.setAttribute('href', safeHref);
         }
 
         onClose();
