@@ -731,7 +731,6 @@ export default function EditClient({
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
         const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
         const SPW_BL_BTN_CLASS = 'spw-bl-edit-btn';
-        const SPW_MA_BTN_CLASS = 'spw-ma-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
         const injectCustomButtonsToLinkTool = (linkTool: HTMLElement) => {
@@ -857,28 +856,6 @@ export default function EditClient({
                 });
                 linkTool.appendChild(btn);
             }
-            if (!linkTool.querySelector(`.${SPW_MA_BTN_CLASS}`)) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = SPW_MA_BTN_CLASS;
-                btn.title = '자산 편집';
-                btn.style.cssText =
-                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
-                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`;
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    const block =
-                        document
-                            .querySelector<HTMLElement>('.icon-active')
-                            ?.closest<HTMLElement>('[data-component-id^="mydata-asset"]') ??
-                        document
-                            .querySelector<HTMLElement>('.elm-active')
-                            ?.closest<HTMLElement>('[data-component-id^="mydata-asset"]');
-                    if (block) setMyDataAssetBlock(block);
-                });
-                linkTool.appendChild(btn);
-            }
         };
 
         // 활성 요소 위치에 따라 각 버튼 가시성 갱신
@@ -920,13 +897,6 @@ export default function EditClient({
                     !!iconActive?.closest('[data-component-id^="branch-locator"]') ||
                     !!elmActive?.closest('[data-component-id^="branch-locator"]');
                 blBtn.style.display = isInBl ? 'flex' : 'none';
-            }
-            const maBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_MA_BTN_CLASS}`);
-            if (maBtn) {
-                const isInMa =
-                    !!iconActive?.closest('[data-component-id^="mydata-asset"]') ||
-                    !!elmActive?.closest('[data-component-id^="mydata-asset"]');
-                maBtn.style.display = isInMa ? 'flex' : 'none';
             }
         };
 
@@ -1186,6 +1156,36 @@ export default function EditClient({
             });
         };
 
+        const SPW_MA_ROW_BTN_CLASS = 'spw-ma-row-edit-btn';
+
+        const injectMaEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_MA_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_MA_ROW_BTN_CLASS;
+            btn.title = '자산 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="mydata-asset"]');
+                if (block) setMyDataAssetBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateMaRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_MA_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isMa = !!activeEl?.closest('[data-component-id^="mydata-asset"]');
+                btn.style.display = isMa ? 'flex' : 'none';
+            });
+        };
+
         // 슬라이드·아코디언 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
         const slideToolObserver = new MutationObserver((mutations) => {
             let needsRowToolVisibility = false;
@@ -1200,6 +1200,7 @@ export default function EditClient({
                         injectFlEditToRowTool(node);
                         injectIcsEditToRowTool(node);
                         injectScEditToRowTool(node);
+                        injectMaEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
@@ -1209,6 +1210,7 @@ export default function EditClient({
                         injectFlEditToRowTool(t);
                         injectIcsEditToRowTool(t);
                         injectScEditToRowTool(t);
+                        injectMaEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -1225,6 +1227,7 @@ export default function EditClient({
                 updateFlRowBtnVisibility();
                 updateIcsRowBtnVisibility();
                 updateScRowBtnVisibility();
+                updateMaRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -1243,6 +1246,7 @@ export default function EditClient({
             injectFlEditToRowTool(t);
             injectIcsEditToRowTool(t);
             injectScEditToRowTool(t);
+            injectMaEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
