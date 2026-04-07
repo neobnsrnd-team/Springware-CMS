@@ -467,7 +467,7 @@ export default function FinanceCalendarEditor({ blockEl, onClose }: FinanceCalen
                                             value={Math.round(Math.abs(ev.amount ?? 0))}
                                             onChange={(e) => {
                                                 const abs = Math.round(Math.abs(parseInt(e.target.value, 10) || 0));
-                                                const sign = ev.amount < 0 || Object.is(ev.amount, -0) ? -1 : 1;
+                                                const sign = (ev.amount ?? 0) < 0 || Object.is(ev.amount, -0) ? -1 : 1;
                                                 updateEvent(idx, { amount: sign * abs });
                                             }}
                                             placeholder="금액 (원)"

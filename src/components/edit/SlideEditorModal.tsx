@@ -6,6 +6,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { rgbToHex } from '@/lib/html-utils';
+
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
 interface PromoBannerSlide {
@@ -53,13 +55,6 @@ function parsePromoBannerSlides(root: HTMLElement): PromoBannerSlide[] {
             ctaHref: ctaEl?.getAttribute('href') ?? '#',
         };
     });
-}
-
-// rgb(r, g, b) / rgba(r, g, b, a) → #rrggbb 변환 (DOM style 값 파싱용, 알파값 무시)
-function rgbToHex(rgb: string): string {
-    const match = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
-    if (!match) return rgb;
-    return '#' + [match[1], match[2], match[3]].map((v) => parseInt(v).toString(16).padStart(2, '0')).join('');
 }
 
 function parseCard(inner: HTMLElement | null): ProductGalleryCard {

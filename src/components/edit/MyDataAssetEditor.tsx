@@ -5,23 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-import { escapeHtml } from '@/lib/html-utils';
-
-// ── 유틸 ──────────────────────────────────────────────────────────────────
-
-const rgbToHex = (rgb: string, fallback = '#1A1A2E'): string => {
-    if (!rgb || !rgb.startsWith('rgb')) return /^#[0-9A-Fa-f]{6}$/.test(rgb) ? rgb : fallback;
-    const parts = rgb.match(/\d+/g);
-    if (!parts || parts.length < 3) return fallback;
-    return (
-        '#' +
-        parts
-            .slice(0, 3)
-            .map((x) => Number(x).toString(16).padStart(2, '0'))
-            .join('')
-            .toUpperCase()
-    );
-};
+import { escapeHtml, rgbToHex } from '@/lib/html-utils';
 
 /** "42,500,000 원" → 42500000 */
 const parseAmount = (str: string): number => {
