@@ -97,7 +97,7 @@ const BANNER_SCRIPT =
     `track.scrollTo({left:track.offsetWidth*current,behavior:'smooth'});` +
     `if(indicator)indicator.textContent=(current+1)+' / '+total;` +
     `}` +
-    `function startTimer(){if(paused)return;timer=setInterval(function(){goTo(current+1);},interval);}` +
+    `function startTimer(){if(paused)return;timer=setInterval(function(){if(!document.contains(root)){stopTimer();return;}goTo(current+1);},interval);}` +
     `function stopTimer(){clearInterval(timer);timer=null;}` +
     `startTimer();` +
     `if(prevBtn)prevBtn.addEventListener('click',function(){stopTimer();goTo(current-1);startTimer();});` +
@@ -128,7 +128,7 @@ function buildEventBannerHtml(
     interval: number,
     extraStyle: string,
 ): string {
-    const slidesJson = JSON.stringify(slides).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    const slidesJson = escapeHtml(JSON.stringify(slides));
     const slidesHtml = slides.map((s, i) => buildSlideHtml(s, i)).join('');
     const total = slides.length;
 
@@ -345,6 +345,8 @@ export default function EventBannerEditor({ blockEl, onClose }: Props) {
     // 1. state
     const [slides, setSlides] = useState<BannerSlide[]>([]);
     const [autoInterval, setAutoInterval] = useState(3000);
+    // 입력 도중 빈 문자열·중간값 허용을 위해 string으로 별도 관리
+    const [intervalStr, setIntervalStr] = useState('3000');
 
     // 2. ref
     const filePickerRef = useRef<Window | null>(null);
@@ -355,11 +357,13 @@ export default function EventBannerEditor({ blockEl, onClose }: Props) {
         const { slides: s, interval } = parseBannerData(blockEl);
         setSlides(s);
         setAutoInterval(interval);
+        setIntervalStr(String(interval));
     }, [blockEl]);
 
     // 4. effect — 파일 피커 postMessage 수신
     useEffect(() => {
         const handler = (e: MessageEvent) => {
+            if (e.origin !== window.location.origin) return;
             if (e.data?.type !== 'ASSET_SELECTED') return;
             const idx = pendingImgIdxRef.current;
             if (idx === null) return;
@@ -445,9 +449,18 @@ export default function EventBannerEditor({ blockEl, onClose }: Props) {
                         <input
                             type="number"
                             min={500}
-                            step={500}
-                            value={autoInterval}
-                            onChange={(e) => setAutoInterval(Math.max(500, parseInt(e.target.value) || 3000))}
+                            step={100}
+                            value={intervalStr}
+                            onChange={(e) => {
+                                setIntervalStr(e.target.value);
+                                const n = parseInt(e.target.value);
+                                if (!isNaN(n) && n >= 100) setAutoInterval(n);
+                            }}
+                            onBlur={() => {
+                                const clamped = Math.max(500, parseInt(intervalStr) || 3000);
+                                setAutoInterval(clamped);
+                                setIntervalStr(String(clamped));
+                            }}
                             style={{ ...S.input, width: 90 }}
                         />
                     </div>

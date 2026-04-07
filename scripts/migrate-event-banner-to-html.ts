@@ -103,7 +103,7 @@ const BANNER_SCRIPT =
     `if(indicator)indicator.textContent=(current+1)+' / '+total;` +
     `}` +
     // 자동재생 제어
-    `function startTimer(){if(paused)return;timer=setInterval(function(){goTo(current+1);},interval);}` +
+    `function startTimer(){if(paused)return;timer=setInterval(function(){if(!document.contains(root)){stopTimer();return;}goTo(current+1);},interval);}` +
     `function stopTimer(){clearInterval(timer);timer=null;}` +
     `startTimer();` +
     // 이전/다음 버튼
@@ -124,7 +124,7 @@ const BANNER_SCRIPT =
 // ── 전체 HTML 조립 ───────────────────────────────────────────────────────
 
 function buildEventBannerHtml(slides: BannerSlide[], componentId: string, interval: number, extraStyle: string): string {
-    const slidesJson = JSON.stringify(slides).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    const slidesJson = escapeHtml(JSON.stringify(slides));
     const slidesHtml = slides.map((s, i) => buildSlideHtml(s, i)).join('');
     const total = slides.length;
 
