@@ -85,17 +85,15 @@ jobs:
             test-results/
           retention-days: 7
 
-  # ── 3. Code Quality (SonarCloud + ESLint) ─────────────────────────────────
+  # ── 3. Code Quality (ESLint 정적 분석) ─────────────────────────────────────
   code-quality:
     name: 코드 품질 분석
     needs: lint-and-build
     runs-on: ubuntu-latest
 
     steps:
-      - name: 코드 체크아웃 (전체 히스토리 — SonarCloud 필수)
+      - name: 코드 체크아웃
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Node.js 설정
         uses: actions/setup-node@v4
@@ -106,12 +104,18 @@ jobs:
       - name: 의존성 설치
         run: npm ci
 
-      - name: ESLint JSON 리포트 생성
-        # SonarCloud ESLint 연동용 JSON 리포트 생성
+      - name: ESLint 정적 분석 (보안 + 복잡도 + 코드 스멜)
+        # eslint-plugin-security: 보안 취약점 탐지
+        # complexity, max-depth, max-lines-per-function: 코드 복잡도 검사
+        run: npm run lint
+
+      - name: ESLint JSON 리포트 생성 (아티팩트 보관용)
         run: npx eslint --format json --output-file eslint-report.json || true
 
-      - name: SonarCloud 분석
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: ESLint 리포트 아티팩트 저장
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eslint-report
+          path: eslint-report.json
+          retention-days: 7
