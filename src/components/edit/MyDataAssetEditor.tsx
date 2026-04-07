@@ -5,24 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-// ── 유틸 ──────────────────────────────────────────────────────────────────
-
-const escapeHtml = (str: string) =>
-    str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m] ?? m);
-
-const rgbToHex = (rgb: string, fallback = '#1A1A2E'): string => {
-    if (!rgb || !rgb.startsWith('rgb')) return /^#[0-9A-Fa-f]{6}$/.test(rgb) ? rgb : fallback;
-    const parts = rgb.match(/\d+/g);
-    if (!parts || parts.length < 3) return fallback;
-    return (
-        '#' +
-        parts
-            .slice(0, 3)
-            .map((x) => Number(x).toString(16).padStart(2, '0'))
-            .join('')
-            .toUpperCase()
-    );
-};
+import { escapeHtml, rgbToHex } from '@/lib/html-utils';
 
 /** "42,500,000 원" → 42500000 */
 const parseAmount = (str: string): number => {
@@ -516,9 +499,9 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                 <input
                                     type="number"
-                                    value={Math.abs(row.amount)}
+                                    value={Math.round(Math.abs(row.amount ?? 0))}
                                     onChange={(e) => {
-                                        const abs = Math.round(Math.abs(Number(e.target.value) || 0));
+                                        const abs = Math.round(Math.abs(parseInt(e.target.value, 10) || 0));
                                         updateRow(idx, { amount: row.type === 'debt' ? -abs : abs });
                                     }}
                                     placeholder="금액 (원)"

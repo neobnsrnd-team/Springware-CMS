@@ -29,6 +29,7 @@ import InfoCardSlideEditor from '@/components/edit/InfoCardSlideEditor';
 import PopupBannerEditor from '@/components/edit/PopupBannerEditor';
 import StatusCardEditor from '@/components/edit/StatusCardEditor';
 import MyDataAssetEditor from '@/components/edit/MyDataAssetEditor';
+import FinanceCalendarEditor from '@/components/edit/FinanceCalendarEditor';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
@@ -310,6 +311,7 @@ export default function EditClient({
     // status-card 현황 카드 편집 모달
     const [statusCardBlock, setStatusCardBlock] = useState<HTMLElement | null>(null);
     const [myDataAssetBlock, setMyDataAssetBlock] = useState<HTMLElement | null>(null);
+    const [financeCalendarBlock, setFinanceCalendarBlock] = useState<HTMLElement | null>(null);
 
     // 슬라이드 편집 모달 (promo-banner / product-gallery)
     const [slideEditorBlock, setSlideEditorBlock] = useState<HTMLElement | null>(null);
@@ -1227,6 +1229,36 @@ export default function EditClient({
             });
         };
 
+        const SPW_FC_ROW_BTN_CLASS = 'spw-fc-row-edit-btn';
+
+        const injectFcEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_FC_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_FC_ROW_BTN_CLASS;
+            btn.title = '금융 일정 캘린더 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="finance-calendar"]');
+                if (block) setFinanceCalendarBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+
+        const updateFcRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_FC_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isFc = !!activeEl?.closest('[data-component-id^="finance-calendar"]');
+                btn.style.display = isFc ? 'flex' : 'none';
+            });
+        };
+
         // 슬라이드·아코디언 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
         const slideToolObserver = new MutationObserver((mutations) => {
             let needsRowToolVisibility = false;
@@ -1242,6 +1274,7 @@ export default function EditClient({
                         injectIcsEditToRowTool(node);
                         injectScEditToRowTool(node);
                         injectMaEditToRowTool(node);
+                        injectFcEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
@@ -1252,6 +1285,7 @@ export default function EditClient({
                         injectIcsEditToRowTool(t);
                         injectScEditToRowTool(t);
                         injectMaEditToRowTool(t);
+                        injectFcEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -1269,6 +1303,7 @@ export default function EditClient({
                 updateIcsRowBtnVisibility();
                 updateScRowBtnVisibility();
                 updateMaRowBtnVisibility();
+                updateFcRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -1288,6 +1323,7 @@ export default function EditClient({
             injectIcsEditToRowTool(t);
             injectScEditToRowTool(t);
             injectMaEditToRowTool(t);
+            injectFcEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
@@ -2567,6 +2603,9 @@ export default function EditClient({
             {statusCardBlock && <StatusCardEditor blockEl={statusCardBlock} onClose={() => setStatusCardBlock(null)} />}
             {myDataAssetBlock && (
                 <MyDataAssetEditor blockEl={myDataAssetBlock} onClose={() => setMyDataAssetBlock(null)} />
+            )}
+            {financeCalendarBlock && (
+                <FinanceCalendarEditor blockEl={financeCalendarBlock} onClose={() => setFinanceCalendarBlock(null)} />
             )}
 
             {/* ── info-card-slide 정보 카드 편집 모달 ── */}
