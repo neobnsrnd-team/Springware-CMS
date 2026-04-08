@@ -7,7 +7,15 @@ import { NextRequest } from 'next/server';
 
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
 
+const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
+
 export async function POST(req: NextRequest) {
+    // 배포 토큰 인증
+    const token = req.headers.get('x-deploy-token');
+    if (!DEPLOY_SECRET || token !== DEPLOY_SECRET) {
+        return errorResponse('인증 토큰이 유효하지 않습니다.', 401);
+    }
+
     try {
         const { pageId, html, trackerJs } = (await req.json()) as {
             pageId?: string;

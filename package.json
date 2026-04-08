@@ -25,6 +25,7 @@
     "@innovastudio/contentbuilder-runtime": "^1.0.33",
     "axios": "^1.12.2",
     "html2canvas": "^1.4.1",
+    "jose": "^6.2.2",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
     "oracledb": "^6.10.0",
