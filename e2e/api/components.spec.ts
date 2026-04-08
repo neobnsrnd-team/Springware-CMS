@@ -28,7 +28,7 @@ test.describe('컴포넌트 API — /api/components', () => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({ ok: true, data: MOCK_COMPONENTS }),
+                body: JSON.stringify({ ok: true, components: MOCK_COMPONENTS }),
             });
         });
 
@@ -41,7 +41,7 @@ test.describe('컴포넌트 API — /api/components', () => {
 
         expect(result.status).toBe(200);
         expect(result.body.ok).toBe(true);
-        expect(Array.isArray(result.body.data)).toBe(true);
+        expect(Array.isArray(result.body.components)).toBe(true);
     });
 
     test('컴포넌트 목록 — viewMode 필터 (mobile)', async ({ page }) => {
@@ -62,7 +62,7 @@ test.describe('컴포넌트 API — /api/components', () => {
         });
 
         expect(result.body.ok).toBe(true);
-        result.body.data.forEach((item: { viewMode: string }) => {
+        result.body.components.forEach((item: { viewMode: string }) => {
             expect(item.viewMode).toBe('mobile');
         });
     });
@@ -72,7 +72,7 @@ test.describe('컴포넌트 API — /api/components', () => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({ ok: true, data: MOCK_COMPONENTS }),
+                body: JSON.stringify({ ok: true, components: MOCK_COMPONENTS }),
             });
         });
 
@@ -82,7 +82,7 @@ test.describe('컴포넌트 API — /api/components', () => {
             return { body: await res.json() };
         });
 
-        result.body.data.forEach((item: Record<string, unknown>) => {
+        result.body.components.forEach((item: Record<string, unknown>) => {
             expect(item).toHaveProperty('id');
             expect(item).toHaveProperty('label');
             expect(item).toHaveProperty('viewMode');

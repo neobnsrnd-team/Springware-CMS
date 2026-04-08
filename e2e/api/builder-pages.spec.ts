@@ -3,17 +3,17 @@
 
 import { test, expect } from '@playwright/test';
 
-// mock 페이지 데이터
+// mock 페이지 데이터 — 실제 API 응답 구조 반영
 const MOCK_PAGE = {
-    pageId: 'test-page-001',
-    content: '<div>테스트 콘텐츠</div>',
-    status: 'DRAFT',
-    updatedAt: '2026-04-07T00:00:00.000Z',
+    bank: 'test-page-001',
+    html: '<div>테스트 콘텐츠</div>',
+    approveState: 'WORK',
+    lastModifiedDtime: '2026-04-07T00:00:00.000Z',
 };
 
 const MOCK_PAGES_LIST = [
-    { pageId: 'test-page-001', status: 'DRAFT',    updatedAt: '2026-04-07T00:00:00.000Z' },
-    { pageId: 'test-page-002', status: 'APPROVED', updatedAt: '2026-04-06T00:00:00.000Z' },
+    { id: 'test-page-001', approveState: 'WORK',     lastModifiedDtime: '2026-04-07T00:00:00.000Z' },
+    { id: 'test-page-002', approveState: 'APPROVED', lastModifiedDtime: '2026-04-06T00:00:00.000Z' },
 ];
 
 test.describe('빌더 페이지 API', () => {
@@ -23,7 +23,7 @@ test.describe('빌더 페이지 API', () => {
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
-                    body: JSON.stringify({ ok: true, content: MOCK_PAGE.content }),
+                    body: JSON.stringify({ ok: true, html: MOCK_PAGE.html }),
                 });
             });
 
@@ -32,14 +32,14 @@ test.describe('빌더 페이지 API', () => {
                 const res = await fetch('/api/builder/load', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pageId: 'test-page-001' }),
+                    body: JSON.stringify({ bank: 'test-page-001' }),
                 });
                 return { status: res.status, body: await res.json() };
             });
 
             expect(result.status).toBe(200);
             expect(result.body.ok).toBe(true);
-            expect(typeof result.body.content).toBe('string');
+            expect(typeof result.body.html).toBe('string');
         });
     });
 
@@ -49,7 +49,7 @@ test.describe('빌더 페이지 API', () => {
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
-                    body: JSON.stringify({ ok: true, pageId: MOCK_PAGE.pageId }),
+                    body: JSON.stringify({ ok: true }),
                 });
             });
 
@@ -58,14 +58,13 @@ test.describe('빌더 페이지 API', () => {
                 const res = await fetch('/api/builder/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: '<div>테스트</div>', pageId: 'test-page-001' }),
+                    body: JSON.stringify({ html: '<div>테스트</div>', bank: 'test-page-001' }),
                 });
                 return { status: res.status, body: await res.json() };
             });
 
             expect(result.status).toBe(200);
             expect(result.body.ok).toBe(true);
-            expect(result.body).toHaveProperty('pageId');
         });
     });
 
@@ -75,7 +74,7 @@ test.describe('빌더 페이지 API', () => {
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
-                    body: JSON.stringify({ ok: true, data: MOCK_PAGES_LIST }),
+                    body: JSON.stringify({ ok: true, pages: MOCK_PAGES_LIST }),
                 });
             });
 
@@ -87,7 +86,7 @@ test.describe('빌더 페이지 API', () => {
 
             expect(result.status).toBe(200);
             expect(result.body.ok).toBe(true);
-            expect(Array.isArray(result.body.data)).toBe(true);
+            expect(Array.isArray(result.body.pages)).toBe(true);
         });
 
         test('페이지 목록 — 각 항목 필수 필드 확인', async ({ page }) => {
@@ -95,7 +94,7 @@ test.describe('빌더 페이지 API', () => {
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
-                    body: JSON.stringify({ ok: true, data: MOCK_PAGES_LIST }),
+                    body: JSON.stringify({ ok: true, pages: MOCK_PAGES_LIST }),
                 });
             });
 
@@ -105,14 +104,14 @@ test.describe('빌더 페이지 API', () => {
                 return { body: await res.json() };
             });
 
-            result.body.data.forEach((item: Record<string, unknown>) => {
-                expect(item).toHaveProperty('pageId');
-                expect(item).toHaveProperty('status');
+            result.body.pages.forEach((item: Record<string, unknown>) => {
+                expect(item).toHaveProperty('id');
+                expect(item).toHaveProperty('approveState');
             });
         });
     });
 
-    test.describe('POST /api/builder/pages/[pageId]/approve-request — 승인 요청', () => {
+    test.describe('PATCH /api/builder/pages/[pageId]/approve-request — 승인 요청', () => {
         test('승인 요청 응답 구조 검증', async ({ page }) => {
             await page.route('**/api/builder/pages/test-page-001/approve-request', async (route) => {
                 await route.fulfill({
@@ -125,7 +124,9 @@ test.describe('빌더 페이지 API', () => {
             await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/pages/test-page-001/approve-request', {
-                    method: 'POST',
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approverId: 'admin', approverName: '관리자' }),
                 });
                 return { status: res.status, body: await res.json() };
             });
@@ -135,7 +136,7 @@ test.describe('빌더 페이지 API', () => {
         });
     });
 
-    test.describe('POST /api/builder/pages/[pageId]/approve — 승인', () => {
+    test.describe('PATCH /api/builder/pages/[pageId]/approve — 승인', () => {
         test('승인 응답 구조 검증', async ({ page }) => {
             await page.route('**/api/builder/pages/test-page-001/approve', async (route) => {
                 await route.fulfill({
@@ -148,7 +149,7 @@ test.describe('빌더 페이지 API', () => {
             await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/pages/test-page-001/approve', {
-                    method: 'POST',
+                    method: 'PATCH',
                 });
                 return { status: res.status, body: await res.json() };
             });
