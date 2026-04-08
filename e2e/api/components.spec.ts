@@ -23,8 +23,8 @@ const MOCK_COMPONENTS = [
 
 test.describe('컴포넌트 API — /api/components', () => {
     test('컴포넌트 목록 조회 — 응답 구조 검증', async ({ page }) => {
-        // DB 응답 mock
-        await page.route('/api/components', async (route) => {
+        // DB 응답 mock — 브라우저 내부 fetch 요청을 intercept
+        await page.route('**/api/components', async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
@@ -32,17 +32,22 @@ test.describe('컴포넌트 API — /api/components', () => {
             });
         });
 
-        const response = await page.request.get('/api/components');
-        const body = await response.json() as { ok: boolean; data: typeof MOCK_COMPONENTS };
+        // 빈 페이지 로드 후 브라우저 내부에서 fetch 실행
+        await page.goto('about:blank');
+        const result = await page.evaluate(async () => {
+            const res = await fetch('/api/components');
+            return { status: res.status, body: await res.json() };
+        });
 
-        expect(response.status()).toBe(200);
-        expect(body.ok).toBe(true);
-        expect(Array.isArray(body.data)).toBe(true);
+        expect(result.status).toBe(200);
+        expect(result.body.ok).toBe(true);
+        expect(Array.isArray(result.body.data)).toBe(true);
     });
 
     test('컴포넌트 목록 — viewMode 필터 (mobile)', async ({ page }) => {
-        await page.route('/api/components?viewMode=mobile', async (route) => {
-            const mobileOnly = MOCK_COMPONENTS.filter((c) => c.viewMode === 'mobile');
+        const mobileOnly = MOCK_COMPONENTS.filter((c) => c.viewMode === 'mobile');
+
+        await page.route('**/api/components?viewMode=mobile', async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
@@ -50,17 +55,20 @@ test.describe('컴포넌트 API — /api/components', () => {
             });
         });
 
-        const response = await page.request.get('/api/components?viewMode=mobile');
-        const body = await response.json() as { ok: boolean; data: typeof MOCK_COMPONENTS };
+        await page.goto('about:blank');
+        const result = await page.evaluate(async () => {
+            const res = await fetch('/api/components?viewMode=mobile');
+            return { body: await res.json() };
+        });
 
-        expect(body.ok).toBe(true);
-        body.data.forEach((item) => {
+        expect(result.body.ok).toBe(true);
+        result.body.data.forEach((item: { viewMode: string }) => {
             expect(item.viewMode).toBe('mobile');
         });
     });
 
     test('컴포넌트 목록 — 각 항목 필수 필드 포함 확인', async ({ page }) => {
-        await page.route('/api/components', async (route) => {
+        await page.route('**/api/components', async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
@@ -68,10 +76,13 @@ test.describe('컴포넌트 API — /api/components', () => {
             });
         });
 
-        const response = await page.request.get('/api/components');
-        const body = await response.json() as { ok: boolean; data: typeof MOCK_COMPONENTS };
+        await page.goto('about:blank');
+        const result = await page.evaluate(async () => {
+            const res = await fetch('/api/components');
+            return { body: await res.json() };
+        });
 
-        body.data.forEach((item) => {
+        result.body.data.forEach((item: Record<string, unknown>) => {
             expect(item).toHaveProperty('id');
             expect(item).toHaveProperty('label');
             expect(item).toHaveProperty('viewMode');
