@@ -2,6 +2,7 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 import security from "eslint-plugin-security";
+import playwright from "eslint-plugin-playwright";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -58,6 +59,11 @@ const eslintConfig = [
     rules: {
       "no-console": "off",
     },
+  },
+  // ── Playwright 테스트 코드 린트 ──
+  {
+    files: ["e2e/**/*.spec.ts", "e2e/**/*.ts"],
+    ...playwright.configs["flat/recommended"],
   },
 ];
 

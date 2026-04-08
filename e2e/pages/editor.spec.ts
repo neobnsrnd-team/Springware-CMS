@@ -7,8 +7,8 @@ import { LABEL } from '../fixtures/locale';
 test.describe('에디터 페이지 — 기본 UI', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/edit');
-        // ContentBuilder 초기화 대기 — 에디터 캔버스가 DOM에 나타날 때까지
-        await page.waitForLoadState('networkidle');
+        // ContentBuilder 초기화 대기 — DOM 로드 완료까지
+        await page.waitForLoadState('domcontentloaded');
     });
 
     test('에디터 캔버스 로드 확인', async ({ page }) => {
@@ -62,7 +62,7 @@ test.describe('뷰어 페이지 — 금융 컴포넌트 렌더링', () => {
 
     test('레이아웃 이탈 감지 — 가로 스크롤 없음 확인', async ({ page }) => {
         await page.goto('/view');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         const hasHorizontalScroll = await page.evaluate(() => {
             return document.body.scrollWidth > document.documentElement.clientWidth;
@@ -80,7 +80,7 @@ test.describe('뷰어 페이지 — 뷰포트별 스크린샷 비교', () => {
 
     test('모바일(390px) 뷰어 스크린샷 기준 비교', async ({ page }) => {
         await page.goto('/view');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         await expect(page).toHaveScreenshot('viewer-mobile.png', {
             fullPage: true,
