@@ -4,6 +4,24 @@
 
 ---
 
+## 초기 세팅
+
+E2E 테스트를 처음 실행하는 경우 아래 두 단계가 필요합니다.
+
+```bash
+# 1. 패키지 설치
+npm install
+
+# 2. Playwright 브라우저 바이너리 설치 (최초 1회)
+npx playwright install
+```
+
+> `npx playwright install`은 Chromium·Firefox·WebKit 바이너리를 `~/.cache/ms-playwright/`에 다운로드합니다.
+> `npm install`과 별도로 실행해야 하며, git에 추적되지 않아 새로운 환경마다 필요합니다.
+> E2E 테스트를 실행하지 않을 경우 생략 가능합니다.
+
+---
+
 ## 테스트 구조 개요
 
 CI 환경에 Oracle이 없으므로, DB에 의존하는 API는 `page.route()`로 mock합니다.
