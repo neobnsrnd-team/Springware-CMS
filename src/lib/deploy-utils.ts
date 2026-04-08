@@ -1,6 +1,8 @@
 // src/lib/deploy-utils.ts
 // 배포 공통 유틸 — 운영 서버 전송 헬퍼
 
+const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
+
 /** 배포 대상 서버로 HTML + 트래커 JS 전송 */
 export async function sendToServer(
     serverUrl: string,
@@ -10,7 +12,10 @@ export async function sendToServer(
 ): Promise<void> {
     const res = await fetch(serverUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-deploy-token': DEPLOY_SECRET,
+        },
         body: JSON.stringify({ pageId, html, trackerJs }),
     });
     if (!res.ok) {
