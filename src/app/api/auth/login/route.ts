@@ -2,11 +2,11 @@
 // 로그인 API — 사용자 검증 후 서명된 JWT 발급
 // 1단계: demo-users.ts 기반 (2단계에서 DB 사용자 테이블로 교체 예정)
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 
 import { findDemoUser } from '@/data/demo-users';
-import { successResponse, errorResponse } from '@/lib/api-response';
+import { errorResponse } from '@/lib/api-response';
 
 const JWT_SECRET_RAW = process.env.JWT_SECRET ?? '';
 const JWT_EXPIRES_IN = '8h';
@@ -22,10 +22,15 @@ export async function POST(req: NextRequest) {
         return errorResponse('서버 설정 오류입니다.', 500);
     }
 
-    const { userId, password } = (await req.json()) as {
-        userId?: string;
-        password?: string;
-    };
+    let userId: string | undefined;
+    let password: string | undefined;
+    try {
+        const body = (await req.json()) as { userId?: string; password?: string };
+        userId = body.userId;
+        password = body.password;
+    } catch {
+        return errorResponse('요청 본문이 올바르지 않습니다.', 400);
+    }
 
     if (!userId || !password) {
         return errorResponse('아이디와 비밀번호를 입력해 주세요.', 400);
@@ -39,15 +44,21 @@ export async function POST(req: NextRequest) {
     }
 
     // JWT 발급
-    const token = await new SignJWT({ userId: user.userId, role: user.role })
+    const token = await new SignJWT({ userId: user.userId, userName: user.userName, role: user.role })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
         .setExpirationTime(JWT_EXPIRES_IN)
         .sign(getSecretKey());
 
     // HttpOnly 쿠키에 토큰 저장
-    const response = successResponse({ userId: user.userId, userName: user.userName, role: user.role });
-    response.headers.set('Set-Cookie', `cms-token=${token}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${8 * 60 * 60}`);
+    const response = NextResponse.json({ ok: true, userId: user.userId, userName: user.userName, role: user.role });
+    response.cookies.set('cms-token', token, {
+        httpOnly: true,
+        path: '/',
+        sameSite: 'strict',
+        maxAge: 8 * 60 * 60,
+        secure: process.env.NODE_ENV === 'production',
+    });
 
     return response;
 }

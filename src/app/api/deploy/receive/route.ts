@@ -1,6 +1,7 @@
 // src/app/api/deploy/receive/route.ts
 // 데모 전용 수신 엔드포인트 — 실제 운영 환경에서는 별도 서버로 교체
 import { writeFile, mkdir } from 'fs/promises';
+import { timingSafeEqual } from 'crypto';
 import path from 'path';
 
 import { NextRequest } from 'next/server';
@@ -9,10 +10,22 @@ import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-respo
 
 const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
 
+/** 타이밍 공격 방지 토큰 비교 */
+function isValidToken(token: string | null): boolean {
+    if (!DEPLOY_SECRET || !token) return false;
+    try {
+        const 기대값 = Buffer.from(DEPLOY_SECRET, 'utf8');
+        const 수신값 = Buffer.from(token, 'utf8');
+        if (기대값.length !== 수신값.length) return false;
+        return timingSafeEqual(기대값, 수신값);
+    } catch {
+        return false;
+    }
+}
+
 export async function POST(req: NextRequest) {
     // 배포 토큰 인증
-    const token = req.headers.get('x-deploy-token');
-    if (!DEPLOY_SECRET || token !== DEPLOY_SECRET) {
+    if (!isValidToken(req.headers.get('x-deploy-token'))) {
         return errorResponse('인증 토큰이 유효하지 않습니다.', 401);
     }
 

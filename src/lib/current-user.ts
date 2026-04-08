@@ -12,6 +12,7 @@ export interface CurrentUser {
 
 interface JwtPayload {
     userId: string;
+    userName: string;
     role: 'admin' | 'user';
 }
 
@@ -38,7 +39,7 @@ export async function getCurrentUser(): Promise<CurrentUser> {
         const { payload } = await jwtVerify<JwtPayload>(token, getSecretKey());
         return {
             userId: payload.userId,
-            userName: payload.userId,
+            userName: payload.userName,
             role: payload.role,
         };
     } catch {
