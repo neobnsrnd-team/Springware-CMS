@@ -51,7 +51,7 @@ test.describe('컴포넌트 API — /api/components', () => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({ ok: true, data: mobileOnly }),
+                body: JSON.stringify({ ok: true, components: mobileOnly }),
             });
         });
 
