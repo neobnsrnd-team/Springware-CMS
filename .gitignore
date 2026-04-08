@@ -46,6 +46,11 @@ next-env.d.ts
 # ── 테스트 커버리지 ──
 /coverage
 
+# ── Playwright ──
+/playwright-report/
+/test-results/
+/e2e/snapshots/
+
 # ── 배포 ──
 .vercel
 

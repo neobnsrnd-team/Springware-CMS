@@ -77,6 +77,50 @@ file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 ---
 
+## E2E 테스트 코드 (Playwright)
+
+### mock 데이터 작성 기준
+
+`page.route()` mock 응답은 **실제 API 응답 구조와 동일**하게 작성합니다. 불일치 시 테스트가 자기 자신만 검증하게 됩니다.
+
+```ts
+// ✅ 실제 /api/builder/pages 응답 구조 반영
+body: JSON.stringify({ ok: true, pages: MOCK_LIST })
+
+// ❌ 실제 API는 data가 아닌 pages 반환
+body: JSON.stringify({ ok: true, data: MOCK_LIST })
+```
+
+### page.route() 사용 패턴
+
+```ts
+// ✅ mock + page.evaluate(fetch) 조합 — about:blank 금지, 실제 페이지(/) 사용
+await page.route('**/api/...', async (route) => { ... });
+await page.goto('/');
+const result = await page.evaluate(async () => {
+    const res = await fetch('/api/...');
+    return res.json();
+});
+
+// ❌ page.request는 page.route() mock을 우회함
+const res = await page.request.get('/api/...');
+```
+
+### test.skip 기준
+
+CI 구조적 한계(Oracle 없음 등)일 때만 허용, 이유를 구체적으로 명시합니다.
+
+```ts
+// eslint-disable-next-line playwright/no-skipped-test
+test.skip(!!process.env.CI, 'CI 환경: Oracle 없어 ContentBuilder 초기화 불가');
+```
+
+### UI 텍스트
+
+셀렉터 문자열은 `e2e/fixtures/locale.ts`의 `LABEL` 상수로 중앙 관리합니다.
+
+---
+
 ## 일반 규칙 (빠른 참조)
 
 - **포매팅**: 4 spaces, single quote, 세미콜론 필수, 트레일링 콤마 필수
