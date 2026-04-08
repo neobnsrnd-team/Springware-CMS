@@ -36,7 +36,7 @@ test.describe('승인 플로우 — API 시나리오', () => {
             });
         });
 
-        await page.goto('about:blank');
+        await page.goto('/');
 
         // 저장 API 호출
         const pageId = TEST_PAGE_ID;
@@ -79,7 +79,7 @@ test.describe('승인 플로우 — API 시나리오', () => {
             });
         });
 
-        await page.goto('about:blank');
+        await page.goto('/');
         const result = await page.evaluate(async (id) => {
             const res = await fetch(`/api/builder/pages/${id}/reject`, {
                 method: 'POST',
@@ -105,7 +105,7 @@ test.describe('승인 플로우 — API 시나리오', () => {
             });
         });
 
-        await page.goto('about:blank');
+        await page.goto('/');
         const result = await page.evaluate(async () => {
             const res = await fetch('/api/builder/pages');
             return { body: await res.json() };

@@ -32,8 +32,8 @@ test.describe('컴포넌트 API — /api/components', () => {
             });
         });
 
-        // 빈 페이지 로드 후 브라우저 내부에서 fetch 실행
-        await page.goto('about:blank');
+        // 랜딩 페이지 로드 후 브라우저 내부에서 fetch 실행 (about:blank는 origin 없어 상대 URL 불가)
+        await page.goto('/');
         const result = await page.evaluate(async () => {
             const res = await fetch('/api/components');
             return { status: res.status, body: await res.json() };
@@ -55,7 +55,7 @@ test.describe('컴포넌트 API — /api/components', () => {
             });
         });
 
-        await page.goto('about:blank');
+        await page.goto('/');
         const result = await page.evaluate(async () => {
             const res = await fetch('/api/components?viewMode=mobile');
             return { body: await res.json() };
@@ -76,7 +76,7 @@ test.describe('컴포넌트 API — /api/components', () => {
             });
         });
 
-        await page.goto('about:blank');
+        await page.goto('/');
         const result = await page.evaluate(async () => {
             const res = await fetch('/api/components');
             return { body: await res.json() };

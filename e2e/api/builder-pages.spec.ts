@@ -27,7 +27,7 @@ test.describe('빌더 페이지 API', () => {
                 });
             });
 
-            await page.goto('about:blank');
+            await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/load', {
                     method: 'POST',
@@ -53,7 +53,7 @@ test.describe('빌더 페이지 API', () => {
                 });
             });
 
-            await page.goto('about:blank');
+            await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/save', {
                     method: 'POST',
@@ -79,7 +79,7 @@ test.describe('빌더 페이지 API', () => {
                 });
             });
 
-            await page.goto('about:blank');
+            await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/pages');
                 return { status: res.status, body: await res.json() };
@@ -99,7 +99,7 @@ test.describe('빌더 페이지 API', () => {
                 });
             });
 
-            await page.goto('about:blank');
+            await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/pages');
                 return { body: await res.json() };
@@ -122,7 +122,7 @@ test.describe('빌더 페이지 API', () => {
                 });
             });
 
-            await page.goto('about:blank');
+            await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/pages/test-page-001/approve-request', {
                     method: 'POST',
@@ -145,7 +145,7 @@ test.describe('빌더 페이지 API', () => {
                 });
             });
 
-            await page.goto('about:blank');
+            await page.goto('/');
             const result = await page.evaluate(async () => {
                 const res = await fetch('/api/builder/pages/test-page-001/approve', {
                     method: 'POST',
