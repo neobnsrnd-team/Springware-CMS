@@ -253,6 +253,61 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         document.querySelectorAll<HTMLElement>('[data-component-id^="branch-locator"]').forEach((root) => {
             const filterBtns = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-filter]'));
             const branchItems = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-item]'));
+            // ── 바텀시트 드래그 핸들 ──
+            const sheet = root.querySelector<HTMLElement>('[data-bl-sheet]');
+            const handle = root.querySelector<HTMLElement>('[data-bl-handle]');
+            if (sheet && handle) {
+                let dragY = 0;
+                let dragH = 0;
+                let dragging = false;
+
+                const onStart = (e: MouseEvent | TouchEvent) => {
+                    e.preventDefault();
+                    dragging = true;
+                    dragY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+                    dragH = sheet.offsetHeight;
+                    sheet.style.flex = 'none';
+                    sheet.style.transition = 'none';
+                };
+                const onMove = (e: MouseEvent | TouchEvent) => {
+                    if (!dragging) return;
+                    e.preventDefault();
+                    const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
+                    const maxH = root.offsetHeight * 0.8;
+                    sheet.style.height = `${Math.max(80, Math.min(maxH, dragH + (dragY - y)))}px`;
+                };
+                const onEnd = () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    sheet.style.transition = 'height 0.3s ease';
+                    const h = sheet.offsetHeight;
+                    if (h < 140) {
+                        sheet.style.height = '80px';
+                    } else if (h > root.offsetHeight * 0.5) {
+                        sheet.style.height = `${Math.round(root.offsetHeight * 0.7)}px`;
+                    } else {
+                        // 기본 — flex:1 복원
+                        sheet.style.flex = '1';
+                        sheet.style.height = '';
+                    }
+                };
+
+                handle.addEventListener('mousedown', onStart);
+                handle.addEventListener('touchstart', onStart, { passive: false });
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('mouseup', onEnd);
+                document.addEventListener('touchend', onEnd);
+                blCleanups.push(() => {
+                    handle.removeEventListener('mousedown', onStart);
+                    handle.removeEventListener('touchstart', onStart);
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('touchmove', onMove);
+                    document.removeEventListener('mouseup', onEnd);
+                    document.removeEventListener('touchend', onEnd);
+                });
+            }
+
             filterBtns.forEach((btn) => {
                 const onClick = () => {
                     const filterType = btn.getAttribute('data-bl-filter');
