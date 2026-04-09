@@ -280,61 +280,56 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 blCleanups.push(() => btn.removeEventListener('click', onClick));
             });
 
-            // 바텀시트 드래그
+            // 바텀시트 드래그 — absolute 포지션 방식
+            // flex 내부에서 height를 변경하면 부모 전체가 늘어나/줄어드므로
+            // absolute bottom:0으로 지도 위에 겹치는 방식 사용
             const sheet = root.querySelector<HTMLElement>('[data-bl-sheet]');
             const handle = root.querySelector<HTMLElement>('[data-bl-handle]');
             if (sheet && handle) {
-                // min-height 해제 — 아래로 접을 수 있도록
+                // 루트를 기준 컨테이너로, overflow 차단
+                root.style.position = 'relative';
+                root.style.overflow = 'hidden';
+
+                // 바텀시트를 absolute로 전환
+                const defaultH = Math.min(sheet.offsetHeight, root.offsetHeight * 0.5);
+                sheet.style.position = 'absolute';
+                sheet.style.bottom = '0';
+                sheet.style.left = '0';
+                sheet.style.right = '0';
+                sheet.style.height = `${defaultH}px`;
                 sheet.style.minHeight = '0';
+                sheet.style.flex = 'none';
+                sheet.style.zIndex = '10';
 
                 let startY = 0;
                 let startH = 0;
                 let dragging = false;
-
-                // 핸들 최소 높이: 44px (터치 타겟) — 실제 막대(4px)는 그대로, 패딩으로 확장
-                const HANDLE_MIN_H = 44;
-                const barH = handle.offsetHeight || 4;
-                const padV = Math.max(0, (HANDLE_MIN_H - barH) / 2);
-                handle.style.paddingTop = `${padV}px`;
-                handle.style.paddingBottom = `${padV}px`;
-                handle.style.boxSizing = 'content-box';
-                handle.style.background = 'transparent';
-                // 막대 시각 요소를 ::before가 아닌 내부 div로 대체
-                const barDiv = document.createElement('div');
-                barDiv.style.cssText = `width:40px;height:4px;background:#D1D5DB;border-radius:2px;margin:0 auto;`;
-                handle.innerHTML = '';
-                handle.appendChild(barDiv);
+                const MIN_H = 48; // 핸들만 보이는 접힌 상태
+                const MAX_RATIO = 0.85; // 루트 높이의 85%까지
 
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     dragging = true;
                     startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     startH = sheet.offsetHeight;
-                    sheet.style.flex = 'none';
                     sheet.style.transition = 'none';
                 };
                 const onMove = (e: MouseEvent | TouchEvent) => {
                     if (!dragging) return;
                     const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
-                    const maxH = root.offsetHeight * 0.8;
-                    // 최소 높이: 핸들(44px) + 여유 — 완전히 접힌 상태
-                    sheet.style.height = `${Math.max(56, Math.min(maxH, startH + (startY - y)))}px`;
+                    const maxH = root.offsetHeight * MAX_RATIO;
+                    sheet.style.height = `${Math.max(MIN_H, Math.min(maxH, startH + (startY - y)))}px`;
                 };
                 const onEnd = () => {
                     if (!dragging) return;
                     dragging = false;
                     sheet.style.transition = 'height 0.3s ease';
                     const h = sheet.offsetHeight;
-                    const threshold = root.offsetHeight * 0.5;
-                    if (h < 120) {
-                        // 접힘 — 핸들만 보임
-                        sheet.style.height = '56px';
-                    } else if (h > threshold) {
-                        // 펼침 — 70%
+                    if (h < 100) {
+                        sheet.style.height = `${MIN_H}px`;
+                    } else if (h > root.offsetHeight * 0.6) {
                         sheet.style.height = `${root.offsetHeight * 0.7}px`;
                     } else {
-                        // 중간 — flex:1 복원
-                        sheet.style.flex = '1';
-                        sheet.style.height = '';
+                        sheet.style.height = `${defaultH}px`;
                     }
                 };
 
