@@ -94,11 +94,7 @@ const makeCalendarHtml = (opts: {
        style="font-family:-apple-system,sans-serif;background:#fff;border-radius:12px;margin:0 16px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;">
       <span data-fc-title style="font-size:15px;font-weight:700;color:#1A1A2E;">금융 일정</span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button aria-label="이전달" style="font-size:14px;color:#9CA3AF;cursor:pointer;padding:2px 6px;background:none;border:none;min-width:44px;min-height:44px;">◀</button>
-        <span data-fc-year="${year}" data-fc-month="${month}" style="font-size:13px;font-weight:600;color:#374151;">${year}.${mm}</span>
-        <button aria-label="다음달" style="font-size:14px;color:#9CA3AF;cursor:pointer;padding:2px 6px;background:none;border:none;min-width:44px;min-height:44px;">▶</button>
-      </div>
+      <span data-fc-year="${year}" data-fc-month="${month}" style="font-size:13px;font-weight:600;color:#374151;">${year}.${mm}</span>
     </div>
     <div data-fc-grid style="padding:0 8px;" data-fc-events="${eventsJson}">
       ${gridHtml}
