@@ -11,6 +11,16 @@ import {
 // ── 테스트용 HTML ─────────────────────────────────────────────────────────
 // 실제 컴포넌트 구조(data-fc-* 속성)를 사용 — migrate-finance-calendar-to-html.ts 와 동일한 DOM 구조
 
+/** 실제 컴포넌트의 escapeHtml(src/lib/html-utils.ts)과 동일한 로직 */
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 /**
  * 캘린더 그리드 + 이벤트 목록을 포함한 finance-calendar HTML 생성
  * - data-fc-grid + data-fc-events (JSON) : 캘린더 그리드
@@ -77,7 +87,7 @@ const makeCalendarHtml = (opts: {
                 `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F9FAFB;">` +
                 `<span style="width:8px;height:8px;border-radius:50%;background:${ev.color};flex-shrink:0;"></span>` +
                 `<span style="font-size:12px;color:#9CA3AF;flex-shrink:0;">${year}.${mm}.${dd}</span>` +
-                `<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.label}</span>` +
+                `<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(ev.label)}</span>` +
                 amountStr +
                 `</div>`
             );
@@ -157,7 +167,7 @@ const XSS_HTML = makeCalendarHtml({
     year: 2026,
     month: 4,
     events: [
-        { day: 5, label: '&lt;script&gt;alert(1)&lt;/script&gt;XSS테스트', color: '#EF4444' },
+        { day: 5, label: '<script>alert(1)</script>XSS테스트', color: '#EF4444' },
     ],
 });
 
@@ -316,15 +326,33 @@ test.describe('finance-calendar — 예외 처리', () => {
         }
     });
 
-    test('2월 달력(28일) — 레이아웃 깨짐 없음', async ({ page }) => {
+    test('2월 달력(28일) — 레이아웃 깨짐 없음 (요일 7열·날짜 셀 수·행 수 검증)', async ({ page }) => {
         await page.setContent(FEB_HTML);
         await checkNoHorizontalScroll(page);
 
         const grid = page.locator('[data-fc-grid]');
         await expect(grid).toBeAttached();
-        const box = await grid.boundingBox();
-        expect(box).not.toBeNull();
-        expect(box!.height).toBeGreaterThan(0);
+
+        // 요일 헤더 행: 정확히 7개
+        const headerRow = grid.locator('div').first();
+        const headerCells = headerRow.locator('> div');
+        await expect(headerCells).toHaveCount(7);
+
+        // 2026년 2월: 1일이 일요일, 28일 → 4주 = 28셀 (여백 없음)
+        // totalCells = Math.ceil((0+28)/7)*7 = 28
+        const dateRow = grid.locator('div').nth(1);
+        const dateCells = dateRow.locator('> div');
+        await expect(dateCells).toHaveCount(28);
+
+        // 각 셀이 뷰포트 밖으로 삐져나가지 않음 (첫/마지막 셀 위치 확인)
+        const firstCell = dateCells.first();
+        const lastCell = dateCells.last();
+        const gridBox = await grid.boundingBox();
+        const firstBox = await firstCell.boundingBox();
+        const lastBox = await lastCell.boundingBox();
+
+        expect(firstBox!.x).toBeGreaterThanOrEqual(gridBox!.x);
+        expect(lastBox!.x + lastBox!.width).toBeLessThanOrEqual(gridBox!.x + gridBox!.width + 1);
     });
 });
 
@@ -342,16 +370,19 @@ test.describe('finance-calendar — 엣지 케이스', () => {
         expect(box!.height).toBeGreaterThan(0);
     });
 
-    test('XSS — 특수문자가 스크립트로 실행되지 않음', async ({ page }) => {
+    test('XSS — raw <script> 문자열이 이스케이프되어 실행되지 않음', async ({ page }) => {
         await page.setContent(XSS_HTML);
 
+        // script 태그가 DOM에 삽입되지 않음
         const injected = await page.evaluate(
             () => document.querySelector('[data-component-id^="finance-calendar"] script'),
         );
         expect(injected).toBeNull();
 
-        // 이벤트 레이블이 텍스트로 렌더링됨
-        const label = page.locator('[data-fc-event-list]');
-        await expect(label).toBeVisible();
+        // escapeHtml이 적용되어 레이블이 텍스트로만 렌더링됨
+        const labelEl = page.locator('[data-fc-event-list] > div:first-child span').nth(2);
+        const text = await labelEl.textContent();
+        expect(text).toContain('<script>'); // 텍스트로 보임
+        expect(text).not.toContain('alert'); // 실행 흔적 없음 (실행됐으면 alert 발생)
     });
 });
