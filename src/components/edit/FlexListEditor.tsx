@@ -39,6 +39,8 @@ interface FlexListRow {
     };
 }
 
+type ViewMode = 'mobile' | 'web' | 'responsive';
+
 interface Props {
     blockEl: HTMLElement;
     onClose: () => void;
@@ -157,16 +159,20 @@ function buildImageHtml(
     width: 'fixed' | 'flex' | 'auto' | 'custom',
     customWidth?: string,
     shape?: string,
+    viewMode: ViewMode = 'mobile',
 ): string {
     const safeSrc = sanitizeImageSrc(src);
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
+    const autoSize = viewMode === 'web' ? '64px' : '48px';
+    const flexHeight = viewMode === 'web' ? '64px' : '48px';
     const widthStyle =
         width === 'custom' && customWidth
             ? `flex:0 0 ${customWidth};width:${customWidth};height:auto;`
             : width === 'fixed'
-              ? 'flex:0 0 40px;width:40px;height:40px;'
+              ? `flex:0 0 ${fixedSize};width:${fixedSize};height:${fixedSize};`
               : width === 'auto'
-                ? 'flex:0 0 auto;width:48px;height:48px;'
-                : 'flex:1;min-width:0;height:48px;';
+                ? `flex:0 0 auto;width:${autoSize};height:${autoSize};`
+                : `flex:1;min-width:0;height:${flexHeight};`;
     const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
     const imgRadius = shapeToRadius(shape || 'round');
 
@@ -194,10 +200,12 @@ function buildIconHtml(
     width?: 'fixed' | 'flex' | 'auto' | 'custom',
     customWidth?: string,
     shape?: string,
+    viewMode: ViewMode = 'mobile',
 ): string {
     const svg = ICONS_20[iconKey] ?? ICONS_20['check'];
-    const size = width === 'custom' && customWidth ? customWidth : '40px';
-    const flexBasis = width === 'custom' && customWidth ? customWidth : '40px';
+    const defaultSize = viewMode === 'web' ? '48px' : '40px';
+    const size = width === 'custom' && customWidth ? customWidth : defaultSize;
+    const flexBasis = width === 'custom' && customWidth ? customWidth : defaultSize;
     const radius = shapeToRadius(shape);
     const bg = shape === 'none' ? 'transparent' : bgColor;
     return (
@@ -210,25 +218,37 @@ function buildIconHtml(
     );
 }
 
-function buildColumnHtml(col: FlexListColumn): string {
+function buildColumnHtml(col: FlexListColumn, viewMode: ViewMode = 'mobile'): string {
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape);
+        return buildIconHtml(
+            col.icon ?? 'check',
+            col.iconBg ?? '#E8F0FC',
+            col.width,
+            col.customWidth,
+            col.shape,
+            viewMode,
+        );
     }
 
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape, viewMode);
     }
 
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
     const widthStyle =
         col.width === 'custom' && col.customWidth
             ? `flex:0 0 ${col.customWidth};min-width:0;`
             : col.width === 'fixed'
-              ? 'flex:0 0 40px;'
+              ? `flex:0 0 ${fixedSize};`
               : col.width === 'auto'
-                ? 'flex:0 0 auto;'
+                ? 'flex:0 1 auto;min-width:0;margin-left:auto;'
                 : 'flex:1;min-width:0;';
     const customWidthAttr =
         col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
+    const textColumnStyle =
+        col.width === 'auto'
+            ? `align-items:flex-end;max-width:${viewMode === 'web' ? '32%' : '45%'};text-align:right;`
+            : '';
 
     const lines: FlexListLine[] = (col.lines ?? [{ text: '텍스트' }]).map((l) =>
         typeof l === 'string' ? { text: l } : l,
@@ -236,14 +256,14 @@ function buildColumnHtml(col: FlexListColumn): string {
     const lineHtmls = lines.map((line, i) => {
         const alignStyle = `text-align:${line.align ?? 'left'};`;
         if (i === 0) {
-            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;${alignStyle}">${line.text}</span>`;
+            return `<span style="font-size:${viewMode === 'web' ? '16px' : '15px'};font-weight:${viewMode === 'web' ? '700' : '600'};color:#1A1A2E;line-height:${viewMode === 'web' ? '1.35' : '1.4'};${alignStyle}">${line.text}</span>`;
         }
-        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;${alignStyle}">${line.text}</span>`;
+        return `<span style="font-size:13px;color:#6B7280;line-height:${viewMode === 'web' ? '1.5' : '1.4'};${alignStyle}">${line.text}</span>`;
     });
 
     return (
         `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
-        ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
+        ` style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:${viewMode === 'web' ? '4px' : '2px'};">` +
         lineHtmls.join('') +
         `</span>`
     );
@@ -254,15 +274,20 @@ function wrapColumnWithLink(colHtml: string, href?: string): string {
     return `<a href="${sanitizeHref(href)}" data-fl-col-link style="text-decoration:none;display:contents;">${colHtml}</a>`;
 }
 
-function buildRowHtml(row: FlexListRow, isLast: boolean): string {
+function buildRowHtml(row: FlexListRow, isLast: boolean, viewMode: ViewMode = 'mobile'): string {
     const borderShow = row.border?.show !== false;
     const borderColor = row.border?.color ?? '#E5E7EB';
     const borderW = row.border?.width ?? 1;
-    const borderStyle = !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
+    const borderStyle =
+        viewMode === 'web' ? '' : !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
 
-    const pad = row.padding ?? '16px 20px';
-    const gap = row.gap ?? '12px';
-    const bg = row.bgColor ? `background:${row.bgColor};` : '';
+    const pad = row.padding ?? (viewMode === 'web' ? '20px 24px' : '16px 20px');
+    const gap = row.gap ?? (viewMode === 'web' ? '18px' : '12px');
+    const bg = row.bgColor ? `background:${row.bgColor};` : viewMode === 'web' ? 'background:#ffffff;' : '';
+    const webCardStyle =
+        viewMode === 'web'
+            ? 'border:1px solid #E6ECF5;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.06);margin-bottom:14px;'
+            : '';
 
     const dataAttrs =
         (row.bgColor ? ` data-fl-bg="${row.bgColor}"` : '') +
@@ -273,32 +298,51 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
             : '');
 
     const linkMode = row.linkMode ?? 'none';
-    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${bg}text-decoration:none;`;
+    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${webCardStyle}${bg}text-decoration:none;`;
 
     if (linkMode === 'row' && row.rowHref) {
-        const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+        const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
         return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
-        const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col), col.href)).join('');
+        const columnsHtml = row.columns
+            .map((col) => wrapColumnWithLink(buildColumnHtml(col, viewMode), col.href))
+            .join('');
         return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
-    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
     return `<a href="#" data-fl-link-mode="none"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
 }
 
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
 
+function getRootExtraStyle(componentId: string): string {
+    if (componentId.endsWith('-web')) {
+        return 'width:100%;box-sizing:border-box;background:transparent;padding:12px 0;';
+    }
+    if (componentId.endsWith('-responsive')) {
+        return 'width:100%;box-sizing:border-box;';
+    }
+    return '';
+}
+
 function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
+    const componentId = blockEl.getAttribute('data-component-id') ?? '';
+    const viewMode: ViewMode = componentId.endsWith('-web')
+        ? 'web'
+        : componentId.endsWith('-responsive')
+          ? 'responsive'
+          : 'mobile';
+    blockEl.setAttribute('style', `font-family:${FONT_FAMILY};background:#ffffff;${getRootExtraStyle(componentId)}`);
     blockEl.setAttribute('data-fl-rows', JSON.stringify(rows));
 
     // 기존 행 제거 (<a> 또는 <div data-fl-link-mode>)
     blockEl.querySelectorAll(':scope > a, :scope > div[data-fl-link-mode]').forEach((el) => el.remove());
 
     // 새 행 삽입
-    const html = rows.map((row, i) => buildRowHtml(row, i === rows.length - 1)).join('');
+    const html = rows.map((row, i) => buildRowHtml(row, i === rows.length - 1, viewMode)).join('');
     blockEl.insertAdjacentHTML('beforeend', html);
 }
 
@@ -559,6 +603,7 @@ const S = {
         top: '50%',
         transform: 'translate(-50%, -50%)',
         width: 520,
+        maxWidth: 'calc(100vw - 24px)',
         maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column' as const,
@@ -579,6 +624,8 @@ const S = {
         borderRadius: '12px 12px 0 0',
         background: '#fafafa',
         flexShrink: 0,
+        cursor: 'grab',
+        userSelect: 'none' as const,
     },
     body: {
         overflowY: 'auto' as const,
@@ -1160,6 +1207,10 @@ function ColumnEditor({
 
 export default function FlexListEditor({ blockEl, onClose }: Props) {
     const [rows, setRows] = useState<FlexListRow[]>(() => parseRows(blockEl));
+    const [pos, setPos] = useState(() => ({
+        x: Math.max(12, window.innerWidth / 2 - 260),
+        y: Math.max(12, window.innerHeight / 2 - 320),
+    }));
 
     // 스타일 설정 펼침 상태 — UI 전용, 데이터 모델과 분리
     const [expandedStyles, setExpandedStyles] = useState<Set<number>>(() => new Set());
@@ -1174,11 +1225,23 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
 
     // 이미지 파일 선택 대기 상태 — 어떤 행/컬럼이 파일 피커 결과를 기다리는지 추적
     const pendingImagePick = useRef<{ rowIdx: number; colIdx: number } | null>(null);
+    const dragging = useRef(false);
+    const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 });
 
     const requestImagePick = useCallback((rowIdx: number, colIdx: number) => {
         pendingImagePick.current = { rowIdx, colIdx };
         window.open('/files', '_blank', 'width=900,height=600');
     }, []);
+
+    const handleHeaderMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            if ((e.target as HTMLElement).closest('button,input,select,textarea,label')) return;
+            dragging.current = true;
+            dragStart.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
+            e.preventDefault();
+        },
+        [pos],
+    );
 
     // FileBrowser에서 ASSET_SELECTED 메시지 수신
     useEffect(() => {
@@ -1201,6 +1264,27 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         };
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
+    }, []);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!dragging.current) return;
+            setPos({
+                x: Math.max(12, dragStart.current.px + e.clientX - dragStart.current.mx),
+                y: Math.max(12, dragStart.current.py + e.clientY - dragStart.current.my),
+            });
+        };
+
+        const handleMouseUp = () => {
+            dragging.current = false;
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
     }, []);
 
     const updateColumn = useCallback((rowIdx: number, colIdx: number, col: FlexListColumn) => {
@@ -1264,9 +1348,12 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         <>
             <div onClick={onClose} style={S.overlay} />
 
-            <div onClick={(e) => e.stopPropagation()} style={S.panel}>
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{ ...S.panel, left: pos.x, top: pos.y, transform: 'none' }}
+            >
                 {/* 헤더 */}
-                <div style={S.header}>
+                <div onMouseDown={handleHeaderMouseDown} style={S.header}>
                     <span style={{ fontWeight: 700, color: '#111827' }}>가변 리스트 편집</span>
                     <button
                         onClick={onClose}
