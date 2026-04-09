@@ -117,11 +117,7 @@ function buildInner(year: number, month: number, events: FcEvent[]): string {
         // 헤더
         `<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;">` +
             `<span data-fc-title style="font-size:15px;font-weight:700;color:#1A1A2E;">금융 일정</span>` +
-            `<div style="display:flex;align-items:center;gap:8px;">` +
-                `<span style="font-size:14px;color:#9CA3AF;cursor:pointer;padding:2px 6px;">◀</span>` +
-                `<span data-fc-year="${year}" data-fc-month="${month}" style="font-size:13px;font-weight:600;color:#374151;">${year}.${mm}</span>` +
-                `<span style="font-size:14px;color:#9CA3AF;cursor:pointer;padding:2px 6px;">▶</span>` +
-            `</div>` +
+            `<span data-fc-year="${year}" data-fc-month="${month}" style="font-size:13px;font-weight:600;color:#374151;">${year}.${mm}</span>` +
         `</div>` +
 
         // 캘린더 그리드
