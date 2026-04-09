@@ -254,41 +254,76 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             const filterBtns = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-filter]'));
             const branchItems = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-item]'));
             // ── 바텀시트 드래그 핸들 ──
+            // flex 흐름 유지: 지도(flex:1) → 필터(고정) → 시트(명시 높이)
+            // 시트 줄이면 지도가 자연 확장 → 지도가 필터 뒤로 침범하지 않음
             const sheet = root.querySelector<HTMLElement>('[data-bl-sheet]');
             const handle = root.querySelector<HTMLElement>('[data-bl-handle]');
+            const mapArea = root.querySelector<HTMLElement>('[data-bl-map]')?.parentElement ?? null;
             if (sheet && handle) {
                 let dragY = 0;
                 let dragH = 0;
                 let dragging = false;
+                let moved = false;
 
+                // 원본 style 속성 저장 — 복원 시 완벽하게 되돌리기 위해
+                const origRootStyle = root.getAttribute('style') ?? '';
+                const origMapStyle = mapArea?.getAttribute('style') ?? '';
+                const origSheetStyle = sheet.getAttribute('style') ?? '';
+
+                const activateLayout = () => {
+                    root.style.height = `${root.offsetHeight}px`;
+                    root.style.minHeight = '0';
+                    root.style.overflow = 'hidden';
+                    if (mapArea) {
+                        mapArea.style.aspectRatio = 'unset';
+                        mapArea.style.flex = '1';
+                    }
+                    sheet.style.flex = 'none';
+                    sheet.style.minHeight = '0';
+                    sheet.style.height = `${dragH}px`;
+                    sheet.style.transition = 'none';
+                };
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     e.preventDefault();
                     dragging = true;
+                    moved = false;
                     dragY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     dragH = sheet.offsetHeight;
-                    sheet.style.flex = 'none';
-                    sheet.style.transition = 'none';
                 };
                 const onMove = (e: MouseEvent | TouchEvent) => {
                     if (!dragging) return;
-                    e.preventDefault();
                     const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
-                    const maxH = root.offsetHeight * 0.8;
-                    sheet.style.height = `${Math.max(80, Math.min(maxH, dragH + (dragY - y)))}px`;
+                    if (!moved) {
+                        if (Math.abs(y - dragY) < 25) return;
+                        moved = true;
+                        activateLayout();
+                    }
+                    e.preventDefault();
+                    const maxH = root.offsetHeight * 0.85;
+                    const newH = Math.max(24, Math.min(maxH, dragH + (dragY - y)));
+                    sheet.style.height = `${newH}px`;
                 };
+                const restoreAll = () => {
+                    root.setAttribute('style', origRootStyle);
+                    if (mapArea) mapArea.setAttribute('style', origMapStyle);
+                    sheet.setAttribute('style', origSheetStyle);
+                };
+                const initH = sheet.offsetHeight;
                 const onEnd = () => {
                     if (!dragging) return;
                     dragging = false;
-                    sheet.style.transition = 'height 0.3s ease';
+                    if (!moved) return;
+                    sheet.style.transition = 'height 0.25s ease';
                     const h = sheet.offsetHeight;
-                    if (h < 140) {
-                        sheet.style.height = '80px';
-                    } else if (h > root.offsetHeight * 0.5) {
-                        sheet.style.height = `${Math.round(root.offsetHeight * 0.7)}px`;
+                    const diff = Math.abs(h - dragH);
+                    if (diff < 20) {
+                        restoreAll();
+                    } else if (h < initH * 0.4) {
+                        sheet.style.height = '24px';
+                    } else if (h > initH * 1.2) {
+                        sheet.style.height = `${Math.round(root.offsetHeight * 0.75)}px`;
                     } else {
-                        // 기본 — flex:1 복원
-                        sheet.style.flex = '1';
-                        sheet.style.height = '';
+                        restoreAll();
                     }
                 };
 
