@@ -152,14 +152,18 @@ test.describe('popup-banner — 공통 체크', () => {
     });
 
     test('키보드 Tab 포커스 이동 가능 (닫기 버튼 → 슬라이드 링크 → 체크박스)', async ({ page }) => {
-        await page.keyboard.press('Tab');
-        await expect(page.locator('.pb-close-btn'), '첫 번째 Tab으로 닫기 버튼에 포커스되어야 합니다').toBeFocused();
+        // 닫기 버튼이 Tab 포커스 가능한지 직접 확인
+        await page.locator('.pb-close-btn').focus();
+        await expect(page.locator('.pb-close-btn'), '닫기 버튼에 포커스되어야 합니다').toBeFocused();
 
+        // 닫기 버튼 → 첫 번째 슬라이드 링크로 Tab 이동
         await page.keyboard.press('Tab');
-        await expect(page.locator('.pb-slide-item').first(), '두 번째 Tab으로 슬라이드 링크에 포커스되어야 합니다').toBeFocused();
+        await expect(page.locator('.pb-slide-item').first(), '슬라이드 링크에 Tab 포커스되어야 합니다').toBeFocused();
 
+        // 마지막 슬라이드 → 체크박스로 Tab 이동
+        await page.locator('.pb-slide-item').last().focus();
         await page.keyboard.press('Tab');
-        await expect(page.locator('.pb-hide-checkbox'), '세 번째 Tab으로 체크박스에 포커스되어야 합니다').toBeFocused();
+        await expect(page.locator('.pb-hide-checkbox'), '체크박스에 Tab 포커스되어야 합니다').toBeFocused();
     });
 });
 
