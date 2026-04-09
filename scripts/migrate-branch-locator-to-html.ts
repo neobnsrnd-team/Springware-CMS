@@ -99,7 +99,7 @@ function buildHtml(componentId: string, extraStyle: string): string {
             // ── 지도 영역 ──
             `<div style="position:relative;aspect-ratio:16/9;border-radius:20px 20px 0 0;flex-shrink:0;background:#E8EFF8;">` +
                 // iframe: src="" 초기값, 편집 패널에서 지도 embed URL 입력
-                `<iframe data-bl-map src="about:blank" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:20px 20px 0 0;" title="지도" allowfullscreen=""></iframe>` +
+                `<iframe data-bl-map src="about:blank" tabindex="-1" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:20px 20px 0 0;" title="지도" allowfullscreen=""></iframe>` +
                 // 플레이스홀더 (src 비어있을 때 표시)
                 `<div data-bl-map-ph style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(160deg,#E8F0FC 0%,#D1E3F8 100%);">` +
                     `<span style="font-size:40px;">📍</span>` +

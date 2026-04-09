@@ -58,7 +58,7 @@ function makeLocatorHtml(items: BranchItem[]): string {
   <div data-component-id="branch-locator-mobile" data-spw-block
        style="font-family:sans-serif;background:#F5F7FA;border-radius:20px;display:flex;flex-direction:column;min-height:420px;">
     <div style="position:relative;aspect-ratio:16/9;border-radius:20px 20px 0 0;flex-shrink:0;background:#E8EFF8;">
-      <iframe data-bl-map src="about:blank" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" title="지도"></iframe>
+      <iframe data-bl-map src="about:blank" tabindex="-1" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" title="지도"></iframe>
       <div data-bl-map-ph style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
         <p style="font-size:13px;color:#6B7280;margin:0;">지도 placeholder</p>
       </div>
