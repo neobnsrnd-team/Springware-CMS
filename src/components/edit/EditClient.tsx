@@ -748,7 +748,7 @@ export default function EditClient({
         const SPW_MV_BTN_CLASS = 'spw-mv-url-edit-btn';
         const SPW_AC_BTN_CLASS = 'spw-ac-icon-edit-btn';
         const SPW_AH_BTN_CLASS = 'spw-ah-border-edit-btn';
-        const SPW_BL_BTN_CLASS = 'spw-bl-edit-btn';
+        const SPW_BL_ROW_BTN_CLASS = 'spw-bl-row-edit-btn';
         const SPW_PB_BTN_CLASS = 'spw-pb-edit-btn';
 
         // #divLinkTool에 커스텀 버튼 일괄 주입 (중복 주입 방지)
@@ -852,30 +852,6 @@ export default function EditClient({
                 linkTool.appendChild(btn);
             }
 
-            // ⑤ branch-locator 지점 편집 버튼
-            if (!linkTool.querySelector(`.${SPW_BL_BTN_CLASS}`)) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = SPW_BL_BTN_CLASS;
-                btn.title = '지점 편집';
-                btn.style.cssText =
-                    'display:none;width:37px;height:37px;flex-shrink:0;justify-content:center;align-items:center;background:transparent;cursor:pointer;border:none;padding:0;';
-                btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    const block =
-                        document
-                            .querySelector<HTMLElement>('.icon-active')
-                            ?.closest<HTMLElement>('[data-component-id^="branch-locator"]') ??
-                        document
-                            .querySelector<HTMLElement>('.elm-active')
-                            ?.closest<HTMLElement>('[data-component-id^="branch-locator"]');
-                    if (block) setBranchLocatorBlock(block);
-                });
-                linkTool.appendChild(btn);
-            }
-
             // ⑥ popup-banner 이미지 팝업 편집 버튼
             if (!linkTool.querySelector(`.${SPW_PB_BTN_CLASS}`)) {
                 const btn = document.createElement('button');
@@ -933,13 +909,6 @@ export default function EditClient({
                     !!iconActive?.closest('[data-component-id^="media-video"]') ||
                     !!elmActive?.closest('[data-component-id^="media-video"]');
                 mvBtn.style.display = isInMv ? 'flex' : 'none';
-            }
-            const blBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_BL_BTN_CLASS}`);
-            if (blBtn) {
-                const isInBl =
-                    !!iconActive?.closest('[data-component-id^="branch-locator"]') ||
-                    !!elmActive?.closest('[data-component-id^="branch-locator"]');
-                blBtn.style.display = isInBl ? 'flex' : 'none';
             }
             const pbBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PB_BTN_CLASS}`);
             if (pbBtn) {
@@ -1292,6 +1261,34 @@ export default function EditClient({
             });
         };
 
+        // ── branch-locator 지점 찾기 편집 버튼 — .is-row-tool 주입 ────────────────
+        const injectBlEditToRowTool = (rowTool: HTMLElement) => {
+            if (rowTool.querySelector(`.${SPW_BL_ROW_BTN_CLASS}`)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = SPW_BL_ROW_BTN_CLASS;
+            btn.title = '지점 찾기 편집';
+            btn.style.cssText =
+                'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const activeEl = document.querySelector<HTMLElement>('.elm-active');
+                const block = activeEl?.closest<HTMLElement>('[data-component-id^="branch-locator"]');
+                if (block) setBranchLocatorBlock(block);
+            });
+            rowTool.appendChild(btn);
+        };
+        const updateBlRowBtnVisibility = () => {
+            document.querySelectorAll<HTMLElement>(`.${SPW_BL_ROW_BTN_CLASS}`).forEach((btn) => {
+                const activeEl = document.querySelector('.elm-active');
+                const isBl = !!activeEl?.closest('[data-component-id^="branch-locator"]');
+                btn.style.display = isBl ? 'flex' : 'none';
+            });
+        };
+
         // 슬라이드·아코디언 컴포넌트 행 툴바 감지 — colToolObserver와 별도 옵저버 사용
         const slideToolObserver = new MutationObserver((mutations) => {
             let needsRowToolVisibility = false;
@@ -1309,6 +1306,7 @@ export default function EditClient({
                         injectMaEditToRowTool(node);
                         injectFcEditToRowTool(node);
                         injectEbEditToRowTool(node);
+                        injectBlEditToRowTool(node);
                     }
                     node.querySelectorAll<HTMLElement>('.is-row-tool').forEach((t) => {
                         injectSlideEditToRowTool(t);
@@ -1321,6 +1319,7 @@ export default function EditClient({
                         injectMaEditToRowTool(t);
                         injectFcEditToRowTool(t);
                         injectEbEditToRowTool(t);
+                        injectBlEditToRowTool(t);
                     });
                 });
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -1340,6 +1339,7 @@ export default function EditClient({
                 updateMaRowBtnVisibility();
                 updateFcRowBtnVisibility();
                 updateEbRowBtnVisibility();
+                updateBlRowBtnVisibility();
             }
         });
         slideToolObserver.observe(document.body, {
@@ -1361,6 +1361,7 @@ export default function EditClient({
             injectMaEditToRowTool(t);
             injectFcEditToRowTool(t);
             injectEbEditToRowTool(t);
+            injectBlEditToRowTool(t);
         });
 
         // ── quickadd 팝업 드래그 이동 ─────────────────────────────────────────
