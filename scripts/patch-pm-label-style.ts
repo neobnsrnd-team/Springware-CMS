@@ -26,6 +26,13 @@ function patchHtml(html: string): { patched: string; changed: boolean } {
         'word-break:keep-all;overflow-wrap:anywhere;max-width:100%;',
     );
 
+    // 3. pm-icon-wrap 내 SVG에 aria-hidden="true" 추가 (없는 경우만)
+    //    장식용 SVG → 스크린 리더 중복 낭독 방지
+    patched = patched.replace(
+        /(<svg\b(?![^>]*\baria-hidden\b)[^>]*)(>)/g,
+        '$1 aria-hidden="true"$2',
+    );
+
     return { patched, changed: patched !== html };
 }
 

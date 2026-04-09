@@ -226,24 +226,17 @@ test.describe('product-menu — SVG 접근성', () => {
         await page.setContent(NORMAL_HTML);
     });
 
-    test('SVG 아이콘에 aria-hidden="true" 또는 각 pm-item에 접근 가능한 텍스트(pm-label)가 있음', async ({ page }) => {
+    test('장식용 SVG 아이콘에 aria-hidden="true"가 설정되어야 함 (스크린 리더 중복 낭독 방지)', async ({ page }) => {
         const items = page.locator('[data-component-id^="product-menu"] .pm-item');
         const count = await items.count();
         expect(count).toBeGreaterThanOrEqual(1);
 
         for (let i = 0; i < count; i++) {
-            const item = items.nth(i);
-            // pm-label이 있으면 레이블이 접근 가능한 텍스트 역할을 함
-            const labelText = await item.locator('.pm-label').textContent();
-            const hasLabel = (labelText?.trim().length ?? 0) > 0;
-
-            // SVG에 aria-hidden이 있거나, pm-label로 대체 텍스트 역할이 충족되면 통과
-            const svgAriaHidden = await item.locator('svg').getAttribute('aria-hidden');
-            const isAccessible = hasLabel || svgAriaHidden === 'true';
-            expect(
-                isAccessible,
-                `${i + 1}번째 항목: pm-label 또는 svg[aria-hidden] 중 하나는 있어야 합니다`,
-            ).toBe(true);
+            // 장식용 SVG는 pm-label이 접근 텍스트를 담당하므로 aria-hidden="true" 필수
+            await expect(
+                items.nth(i).locator('svg'),
+                `${i + 1}번째 항목: SVG 아이콘에 aria-hidden="true"가 설정되어야 합니다`,
+            ).toHaveAttribute('aria-hidden', 'true');
         }
     });
 
@@ -274,11 +267,7 @@ test.describe('product-menu — 예외 처리', () => {
 test.describe('product-menu — 엣지 케이스', () => {
     test('항목 9개 이상 — body 가로 스크롤 없음, 전체 항목 렌더링됨', async ({ page }) => {
         await page.setContent(NINE_ITEMS_HTML);
-
-        const bodyHScroll = await page.evaluate(
-            () => document.body.scrollWidth > document.documentElement.clientWidth,
-        );
-        expect(bodyHScroll, 'body 가로 스크롤이 발생하면 안 됩니다').toBe(false);
+        await checkNoHorizontalScroll(page);
 
         const items = page.locator('[data-component-id^="product-menu"] .pm-item');
         await expect(items).toHaveCount(9);
@@ -356,25 +345,18 @@ test.describe('product-menu — 엣지 케이스', () => {
 // ── 반응형 뷰어 ───────────────────────────────────────────────────────────────
 
 test.describe('product-menu — 반응형 뷰어', () => {
-    test('뷰어(/view) — product-menu HTML이 렌더링됨', async ({ page }) => {
-        await page.route('/api/builder/load', async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({
-                    ok: true,
-                    html: `<div data-component-id="product-menu-mobile">
-                        <div class="pm-grid">
-                            <a href="#" class="pm-item"><span class="pm-label">예금</span></a>
-                        </div>
-                    </div>`,
-                }),
-            });
-        });
-
+    test('뷰어 — product-menu HTML이 올바르게 렌더링됨', async ({ page }) => {
+        // page.setContent()는 네트워크 요청을 발생시키지 않으므로 page.route 불필요
+        // 컴포넌트 구조(data-component-id, pm-grid, pm-item)가 올바르게 렌더링되는지만 검증
         await page.setContent(NORMAL_HTML);
         await expect(
             page.locator('[data-component-id^="product-menu"]'),
         ).toBeAttached();
+        await expect(
+            page.locator('[data-component-id^="product-menu"] .pm-grid'),
+        ).toBeAttached();
+        await expect(
+            page.locator('[data-component-id^="product-menu"] .pm-item').first(),
+        ).toBeVisible();
     });
 });
