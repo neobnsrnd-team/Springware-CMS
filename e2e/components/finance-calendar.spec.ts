@@ -333,23 +333,22 @@ test.describe('finance-calendar — 예외 처리', () => {
         const grid = page.locator('[data-fc-grid]');
         await expect(grid).toBeAttached();
 
+        // data-fc-grid 직계 자식: [0]=헤더 행, [1]=날짜 행
+        const gridChildren = grid.locator(':scope > div');
+        await expect(gridChildren).toHaveCount(2);
+
         // 요일 헤더 행: 정확히 7개
-        const headerRow = grid.locator('div').first();
-        const headerCells = headerRow.locator('> div');
+        const headerCells = gridChildren.nth(0).locator(':scope > div');
         await expect(headerCells).toHaveCount(7);
 
         // 2026년 2월: 1일이 일요일, 28일 → 4주 = 28셀 (여백 없음)
-        // totalCells = Math.ceil((0+28)/7)*7 = 28
-        const dateRow = grid.locator('div').nth(1);
-        const dateCells = dateRow.locator('> div');
+        const dateCells = gridChildren.nth(1).locator(':scope > div');
         await expect(dateCells).toHaveCount(28);
 
-        // 각 셀이 뷰포트 밖으로 삐져나가지 않음 (첫/마지막 셀 위치 확인)
-        const firstCell = dateCells.first();
-        const lastCell = dateCells.last();
+        // 각 셀이 그리드 범위 밖으로 삐져나가지 않음
         const gridBox = await grid.boundingBox();
-        const firstBox = await firstCell.boundingBox();
-        const lastBox = await lastCell.boundingBox();
+        const firstBox = await dateCells.first().boundingBox();
+        const lastBox = await dateCells.last().boundingBox();
 
         expect(firstBox!.x).toBeGreaterThanOrEqual(gridBox!.x);
         expect(lastBox!.x + lastBox!.width).toBeLessThanOrEqual(gridBox!.x + gridBox!.width + 1);
@@ -379,10 +378,11 @@ test.describe('finance-calendar — 엣지 케이스', () => {
         );
         expect(injected).toBeNull();
 
-        // escapeHtml이 적용되어 레이블이 텍스트로만 렌더링됨
+        // escapeHtml이 적용되어 레이블이 텍스트로만 렌더링됨 (innerHTML에 &lt;script&gt; 포함)
         const labelEl = page.locator('[data-fc-event-list] > div:first-child span').nth(2);
-        const text = await labelEl.textContent();
-        expect(text).toContain('<script>'); // 텍스트로 보임
-        expect(text).not.toContain('alert'); // 실행 흔적 없음 (실행됐으면 alert 발생)
+        const innerHTML = await labelEl.evaluate((el) => el.innerHTML);
+        // escapeHtml에 의해 &lt;script&gt; 형태로 이스케이프됨
+        expect(innerHTML).toContain('&lt;script&gt;');
+        expect(innerHTML).not.toContain('<script>');
     });
 });
