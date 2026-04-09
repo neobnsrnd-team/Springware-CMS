@@ -6,7 +6,6 @@ import {
     runCommonChecks,
     checkNoHorizontalScroll,
     checkNotOutsideViewport,
-    checkKeyboardFocusable,
 } from '../helpers/component-checks';
 
 // ── 테스트용 HTML ─────────────────────────────────────────────────────────
@@ -265,7 +264,7 @@ test.describe('finance-calendar — 정상 동작', () => {
         const eventList = page.locator(
             '[data-component-id^="finance-calendar"] [data-fc-event-list] > div',
         );
-        expect(await eventList.count()).toBe(3);
+        await expect(eventList).toHaveCount(3);
     });
 
     test('연/월 정보(data-fc-year, data-fc-month)가 올바르게 표시됨', async ({ page }) => {
@@ -305,18 +304,15 @@ test.describe('finance-calendar — 예외 처리', () => {
         ).toBeAttached();
         // 이벤트 목록은 비어 있음
         const items = page.locator('[data-fc-event-list] > div');
-        expect(await items.count()).toBe(0);
+        await expect(items).toHaveCount(0);
         // data-fc-events 속성은 빈 배열
-        const eventsAttr = await page
-            .locator('[data-fc-grid]')
-            .getAttribute('data-fc-events');
-        expect(eventsAttr).toBe('[]');
+        await expect(page.locator('[data-fc-grid]')).toHaveAttribute('data-fc-events', '[]');
     });
 
     test('동일 날짜 이벤트 2개 → 모두 표시됨', async ({ page }) => {
         await page.setContent(MULTI_SAME_DAY_HTML);
         const items = page.locator('[data-fc-event-list] > div');
-        expect(await items.count()).toBe(2);
+        await expect(items).toHaveCount(2);
         // 두 항목 모두 15일 날짜를 포함
         for (let i = 0; i < 2; i++) {
             const text = await items.nth(i).textContent();
