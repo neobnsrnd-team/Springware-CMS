@@ -97,7 +97,7 @@ const makeHtml = (images: SlideImage[]) => `
         <span style="font-size:11px;font-weight:700;color:#0046A4;">이미지 팝업 배너</span>
       </div>
       <div class="pb-header">
-        <button class="pb-close-btn" aria-label="미리보기">
+        <button class="pb-close-btn" aria-label="닫기">
           <span style="font-size:11px;font-weight:600;color:#6B7280;white-space:nowrap;">${images.length}장</span>
         </button>
       </div>
@@ -153,8 +153,13 @@ test.describe('popup-banner — 공통 체크', () => {
 
     test('키보드 Tab 포커스 이동 가능 (닫기 버튼 → 슬라이드 링크 → 체크박스)', async ({ page }) => {
         await page.keyboard.press('Tab');
-        const focused = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
-        expect(focused, '키보드 Tab으로 포커스 가능한 요소가 없습니다').not.toBe('body');
+        await expect(page.locator('.pb-close-btn'), '첫 번째 Tab으로 닫기 버튼에 포커스되어야 합니다').toBeFocused();
+
+        await page.keyboard.press('Tab');
+        await expect(page.locator('.pb-slide-item').first(), '두 번째 Tab으로 슬라이드 링크에 포커스되어야 합니다').toBeFocused();
+
+        await page.keyboard.press('Tab');
+        await expect(page.locator('.pb-hide-checkbox'), '세 번째 Tab으로 체크박스에 포커스되어야 합니다').toBeFocused();
     });
 });
 
@@ -215,8 +220,8 @@ test.describe('popup-banner — 정상 동작', () => {
     test('슬라이드 이미지에 alt 속성이 있음 (접근성)', async ({ page }) => {
         const images = page.locator('[data-component-id^="popup-banner"] .pb-slide-item img');
         await expect(images).toHaveCount(2);
-        for (let i = 0; i < 2; i++) {
-            await expect(images.nth(i)).toHaveAttribute('alt', /.*/);
+        for (const image of await images.all()) {
+            await expect(image).toHaveAttribute('alt', /.*/);
         }
     });
 
