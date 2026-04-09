@@ -965,9 +965,7 @@ export default function EditClient({
                     if (cl.contains('icon-active') || cl.contains('elm-active')) {
                         needsVisibilityUpdate = true;
                         const activeEl = mutation.target as HTMLElement;
-                        // branch-locator 블록 활성 시 편집 패널 자동 오픈
-                        const branchBlock = activeEl.closest<HTMLElement>('[data-component-id^="branch-locator"]');
-                        if (branchBlock) setBranchLocatorBlock(branchBlock);
+                        void activeEl; // 가시성 갱신 외 자동 오픈 없음
                     }
                 }
             });
@@ -1951,7 +1949,9 @@ export default function EditClient({
 
             // 브랜드 테마 색상 치환 (금융 컴포넌트 삽입 시)
             const theme = brandThemeRef.current;
-            const themedHtml = theme ? applyBrandTheme(html, theme) : html;
+            // 뷰어 전용 <script> 블록 제거 — 에디터 DOM 삽입 시 파싱 에러 방지
+            const scriptStripped = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+            const themedHtml = theme ? applyBrandTheme(scriptStripped, theme) : scriptStripped;
 
             // canvasBlocksRef.current 대신 builder.html()로 현재 DOM 상태를 직접 읽음
             // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
