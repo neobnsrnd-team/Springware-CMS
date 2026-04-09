@@ -247,6 +247,85 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             });
         });
 
+        // ── branch-locator 필터 버튼 + 지도 플레이스홀더 + 바텀시트 드래그 ──
+        // 인라인 <script> 방식은 dangerouslySetInnerHTML 환경에서 파싱 에러를 유발하므로
+        // ViewClient에서 직접 처리
+        const blCleanups: (() => void)[] = [];
+        document.querySelectorAll<HTMLElement>('[data-component-id^="branch-locator"]').forEach((root) => {
+            // 지도 플레이스홀더: embed URL이 있으면 숨김
+            const mapIframe = root.querySelector<HTMLIFrameElement>('[data-bl-map]');
+            const mapPh = root.querySelector<HTMLElement>('[data-bl-map-ph]');
+            const mapSrc = mapIframe?.getAttribute('src') ?? '';
+            if (mapIframe && mapPh && mapSrc && mapSrc !== 'about:blank') {
+                mapPh.style.display = 'none';
+            }
+
+            // 필터 버튼
+            const filterBtns = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-filter]'));
+            const branchItems = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-item]'));
+            filterBtns.forEach((btn) => {
+                const onClick = () => {
+                    const filterType = btn.getAttribute('data-bl-filter');
+                    filterBtns.forEach((x) => {
+                        const isActive = x === btn;
+                        x.style.background = isActive ? '#0046A4' : '#fff';
+                        x.style.color = isActive ? '#fff' : '#6B7280';
+                    });
+                    branchItems.forEach((item) => {
+                        item.style.display =
+                            filterType === 'all' || item.getAttribute('data-bl-item') === filterType ? 'flex' : 'none';
+                    });
+                };
+                btn.addEventListener('click', onClick);
+                blCleanups.push(() => btn.removeEventListener('click', onClick));
+            });
+
+            // 바텀시트 드래그
+            const sheet = root.querySelector<HTMLElement>('[data-bl-sheet]');
+            const handle = root.querySelector<HTMLElement>('[data-bl-handle]');
+            if (sheet && handle) {
+                let startY = 0;
+                let startH = 0;
+                let dragging = false;
+
+                const onStart = (e: MouseEvent | TouchEvent) => {
+                    dragging = true;
+                    startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+                    startH = sheet.offsetHeight;
+                    sheet.style.transition = 'none';
+                };
+                const onMove = (e: MouseEvent | TouchEvent) => {
+                    if (!dragging) return;
+                    const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
+                    const maxH = root.offsetHeight * 0.8;
+                    sheet.style.height = `${Math.max(80, Math.min(maxH, startH + (startY - y)))}px`;
+                };
+                const onEnd = () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    sheet.style.transition = 'height 0.3s ease';
+                    const h = sheet.offsetHeight;
+                    const threshold = root.offsetHeight * 0.5;
+                    sheet.style.height = h < 160 ? '80px' : h > threshold ? `${root.offsetHeight * 0.7}px` : '200px';
+                };
+
+                handle.addEventListener('touchstart', onStart, { passive: true });
+                handle.addEventListener('mousedown', onStart);
+                document.addEventListener('touchmove', onMove, { passive: true });
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('touchend', onEnd);
+                document.addEventListener('mouseup', onEnd);
+                blCleanups.push(() => {
+                    handle.removeEventListener('touchstart', onStart);
+                    handle.removeEventListener('mousedown', onStart);
+                    document.removeEventListener('touchmove', onMove);
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('touchend', onEnd);
+                    document.removeEventListener('mouseup', onEnd);
+                });
+            }
+        });
+
         // 금융 컴포넌트 내 더미 링크(href="#") 클릭 시 상단 이동 차단
         // ContentBuilder가 onclick 속성을 제거하므로 이벤트 위임으로 처리
         const handleDummyLink = (e: MouseEvent) => {
@@ -256,6 +335,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         document.addEventListener('click', handleDummyLink);
 
         return () => {
+            blCleanups.forEach((fn) => fn());
             document.removeEventListener('click', handleDummyLink);
             runtime.destroy();
         };

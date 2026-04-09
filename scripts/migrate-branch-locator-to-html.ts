@@ -51,46 +51,9 @@ function buildBranchItem(item: BranchItem, isLast: boolean): string {
     );
 }
 
-// 뷰어 전용 인라인 스크립트
-// window.builderRuntime: 에디터 활성 시 전역 등록 → 에디터에서는 스킵
-const VIEWER_SCRIPT =
-    `<script>` +
-    `(function(){` +
-        `if(window.builderRuntime)return;` +
-        `var r=document.currentScript&&document.currentScript.parentElement;` +
-        `if(!r)return;` +
-        // 지도 플레이스홀더: src 있으면 숨김
-        `var mi=r.querySelector('[data-bl-map]');` +
-        `var mp=r.querySelector('[data-bl-map-ph]');` +
-        `var ms=mi?mi.getAttribute('src'):'';` +
-        `if(mi&&mp&&ms&&ms!=='about:blank')mp.style.display='none';` +
-        // 필터 버튼
-        `var fbs=Array.from(r.querySelectorAll('[data-bl-filter]'));` +
-        `var bis=Array.from(r.querySelectorAll('[data-bl-item]'));` +
-        `fbs.forEach(function(b){` +
-            `b.addEventListener('click',function(){` +
-                `var t=b.getAttribute('data-bl-filter');` +
-                `fbs.forEach(function(x){var a=x===b;x.style.background=a?'#0046A4':'#fff';x.style.color=a?'#fff':'#6B7280';});` +
-                `bis.forEach(function(i){i.style.display=(t==='all'||i.getAttribute('data-bl-item')===t)?'flex':'none';});` +
-            `});` +
-        `});` +
-        // 바텀 시트 드래그
-        `var sh=r.querySelector('[data-bl-sheet]');` +
-        `var hd=r.querySelector('[data-bl-handle]');` +
-        `if(sh&&hd){` +
-            `var sY=0,sH=0,dr=false;` +
-            `var oS=function(e){dr=true;sY=e.touches?e.touches[0].clientY:e.clientY;sH=sh.offsetHeight;sh.style.transition='none';};` +
-            `var oM=function(e){if(!dr)return;var y=e.touches?e.touches[0].clientY:e.clientY;sh.style.height=Math.max(80,Math.min(r.offsetHeight*0.8,sH+(sY-y)))+'px';};` +
-            `var oE=function(){if(!dr)return;dr=false;sh.style.transition='height 0.3s ease';var h=sh.offsetHeight;sh.style.height=(h<160?80:h>r.offsetHeight*0.5?r.offsetHeight*0.7:200)+'px';};` +
-            `hd.addEventListener('touchstart',oS,{passive:true});` +
-            `hd.addEventListener('mousedown',oS);` +
-            `document.addEventListener('touchmove',oM,{passive:true});` +
-            `document.addEventListener('mousemove',oM);` +
-            `document.addEventListener('touchend',oE);` +
-            `document.addEventListener('mouseup',oE);` +
-        `}` +
-    `})();` +
-    `<\\/script>`;
+// 뷰어 전용 스크립트 — ViewClient.tsx에서 직접 처리
+// 인라인 <script> 방식은 dangerouslySetInnerHTML 환경에서 파싱 에러를 유발하므로
+// ViewClient에서 DOM 조작으로 동일한 로직을 실행합니다.
 
 function buildHtml(componentId: string, extraStyle: string): string {
     const itemList = DEFAULT_ITEMS.map((item, i) => buildBranchItem(item, i === DEFAULT_ITEMS.length - 1)).join('');
@@ -126,7 +89,6 @@ function buildHtml(componentId: string, extraStyle: string): string {
                 `<div style="font-size:15px;font-weight:700;color:#1A1A2E;padding:12px 20px 8px;flex-shrink:0;">주변 영업점 · ATM</div>` +
                 `<div data-bl-list style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;">${itemList}</div>` +
             `</div>` +
-            VIEWER_SCRIPT +
         `</div>`
     );
 }
