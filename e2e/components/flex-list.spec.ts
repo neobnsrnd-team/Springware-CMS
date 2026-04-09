@@ -41,6 +41,8 @@ interface FlexListRow {
     };
 }
 
+type ViewMode = 'mobile' | 'web' | 'responsive';
+
 const ICONS: Record<string, string> = {
     shopping:
         '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0046A4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
@@ -77,16 +79,20 @@ function buildImageHtml(
     width: 'fixed' | 'flex' | 'auto' | 'custom',
     customWidth?: string,
     shape?: string,
+    viewMode: ViewMode = 'mobile',
 ): string {
     const safeSrc = sanitizeImageSrc(src);
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
+    const autoSize = viewMode === 'web' ? '64px' : '48px';
+    const flexHeight = viewMode === 'web' ? '64px' : '48px';
     const widthStyle =
         width === 'custom' && customWidth
             ? `flex:0 0 ${customWidth};width:${customWidth};height:auto;`
             : width === 'fixed'
-              ? 'flex:0 0 40px;width:40px;height:40px;'
+              ? `flex:0 0 ${fixedSize};width:${fixedSize};height:${fixedSize};`
               : width === 'auto'
-                ? 'flex:0 0 auto;width:48px;height:48px;'
-                : 'flex:1;min-width:0;height:48px;';
+                ? `flex:0 0 auto;width:${autoSize};height:${autoSize};`
+                : `flex:1;min-width:0;height:${flexHeight};`;
     const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
     const imgRadius = shapeToRadius(shape || 'round');
 
@@ -106,10 +112,12 @@ function buildIconHtml(
     width?: 'fixed' | 'flex' | 'auto' | 'custom',
     customWidth?: string,
     shape?: string,
+    viewMode: ViewMode = 'mobile',
 ): string {
     const svg = ICONS[iconKey] ?? ICONS['check'];
-    const size = width === 'custom' && customWidth ? customWidth : '40px';
-    const flexBasis = width === 'custom' && customWidth ? customWidth : '40px';
+    const defaultSize = viewMode === 'web' ? '48px' : '40px';
+    const size = width === 'custom' && customWidth ? customWidth : defaultSize;
+    const flexBasis = width === 'custom' && customWidth ? customWidth : defaultSize;
     const radius = shapeToRadius(shape);
     const bg = shape === 'none' ? 'transparent' : bgColor;
     return (
@@ -121,23 +129,24 @@ function buildIconHtml(
     );
 }
 
-function buildColumnHtml(col: FlexListColumn): string {
+function buildColumnHtml(col: FlexListColumn, viewMode: ViewMode = 'mobile'): string {
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape, viewMode);
     }
 
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
     const widthStyle =
         col.width === 'custom' && col.customWidth
             ? `flex:0 0 ${col.customWidth};min-width:0;`
             : col.width === 'fixed'
-              ? 'flex:0 0 40px;'
+              ? `flex:0 0 ${fixedSize};`
               : col.width === 'auto'
                 ? 'flex:0 1 auto;min-width:0;margin-left:auto;'
                 : 'flex:1;min-width:0;';
     const customWidthAttr =
         col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
     const textColumnStyle =
-        col.width === 'auto' ? 'align-items:flex-end;max-width:45%;text-align:right;' : '';
+        col.width === 'auto' ? `align-items:flex-end;max-width:${viewMode === 'web' ? '32%' : '45%'};text-align:right;` : '';
 
     if (col.type === 'icon') {
         return buildIconHtml(
@@ -146,6 +155,7 @@ function buildColumnHtml(col: FlexListColumn): string {
             col.width,
             col.customWidth,
             col.shape,
+            viewMode,
         );
     }
 
@@ -155,13 +165,13 @@ function buildColumnHtml(col: FlexListColumn): string {
     const lineHtml = lines.map((line, index) => {
         const alignStyle = `text-align:${line.align ?? 'left'};`;
         if (index === 0) {
-            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;${alignStyle}">${line.text}</span>`;
+            return `<span style="font-size:${viewMode === 'web' ? '16px' : '15px'};font-weight:${viewMode === 'web' ? '700' : '600'};color:#1A1A2E;line-height:${viewMode === 'web' ? '1.35' : '1.4'};${alignStyle}">${line.text}</span>`;
         }
-        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;${alignStyle}">${line.text}</span>`;
+        return `<span style="font-size:13px;color:#6B7280;line-height:${viewMode === 'web' ? '1.5' : '1.4'};${alignStyle}">${line.text}</span>`;
     });
 
     return (
-        `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr} style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:2px;">` +
+        `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr} style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:${viewMode === 'web' ? '4px' : '2px'};">` +
         lineHtml.join('') +
         `</span>`
     );
@@ -172,14 +182,18 @@ function wrapColumnWithLink(colHtml: string, href?: string): string {
     return `<a href="${sanitizeHref(href)}" data-fl-col-link style="text-decoration:none;display:contents;">${colHtml}</a>`;
 }
 
-function buildRowHtml(row: FlexListRow, isLast: boolean): string {
+function buildRowHtml(row: FlexListRow, isLast: boolean, viewMode: ViewMode = 'mobile'): string {
     const borderShow = row.border?.show !== false;
     const borderColor = row.border?.color ?? '#E5E7EB';
     const borderWidth = row.border?.width ?? 1;
-    const borderStyle = !isLast && borderShow ? `border-bottom:${borderWidth}px solid ${borderColor};` : '';
-    const pad = row.padding ?? '16px 20px';
-    const gap = row.gap ?? '12px';
-    const bg = row.bgColor ? `background:${row.bgColor};` : '';
+    const borderStyle = viewMode === 'web' ? '' : !isLast && borderShow ? `border-bottom:${borderWidth}px solid ${borderColor};` : '';
+    const pad = row.padding ?? (viewMode === 'web' ? '20px 24px' : '16px 20px');
+    const gap = row.gap ?? (viewMode === 'web' ? '18px' : '12px');
+    const bg = row.bgColor ? `background:${row.bgColor};` : viewMode === 'web' ? 'background:#ffffff;' : '';
+    const webCardStyle =
+        viewMode === 'web'
+            ? 'border:1px solid #E6ECF5;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.06);margin-bottom:14px;'
+            : '';
     const dataAttrs =
         (row.bgColor ? ` data-fl-bg="${row.bgColor}"` : '') +
         (row.padding ? ` data-fl-padding="${row.padding}"` : '') +
@@ -189,25 +203,26 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
             : '');
 
     const linkMode = row.linkMode ?? 'none';
-    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${bg}text-decoration:none;`;
+    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${webCardStyle}${bg}text-decoration:none;`;
 
     if (linkMode === 'row' && row.rowHref) {
-        const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+        const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
         return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
-        const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col), col.href)).join('');
+        const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col, viewMode), col.href)).join('');
         return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
-    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
     return `<a href="#" data-fl-link-mode="none"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
 }
 
 function buildFlexListHtml(rows: FlexListRow[], componentId: string, extraStyle: string): string {
     const rowsJson = JSON.stringify(rows).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    const rowsHtml = rows.map((row, index) => buildRowHtml(row, index === rows.length - 1)).join('');
+    const viewMode: ViewMode = componentId.endsWith('-web') ? 'web' : componentId.endsWith('-responsive') ? 'responsive' : 'mobile';
+    const rowsHtml = rows.map((row, index) => buildRowHtml(row, index === rows.length - 1, viewMode)).join('');
 
     return `
 <!DOCTYPE html><html><head>
@@ -333,7 +348,7 @@ const INVALID_HREF_ROWS: FlexListRow[] = [
 ];
 
 const MOBILE_HTML = buildFlexListHtml(DEFAULT_ROWS, 'flex-list-mobile', '');
-const WEB_HTML = buildFlexListHtml(DEFAULT_ROWS, 'flex-list-web', 'width:100%;box-sizing:border-box;');
+const WEB_HTML = buildFlexListHtml(DEFAULT_ROWS, 'flex-list-web', 'width:100%;box-sizing:border-box;background:transparent;padding:12px 0;');
 const RESPONSIVE_HTML = buildFlexListHtml(DEFAULT_ROWS, 'flex-list-responsive', 'width:100%;box-sizing:border-box;');
 const COLUMN_LINK_HTML = buildFlexListHtml(COLUMN_LINK_ROWS, 'flex-list-mobile', '');
 const BROKEN_IMAGE_HTML = buildFlexListHtml(BROKEN_IMAGE_ROWS, 'flex-list-mobile', '');
@@ -410,6 +425,18 @@ test.describe('flex-list 웹 QA', () => {
 
         const rows = page.locator('[data-component-id="flex-list-web"] > a, [data-component-id="flex-list-web"] > div[data-fl-link-mode]');
         await expect(rows).toHaveCount(3);
+    });
+
+    test('웹 모드에서 각 행이 카드형 스타일로 렌더링된다', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await page.setContent(WEB_HTML);
+
+        const firstRow = page.locator('[data-component-id="flex-list-web"] > a, [data-component-id="flex-list-web"] > div[data-fl-link-mode]').first();
+        const radius = await firstRow.evaluate((el) => getComputedStyle(el).borderRadius);
+        const shadow = await firstRow.evaluate((el) => getComputedStyle(el).boxShadow);
+
+        expect(radius).toBe('18px');
+        expect(shadow).not.toBe('none');
     });
 });
 

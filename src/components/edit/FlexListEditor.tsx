@@ -39,6 +39,8 @@ interface FlexListRow {
     };
 }
 
+type ViewMode = 'mobile' | 'web' | 'responsive';
+
 interface Props {
     blockEl: HTMLElement;
     onClose: () => void;
@@ -157,16 +159,20 @@ function buildImageHtml(
     width: 'fixed' | 'flex' | 'auto' | 'custom',
     customWidth?: string,
     shape?: string,
+    viewMode: ViewMode = 'mobile',
 ): string {
     const safeSrc = sanitizeImageSrc(src);
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
+    const autoSize = viewMode === 'web' ? '64px' : '48px';
+    const flexHeight = viewMode === 'web' ? '64px' : '48px';
     const widthStyle =
         width === 'custom' && customWidth
             ? `flex:0 0 ${customWidth};width:${customWidth};height:auto;`
             : width === 'fixed'
-              ? 'flex:0 0 40px;width:40px;height:40px;'
+              ? `flex:0 0 ${fixedSize};width:${fixedSize};height:${fixedSize};`
               : width === 'auto'
-                ? 'flex:0 0 auto;width:48px;height:48px;'
-                : 'flex:1;min-width:0;height:48px;';
+                ? `flex:0 0 auto;width:${autoSize};height:${autoSize};`
+                : `flex:1;min-width:0;height:${flexHeight};`;
     const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
     const imgRadius = shapeToRadius(shape || 'round');
 
@@ -194,10 +200,12 @@ function buildIconHtml(
     width?: 'fixed' | 'flex' | 'auto' | 'custom',
     customWidth?: string,
     shape?: string,
+    viewMode: ViewMode = 'mobile',
 ): string {
     const svg = ICONS_20[iconKey] ?? ICONS_20['check'];
-    const size = width === 'custom' && customWidth ? customWidth : '40px';
-    const flexBasis = width === 'custom' && customWidth ? customWidth : '40px';
+    const defaultSize = viewMode === 'web' ? '48px' : '40px';
+    const size = width === 'custom' && customWidth ? customWidth : defaultSize;
+    const flexBasis = width === 'custom' && customWidth ? customWidth : defaultSize;
     const radius = shapeToRadius(shape);
     const bg = shape === 'none' ? 'transparent' : bgColor;
     return (
@@ -210,27 +218,28 @@ function buildIconHtml(
     );
 }
 
-function buildColumnHtml(col: FlexListColumn): string {
+function buildColumnHtml(col: FlexListColumn, viewMode: ViewMode = 'mobile'): string {
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape);
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape, viewMode);
     }
 
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape, viewMode);
     }
 
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
     const widthStyle =
         col.width === 'custom' && col.customWidth
             ? `flex:0 0 ${col.customWidth};min-width:0;`
             : col.width === 'fixed'
-              ? 'flex:0 0 40px;'
+              ? `flex:0 0 ${fixedSize};`
               : col.width === 'auto'
                 ? 'flex:0 1 auto;min-width:0;margin-left:auto;'
                 : 'flex:1;min-width:0;';
     const customWidthAttr =
         col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
     const textColumnStyle =
-        col.width === 'auto' ? 'align-items:flex-end;max-width:45%;text-align:right;' : '';
+        col.width === 'auto' ? `align-items:flex-end;max-width:${viewMode === 'web' ? '32%' : '45%'};text-align:right;` : '';
 
     const lines: FlexListLine[] = (col.lines ?? [{ text: '텍스트' }]).map((l) =>
         typeof l === 'string' ? { text: l } : l,
@@ -238,14 +247,14 @@ function buildColumnHtml(col: FlexListColumn): string {
     const lineHtmls = lines.map((line, i) => {
         const alignStyle = `text-align:${line.align ?? 'left'};`;
         if (i === 0) {
-            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;${alignStyle}">${line.text}</span>`;
+            return `<span style="font-size:${viewMode === 'web' ? '16px' : '15px'};font-weight:${viewMode === 'web' ? '700' : '600'};color:#1A1A2E;line-height:${viewMode === 'web' ? '1.35' : '1.4'};${alignStyle}">${line.text}</span>`;
         }
-        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;${alignStyle}">${line.text}</span>`;
+        return `<span style="font-size:13px;color:#6B7280;line-height:${viewMode === 'web' ? '1.5' : '1.4'};${alignStyle}">${line.text}</span>`;
     });
 
     return (
         `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
-        ` style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:2px;">` +
+        ` style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:${viewMode === 'web' ? '4px' : '2px'};">` +
         lineHtmls.join('') +
         `</span>`
     );
@@ -256,15 +265,19 @@ function wrapColumnWithLink(colHtml: string, href?: string): string {
     return `<a href="${sanitizeHref(href)}" data-fl-col-link style="text-decoration:none;display:contents;">${colHtml}</a>`;
 }
 
-function buildRowHtml(row: FlexListRow, isLast: boolean): string {
+function buildRowHtml(row: FlexListRow, isLast: boolean, viewMode: ViewMode = 'mobile'): string {
     const borderShow = row.border?.show !== false;
     const borderColor = row.border?.color ?? '#E5E7EB';
     const borderW = row.border?.width ?? 1;
-    const borderStyle = !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
+    const borderStyle = viewMode === 'web' ? '' : !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
 
-    const pad = row.padding ?? '16px 20px';
-    const gap = row.gap ?? '12px';
-    const bg = row.bgColor ? `background:${row.bgColor};` : '';
+    const pad = row.padding ?? (viewMode === 'web' ? '20px 24px' : '16px 20px');
+    const gap = row.gap ?? (viewMode === 'web' ? '18px' : '12px');
+    const bg = row.bgColor ? `background:${row.bgColor};` : viewMode === 'web' ? 'background:#ffffff;' : '';
+    const webCardStyle =
+        viewMode === 'web'
+            ? 'border:1px solid #E6ECF5;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.06);margin-bottom:14px;'
+            : '';
 
     const dataAttrs =
         (row.bgColor ? ` data-fl-bg="${row.bgColor}"` : '') +
@@ -275,19 +288,19 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
             : '');
 
     const linkMode = row.linkMode ?? 'none';
-    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${bg}text-decoration:none;`;
+    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${webCardStyle}${bg}text-decoration:none;`;
 
     if (linkMode === 'row' && row.rowHref) {
-        const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+        const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
         return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
-        const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col), col.href)).join('');
+        const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col, viewMode), col.href)).join('');
         return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
-    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
     return `<a href="#" data-fl-link-mode="none"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
 }
 
@@ -295,7 +308,7 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
 
 function getRootExtraStyle(componentId: string): string {
     if (componentId.endsWith('-web')) {
-        return 'width:100%;box-sizing:border-box;';
+        return 'width:100%;box-sizing:border-box;background:transparent;padding:12px 0;';
     }
     if (componentId.endsWith('-responsive')) {
         return 'width:100%;box-sizing:border-box;';
@@ -304,9 +317,15 @@ function getRootExtraStyle(componentId: string): string {
 }
 
 function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
+    const componentId = blockEl.getAttribute('data-component-id') ?? '';
+    const viewMode: ViewMode = componentId.endsWith('-web')
+        ? 'web'
+        : componentId.endsWith('-responsive')
+          ? 'responsive'
+          : 'mobile';
     blockEl.setAttribute(
         'style',
-        `font-family:${FONT_FAMILY};background:#ffffff;${getRootExtraStyle(blockEl.getAttribute('data-component-id') ?? '')}`,
+        `font-family:${FONT_FAMILY};background:#ffffff;${getRootExtraStyle(componentId)}`,
     );
     blockEl.setAttribute('data-fl-rows', JSON.stringify(rows));
 
@@ -314,7 +333,7 @@ function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
     blockEl.querySelectorAll(':scope > a, :scope > div[data-fl-link-mode]').forEach((el) => el.remove());
 
     // 새 행 삽입
-    const html = rows.map((row, i) => buildRowHtml(row, i === rows.length - 1)).join('');
+    const html = rows.map((row, i) => buildRowHtml(row, i === rows.length - 1, viewMode)).join('');
     blockEl.insertAdjacentHTML('beforeend', html);
 }
 

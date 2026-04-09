@@ -41,6 +41,8 @@ interface FlexListRow {
     };
 }
 
+type ViewMode = 'mobile' | 'web' | 'responsive';
+
 // ── 프리셋 아이콘 SVG ────────────────────────────────────────────────────
 
 const ICONS: Record<string, string> = {
@@ -80,13 +82,22 @@ function sanitizeImageSrc(url: string): string {
 
 // ── 이미지 HTML 빌더 ────────────────────────────────────────────────────
 
-function buildImageHtml(src: string, width: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string, shape?: string): string {
+function buildImageHtml(
+    src: string,
+    width: 'fixed' | 'flex' | 'auto' | 'custom',
+    customWidth?: string,
+    shape?: string,
+    viewMode: ViewMode = 'mobile',
+): string {
     const safeSrc = sanitizeImageSrc(src);
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
+    const autoSize = viewMode === 'web' ? '64px' : '48px';
+    const flexHeight = viewMode === 'web' ? '64px' : '48px';
     const widthStyle =
         width === 'custom' && customWidth ? `flex:0 0 ${customWidth};width:${customWidth};height:auto;` :
-        width === 'fixed' ? 'flex:0 0 40px;width:40px;height:40px;' :
-        width === 'auto'  ? 'flex:0 0 auto;width:48px;height:48px;' :
-                            'flex:1;min-width:0;height:48px;';
+        width === 'fixed' ? `flex:0 0 ${fixedSize};width:${fixedSize};height:${fixedSize};` :
+        width === 'auto'  ? `flex:0 0 auto;width:${autoSize};height:${autoSize};` :
+                            `flex:1;min-width:0;height:${flexHeight};`;
     const customAttr = width === 'custom' && customWidth ? ` data-fl-custom-width="${customWidth}"` : '';
     const imgRadius = shapeToRadius(shape || 'round');
 
@@ -108,10 +119,18 @@ function shapeToRadius(shape?: string): string {
     return '50%'; // circle (기본) 및 none
 }
 
-function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex' | 'auto' | 'custom', customWidth?: string, shape?: string): string {
+function buildIconHtml(
+    iconKey: string,
+    bgColor: string,
+    width?: 'fixed' | 'flex' | 'auto' | 'custom',
+    customWidth?: string,
+    shape?: string,
+    viewMode: ViewMode = 'mobile',
+): string {
     const svg = ICONS[iconKey] ?? ICONS['check'];
-    const size = (width === 'custom' && customWidth) ? customWidth : '40px';
-    const flexBasis = (width === 'custom' && customWidth) ? customWidth : '40px';
+    const defaultSize = viewMode === 'web' ? '48px' : '40px';
+    const size = (width === 'custom' && customWidth) ? customWidth : defaultSize;
+    const flexBasis = (width === 'custom' && customWidth) ? customWidth : defaultSize;
     const radius = shapeToRadius(shape);
     const bg = shape === 'none' ? 'transparent' : bgColor;
     return (
@@ -126,23 +145,24 @@ function buildIconHtml(iconKey: string, bgColor: string, width?: 'fixed' | 'flex
 
 // ── 컬럼 HTML 빌더 ──────────────────────────────────────────────────────
 
-function buildColumnHtml(col: FlexListColumn): string {
+function buildColumnHtml(col: FlexListColumn, viewMode: ViewMode = 'mobile'): string {
     if (col.type === 'image') {
-        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape);
+        return buildImageHtml(col.imageSrc ?? '', col.width, col.customWidth, col.shape, viewMode);
     }
 
+    const fixedSize = viewMode === 'web' ? '48px' : '40px';
     const widthStyle =
         col.width === 'custom' && col.customWidth ? `flex:0 0 ${col.customWidth};min-width:0;` :
-        col.width === 'fixed' ? 'flex:0 0 40px;' :
+        col.width === 'fixed' ? `flex:0 0 ${fixedSize};` :
         col.width === 'auto'  ? 'flex:0 1 auto;min-width:0;margin-left:auto;' :
                                 'flex:1;min-width:0;';
     const customWidthAttr = col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
     const textColumnStyle = col.width === 'auto'
-        ? 'align-items:flex-end;max-width:45%;text-align:right;'
+        ? `align-items:flex-end;max-width:${viewMode === 'web' ? '32%' : '45%'};text-align:right;`
         : '';
 
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape);
+        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape, viewMode);
     }
 
     // 텍스트 컬럼 — 다층 행
@@ -152,14 +172,14 @@ function buildColumnHtml(col: FlexListColumn): string {
     const lineHtmls = lines.map((line, i) => {
         const alignStyle = `text-align:${line.align ?? 'left'};`;
         if (i === 0) {
-            return `<span style="font-size:15px;font-weight:600;color:#1A1A2E;line-height:1.4;${alignStyle}">${line.text}</span>`;
+            return `<span style="font-size:${viewMode === 'web' ? '16px' : '15px'};font-weight:${viewMode === 'web' ? '700' : '600'};color:#1A1A2E;line-height:${viewMode === 'web' ? '1.35' : '1.4'};${alignStyle}">${line.text}</span>`;
         }
-        return `<span style="font-size:13px;color:#6B7280;line-height:1.4;${alignStyle}">${line.text}</span>`;
+        return `<span style="font-size:13px;color:#6B7280;line-height:${viewMode === 'web' ? '1.5' : '1.4'};${alignStyle}">${line.text}</span>`;
     });
 
     return (
         `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
-        ` style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:2px;">` +
+        ` style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:${viewMode === 'web' ? '4px' : '2px'};">` +
         lineHtmls.join('') +
         `</span>`
     );
@@ -174,17 +194,23 @@ function wrapColumnWithLink(colHtml: string, href?: string): string {
 
 // ── 행(Row) HTML 빌더 ───────────────────────────────────────────────────
 
-function buildRowHtml(row: FlexListRow, isLast: boolean): string {
+function buildRowHtml(row: FlexListRow, isLast: boolean, viewMode: ViewMode = 'mobile'): string {
     // 구분선 스타일 — border 설정 또는 기본값
     const borderShow = row.border?.show !== false;
     const borderColor = row.border?.color ?? '#E5E7EB';
     const borderWidth = row.border?.width ?? 1;
-    const borderStyle = (!isLast && borderShow) ? `border-bottom:${borderWidth}px solid ${borderColor};` : '';
+    const borderStyle = viewMode === 'web'
+        ? ''
+        : (!isLast && borderShow) ? `border-bottom:${borderWidth}px solid ${borderColor};` : '';
 
     // 행 스타일 — 패딩, 간격, 배경색
-    const pad = row.padding ?? '16px 20px';
-    const gap = row.gap ?? '12px';
-    const bg = row.bgColor ? `background:${row.bgColor};` : '';
+    const pad = row.padding ?? (viewMode === 'web' ? '20px 24px' : '16px 20px');
+    const gap = row.gap ?? (viewMode === 'web' ? '18px' : '12px');
+    const bg = row.bgColor ? `background:${row.bgColor};` : viewMode === 'web' ? 'background:#ffffff;' : '';
+    const webCardStyle =
+        viewMode === 'web'
+            ? 'border:1px solid #E6ECF5;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.06);margin-bottom:14px;'
+            : '';
 
     // 데이터 속성 (파싱용)
     const dataAttrs =
@@ -194,21 +220,21 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
         (row.border ? ` data-fl-border-show="${row.border.show}" data-fl-border-color="${row.border.color ?? '#E5E7EB'}" data-fl-border-width="${row.border.width ?? 1}"` : '');
 
     const linkMode = row.linkMode ?? 'none';
-    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${bg}text-decoration:none;`;
+    const flexStyle = `display:flex;align-items:center;gap:${gap};padding:${pad};${borderStyle}${webCardStyle}${bg}text-decoration:none;`;
 
     if (linkMode === 'row' && row.rowHref) {
-        const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+        const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
         return `<a href="${sanitizeHref(row.rowHref)}" data-fl-link-mode="row"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
     }
 
     if (linkMode === 'column') {
         const columnsHtml = row.columns.map((col) =>
-            wrapColumnWithLink(buildColumnHtml(col), col.href),
+            wrapColumnWithLink(buildColumnHtml(col, viewMode), col.href),
         ).join('');
         return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
-    const columnsHtml = row.columns.map((col) => buildColumnHtml(col)).join('');
+    const columnsHtml = row.columns.map((col) => buildColumnHtml(col, viewMode)).join('');
     return `<a href="#" data-fl-link-mode="none"${dataAttrs} style="${flexStyle}">${columnsHtml}</a>`;
 }
 
@@ -216,8 +242,9 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
 
 function buildFlexListHtml(rows: FlexListRow[], componentId: string, extraStyle: string): string {
     const rowsJson = JSON.stringify(rows).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    const viewMode: ViewMode = componentId.endsWith('-web') ? 'web' : componentId.endsWith('-responsive') ? 'responsive' : 'mobile';
 
-    const rowsHtml = rows.map((row, i) => buildRowHtml(row, i === rows.length - 1)).join('');
+    const rowsHtml = rows.map((row, i) => buildRowHtml(row, i === rows.length - 1, viewMode)).join('');
 
     return (
         `<div data-component-id="${componentId}" data-spw-block` +
@@ -263,7 +290,7 @@ const VIEW_MODES = ['mobile', 'web', 'responsive'] as const;
 
 const EXTRA_STYLES: Record<string, string> = {
     mobile: '',
-    web: 'width:100%;box-sizing:border-box;',
+    web: 'width:100%;box-sizing:border-box;background:transparent;padding:12px 0;',
     responsive: 'width:100%;box-sizing:border-box;',
 };
 
