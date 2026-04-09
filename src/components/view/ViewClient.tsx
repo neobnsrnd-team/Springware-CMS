@@ -280,18 +280,28 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 blCleanups.push(() => btn.removeEventListener('click', onClick));
             });
 
-            // 바텀시트 드래그 — absolute 포지션 방식
-            // flex 내부에서 height를 변경하면 부모 전체가 늘어나/줄어드므로
-            // absolute bottom:0으로 지도 위에 겹치는 방식 사용
+            // 바텀시트 드래그 — 맵 full + 시트 overlay 패턴
+            // 지도가 루트 전체를 채우고, 바텀시트가 하단에서 겹침
             const sheet = root.querySelector<HTMLElement>('[data-bl-sheet]');
             const handle = root.querySelector<HTMLElement>('[data-bl-handle]');
-            if (sheet && handle) {
-                // 루트를 기준 컨테이너로, overflow 차단
+            const mapArea = sheet ? (root.querySelector(':scope > div:first-child') as HTMLElement) : null;
+            if (sheet && handle && mapArea && mapArea !== sheet) {
+                // 루트: 높이 고정 + overflow 차단
+                const rootH = root.offsetHeight;
+                root.style.height = `${rootH}px`;
+                root.style.minHeight = '0';
                 root.style.position = 'relative';
                 root.style.overflow = 'hidden';
+                root.style.display = 'block';
 
-                // 바텀시트를 absolute로 전환
-                const defaultH = Math.min(sheet.offsetHeight, root.offsetHeight * 0.5);
+                // 지도 영역: 루트 전체를 채움 (바텀시트 뒤 배경)
+                mapArea.style.position = 'absolute';
+                mapArea.style.inset = '0';
+                mapArea.style.aspectRatio = 'unset';
+                mapArea.style.borderRadius = '20px 20px 0 0';
+
+                // 바텀시트: 하단 overlay
+                const defaultH = Math.round(rootH * 0.45);
                 sheet.style.position = 'absolute';
                 sheet.style.bottom = '0';
                 sheet.style.left = '0';
@@ -304,8 +314,8 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 let startY = 0;
                 let startH = 0;
                 let dragging = false;
-                const MIN_H = 48; // 핸들만 보이는 접힌 상태
-                const MAX_RATIO = 0.85; // 루트 높이의 85%까지
+                const MIN_H = 48;
+                const MAX_RATIO = 0.85;
 
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     dragging = true;
@@ -316,7 +326,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 const onMove = (e: MouseEvent | TouchEvent) => {
                     if (!dragging) return;
                     const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
-                    const maxH = root.offsetHeight * MAX_RATIO;
+                    const maxH = rootH * MAX_RATIO;
                     sheet.style.height = `${Math.max(MIN_H, Math.min(maxH, startH + (startY - y)))}px`;
                 };
                 const onEnd = () => {
@@ -326,8 +336,8 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     const h = sheet.offsetHeight;
                     if (h < 100) {
                         sheet.style.height = `${MIN_H}px`;
-                    } else if (h > root.offsetHeight * 0.6) {
-                        sheet.style.height = `${root.offsetHeight * 0.7}px`;
+                    } else if (h > rootH * 0.6) {
+                        sheet.style.height = `${Math.round(rootH * 0.7)}px`;
                     } else {
                         sheet.style.height = `${defaultH}px`;
                     }
