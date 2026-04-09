@@ -299,8 +299,6 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 mapArea.style.inset = '0';
                 mapArea.style.aspectRatio = 'unset';
                 mapArea.style.borderRadius = '20px 20px 0 0';
-                // iframe이 터치 이벤트를 가로채지 않도록 차단 (모바일 에뮬레이션)
-                mapArea.style.pointerEvents = 'none';
 
                 // 바텀시트: 하단 overlay, overflow:hidden으로 콘텐츠 클리핑
                 const defaultH = Math.round(rootH * 0.45);
