@@ -33,15 +33,20 @@
 */
 
 const CURRENCY_META = {
-    USD: { flag: '🇺🇸', name: '미국 달러' },
-    EUR: { flag: '🇪🇺', name: '유럽 유로' },
-    JPY: { flag: '🇯🇵', name: '일본 엔화' },
-    CNY: { flag: '🇨🇳', name: '중국 위안' },
-    GBP: { flag: '🇬🇧', name: '영국 파운드' },
-    HKD: { flag: '🇭🇰', name: '홍콩 달러' },
-    VND: { flag: '🇻🇳', name: '베트남 동' },
-    AUD: { flag: '🇦🇺', name: '호주 달러' },
+    USD: { flag: 'us', name: '미국 달러' },
+    EUR: { flag: 'eu', name: '유럽 유로' },
+    JPY: { flag: 'jp', name: '일본 엔화' },
+    CNY: { flag: 'cn', name: '중국 위안' },
+    GBP: { flag: 'gb', name: '영국 파운드' },
+    HKD: { flag: 'hk', name: '홍콩 달러' },
+    VND: { flag: 'vn', name: '베트남 동' },
+    AUD: { flag: 'au', name: '호주 달러' },
 };
+
+// flagcdn.com 국기 이미지 HTML 생성 (Windows 이모지 미지원 대응)
+function flagImg(countryCode, alt) {
+    return `<img src="https://flagcdn.com/w40/${countryCode}.png" alt="${alt}" style="width:28px;height:auto;display:block;">`;
+}
 
 // 에디터에서 항목 편집 UI 생성
 function createItemEditor(item, onChange) {
@@ -53,8 +58,17 @@ function createItemEditor(item, onChange) {
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;align-items:center;padding:8px 12px;background:#f9fafb;cursor:pointer;gap:8px;';
     const flagEl = document.createElement('span');
-    flagEl.textContent = item.querySelector('.eb-flag')?.textContent || '🌐';
-    flagEl.style.fontSize = '20px';
+    const flagImgEl = item.querySelector('.eb-flag img');
+    if (flagImgEl) {
+        const img = document.createElement('img');
+        img.src = flagImgEl.src;
+        img.alt = flagImgEl.alt;
+        img.style.cssText = 'width:20px;height:auto;vertical-align:middle;';
+        flagEl.appendChild(img);
+    } else {
+        flagEl.textContent = code || '?';
+        flagEl.style.cssText = 'font-size:12px;font-weight:700;color:#374151;';
+    }
     const codeEl = document.createElement('span');
     codeEl.textContent = code;
     codeEl.style.cssText = 'font-weight:600;font-size:13px;flex:1;';
@@ -192,23 +206,25 @@ export default {
 
             // 통화 추가 버튼
             const addWrap = document.createElement('div');
-            addWrap.style.cssText = 'display:flex;gap:8px;margin-top:4px;margin-bottom:16px;';
+            addWrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:4px;margin-bottom:16px;';
             const codeSelect = document.createElement('select');
-            codeSelect.style.cssText = 'flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;';
+            codeSelect.style.cssText = 'width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;box-sizing:border-box;';
             Object.entries(CURRENCY_META).forEach(([code, m]) => {
                 const o = document.createElement('option');
                 o.value = code;
-                o.textContent = `${m.flag} ${code} — ${m.name}`;
+                o.textContent = `${code} — ${m.name}`;
                 codeSelect.appendChild(o);
             });
             const addBtn = document.createElement('button');
             addBtn.textContent = '+ 추가';
-            addBtn.style.cssText = 'padding:7px 14px;background:#0046A4;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;';
+            addBtn.style.cssText = 'align-self:flex-end;padding:7px 20px;background:#0046A4;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;';
             addBtn.onclick = (e) => {
                 e.preventDefault();
                 const code = codeSelect.value;
                 const meta = CURRENCY_META[code];
                 if (!meta) return;
+                // 동일 통화 중복 추가 방지
+                if (element.querySelector(`.eb-item[data-currency="${code}"]`)) return;
                 const list = element.querySelector('.eb-list');
                 if (!list) return;
                 const newItem = document.createElement('div');
@@ -216,7 +232,7 @@ export default {
                 newItem.dataset.currency = code;
                 newItem.innerHTML = `
                     <div class="eb-left">
-                        <span class="eb-flag">${meta.flag}</span>
+                        <span class="eb-flag">${flagImg(meta.flag, code)}</span>
                         <div class="eb-currency-info">
                             <span class="eb-code">${code}</span>
                             <span class="eb-name">${meta.name}</span>
@@ -263,12 +279,12 @@ export default {
                 syncBtn.textContent = '불러오는 중...';
                 syncBtn.disabled = true;
                 fetch('/api/exchange')
-                    .then(r => r.json())
+                    .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
                     .then(data => {
                         element.querySelectorAll('.eb-item').forEach(item => {
                             const code = item.dataset.currency;
                             const d = data[code];
-                            if (!d) return;
+                            if (!d || d.buy == null || d.sell == null) return;
                             const buyEl = item.querySelector('.eb-buy');
                             const sellEl = item.querySelector('.eb-sell');
                             const changeEl = item.querySelector('.eb-change');
@@ -309,7 +325,8 @@ export default {
             element.querySelectorAll('.eb-item').forEach(item => {
                 const code = item.dataset.currency;
                 const d = data?.[code];
-                if (!d) return;
+                // null 값 안전 처리 — d.buy/sell이 null이면 toLocaleString TypeError 방지
+                if (!d || d.buy == null || d.sell == null) return;
                 const buyEl = item.querySelector('.eb-buy');
                 const sellEl = item.querySelector('.eb-sell');
                 const changeEl = item.querySelector('.eb-change');
@@ -336,7 +353,7 @@ export default {
 
         // 실시간 데이터 fetch (실패해도 인라인 데이터 유지)
         fetch('/api/exchange')
-            .then(r => r.json())
+            .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
             .then(data => updateRates(data))
             .catch(() => {});
 

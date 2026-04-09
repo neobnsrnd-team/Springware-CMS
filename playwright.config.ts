@@ -40,6 +40,8 @@ export default defineConfig({
             use: {
                 ...devices['iPhone 14'],
                 // iPhone 14 기본 뷰포트: 390×844
+                // WebKit 실행파일 누락 시 Chromium으로 폴백 (로컬 환경 대응)
+                defaultBrowserType: process.env.CI ? 'webkit' : 'chromium',
             },
         },
         {

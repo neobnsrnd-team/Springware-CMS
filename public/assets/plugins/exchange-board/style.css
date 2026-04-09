@@ -64,11 +64,17 @@
 }
 
 [data-cb-type="exchange-board"] .eb-flag {
-    font-size: 28px;
-    line-height: 1;
     width: 36px;
-    text-align: center;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-cb-type="exchange-board"] .eb-flag img {
+    width: 28px;
+    height: auto;
+    display: block;
 }
 
 [data-cb-type="exchange-board"] .eb-currency-info {
