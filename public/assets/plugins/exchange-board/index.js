@@ -192,9 +192,9 @@ export default {
 
             // 통화 추가 버튼
             const addWrap = document.createElement('div');
-            addWrap.style.cssText = 'display:flex;gap:8px;margin-top:4px;margin-bottom:16px;';
+            addWrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:4px;margin-bottom:16px;';
             const codeSelect = document.createElement('select');
-            codeSelect.style.cssText = 'flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;';
+            codeSelect.style.cssText = 'width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;box-sizing:border-box;';
             Object.entries(CURRENCY_META).forEach(([code, m]) => {
                 const o = document.createElement('option');
                 o.value = code;
@@ -203,7 +203,7 @@ export default {
             });
             const addBtn = document.createElement('button');
             addBtn.textContent = '+ 추가';
-            addBtn.style.cssText = 'padding:7px 14px;background:#0046A4;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;';
+            addBtn.style.cssText = 'align-self:flex-end;padding:7px 20px;background:#0046A4;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;';
             addBtn.onclick = (e) => {
                 e.preventDefault();
                 const code = codeSelect.value;
