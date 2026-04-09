@@ -288,10 +288,16 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 let startH = 0;
                 let dragging = false;
 
+                // 핸들 터치 영역 확대 (4px → 24px 패딩)
+                handle.style.padding = '12px 0';
+                handle.style.margin = '0 auto';
+
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     dragging = true;
                     startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     startH = sheet.offsetHeight;
+                    // flex:1이 height 설정을 덮어쓰므로 드래그 시 해제
+                    sheet.style.flex = 'none';
                     sheet.style.transition = 'none';
                 };
                 const onMove = (e: MouseEvent | TouchEvent) => {
