@@ -335,6 +335,9 @@ export default function EditClient({
         });
     }, []);
 
+    // patchMaxChars — 하위 호환용 no-op (실제 제한은 main useEffect의 document 핸들러가 담당)
+    const patchMaxChars = useCallback(() => {}, []);
+
     useEffect(() => {
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
         // reinitialize(): Runtime이 data-cb-type 플러그인 DOM을 재마운트
@@ -350,6 +353,7 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 // ContentBuilder 자체 삭제/이동 후 순서 패널 동기화
                 const html = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
@@ -1717,6 +1721,47 @@ export default function EditClient({
         };
         document.addEventListener('click', handleSiteFooterSelectClick, true);
 
+        // ── data-max-chars 글자 수 제한 (document 레벨 위임) ─────────────────
+        // ContentBuilder는 span 자체가 아닌 상위 요소를 contenteditable로 만드므로
+        // 선택 영역(Selection)의 공통 조상을 기준으로 data-max-chars 요소를 탐색
+        const getMaxCharsEl = (): HTMLElement | null => {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return null;
+            let node: Node | null = sel.getRangeAt(0).commonAncestorContainer;
+            if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+            return (node as Element)?.closest?.('[data-max-chars]') as HTMLElement | null;
+        };
+
+        const handleMaxCharsKeydown = (e: KeyboardEvent) => {
+            // 제어 키·단축키 허용
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (e.key.length !== 1) return; // 특수 키(Backspace, Arrow 등) 제외
+            const maxEl = getMaxCharsEl();
+            if (!maxEl) return;
+            const max = parseInt(maxEl.dataset.maxChars ?? '20', 10);
+            const sel = window.getSelection();
+            const selectedLen = sel?.toString().length ?? 0;
+            if ((maxEl.textContent?.length ?? 0) - selectedLen >= max) {
+                e.preventDefault();
+            }
+        };
+
+        const handleMaxCharsPaste = (e: ClipboardEvent) => {
+            const maxEl = getMaxCharsEl();
+            if (!maxEl) return;
+            e.preventDefault();
+            const max = parseInt(maxEl.dataset.maxChars ?? '20', 10);
+            const sel = window.getSelection();
+            const selectedLen = sel?.toString().length ?? 0;
+            const remaining = max - ((maxEl.textContent?.length ?? 0) - selectedLen);
+            if (remaining <= 0) return;
+            const text = (e.clipboardData?.getData('text') ?? '').slice(0, remaining);
+            document.execCommand('insertText', false, text);
+        };
+
+        document.addEventListener('keydown', handleMaxCharsKeydown, true);
+        document.addEventListener('paste', handleMaxCharsPaste, true);
+
         // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
         const loadController = new AbortController();
         fetch('/api/builder/load', {
@@ -1756,6 +1801,7 @@ export default function EditClient({
                     await runtimeRef.current?.reinitialize();
                     builderRef.current?.applyBehavior();
                     patchPmIconWrap();
+                    patchMaxChars();
                     setContainerOpacity(1);
                     // 초기 블록 목록 파싱
                     const html = builderRef.current?.html() ?? '';
@@ -1782,6 +1828,8 @@ export default function EditClient({
             document.removeEventListener('click', handleSiteFooterSelectClick, true);
             koObserver.disconnect();
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
+            document.removeEventListener('keydown', handleMaxCharsKeydown, true);
+            document.removeEventListener('paste', handleMaxCharsPaste, true);
             if (reinitTimer) clearTimeout(reinitTimer);
             builderRef.current?.destroy();
             builderRef.current = null;
@@ -1935,11 +1983,12 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 const newHtml = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
             }, 300);
         },
-        [patchPmIconWrap],
+        [patchPmIconWrap, patchMaxChars],
     );
 
     // ── 순서 탭 블록 클릭 → 캔버스 활성화 ──────────────────────────────
@@ -1982,11 +2031,12 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 const updatedHtml = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
             }, 300);
         },
-        [patchPmIconWrap],
+        [patchPmIconWrap, patchMaxChars],
     );
 
     // ── 전체 블록 삭제 ──────────────────────────────────────────────────
@@ -2023,11 +2073,12 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 const updatedHtml = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
             }, 300);
         },
-        [patchPmIconWrap],
+        [patchPmIconWrap, patchMaxChars],
     );
 
     // ── 오버레이 드롭 핸들러 ──────────────────────────────────────────────
