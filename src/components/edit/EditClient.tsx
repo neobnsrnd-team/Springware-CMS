@@ -335,29 +335,8 @@ export default function EditClient({
         });
     }, []);
 
-    // ── data-max-chars 입력 글자 수 제한 패치 ───────────────────────────
-    // data-max-chars="N" 속성이 있는 요소의 contenteditable 입력을 N자로 제한
-    // app-header 금융사명 등 오버플로 방지용
-    const patchMaxChars = useCallback(() => {
-        const container = document.querySelector('.container');
-        if (!container) return;
-        container.querySelectorAll<HTMLElement>('[data-max-chars]:not([data-max-chars-bound])').forEach((el) => {
-            el.dataset.maxCharsBound = 'true';
-            el.addEventListener('input', () => {
-                const max = parseInt(el.dataset.maxChars ?? '20', 10);
-                const text = el.textContent ?? '';
-                if (text.length <= max) return;
-                // 초과분 잘라내고 커서를 끝으로 이동
-                el.textContent = text.slice(0, max);
-                const sel = window.getSelection();
-                const range = document.createRange();
-                range.selectNodeContents(el);
-                range.collapse(false);
-                sel?.removeAllRanges();
-                sel?.addRange(range);
-            });
-        });
-    }, []);
+    // patchMaxChars — 하위 호환용 no-op (실제 제한은 main useEffect의 document 핸들러가 담당)
+    const patchMaxChars = useCallback(() => {}, []);
 
     useEffect(() => {
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
@@ -1742,6 +1721,47 @@ export default function EditClient({
         };
         document.addEventListener('click', handleSiteFooterSelectClick, true);
 
+        // ── data-max-chars 글자 수 제한 (document 레벨 위임) ─────────────────
+        // ContentBuilder는 span 자체가 아닌 상위 요소를 contenteditable로 만드므로
+        // 선택 영역(Selection)의 공통 조상을 기준으로 data-max-chars 요소를 탐색
+        const getMaxCharsEl = (): HTMLElement | null => {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return null;
+            let node: Node | null = sel.getRangeAt(0).commonAncestorContainer;
+            if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+            return (node as Element)?.closest?.('[data-max-chars]') as HTMLElement | null;
+        };
+
+        const handleMaxCharsKeydown = (e: KeyboardEvent) => {
+            // 제어 키·단축키 허용
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (e.key.length !== 1) return; // 특수 키(Backspace, Arrow 등) 제외
+            const maxEl = getMaxCharsEl();
+            if (!maxEl) return;
+            const max = parseInt(maxEl.dataset.maxChars ?? '20', 10);
+            const sel = window.getSelection();
+            const selectedLen = sel?.toString().length ?? 0;
+            if ((maxEl.textContent?.length ?? 0) - selectedLen >= max) {
+                e.preventDefault();
+            }
+        };
+
+        const handleMaxCharsPaste = (e: ClipboardEvent) => {
+            const maxEl = getMaxCharsEl();
+            if (!maxEl) return;
+            e.preventDefault();
+            const max = parseInt(maxEl.dataset.maxChars ?? '20', 10);
+            const sel = window.getSelection();
+            const selectedLen = sel?.toString().length ?? 0;
+            const remaining = max - ((maxEl.textContent?.length ?? 0) - selectedLen);
+            if (remaining <= 0) return;
+            const text = (e.clipboardData?.getData('text') ?? '').slice(0, remaining);
+            document.execCommand('insertText', false, text);
+        };
+
+        document.addEventListener('keydown', handleMaxCharsKeydown, true);
+        document.addEventListener('paste', handleMaxCharsPaste, true);
+
         // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
         const loadController = new AbortController();
         fetch('/api/builder/load', {
@@ -1808,6 +1828,8 @@ export default function EditClient({
             document.removeEventListener('click', handleSiteFooterSelectClick, true);
             koObserver.disconnect();
             document.removeEventListener('mousedown', activateRowOnMouseDown, true);
+            document.removeEventListener('keydown', handleMaxCharsKeydown, true);
+            document.removeEventListener('paste', handleMaxCharsPaste, true);
             if (reinitTimer) clearTimeout(reinitTimer);
             builderRef.current?.destroy();
             builderRef.current = null;
