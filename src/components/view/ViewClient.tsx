@@ -334,6 +334,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 };
                 const onMove = (e: MouseEvent | TouchEvent) => {
                     if (!dragging) return;
+                    e.preventDefault(); // 드래그 중 페이지 스크롤 차단
                     const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     const maxH = rootH * MAX_RATIO;
                     sheet.style.height = `${Math.max(MIN_H, Math.min(maxH, startH + (startY - y)))}px`;
@@ -354,7 +355,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
 
                 handle.addEventListener('touchstart', onStart, { passive: true });
                 handle.addEventListener('mousedown', onStart);
-                document.addEventListener('touchmove', onMove, { passive: true });
+                document.addEventListener('touchmove', onMove, { passive: false });
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('touchend', onEnd);
                 document.addEventListener('mouseup', onEnd);
