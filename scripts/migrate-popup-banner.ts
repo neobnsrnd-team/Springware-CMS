@@ -14,9 +14,9 @@ const DEFAULT_IMAGES = JSON.stringify([
     { url: '/uploads/sample-banner-2.jpg', link: '#', alt: '이벤트 배너 2' },
 ]);
 
-/** 뷰 모드별 초기 HTML — data-cb-type 루트 + 기본 data 속성만 포함 */
+/** 뷰 모드별 초기 HTML — data-component-id 루트 + data-cb-type(ContentBuilder 플러그인 식별용) */
 function buildHtml(viewMode: string): string {
-    return `<div data-cb-type="popup-banner" data-images='${DEFAULT_IMAGES}' data-hide-days="3" data-view-mode="${viewMode}" style="min-height:40px;"></div>`;
+    return `<div data-component-id="popup-banner-${viewMode}" data-cb-type="popup-banner" data-spw-block data-images='${DEFAULT_IMAGES}' data-hide-days="3" data-view-mode="${viewMode}" style="min-height:40px;"></div>`;
 }
 
 const VARIANTS: Array<{

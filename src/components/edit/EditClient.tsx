@@ -891,10 +891,10 @@ export default function EditClient({
                     const block =
                         document
                             .querySelector<HTMLElement>('.icon-active')
-                            ?.closest<HTMLElement>('[data-cb-type="popup-banner"]') ??
+                            ?.closest<HTMLElement>('[data-component-id^="popup-banner"]') ??
                         document
                             .querySelector<HTMLElement>('.elm-active')
-                            ?.closest<HTMLElement>('[data-cb-type="popup-banner"]');
+                            ?.closest<HTMLElement>('[data-component-id^="popup-banner"]');
                     if (block) setPopupBannerBlock(block);
                 });
                 linkTool.appendChild(btn);
@@ -944,8 +944,8 @@ export default function EditClient({
             const pbBtn = document.querySelector<HTMLElement>(`#divLinkTool .${SPW_PB_BTN_CLASS}`);
             if (pbBtn) {
                 const isInPb =
-                    !!iconActive?.closest('[data-cb-type="popup-banner"]') ||
-                    !!elmActive?.closest('[data-cb-type="popup-banner"]');
+                    !!iconActive?.closest('[data-component-id^="popup-banner"]') ||
+                    !!elmActive?.closest('[data-component-id^="popup-banner"]');
                 pbBtn.style.display = isInPb ? 'flex' : 'none';
             }
         };

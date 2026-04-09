@@ -102,7 +102,7 @@ export default {
 
         // 뷰어 모드: 동일 페이지 첫 번째 팝업만 활성화
         if (!isEditor) {
-            const allBanners = document.querySelectorAll('[data-cb-type="popup-banner"]');
+            const allBanners = document.querySelectorAll('[data-component-id^="popup-banner"]');
             if (allBanners[0] !== element) return {};
             // "N일간 보지 않기" 기간 내이면 미표시 (미리보기 모드에서는 항상 표시)
             if (!isPreviewMode() && isHiddenUntil(pageId)) return {};
