@@ -288,10 +288,6 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 let startH = 0;
                 let dragging = false;
 
-                // 핸들 터치 영역 확대 (4px → 24px 패딩)
-                handle.style.padding = '12px 0';
-                handle.style.margin = '0 auto';
-
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     dragging = true;
                     startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
@@ -312,7 +308,17 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     sheet.style.transition = 'height 0.3s ease';
                     const h = sheet.offsetHeight;
                     const threshold = root.offsetHeight * 0.5;
-                    sheet.style.height = h < 160 ? '80px' : h > threshold ? `${root.offsetHeight * 0.7}px` : '200px';
+                    if (h < 160) {
+                        // 접힘 → 최소 높이 고정
+                        sheet.style.height = '80px';
+                    } else if (h > threshold) {
+                        // 펼침 → 70% 고정
+                        sheet.style.height = `${root.offsetHeight * 0.7}px`;
+                    } else {
+                        // 중간 → flex:1 복원 (기본 상태)
+                        sheet.style.flex = '1';
+                        sheet.style.height = '';
+                    }
                 };
 
                 handle.addEventListener('touchstart', onStart, { passive: true });
