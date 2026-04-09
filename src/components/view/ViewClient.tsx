@@ -300,7 +300,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 mapArea.style.aspectRatio = 'unset';
                 mapArea.style.borderRadius = '20px 20px 0 0';
 
-                // 바텀시트: 하단 overlay
+                // 바텀시트: 하단 overlay, overflow:hidden으로 콘텐츠 클리핑
                 const defaultH = Math.round(rootH * 0.45);
                 sheet.style.position = 'absolute';
                 sheet.style.bottom = '0';
@@ -310,6 +310,15 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 sheet.style.minHeight = '0';
                 sheet.style.flex = 'none';
                 sheet.style.zIndex = '10';
+                sheet.style.overflow = 'hidden';
+                sheet.style.display = 'block';
+
+                // 리스트의 flex:1 + overflow-y:auto 제거 — 시트가 클리핑 담당
+                const list = root.querySelector<HTMLElement>('[data-bl-list]');
+                if (list) {
+                    list.style.flex = 'none';
+                    list.style.overflow = 'visible';
+                }
 
                 let startY = 0;
                 let startH = 0;
