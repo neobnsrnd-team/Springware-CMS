@@ -115,7 +115,7 @@ function buildHtml(componentId: string, extraStyle: string): string {
                 `</div>` +
             `</div>` +
             // ── 필터 버튼 (지도 컨테이너 밖 — iframe 터치 가로채기 방지) ──
-            `<div style="position:relative;display:flex;gap:6px;padding:8px 12px;z-index:10;flex-shrink:0;">` +
+            `<div style="position:relative;display:flex;gap:6px;padding:8px 12px;z-index:10;flex-shrink:0;margin-top:-44px;">` +
                 `<button data-bl-filter="all" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#0046A4;color:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">전체</button>` +
                 `<button data-bl-filter="branch" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#fff;color:#6B7280;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">영업점</button>` +
                 `<button data-bl-filter="atm" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#fff;color:#6B7280;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">ATM</button>` +
