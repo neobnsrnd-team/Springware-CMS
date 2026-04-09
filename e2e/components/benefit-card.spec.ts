@@ -22,12 +22,20 @@ interface BenefitCardHtmlOptions {
     cards: BenefitCardItem[];
 }
 
+function isImageUrl(val: string): boolean {
+    return /^(https?:\/\/|\/|data:image\/)/.test(val.trim());
+}
+
 function buildCard(card: BenefitCardItem): string {
+    const iconContent = isImageUrl(card.icon)
+        ? `<img src="${card.icon}" style="width:28px;height:28px;object-fit:contain;" alt="" />`
+        : `<span style="font-size:24px;line-height:1;">${card.icon}</span>`;
+
     return (
         `<a href="#" style="display:block;text-decoration:none;flex:1;min-width:0;">` +
-        `<div style="background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;box-shadow:0 4px 20px rgba(0,70,164,0.08);height:100%;box-sizing:border-box;min-height:160px;">` +
+        `<div style="background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;box-shadow:0 4px 20px rgba(0,70,164,0.08);height:100%;box-sizing:border-box;">` +
         `<div data-bc-icon style="width:48px;height:48px;background:#E8F0FC;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
-        `<span style="font-size:24px;line-height:1;">${card.icon}</span>` +
+        iconContent +
         `</div>` +
         `<div data-bc-title style="font-size:16px;font-weight:700;color:#0046A4;line-height:1.3;word-break:keep-all;">${card.title}</div>` +
         `<div data-bc-desc style="font-size:12px;color:#6B7280;line-height:1.4;word-break:keep-all;">${card.desc}</div>` +
