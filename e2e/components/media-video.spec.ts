@@ -7,6 +7,7 @@ import {
     checkNoHorizontalScroll,
     checkNotOutsideViewport,
     checkKeyboardFocusable,
+    checkViewportLayouts,
 } from '../helpers/component-checks';
 
 // ── 인라인 CSS ────────────────────────────────────────────────────────────────
@@ -207,5 +208,15 @@ test.describe('media-video — 반응형 뷰어', () => {
         await expect(
             page.locator('[data-component-id^="media-video"] iframe'),
         ).toBeVisible();
+    });
+});
+
+// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+
+test.describe('media-video — 반응형 뷰포트 레이아웃', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="media-video"]');
     });
 });

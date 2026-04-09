@@ -149,6 +149,42 @@ export async function checkComponentIdExists(page: Page, componentIdPrefix: stri
     await expect(el, `data-component-id="${componentIdPrefix}-*" 요소가 존재해야 합니다`).toBeAttached();
 }
 
+// ── 반응형 뷰포트 체크 ────────────────────────────────────────────────────
+
+interface ViewportEntry {
+    name: string;
+    width: number;
+    height: number;
+}
+
+const DEFAULT_VIEWPORTS: ViewportEntry[] = [
+    { name: 'Galaxy S',         width: 360,  height: 800  },
+    { name: 'iPhone SE',        width: 375,  height: 667  },
+    { name: 'iPhone Pro Max',   width: 430,  height: 932  },
+    { name: '767px 경계',       width: 767,  height: 1024 },
+    { name: '768px 경계',       width: 768,  height: 1024 },
+    { name: '1440px 데스크탑',  width: 1440, height: 900  },
+];
+
+/**
+ * 여러 뷰포트 크기에서 가로 스크롤·뷰포트 이탈을 자동 검증
+ * 모든 컴포넌트의 반응형 레이아웃 QA 자동화용
+ *
+ * @example
+ * await checkViewportLayouts(page, '[data-component-id^="product-menu"]');
+ */
+export async function checkViewportLayouts(
+    page: Page,
+    rootSelector: string,
+    viewports: ViewportEntry[] = DEFAULT_VIEWPORTS,
+) {
+    for (const vp of viewports) {
+        await page.setViewportSize({ width: vp.width, height: vp.height });
+        await checkNoHorizontalScroll(page);
+        await checkNotOutsideViewport(page, rootSelector);
+    }
+}
+
 // ── 일괄 실행 헬퍼 ────────────────────────────────────────────────────────
 
 /**

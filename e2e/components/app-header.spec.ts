@@ -7,6 +7,7 @@ import {
     checkNoHorizontalScroll,
     checkNotOutsideViewport,
     checkMinTouchTarget,
+    checkViewportLayouts,
 } from '../helpers/component-checks';
 
 // ── 테스트용 HTML ─────────────────────────────────────────────────────────
@@ -252,5 +253,15 @@ test.describe('app-header — 엣지 케이스', () => {
         // 3. 스크립트가 실제로 실행되지 않았는지 확인 (textContent 방식은 안전해야 함)
         const xssExecuted = await page.evaluate(() => (window as unknown as Record<string, unknown>).__xss_executed);
         expect(xssExecuted, '스크립트가 실행되지 않아야 합니다').toBeUndefined();
+    });
+});
+
+// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+
+test.describe('app-header — 반응형 뷰포트 레이아웃', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="app-header"]');
     });
 });
