@@ -209,6 +209,8 @@ export default {
                 const code = codeSelect.value;
                 const meta = CURRENCY_META[code];
                 if (!meta) return;
+                // 동일 통화 중복 추가 방지
+                if (element.querySelector(`.eb-item[data-currency="${code}"]`)) return;
                 const list = element.querySelector('.eb-list');
                 if (!list) return;
                 const newItem = document.createElement('div');
@@ -263,12 +265,12 @@ export default {
                 syncBtn.textContent = '불러오는 중...';
                 syncBtn.disabled = true;
                 fetch('/api/exchange')
-                    .then(r => r.json())
+                    .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
                     .then(data => {
                         element.querySelectorAll('.eb-item').forEach(item => {
                             const code = item.dataset.currency;
                             const d = data[code];
-                            if (!d) return;
+                            if (!d || d.buy == null || d.sell == null) return;
                             const buyEl = item.querySelector('.eb-buy');
                             const sellEl = item.querySelector('.eb-sell');
                             const changeEl = item.querySelector('.eb-change');
@@ -309,7 +311,8 @@ export default {
             element.querySelectorAll('.eb-item').forEach(item => {
                 const code = item.dataset.currency;
                 const d = data?.[code];
-                if (!d) return;
+                // null 값 안전 처리 — d.buy/sell이 null이면 toLocaleString TypeError 방지
+                if (!d || d.buy == null || d.sell == null) return;
                 const buyEl = item.querySelector('.eb-buy');
                 const sellEl = item.querySelector('.eb-sell');
                 const changeEl = item.querySelector('.eb-change');
@@ -336,7 +339,7 @@ export default {
 
         // 실시간 데이터 fetch (실패해도 인라인 데이터 유지)
         fetch('/api/exchange')
-            .then(r => r.json())
+            .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
             .then(data => updateRates(data))
             .catch(() => {});
 
