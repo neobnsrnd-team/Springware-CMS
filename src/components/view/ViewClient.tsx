@@ -300,7 +300,31 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 mapArea.style.aspectRatio = 'unset';
                 mapArea.style.borderRadius = '20px 20px 0 0';
 
-                // 바텀시트: 하단 overlay, overflow:hidden으로 콘텐츠 클리핑
+                // iframe 기본 터치 차단 — iframe이 터치를 선점하여 시트 드래그 불가 방지
+                const mapIframeEl = mapArea.querySelector('iframe');
+                if (mapIframeEl) mapIframeEl.style.pointerEvents = 'none';
+
+                // 지도 터치 토글 버튼 — 탭하면 지도 조작 활성화, 다시 탭하면 비활성화
+                let mapTouchEnabled = false;
+                const mapToggleBtn = document.createElement('button');
+                mapToggleBtn.textContent = '🗺️ 지도 터치';
+                mapToggleBtn.style.cssText =
+                    'position:absolute;top:12px;right:12px;z-index:5;padding:6px 12px;' +
+                    'border:none;border-radius:8px;background:rgba(255,255,255,0.9);' +
+                    'color:#374151;font-size:12px;font-weight:600;cursor:pointer;' +
+                    'box-shadow:0 2px 8px rgba(0,0,0,0.15);backdrop-filter:blur(4px);';
+                mapArea.appendChild(mapToggleBtn);
+                const toggleMapTouch = () => {
+                    mapTouchEnabled = !mapTouchEnabled;
+                    if (mapIframeEl) mapIframeEl.style.pointerEvents = mapTouchEnabled ? 'auto' : 'none';
+                    mapToggleBtn.style.background = mapTouchEnabled ? '#0046A4' : 'rgba(255,255,255,0.9)';
+                    mapToggleBtn.style.color = mapTouchEnabled ? '#fff' : '#374151';
+                    mapToggleBtn.textContent = mapTouchEnabled ? '✕ 지도 터치 해제' : '🗺️ 지도 터치';
+                };
+                mapToggleBtn.addEventListener('click', toggleMapTouch);
+                blCleanups.push(() => mapToggleBtn.removeEventListener('click', toggleMapTouch));
+
+                // 바텀시트: 하단 overlay
                 const defaultH = Math.round(rootH * 0.45);
                 sheet.style.position = 'absolute';
                 sheet.style.bottom = '0';
@@ -312,6 +336,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 sheet.style.zIndex = '10';
                 sheet.style.overflow = 'hidden';
                 sheet.style.display = 'block';
+                sheet.style.touchAction = 'none';
 
                 // 리스트의 flex:1 + overflow-y:auto 제거 — 시트가 클리핑 담당
                 const list = root.querySelector<HTMLElement>('[data-bl-list]');
@@ -320,18 +345,16 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     list.style.overflow = 'visible';
                 }
 
-                // 드래그 존: 핸들(4px) 대신 시트 상단 영역 전체 (핸들+제목)
+                // 드래그 존: 시트 상단 전체 (56px)
                 const dragZone = document.createElement('div');
                 dragZone.style.cssText =
                     'position:absolute;top:0;left:0;right:0;height:56px;cursor:grab;z-index:1;' +
-                    'display:flex;align-items:flex-start;justify-content:center;padding-top:10px;';
-                // 시각 핸들 바
+                    'display:flex;align-items:flex-start;justify-content:center;padding-top:10px;' +
+                    'touch-action:none;';
                 const bar = document.createElement('div');
                 bar.style.cssText = 'width:40px;height:4px;background:#D1D5DB;border-radius:2px;';
                 dragZone.appendChild(bar);
-                sheet.style.position = 'absolute'; // 이미 설정되어 있지만 확인
                 sheet.insertBefore(dragZone, sheet.firstChild);
-                // 원래 핸들 숨김 (시각적으로 dragZone의 bar가 대체)
                 handle.style.display = 'none';
 
                 let startY = 0;
@@ -339,9 +362,6 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 let dragging = false;
                 const MIN_H = 48;
                 const MAX_RATIO = 0.85;
-
-                // 드래그 중에만 iframe 터치 차단 (iframe은 z-index 무시하고 터치 가로챔)
-                const mapIframeEl = mapArea.querySelector('iframe');
 
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     e.preventDefault();
@@ -351,7 +371,6 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     startH = sheet.offsetHeight;
                     sheet.style.transition = 'none';
                     dragZone.style.cursor = 'grabbing';
-                    if (mapIframeEl) mapIframeEl.style.pointerEvents = 'none';
                 };
                 const onMove = (e: MouseEvent | TouchEvent) => {
                     if (!dragging) return;
@@ -364,7 +383,6 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     if (!dragging) return;
                     dragging = false;
                     dragZone.style.cursor = 'grab';
-                    if (mapIframeEl) mapIframeEl.style.pointerEvents = 'auto';
                     sheet.style.transition = 'height 0.3s ease';
                     const h = sheet.offsetHeight;
                     if (h < 100) {
