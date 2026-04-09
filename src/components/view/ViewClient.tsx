@@ -251,11 +251,6 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         // 인라인 <script>가 dangerouslySetInnerHTML 환경에서 실행 안 되므로 직접 처리
         const blCleanups: (() => void)[] = [];
         document.querySelectorAll<HTMLElement>('[data-component-id^="branch-locator"]').forEach((root) => {
-            // iframe만 터치 차단 — 필터 버튼·바텀시트는 iframe 밖이라 영향 없음
-            // 지도 터치 인터랙션은 #332에서 API 연동과 함께 구현 예정
-            const blIframe = root.querySelector<HTMLIFrameElement>('[data-bl-map]');
-            if (blIframe) blIframe.style.pointerEvents = 'none';
-
             const filterBtns = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-filter]'));
             const branchItems = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-item]'));
             filterBtns.forEach((btn) => {
