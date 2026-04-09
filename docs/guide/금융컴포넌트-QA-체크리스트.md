@@ -77,7 +77,7 @@ npm run test:e2e -- --project=mobile
 
 # UI 모드 (시각적 확인)
 npm run test:e2e:ui
-```
+````
 
 ### 컴포넌트별 스펙 파일 현황
 

@@ -6,6 +6,7 @@ import {
     runCommonChecks,
     checkNoHorizontalScroll,
     checkNotOutsideViewport,
+    checkViewportLayouts,
 } from '../helpers/component-checks';
 
 // ── 테스트용 HTML ─────────────────────────────────────────────────────────
@@ -384,5 +385,15 @@ test.describe('finance-calendar — 엣지 케이스', () => {
         // escapeHtml에 의해 &lt;script&gt; 형태로 이스케이프됨
         expect(innerHTML).toContain('&lt;script&gt;');
         expect(innerHTML).not.toContain('<script>');
+    });
+});
+
+// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+
+test.describe('finance-calendar — 반응형 뷰포트 레이아웃', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="finance-calendar"]');
     });
 });

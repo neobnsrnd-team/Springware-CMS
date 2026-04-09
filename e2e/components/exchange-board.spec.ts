@@ -6,6 +6,7 @@ import {
     runCommonChecks,
     checkNoHorizontalScroll,
     checkNotOutsideViewport,
+    checkViewportLayouts,
 } from '../helpers/component-checks';
 
 // ── CSS (style.css 인라인) ────────────────────────────────────────────────
@@ -432,5 +433,15 @@ test.describe('exchange-board — 엣지 케이스', () => {
         );
         await checkNoHorizontalScroll(page);
         await expect(page.locator('.eb-item[data-currency="VND"]')).toBeVisible();
+    });
+});
+
+// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+
+test.describe('exchange-board — 반응형 뷰포트 레이아웃', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="exchange-board"]');
     });
 });

@@ -6,6 +6,7 @@ import {
     runCommonChecks,
     checkNoHorizontalScroll,
     checkKeyboardFocusable,
+    checkViewportLayouts,
 } from '../helpers/component-checks';
 
 // ── 테스트용 HTML ─────────────────────────────────────────────────────────
@@ -279,5 +280,15 @@ test.describe('product-gallery — 반응형 뷰어', () => {
         await expect(
             page.locator('[data-component-id^="product-gallery"]'),
         ).toBeAttached();
+    });
+});
+
+// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+
+test.describe('product-gallery — 반응형 뷰포트 레이아웃', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="product-gallery"]');
     });
 });

@@ -9,6 +9,7 @@ import {
     checkMinFontSize,
     checkImagesHaveAlt,
     checkComponentIdExists,
+    checkViewportLayouts,
 } from '../helpers/component-checks';
 
 interface BenefitCardItem {
@@ -372,5 +373,15 @@ test.describe('benefit-card 엣지 케이스', () => {
 
         expect(xssExecuted).toBeUndefined();
         expect(xssDescExecuted).toBeUndefined();
+    });
+});
+
+// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+
+test.describe('benefit-card — 반응형 뷰포트 레이아웃', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(MOBILE_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="benefit-card"]');
     });
 });
