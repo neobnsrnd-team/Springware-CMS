@@ -247,6 +247,30 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             });
         });
 
+        // ── branch-locator 필터 버튼 ──
+        // 인라인 <script>가 dangerouslySetInnerHTML 환경에서 실행 안 되므로 직접 처리
+        const blCleanups: (() => void)[] = [];
+        document.querySelectorAll<HTMLElement>('[data-component-id^="branch-locator"]').forEach((root) => {
+            const filterBtns = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-filter]'));
+            const branchItems = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-item]'));
+            filterBtns.forEach((btn) => {
+                const onClick = () => {
+                    const filterType = btn.getAttribute('data-bl-filter');
+                    filterBtns.forEach((x) => {
+                        const isActive = x === btn;
+                        x.style.background = isActive ? '#0046A4' : '#fff';
+                        x.style.color = isActive ? '#fff' : '#6B7280';
+                    });
+                    branchItems.forEach((item) => {
+                        item.style.display =
+                            filterType === 'all' || item.getAttribute('data-bl-item') === filterType ? 'flex' : 'none';
+                    });
+                };
+                btn.addEventListener('click', onClick);
+                blCleanups.push(() => btn.removeEventListener('click', onClick));
+            });
+        });
+
         // 금융 컴포넌트 내 더미 링크(href="#") 클릭 시 상단 이동 차단
         // ContentBuilder가 onclick 속성을 제거하므로 이벤트 위임으로 처리
         const handleDummyLink = (e: MouseEvent) => {
@@ -256,6 +280,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         document.addEventListener('click', handleDummyLink);
 
         return () => {
+            blCleanups.forEach((fn) => fn());
             document.removeEventListener('click', handleDummyLink);
             runtime.destroy();
         };
