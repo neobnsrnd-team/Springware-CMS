@@ -90,8 +90,8 @@ export async function checkMinTouchTarget(
     for (let i = 0; i < count; i++) {
         const box = await buttons.nth(i).boundingBox();
         if (!box) continue;
-        // 둘 중 하나(가로 or 세로)가 기준 이상이면 통과 (아이콘형은 세로만 큰 경우 허용)
-        const meetsTarget = box.width >= minSize || box.height >= minSize;
+        // 가로·세로 모두 기준 이상이어야 통과 (OR 로직은 5×100px 같은 비정상 버튼도 통과시키는 버그)
+        const meetsTarget = box.width >= minSize && box.height >= minSize;
         expect(
             meetsTarget,
             `터치 영역이 ${minSize}px 이상이어야 합니다 (현재: ${box.width}×${box.height}px)`,
@@ -169,4 +169,5 @@ export async function runCommonChecks(
     await checkMinFontSize(page, opts.textSelector, opts.minFontSize);
     await checkMinTouchTarget(page, opts.buttonSelector, opts.minTouchSize);
     await checkImagesHaveAlt(page);
+    await checkKeyboardFocusable(page);
 }
