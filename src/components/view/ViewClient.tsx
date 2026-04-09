@@ -327,6 +327,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 const MAX_RATIO = 0.85;
 
                 const onStart = (e: MouseEvent | TouchEvent) => {
+                    e.preventDefault(); // 텍스트 선택·브라우저 기본 드래그 차단
                     dragging = true;
                     startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     startH = sheet.offsetHeight;
@@ -353,7 +354,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     }
                 };
 
-                handle.addEventListener('touchstart', onStart, { passive: true });
+                handle.addEventListener('touchstart', onStart, { passive: false });
                 handle.addEventListener('mousedown', onStart);
                 document.addEventListener('touchmove', onMove, { passive: false });
                 document.addEventListener('mousemove', onMove);
