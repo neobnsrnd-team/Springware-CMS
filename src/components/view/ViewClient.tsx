@@ -340,14 +340,18 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 const MIN_H = 48;
                 const MAX_RATIO = 0.85;
 
+                // 드래그 중에만 iframe 터치 차단 (iframe은 z-index 무시하고 터치 가로챔)
+                const mapIframeEl = mapArea.querySelector('iframe');
+
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     e.preventDefault();
-                    e.stopPropagation(); // 지도 iframe 클릭 차단
+                    e.stopPropagation();
                     dragging = true;
                     startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     startH = sheet.offsetHeight;
                     sheet.style.transition = 'none';
                     dragZone.style.cursor = 'grabbing';
+                    if (mapIframeEl) mapIframeEl.style.pointerEvents = 'none';
                 };
                 const onMove = (e: MouseEvent | TouchEvent) => {
                     if (!dragging) return;
@@ -360,6 +364,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     if (!dragging) return;
                     dragging = false;
                     dragZone.style.cursor = 'grab';
+                    if (mapIframeEl) mapIframeEl.style.pointerEvents = 'auto';
                     sheet.style.transition = 'height 0.3s ease';
                     const h = sheet.offsetHeight;
                     if (h < 100) {
