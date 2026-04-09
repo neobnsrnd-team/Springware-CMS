@@ -225,10 +225,12 @@ function buildColumnHtml(col: FlexListColumn): string {
             : col.width === 'fixed'
               ? 'flex:0 0 40px;'
               : col.width === 'auto'
-                ? 'flex:0 0 auto;'
+                ? 'flex:0 1 auto;min-width:0;margin-left:auto;'
                 : 'flex:1;min-width:0;';
     const customWidthAttr =
         col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
+    const textColumnStyle =
+        col.width === 'auto' ? 'align-items:flex-end;max-width:45%;text-align:right;' : '';
 
     const lines: FlexListLine[] = (col.lines ?? [{ text: '텍스트' }]).map((l) =>
         typeof l === 'string' ? { text: l } : l,
@@ -243,7 +245,7 @@ function buildColumnHtml(col: FlexListColumn): string {
 
     return (
         `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
-        ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
+        ` style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:2px;">` +
         lineHtmls.join('') +
         `</span>`
     );
@@ -291,7 +293,21 @@ function buildRowHtml(row: FlexListRow, isLast: boolean): string {
 
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
 
+function getRootExtraStyle(componentId: string): string {
+    if (componentId.endsWith('-web')) {
+        return 'width:100%;box-sizing:border-box;';
+    }
+    if (componentId.endsWith('-responsive')) {
+        return 'width:100%;box-sizing:border-box;';
+    }
+    return '';
+}
+
 function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
+    blockEl.setAttribute(
+        'style',
+        `font-family:${FONT_FAMILY};background:#ffffff;${getRootExtraStyle(blockEl.getAttribute('data-component-id') ?? '')}`,
+    );
     blockEl.setAttribute('data-fl-rows', JSON.stringify(rows));
 
     // 기존 행 제거 (<a> 또는 <div data-fl-link-mode>)
@@ -559,6 +575,7 @@ const S = {
         top: '50%',
         transform: 'translate(-50%, -50%)',
         width: 520,
+        maxWidth: 'calc(100vw - 24px)',
         maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column' as const,
@@ -579,6 +596,8 @@ const S = {
         borderRadius: '12px 12px 0 0',
         background: '#fafafa',
         flexShrink: 0,
+        cursor: 'grab',
+        userSelect: 'none' as const,
     },
     body: {
         overflowY: 'auto' as const,
@@ -1160,6 +1179,10 @@ function ColumnEditor({
 
 export default function FlexListEditor({ blockEl, onClose }: Props) {
     const [rows, setRows] = useState<FlexListRow[]>(() => parseRows(blockEl));
+    const [pos, setPos] = useState(() => ({
+        x: Math.max(12, window.innerWidth / 2 - 260),
+        y: Math.max(12, window.innerHeight / 2 - 320),
+    }));
 
     // 스타일 설정 펼침 상태 — UI 전용, 데이터 모델과 분리
     const [expandedStyles, setExpandedStyles] = useState<Set<number>>(() => new Set());
@@ -1174,11 +1197,23 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
 
     // 이미지 파일 선택 대기 상태 — 어떤 행/컬럼이 파일 피커 결과를 기다리는지 추적
     const pendingImagePick = useRef<{ rowIdx: number; colIdx: number } | null>(null);
+    const dragging = useRef(false);
+    const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 });
 
     const requestImagePick = useCallback((rowIdx: number, colIdx: number) => {
         pendingImagePick.current = { rowIdx, colIdx };
         window.open('/files', '_blank', 'width=900,height=600');
     }, []);
+
+    const handleHeaderMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            if ((e.target as HTMLElement).closest('button,input,select,textarea,label')) return;
+            dragging.current = true;
+            dragStart.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
+            e.preventDefault();
+        },
+        [pos],
+    );
 
     // FileBrowser에서 ASSET_SELECTED 메시지 수신
     useEffect(() => {
@@ -1201,6 +1236,27 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         };
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
+    }, []);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!dragging.current) return;
+            setPos({
+                x: Math.max(12, dragStart.current.px + e.clientX - dragStart.current.mx),
+                y: Math.max(12, dragStart.current.py + e.clientY - dragStart.current.my),
+            });
+        };
+
+        const handleMouseUp = () => {
+            dragging.current = false;
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
     }, []);
 
     const updateColumn = useCallback((rowIdx: number, colIdx: number, col: FlexListColumn) => {
@@ -1264,9 +1320,9 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         <>
             <div onClick={onClose} style={S.overlay} />
 
-            <div onClick={(e) => e.stopPropagation()} style={S.panel}>
+            <div onClick={(e) => e.stopPropagation()} style={{ ...S.panel, left: pos.x, top: pos.y, transform: 'none' }}>
                 {/* 헤더 */}
-                <div style={S.header}>
+                <div onMouseDown={handleHeaderMouseDown} style={S.header}>
                     <span style={{ fontWeight: 700, color: '#111827' }}>가변 리스트 편집</span>
                     <button
                         onClick={onClose}

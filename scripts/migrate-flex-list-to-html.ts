@@ -134,9 +134,12 @@ function buildColumnHtml(col: FlexListColumn): string {
     const widthStyle =
         col.width === 'custom' && col.customWidth ? `flex:0 0 ${col.customWidth};min-width:0;` :
         col.width === 'fixed' ? 'flex:0 0 40px;' :
-        col.width === 'auto'  ? 'flex:0 0 auto;' :
+        col.width === 'auto'  ? 'flex:0 1 auto;min-width:0;margin-left:auto;' :
                                 'flex:1;min-width:0;';
     const customWidthAttr = col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
+    const textColumnStyle = col.width === 'auto'
+        ? 'align-items:flex-end;max-width:45%;text-align:right;'
+        : '';
 
     if (col.type === 'icon') {
         return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape);
@@ -156,7 +159,7 @@ function buildColumnHtml(col: FlexListColumn): string {
 
     return (
         `<span data-fl-type="text" data-fl-width="${col.width}"${customWidthAttr}` +
-        ` style="${widthStyle}display:flex;flex-direction:column;gap:2px;">` +
+        ` style="${widthStyle}${textColumnStyle}display:flex;flex-direction:column;gap:2px;">` +
         lineHtmls.join('') +
         `</span>`
     );
@@ -260,7 +263,7 @@ const VIEW_MODES = ['mobile', 'web', 'responsive'] as const;
 
 const EXTRA_STYLES: Record<string, string> = {
     mobile: '',
-    web: 'max-width:480px;margin:0 auto;',
+    web: 'width:100%;box-sizing:border-box;',
     responsive: 'width:100%;box-sizing:border-box;',
 };
 
