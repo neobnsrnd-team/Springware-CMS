@@ -320,6 +320,20 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     list.style.overflow = 'visible';
                 }
 
+                // 드래그 존: 핸들(4px) 대신 시트 상단 영역 전체 (핸들+제목)
+                const dragZone = document.createElement('div');
+                dragZone.style.cssText =
+                    'position:absolute;top:0;left:0;right:0;height:56px;cursor:grab;z-index:1;' +
+                    'display:flex;align-items:flex-start;justify-content:center;padding-top:10px;';
+                // 시각 핸들 바
+                const bar = document.createElement('div');
+                bar.style.cssText = 'width:40px;height:4px;background:#D1D5DB;border-radius:2px;';
+                dragZone.appendChild(bar);
+                sheet.style.position = 'absolute'; // 이미 설정되어 있지만 확인
+                sheet.insertBefore(dragZone, sheet.firstChild);
+                // 원래 핸들 숨김 (시각적으로 dragZone의 bar가 대체)
+                handle.style.display = 'none';
+
                 let startY = 0;
                 let startH = 0;
                 let dragging = false;
@@ -327,15 +341,17 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 const MAX_RATIO = 0.85;
 
                 const onStart = (e: MouseEvent | TouchEvent) => {
-                    e.preventDefault(); // 텍스트 선택·브라우저 기본 드래그 차단
+                    e.preventDefault();
+                    e.stopPropagation(); // 지도 iframe 클릭 차단
                     dragging = true;
                     startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     startH = sheet.offsetHeight;
                     sheet.style.transition = 'none';
+                    dragZone.style.cursor = 'grabbing';
                 };
                 const onMove = (e: MouseEvent | TouchEvent) => {
                     if (!dragging) return;
-                    e.preventDefault(); // 드래그 중 페이지 스크롤 차단
+                    e.preventDefault();
                     const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     const maxH = rootH * MAX_RATIO;
                     sheet.style.height = `${Math.max(MIN_H, Math.min(maxH, startH + (startY - y)))}px`;
@@ -343,6 +359,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 const onEnd = () => {
                     if (!dragging) return;
                     dragging = false;
+                    dragZone.style.cursor = 'grab';
                     sheet.style.transition = 'height 0.3s ease';
                     const h = sheet.offsetHeight;
                     if (h < 100) {
@@ -354,15 +371,15 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     }
                 };
 
-                handle.addEventListener('touchstart', onStart, { passive: false });
-                handle.addEventListener('mousedown', onStart);
+                dragZone.addEventListener('touchstart', onStart, { passive: false });
+                dragZone.addEventListener('mousedown', onStart);
                 document.addEventListener('touchmove', onMove, { passive: false });
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('touchend', onEnd);
                 document.addEventListener('mouseup', onEnd);
                 blCleanups.push(() => {
-                    handle.removeEventListener('touchstart', onStart);
-                    handle.removeEventListener('mousedown', onStart);
+                    dragZone.removeEventListener('touchstart', onStart);
+                    dragZone.removeEventListener('mousedown', onStart);
                     document.removeEventListener('touchmove', onMove);
                     document.removeEventListener('mousemove', onMove);
                     document.removeEventListener('touchend', onEnd);
