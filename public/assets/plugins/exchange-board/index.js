@@ -33,15 +33,20 @@
 */
 
 const CURRENCY_META = {
-    USD: { flag: '🇺🇸', name: '미국 달러' },
-    EUR: { flag: '🇪🇺', name: '유럽 유로' },
-    JPY: { flag: '🇯🇵', name: '일본 엔화' },
-    CNY: { flag: '🇨🇳', name: '중국 위안' },
-    GBP: { flag: '🇬🇧', name: '영국 파운드' },
-    HKD: { flag: '🇭🇰', name: '홍콩 달러' },
-    VND: { flag: '🇻🇳', name: '베트남 동' },
-    AUD: { flag: '🇦🇺', name: '호주 달러' },
+    USD: { flag: 'us', name: '미국 달러' },
+    EUR: { flag: 'eu', name: '유럽 유로' },
+    JPY: { flag: 'jp', name: '일본 엔화' },
+    CNY: { flag: 'cn', name: '중국 위안' },
+    GBP: { flag: 'gb', name: '영국 파운드' },
+    HKD: { flag: 'hk', name: '홍콩 달러' },
+    VND: { flag: 'vn', name: '베트남 동' },
+    AUD: { flag: 'au', name: '호주 달러' },
 };
+
+// flagcdn.com 국기 이미지 HTML 생성 (Windows 이모지 미지원 대응)
+function flagImg(countryCode, alt) {
+    return `<img src="https://flagcdn.com/w40/${countryCode}.png" alt="${alt}" style="width:28px;height:auto;display:block;">`;
+}
 
 // 에디터에서 항목 편집 UI 생성
 function createItemEditor(item, onChange) {
@@ -53,8 +58,17 @@ function createItemEditor(item, onChange) {
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;align-items:center;padding:8px 12px;background:#f9fafb;cursor:pointer;gap:8px;';
     const flagEl = document.createElement('span');
-    flagEl.textContent = item.querySelector('.eb-flag')?.textContent || '🌐';
-    flagEl.style.fontSize = '20px';
+    const flagImgEl = item.querySelector('.eb-flag img');
+    if (flagImgEl) {
+        const img = document.createElement('img');
+        img.src = flagImgEl.src;
+        img.alt = flagImgEl.alt;
+        img.style.cssText = 'width:20px;height:auto;vertical-align:middle;';
+        flagEl.appendChild(img);
+    } else {
+        flagEl.textContent = code || '?';
+        flagEl.style.cssText = 'font-size:12px;font-weight:700;color:#374151;';
+    }
     const codeEl = document.createElement('span');
     codeEl.textContent = code;
     codeEl.style.cssText = 'font-weight:600;font-size:13px;flex:1;';
@@ -198,7 +212,7 @@ export default {
             Object.entries(CURRENCY_META).forEach(([code, m]) => {
                 const o = document.createElement('option');
                 o.value = code;
-                o.textContent = `${m.flag} ${code} — ${m.name}`;
+                o.textContent = `${code} — ${m.name}`;
                 codeSelect.appendChild(o);
             });
             const addBtn = document.createElement('button');
@@ -218,7 +232,7 @@ export default {
                 newItem.dataset.currency = code;
                 newItem.innerHTML = `
                     <div class="eb-left">
-                        <span class="eb-flag">${meta.flag}</span>
+                        <span class="eb-flag">${flagImg(meta.flag, code)}</span>
                         <div class="eb-currency-info">
                             <span class="eb-code">${code}</span>
                             <span class="eb-name">${meta.name}</span>

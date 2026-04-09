@@ -29,7 +29,8 @@ const EB_CSS = `
     padding: 14px 20px; border-bottom: 1px solid #F9FAFB; min-height: 64px;
 }
 [data-cb-type="exchange-board"] .eb-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-[data-cb-type="exchange-board"] .eb-flag { font-size: 28px; width: 36px; text-align: center; flex-shrink: 0; }
+[data-cb-type="exchange-board"] .eb-flag { width: 36px; text-align: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+[data-cb-type="exchange-board"] .eb-flag img { width: 28px; height: auto; display: block; }
 [data-cb-type="exchange-board"] .eb-code { font-size: 15px; font-weight: 700; color: #1A1A2E; }
 [data-cb-type="exchange-board"] .eb-name { font-size: 11px; color: #9CA3AF; }
 [data-cb-type="exchange-board"] .eb-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
@@ -77,7 +78,7 @@ const makeHtml = (items: string, exchangeHref = 'https://ibk.co.kr/exchange') =>
 const ITEM_USD = `
   <div class="eb-item" data-currency="USD">
     <div class="eb-left">
-      <span class="eb-flag">🇺🇸</span>
+      <span class="eb-flag"><img src="https://flagcdn.com/w40/us.png" alt="USD"></span>
       <div class="eb-currency-info">
         <span class="eb-code">USD</span>
         <span class="eb-name">미국 달러</span>
@@ -95,7 +96,7 @@ const ITEM_USD = `
 const ITEM_EUR = `
   <div class="eb-item" data-currency="EUR">
     <div class="eb-left">
-      <span class="eb-flag">🇪🇺</span>
+      <span class="eb-flag"><img src="https://flagcdn.com/w40/eu.png" alt="EUR"></span>
       <div class="eb-currency-info">
         <span class="eb-code">EUR</span>
         <span class="eb-name">유럽 유로</span>
@@ -113,7 +114,7 @@ const ITEM_EUR = `
 const ITEM_JPY = `
   <div class="eb-item" data-currency="JPY">
     <div class="eb-left">
-      <span class="eb-flag">🇯🇵</span>
+      <span class="eb-flag"><img src="https://flagcdn.com/w40/jp.png" alt="JPY"></span>
       <div class="eb-currency-info">
         <span class="eb-code">JPY</span>
         <span class="eb-name">일본 엔화</span>
@@ -137,7 +138,7 @@ const EMPTY_LIST_HTML = makeHtml('');
 const ZERO_RATE_HTML = makeHtml(`
   <div class="eb-item" data-currency="USD">
     <div class="eb-left">
-      <span class="eb-flag">🇺🇸</span>
+      <span class="eb-flag"><img src="https://flagcdn.com/w40/us.png" alt="USD"></span>
       <div class="eb-currency-info">
         <span class="eb-code">USD</span><span class="eb-name">미국 달러</span>
       </div>
@@ -268,8 +269,7 @@ test.describe('exchange-board — 정상 동작', () => {
 
     test('환전 신청 버튼 href가 # 이 아닌 URL로 설정됨', async ({ page }) => {
         const btn = page.locator('.eb-exchange-btn');
-        const href = await btn.getAttribute('href');
-        expect(href, '환전 신청 버튼 href가 설정되어 있어야 합니다').toBeTruthy();
+        await expect(btn, '환전 신청 버튼 href가 설정되어 있어야 합니다').toHaveAttribute('href');
     });
 
     test('환전 신청 버튼 터치 영역 48px 이상 (min-height)', async ({ page }) => {
