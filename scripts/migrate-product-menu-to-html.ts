@@ -41,7 +41,7 @@ function buildItems(): string {
     return ITEMS.map(({ key, label }) =>
         `<a href="#" class="pm-item" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:12px;text-decoration:none;cursor:pointer;">` +
             `<div class="pm-icon-wrap" contenteditable="false" style="width:60px;height:60px;border-radius:14px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ICONS[key]}</div>` +
-            `<span class="pm-label" style="font-size:12px;font-weight:500;color:#0046A4;text-align:center;line-height:1.3;word-break:keep-all;">${label}</span>` +
+            `<span class="pm-label" data-max-chars="20" style="font-size:12px;font-weight:500;color:#0046A4;text-align:center;line-height:1.3;word-break:keep-all;overflow-wrap:anywhere;max-width:100%;">${label}</span>` +
         `</a>`
     ).join('');
 }

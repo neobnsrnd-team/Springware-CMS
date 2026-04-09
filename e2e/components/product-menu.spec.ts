@@ -76,8 +76,8 @@ const makePmItem = (label: string, href = '#') => `
        style="width:60px;height:60px;border-radius:14px;background:rgb(243,244,246);flex-shrink:0;">
     ${ICON_SVG}
   </div>
-  <span class="pm-label text-center"
-        style="font-size:12px;font-weight:500;color:#0046A4;word-break:keep-all;">${label}</span>
+  <span class="pm-label text-center" data-max-chars="20"
+        style="font-size:12px;font-weight:500;color:#0046A4;word-break:keep-all;overflow-wrap:anywhere;max-width:100%;">${label}</span>
 </a>`;
 
 const makeHtml = (items: string) => `
@@ -294,6 +294,48 @@ test.describe('product-menu — 엣지 케이스', () => {
         const box = await firstItem.boundingBox();
         expect(box).not.toBeNull();
         expect(box!.height, '장문 레이블 항목 높이가 0보다 커야 합니다').toBeGreaterThan(0);
+    });
+
+    test('pm-label — data-max-chars="20" 속성이 존재함', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        const labels = page.locator('[data-component-id^="product-menu"] .pm-label');
+        const count = await labels.count();
+        expect(count).toBeGreaterThanOrEqual(1);
+
+        for (let i = 0; i < count; i++) {
+            await expect(
+                labels.nth(i),
+                `${i + 1}번째 pm-label에 data-max-chars="20"이 있어야 합니다`,
+            ).toHaveAttribute('data-max-chars', '20');
+        }
+    });
+
+    test('pm-label — overflow-wrap:anywhere 스타일로 장문 레이블이 컨테이너를 벗어나지 않음', async ({ page }) => {
+        await page.setContent(LONG_LABEL_HTML);
+
+        // 각 pm-item별 label 너비가 item 너비를 초과하지 않는지 검증
+        const result = await page.evaluate(() => {
+            const items = Array.from(document.querySelectorAll('[data-component-id^="product-menu"] .pm-item'));
+            return items.map((item, i) => {
+                const itemW = item.getBoundingClientRect().width;
+                const label = item.querySelector('.pm-label');
+                const labelW = label ? label.getBoundingClientRect().width : 0;
+                return { idx: i, itemW, labelW, ok: labelW <= itemW + 1 };
+            });
+        });
+
+        for (const r of result) {
+            expect(r.ok, `${r.idx + 1}번째 pm-label(${r.labelW}px)이 pm-item(${r.itemW}px)를 벗어나면 안 됩니다`).toBe(true);
+        }
+    });
+
+    test('pm-label — 줄바꿈 허용 (white-space:nowrap 없음)', async ({ page }) => {
+        await page.setContent(LONG_LABEL_HTML);
+
+        const whiteSpace = await page.locator('[data-component-id^="product-menu"] .pm-label').first().evaluate(
+            (el) => getComputedStyle(el).whiteSpace,
+        );
+        expect(whiteSpace, 'pm-label에 white-space:nowrap이 있으면 안 됩니다').not.toBe('nowrap');
     });
 
     test('XSS — 스크립트 태그가 실행되지 않음', async ({ page }) => {
