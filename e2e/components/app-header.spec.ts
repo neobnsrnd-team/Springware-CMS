@@ -1,7 +1,7 @@
 // e2e/components/app-header.spec.ts
 // app-header 컴포넌트 자동화 QA (Issue #304)
 
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import {
     runCommonChecks,
     checkNoHorizontalScroll,
@@ -21,9 +21,9 @@ const NORMAL_HTML = `
        style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#fff;">
     <img src="/logo.png" alt="IBK 기업은행 로고" style="height:32px;">
     <nav style="display:flex;gap:16px;">
-      <a href="/transfer" style="font-size:14px;">이체</a>
-      <a href="/card" style="font-size:14px;">카드</a>
-      <a href="/loan" style="font-size:14px;">대출</a>
+      <a href="/transfer" style="font-size:14px;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;">이체</a>
+      <a href="/card" style="font-size:14px;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;">카드</a>
+      <a href="/loan" style="font-size:14px;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;">대출</a>
     </nav>
     <button aria-label="메뉴 열기" style="width:44px;height:44px;background:none;border:none;cursor:pointer;">
       ☰

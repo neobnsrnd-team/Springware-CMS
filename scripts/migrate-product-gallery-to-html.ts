@@ -155,6 +155,7 @@ const RESPONSIVE_SLIDER_SCRIPT =
         `}` +
         // dots 버튼 초기화 (슬라이더 모드용, 그리드 모드에서는 숨김)
         `if(dotsEl){` +
+            `dotsEl.innerHTML='';` +
             `slides.forEach(function(_,i){` +
                 `var d=document.createElement('button');` +
                 `d.setAttribute('aria-label','슬라이드 '+(i+1));` +
@@ -174,8 +175,8 @@ const RESPONSIVE_SLIDER_SCRIPT =
         // 768px 이상: 그리드 레이아웃 (interval 정지, dots 숨김)
         `function applyGrid(){` +
             `if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}` +
-            `track.style.cssText='display:flex;flex-direction:row;gap:12px;padding:4px 20px 20px;box-sizing:border-box;';` +
-            `slides.forEach(function(s){s.style.cssText='flex:1;min-width:0;box-sizing:border-box;';});` +
+            `track.style.cssText='display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;padding:4px 20px 20px;box-sizing:border-box;';` +
+            `slides.forEach(function(s){s.style.cssText='flex:0 0 calc(33.333% - 8px);min-width:0;box-sizing:border-box;';});` +
             `if(dotsEl)dotsEl.style.display='none';` +
         `}` +
         // 768px 미만: 슬라이더 레이아웃 (interval 시작, dots 표시)
@@ -185,15 +186,16 @@ const RESPONSIVE_SLIDER_SCRIPT =
             `if(dotsEl)dotsEl.style.display='flex';` +
             `if(!r._pgTimer){` +
                 `r._pgTimer=setInterval(function(){goTo((cur+1)%slides.length);},4000);` +
+                `track.addEventListener('touchstart',function(){if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}},{passive:true,once:true});` +
             `}` +
         `}` +
         `function applyLayout(){` +
+            `if(!document.contains(r)){window.removeEventListener('resize',r._pgResize);r._pgResize=null;return;}` +
             `if(window.innerWidth>=768){applyGrid();}else{applySlider();}` +
         `}` +
         `applyLayout();` +
         `r._pgResize=applyLayout;` +
         `window.addEventListener('resize',r._pgResize);` +
-        `track.addEventListener('touchstart',function(){if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}},{passive:true,once:true});` +
     `})();` +
     `<\/script>`;
 
