@@ -335,6 +335,30 @@ export default function EditClient({
         });
     }, []);
 
+    // ── data-max-chars 입력 글자 수 제한 패치 ───────────────────────────
+    // data-max-chars="N" 속성이 있는 요소의 contenteditable 입력을 N자로 제한
+    // app-header 금융사명 등 오버플로 방지용
+    const patchMaxChars = useCallback(() => {
+        const container = document.querySelector('.container');
+        if (!container) return;
+        container.querySelectorAll<HTMLElement>('[data-max-chars]:not([data-max-chars-bound])').forEach((el) => {
+            el.dataset.maxCharsBound = 'true';
+            el.addEventListener('input', () => {
+                const max = parseInt(el.dataset.maxChars ?? '20', 10);
+                const text = el.textContent ?? '';
+                if (text.length <= max) return;
+                // 초과분 잘라내고 커서를 끝으로 이동
+                el.textContent = text.slice(0, max);
+                const sel = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                range.collapse(false);
+                sel?.removeAllRanges();
+                sel?.addRange(range);
+            });
+        });
+    }, []);
+
     useEffect(() => {
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
         // reinitialize(): Runtime이 data-cb-type 플러그인 DOM을 재마운트
@@ -350,6 +374,7 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 // ContentBuilder 자체 삭제/이동 후 순서 패널 동기화
                 const html = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
@@ -1756,6 +1781,7 @@ export default function EditClient({
                     await runtimeRef.current?.reinitialize();
                     builderRef.current?.applyBehavior();
                     patchPmIconWrap();
+                    patchMaxChars();
                     setContainerOpacity(1);
                     // 초기 블록 목록 파싱
                     const html = builderRef.current?.html() ?? '';
@@ -1935,11 +1961,12 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 const newHtml = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
             }, 300);
         },
-        [patchPmIconWrap],
+        [patchPmIconWrap, patchMaxChars],
     );
 
     // ── 순서 탭 블록 클릭 → 캔버스 활성화 ──────────────────────────────
@@ -1982,11 +2009,12 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 const updatedHtml = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
             }, 300);
         },
-        [patchPmIconWrap],
+        [patchPmIconWrap, patchMaxChars],
     );
 
     // ── 전체 블록 삭제 ──────────────────────────────────────────────────
@@ -2023,11 +2051,12 @@ export default function EditClient({
                 await runtimeRef.current?.reinitialize();
                 builderRef.current?.applyBehavior();
                 patchPmIconWrap();
+                patchMaxChars();
                 const updatedHtml = builderRef.current?.html() ?? '';
                 setCanvasBlocks(parseBuilderBlocks(updatedHtml, financeComponentsMapRef.current));
             }, 300);
         },
-        [patchPmIconWrap],
+        [patchPmIconWrap, patchMaxChars],
     );
 
     // ── 오버레이 드롭 핸들러 ──────────────────────────────────────────────
