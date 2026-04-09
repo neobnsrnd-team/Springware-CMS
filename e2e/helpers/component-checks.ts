@@ -130,11 +130,14 @@ export async function checkKeyboardFocusable(
 
     // 첫 번째 포커스 가능 요소 Tab 이동 확인
     await page.keyboard.press('Tab');
-    const focused = await page.evaluate(() => document.activeElement?.tagName);
-    expect(
-        ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(focused ?? ''),
-        '키보드 Tab으로 인터랙티브 요소에 포커스되어야 합니다',
-    ).toBe(true);
+    // body가 아닌 요소에 포커스되었고, 전달된 셀렉터와 매칭되는지 확인
+    // (tabindex="0"인 div/span 등 커스텀 포커스 요소도 포함)
+    const isFocused = await page.evaluate((sel) => {
+        const active = document.activeElement;
+        if (!active || active === document.body) return false;
+        return active.matches(sel);
+    }, selector);
+    expect(isFocused, '키보드 Tab으로 인터랙티브 요소에 포커스되어야 합니다').toBe(true);
 }
 
 /**

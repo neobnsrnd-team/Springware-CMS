@@ -248,5 +248,9 @@ test.describe('app-header — 엣지 케이스', () => {
             .locator('[data-component-id^="app-header"] nav script')
             .count();
         expect(scriptCount, '<script> 요소가 DOM에 존재하면 안 됩니다').toBe(0);
+
+        // 3. 스크립트가 실제로 실행되지 않았는지 확인 (textContent 방식은 안전해야 함)
+        const xssExecuted = await page.evaluate(() => (window as unknown as Record<string, unknown>).__xss_executed);
+        expect(xssExecuted, '스크립트가 실행되지 않아야 합니다').toBeUndefined();
     });
 });
