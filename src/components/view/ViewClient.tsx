@@ -284,15 +284,31 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             const sheet = root.querySelector<HTMLElement>('[data-bl-sheet]');
             const handle = root.querySelector<HTMLElement>('[data-bl-handle]');
             if (sheet && handle) {
+                // min-height 해제 — 아래로 접을 수 있도록
+                sheet.style.minHeight = '0';
+
                 let startY = 0;
                 let startH = 0;
                 let dragging = false;
+
+                // 핸들 최소 높이: 44px (터치 타겟) — 실제 막대(4px)는 그대로, 패딩으로 확장
+                const HANDLE_MIN_H = 44;
+                const barH = handle.offsetHeight || 4;
+                const padV = Math.max(0, (HANDLE_MIN_H - barH) / 2);
+                handle.style.paddingTop = `${padV}px`;
+                handle.style.paddingBottom = `${padV}px`;
+                handle.style.boxSizing = 'content-box';
+                handle.style.background = 'transparent';
+                // 막대 시각 요소를 ::before가 아닌 내부 div로 대체
+                const barDiv = document.createElement('div');
+                barDiv.style.cssText = `width:40px;height:4px;background:#D1D5DB;border-radius:2px;margin:0 auto;`;
+                handle.innerHTML = '';
+                handle.appendChild(barDiv);
 
                 const onStart = (e: MouseEvent | TouchEvent) => {
                     dragging = true;
                     startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     startH = sheet.offsetHeight;
-                    // flex:1이 height 설정을 덮어쓰므로 드래그 시 해제
                     sheet.style.flex = 'none';
                     sheet.style.transition = 'none';
                 };
@@ -300,7 +316,8 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     if (!dragging) return;
                     const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
                     const maxH = root.offsetHeight * 0.8;
-                    sheet.style.height = `${Math.max(80, Math.min(maxH, startH + (startY - y)))}px`;
+                    // 최소 높이: 핸들(44px) + 여유 — 완전히 접힌 상태
+                    sheet.style.height = `${Math.max(56, Math.min(maxH, startH + (startY - y)))}px`;
                 };
                 const onEnd = () => {
                     if (!dragging) return;
@@ -308,14 +325,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     sheet.style.transition = 'height 0.3s ease';
                     const h = sheet.offsetHeight;
                     const threshold = root.offsetHeight * 0.5;
-                    if (h < 160) {
-                        // 접힘 → 최소 높이 고정
-                        sheet.style.height = '80px';
+                    if (h < 120) {
+                        // 접힘 — 핸들만 보임
+                        sheet.style.height = '56px';
                     } else if (h > threshold) {
-                        // 펼침 → 70% 고정
+                        // 펼침 — 70%
                         sheet.style.height = `${root.offsetHeight * 0.7}px`;
                     } else {
-                        // 중간 → flex:1 복원 (기본 상태)
+                        // 중간 — flex:1 복원
                         sheet.style.flex = '1';
                         sheet.style.height = '';
                     }
