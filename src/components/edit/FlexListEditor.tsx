@@ -220,7 +220,14 @@ function buildIconHtml(
 
 function buildColumnHtml(col: FlexListColumn, viewMode: ViewMode = 'mobile'): string {
     if (col.type === 'icon') {
-        return buildIconHtml(col.icon ?? 'check', col.iconBg ?? '#E8F0FC', col.width, col.customWidth, col.shape, viewMode);
+        return buildIconHtml(
+            col.icon ?? 'check',
+            col.iconBg ?? '#E8F0FC',
+            col.width,
+            col.customWidth,
+            col.shape,
+            viewMode,
+        );
     }
 
     if (col.type === 'image') {
@@ -239,7 +246,9 @@ function buildColumnHtml(col: FlexListColumn, viewMode: ViewMode = 'mobile'): st
     const customWidthAttr =
         col.width === 'custom' && col.customWidth ? ` data-fl-custom-width="${col.customWidth}"` : '';
     const textColumnStyle =
-        col.width === 'auto' ? `align-items:flex-end;max-width:${viewMode === 'web' ? '32%' : '45%'};text-align:right;` : '';
+        col.width === 'auto'
+            ? `align-items:flex-end;max-width:${viewMode === 'web' ? '32%' : '45%'};text-align:right;`
+            : '';
 
     const lines: FlexListLine[] = (col.lines ?? [{ text: '텍스트' }]).map((l) =>
         typeof l === 'string' ? { text: l } : l,
@@ -269,7 +278,8 @@ function buildRowHtml(row: FlexListRow, isLast: boolean, viewMode: ViewMode = 'm
     const borderShow = row.border?.show !== false;
     const borderColor = row.border?.color ?? '#E5E7EB';
     const borderW = row.border?.width ?? 1;
-    const borderStyle = viewMode === 'web' ? '' : !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
+    const borderStyle =
+        viewMode === 'web' ? '' : !isLast && borderShow ? `border-bottom:${borderW}px solid ${borderColor};` : '';
 
     const pad = row.padding ?? (viewMode === 'web' ? '20px 24px' : '16px 20px');
     const gap = row.gap ?? (viewMode === 'web' ? '18px' : '12px');
@@ -296,7 +306,9 @@ function buildRowHtml(row: FlexListRow, isLast: boolean, viewMode: ViewMode = 'm
     }
 
     if (linkMode === 'column') {
-        const columnsHtml = row.columns.map((col) => wrapColumnWithLink(buildColumnHtml(col, viewMode), col.href)).join('');
+        const columnsHtml = row.columns
+            .map((col) => wrapColumnWithLink(buildColumnHtml(col, viewMode), col.href))
+            .join('');
         return `<div data-fl-link-mode="column"${dataAttrs} style="${flexStyle}">${columnsHtml}</div>`;
     }
 
@@ -323,10 +335,7 @@ function applyToBlock(blockEl: HTMLElement, rows: FlexListRow[]) {
         : componentId.endsWith('-responsive')
           ? 'responsive'
           : 'mobile';
-    blockEl.setAttribute(
-        'style',
-        `font-family:${FONT_FAMILY};background:#ffffff;${getRootExtraStyle(componentId)}`,
-    );
+    blockEl.setAttribute('style', `font-family:${FONT_FAMILY};background:#ffffff;${getRootExtraStyle(componentId)}`);
     blockEl.setAttribute('data-fl-rows', JSON.stringify(rows));
 
     // 기존 행 제거 (<a> 또는 <div data-fl-link-mode>)
@@ -1339,7 +1348,10 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         <>
             <div onClick={onClose} style={S.overlay} />
 
-            <div onClick={(e) => e.stopPropagation()} style={{ ...S.panel, left: pos.x, top: pos.y, transform: 'none' }}>
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{ ...S.panel, left: pos.x, top: pos.y, transform: 'none' }}
+            >
                 {/* 헤더 */}
                 <div onMouseDown={handleHeaderMouseDown} style={S.header}>
                     <span style={{ fontWeight: 700, color: '#111827' }}>가변 리스트 편집</span>
