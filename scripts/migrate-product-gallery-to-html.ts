@@ -68,16 +68,19 @@ function buildCard(card: (typeof CARDS)[number], itemId: string): string {
     );
 }
 
-// 슬라이더 초기화 인라인 스크립트
+// 슬라이더 초기화 인라인 스크립트 — 모바일용
 // window.builderRuntime: EditClient.tsx에서 에디터 활성 시 전역 등록 → 에디터 감지에 사용
 // 에디터: 기본 column 레이아웃 유지 (전체 카드 표시)
 // 뷰어: 트랙/슬라이드 CSS를 가로 scroll-snap 슬라이더로 변환 후 dots·autoplay 초기화
+// [FIX #312] r._pgTimer로 이전 setInterval 정리 → React StrictMode 이중 실행 시 interval 중복 방지
 const SLIDER_SCRIPT =
     `<script>` +
     `(function(){` +
         `if(window.builderRuntime)return;` +
         `var r=document.currentScript&&document.currentScript.parentElement;` +
         `if(!r)return;` +
+        // 이전 실행 interval 정리 (React StrictMode 이중 실행 방지)
+        `if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}` +
         `var track=r.querySelector('[data-pg-track]');` +
         `var dotsEl=r.querySelector('[data-pg-dots]');` +
         `if(!track)return;` +
@@ -116,8 +119,83 @@ const SLIDER_SCRIPT =
                 `if(i!==cur){cur=i;updateDots(i);}` +
             `},80);` +
         `},{passive:true});` +
-        `var timer=setInterval(function(){goTo((cur+1)%slides.length);},4000);` +
-        `track.addEventListener('touchstart',function(){clearInterval(timer);},{passive:true,once:true});` +
+        `r._pgTimer=setInterval(function(){goTo((cur+1)%slides.length);},4000);` +
+        `track.addEventListener('touchstart',function(){if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}},{passive:true,once:true});` +
+    `})();` +
+    `<\/script>`;
+
+// 반응형 슬라이더 초기화 인라인 스크립트
+// [FIX #312-1] 768px 미만: 슬라이더, 768px 이상: 그리드로 전환 (resize 대응)
+// [FIX #312-2] r._pgTimer / r._pgResize 로 이전 실행 cleanup → interval 중복 방지
+const RESPONSIVE_SLIDER_SCRIPT =
+    `<script>` +
+    `(function(){` +
+        `if(window.builderRuntime)return;` +
+        `var r=document.currentScript&&document.currentScript.parentElement;` +
+        `if(!r)return;` +
+        // 이전 실행 cleanup
+        `if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}` +
+        `if(r._pgResize){window.removeEventListener('resize',r._pgResize);r._pgResize=null;}` +
+        `var track=r.querySelector('[data-pg-track]');` +
+        `var dotsEl=r.querySelector('[data-pg-dots]');` +
+        `if(!track)return;` +
+        `var slides=Array.from(track.querySelectorAll('[data-pg-slide]'));` +
+        `if(!slides.length)return;` +
+        `var cur=0;` +
+        `function updateDots(i){` +
+            `if(!dotsEl)return;` +
+            `Array.from(dotsEl.children).forEach(function(d,j){` +
+                `d.style.background=j===i?'#0046A4':'rgba(0,70,164,0.25)';` +
+            `});` +
+        `}` +
+        `function goTo(i){` +
+            `cur=i;` +
+            `track.scrollTo({left:i*track.clientWidth,behavior:'smooth'});` +
+            `updateDots(i);` +
+        `}` +
+        // dots 버튼 초기화 (슬라이더 모드용, 그리드 모드에서는 숨김)
+        `if(dotsEl){` +
+            `dotsEl.innerHTML='';` +
+            `slides.forEach(function(_,i){` +
+                `var d=document.createElement('button');` +
+                `d.setAttribute('aria-label','슬라이드 '+(i+1));` +
+                `d.style.cssText='width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 4px;display:block;line-height:0;font-size:0;overflow:hidden;flex-shrink:0;background:'+(i===0?'#0046A4':'rgba(0,70,164,0.25)')+';';` +
+                `d.addEventListener('click',function(){goTo(i);});` +
+                `dotsEl.appendChild(d);` +
+            `});` +
+        `}` +
+        `var t;` +
+        `track.addEventListener('scroll',function(){` +
+            `clearTimeout(t);` +
+            `t=setTimeout(function(){` +
+                `var i=Math.round(track.scrollLeft/track.clientWidth);` +
+                `if(i!==cur){cur=i;updateDots(i);}` +
+            `},80);` +
+        `},{passive:true});` +
+        // 768px 이상: 그리드 레이아웃 (interval 정지, dots 숨김)
+        `function applyGrid(){` +
+            `if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}` +
+            `track.style.cssText='display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;padding:4px 20px 20px;box-sizing:border-box;';` +
+            `slides.forEach(function(s){s.style.cssText='flex:0 0 calc(33.333% - 8px);min-width:0;box-sizing:border-box;';});` +
+            `if(dotsEl)dotsEl.style.display='none';` +
+        `}` +
+        // 768px 미만: 슬라이더 레이아웃 (interval 시작, dots 표시)
+        `function applySlider(){` +
+            `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:4px 0 8px;gap:0;';` +
+            `slides.forEach(function(s){s.style.cssText='flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 20px;box-sizing:border-box;';});` +
+            `if(dotsEl)dotsEl.style.display='flex';` +
+            `if(!r._pgTimer){` +
+                `r._pgTimer=setInterval(function(){goTo((cur+1)%slides.length);},4000);` +
+                `track.addEventListener('touchstart',function(){if(r._pgTimer){clearInterval(r._pgTimer);r._pgTimer=null;}},{passive:true,once:true});` +
+            `}` +
+        `}` +
+        `function applyLayout(){` +
+            `if(!document.contains(r)){window.removeEventListener('resize',r._pgResize);r._pgResize=null;return;}` +
+            `if(window.innerWidth>=768){applyGrid();}else{applySlider();}` +
+        `}` +
+        `applyLayout();` +
+        `r._pgResize=applyLayout;` +
+        `window.addEventListener('resize',r._pgResize);` +
     `})();` +
     `<\/script>`;
 
@@ -154,7 +232,8 @@ const PRODUCT_GALLERY_WEB_HTML =
 
 // ── responsive variant ──────────────────────────────────────────────────────
 // 기본: column 나열 (에디터에서 전체 카드 표시)
-// 뷰어: 스크립트가 가로 scroll-snap 슬라이더로 변환
+// 뷰어: 768px 미만 → 슬라이더, 768px 이상 → 그리드 (resize 대응)
+// [FIX #312] RESPONSIVE_SLIDER_SCRIPT 사용 — 브레이크포인트 전환 + interval 중복 방지
 const PRODUCT_GALLERY_RESPONSIVE_HTML =
     `<div data-component-id="product-gallery-responsive" data-spw-block style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;position:relative;width:100%;box-sizing:border-box;">` +
         `<div style="padding:20px 20px 12px;">` +
@@ -166,7 +245,7 @@ const PRODUCT_GALLERY_RESPONSIVE_HTML =
             ).join('') +
         `</div>` +
         `<div data-pg-dots style="display:flex;justify-content:center;align-items:center;height:32px;"></div>` +
-        SLIDER_SCRIPT +
+        RESPONSIVE_SLIDER_SCRIPT +
     `</div>`;
 
 const VARIANTS: Array<{ id: string; html: string }> = [
