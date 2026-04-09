@@ -45,7 +45,7 @@ const makeGalleryHtml = (cards: { name: string; rate: string; desc: string }[]) 
       ${cards
         .map(
             (_, i) =>
-                `<button aria-label="슬라이드 ${i + 1}" style="width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 4px;background:${i === 0 ? '#0046A4' : 'rgba(0,70,164,0.25)'};"></button>`,
+                `<button aria-label="슬라이드 ${i + 1}" style="width:44px;height:44px;border-radius:50%;border:none;padding:0;cursor:pointer;margin:0 4px;background:${i === 0 ? '#0046A4' : 'rgba(0,70,164,0.25)'};"></button>`,
         )
         .join('')}
     </div>
@@ -168,8 +168,9 @@ test.describe('product-gallery — 정상 동작', () => {
         const firstDot = page
             .locator('[data-component-id^="product-gallery"] [data-pg-dots] button')
             .first();
-        const bg = await firstDot.evaluate((el) => (el as HTMLElement).style.background);
-        expect(bg).toContain('0046A4');
+        const bg = await firstDot.evaluate((el) => getComputedStyle(el).backgroundColor);
+        // 브라우저가 hex → rgb로 정규화: #0046A4 → rgb(0, 70, 164)
+        expect(bg).toBe('rgb(0, 70, 164)');
     });
 
     test('신청 링크가 href 속성을 가짐', async ({ page }) => {
