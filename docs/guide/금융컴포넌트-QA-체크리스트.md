@@ -84,6 +84,7 @@ npm run test:e2e:ui
 | 컴포넌트 | 스펙 파일 | 상태 |
 |---|---|---|
 | `app-header` | `e2e/components/app-header.spec.ts` | ✅ 작성 완료 |
+| `info-card-slide` | `e2e/components/info-card-slide-editor.spec.ts` | ✅ 에디터 E2E 작성 완료 |
 | `product-menu` ~ `popup-banner` | `e2e/components/*.spec.ts` | 🔲 미작성 |
 
 > 신규 컴포넌트 스펙 추가 시: `runCommonChecks()` 한 줄로 공통 7개 항목 자동 처리, 이후 컴포넌트 고유 체크만 추가

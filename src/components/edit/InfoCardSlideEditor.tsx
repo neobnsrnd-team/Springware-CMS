@@ -663,6 +663,7 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
         <>
             <div onClick={onClose} style={S.overlay} />
             <div
+                data-testid="info-card-slide-editor"
                 onClick={(e) => e.stopPropagation()}
                 style={{
                     ...S.panel,
@@ -811,6 +812,7 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
                                     >
                                         가로(px)
                                         <input
+                                            data-testid={`card-width-${idx}`}
                                             type="number"
                                             min={0}
                                             value={card.widthPx ?? ''}
@@ -836,6 +838,7 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
                                     >
                                         세로(px)
                                         <input
+                                            data-testid={`card-height-${idx}`}
                                             type="number"
                                             min={0}
                                             value={card.heightPx ?? ''}
@@ -1150,7 +1153,7 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
                         <button onClick={onClose} style={S.cancelBtn}>
                             취소
                         </button>
-                        <button onClick={handleApply} style={S.applyBtn}>
+                        <button data-testid="apply-info-card-slide-editor" onClick={handleApply} style={S.applyBtn}>
                             적용
                         </button>
                     </div>
