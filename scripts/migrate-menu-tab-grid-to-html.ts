@@ -126,11 +126,24 @@ const TOGGLE_SCRIPT =
         // Sticky 모드 — .row 래퍼에 적용해야 .is-container 전체 높이 안에서 고정됨
         `var stickyRow=root.closest('.row');` +
         `var isSticky=root.getAttribute('data-menu-sticky')==='true';` +
-        `if(isSticky&&stickyRow){` +
+        // applySticky: 함수로 분리하여 즉시 적용 + 런타임 init 후 재적용에 재사용
+        `function applySticky(){` +
+            `if(!stickyRow)return;` +
             `stickyRow.style.position='sticky';` +
             `stickyRow.style.top='0';` +
             `stickyRow.style.zIndex='100';` +
             `stickyRow.style.background='#ffffff';` +
+        `}` +
+        `if(isSticky){` +
+            // 즉시 적용 (SSR 파싱 시점)
+            `applySticky();` +
+            // ContentBuilderRuntime init() 이후 재확인
+            // — 런타임이 .row style을 재처리하여 sticky가 소실될 경우 복원
+            `if(document.readyState==='complete'){` +
+                `requestAnimationFrame(applySticky);` +
+            `}else{` +
+                `window.addEventListener('load',function(){requestAnimationFrame(applySticky);},{once:true});` +
+            `}` +
         `}else if(stickyRow){` +
             `stickyRow.style.position='';` +
             `stickyRow.style.top='';` +

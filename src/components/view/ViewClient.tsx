@@ -456,21 +456,13 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                             src={iframeSrc}
                             style={{
                                 width: '100%',
-                                minHeight: '700px',
+                                // 고정 높이로 실제 디바이스 스크린 시뮬레이션
+                                // scrollHeight 자동확장 방식은 iframe 내부 스크롤이 사라져
+                                // position:sticky(menu-tab-grid 등)가 무력화됨
+                                height: 'calc(100vh - 120px)',
+                                minHeight: '600px',
                                 border: 'none',
                                 display: 'block',
-                            }}
-                            // iframe 높이를 내용에 맞게 자동 조정
-                            onLoad={(e) => {
-                                const iframe = e.target as HTMLIFrameElement;
-                                try {
-                                    const doc = iframe.contentDocument;
-                                    if (doc) {
-                                        iframe.style.height = `${doc.documentElement.scrollHeight}px`;
-                                    }
-                                } catch {
-                                    // cross-origin 등으로 접근 불가한 경우 무시
-                                }
                             }}
                         />
                     </div>

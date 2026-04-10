@@ -477,7 +477,7 @@ test.describe('loan-calculator — 엣지 케이스', () => {
 test.describe('loan-calculator — 모바일 뷰 레이아웃 (360~430px)', () => {
     // eslint-disable-next-line playwright/expect-expect
     test('Galaxy S / iPhone SE / iPhone Pro Max — 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
-        await page.setContent(makeHtml(), { baseURL: 'http://localhost:3000' });
+        await page.setContent(makeHtml());
         await checkViewportLayouts(page, ROOT, MOBILE_VIEWPORTS);
     });
 });
@@ -487,7 +487,7 @@ test.describe('loan-calculator — 모바일 뷰 레이아웃 (360~430px)', () =
 test.describe('loan-calculator — 웹 뷰 레이아웃 (767~1440px)', () => {
     // eslint-disable-next-line playwright/expect-expect
     test('태블릿 경계~1440px 데스크탑 — 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
-        await page.setContent(makeHtml(), { baseURL: 'http://localhost:3000' });
+        await page.setContent(makeHtml());
         await checkViewportLayouts(page, ROOT, WEB_VIEWPORTS);
     });
 });
@@ -497,7 +497,7 @@ test.describe('loan-calculator — 웹 뷰 레이아웃 (767~1440px)', () => {
 test.describe('loan-calculator — 반응형 뷰 레이아웃 (360~1440px)', () => {
     // eslint-disable-next-line playwright/expect-expect
     test('전체 뷰포트 구간 — 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
-        await page.setContent(makeHtml(), { baseURL: 'http://localhost:3000' });
+        await page.setContent(makeHtml());
         await checkViewportLayouts(page, ROOT);
     });
 });
