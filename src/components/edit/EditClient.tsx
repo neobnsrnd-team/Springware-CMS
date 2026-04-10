@@ -31,9 +31,11 @@ import StatusCardEditor from '@/components/edit/StatusCardEditor';
 import MyDataAssetEditor from '@/components/edit/MyDataAssetEditor';
 import FinanceCalendarEditor from '@/components/edit/FinanceCalendarEditor';
 import EventBannerEditor from '@/components/edit/EventBannerEditor';
+import Toast from '@/components/ui/Toast';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
+import useToast from '@/hooks/useToast';
 
 // 기본 블록 타입 — DB SPW_CMS_COMPONENT에서 로드
 export interface BasicBlock {
@@ -230,6 +232,7 @@ export default function EditClient({
         brandThemeRef.current = brandTheme ?? null;
     }, [brandTheme]);
     const [containerOpacity, setContainerOpacity] = useState(0);
+    const { toastMessage: infoToast, showToast: showInfoToast } = useToast();
 
     // 컴포넌트 패널 드래그 상태
     // — ref: 동기 접근용 (dragover 이벤트 핸들러 내 즉시 참조)
@@ -1966,6 +1969,13 @@ export default function EditClient({
                 const root = tempDiv.firstElementChild;
                 return root?.hasAttribute('data-spw-block') ?? false;
             })();
+            const shouldShowMyDataAssetToast = (() => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = themedHtml.trim();
+                const root = tempDiv.firstElementChild as HTMLElement | null;
+                const componentId = root?.getAttribute('data-component-id') ?? '';
+                return componentId.startsWith('mydata-asset');
+            })();
             const colClass = isSpwBlock ? 'column spw-finance-col' : 'column';
             const wrappedHtml = `<div class="row"><div class="${colClass}">\n${themedHtml}\n</div></div>`;
             const blockHtmls = liveBlocks.map((b) => b.outerHtml);
@@ -1978,6 +1988,11 @@ export default function EditClient({
 
             blockHtmls.splice(targetIdx, 0, wrappedHtml);
             builder.loadHtml(blockHtmls.join('\n'));
+            if (shouldShowMyDataAssetToast) {
+                showInfoToast(
+                    '캔버스 내 숫자 직접 수정은 표시값만 바뀝니다. 비율과 차트까지 반영하려면 편집 모달을 사용해주세요.',
+                );
+            }
 
             // 플러그인 재초기화 + ContentBuilder 편집 핸들러 재연결 + 블록 목록 갱신
             setTimeout(async () => {
@@ -1989,7 +2004,7 @@ export default function EditClient({
                 setCanvasBlocks(parseBuilderBlocks(newHtml, financeComponentsMapRef.current));
             }, 300);
         },
-        [patchPmIconWrap, patchMaxChars],
+        [patchPmIconWrap, patchMaxChars, showInfoToast],
     );
 
     // ── 순서 탭 블록 클릭 → 캔버스 활성화 ──────────────────────────────
@@ -2895,6 +2910,8 @@ export default function EditClient({
                     </div>
                 </div>
             )}
+
+            {infoToast && <Toast message={infoToast} />}
         </>
     );
 }

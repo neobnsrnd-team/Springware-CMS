@@ -137,7 +137,13 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const handleApply = useCallback(() => {
         // 제목
         const titleEl = blockEl.querySelector<HTMLElement>('[data-ma-title]');
-        if (titleEl) titleEl.textContent = title;
+        if (titleEl) {
+            titleEl.textContent = title;
+            titleEl.style.cssText =
+                viewMode === 'web'
+                    ? 'display:block;flex:1;min-width:0;font-size:22px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+                    : 'display:block;flex:1;min-width:0;font-size:15px;font-weight:700;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        }
 
         // 기준일 뱃지
         const dateEl = blockEl.querySelector<HTMLElement>('[data-ma-date]');
@@ -145,6 +151,12 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
             dateEl.textContent = dateText;
             dateEl.setAttribute('data-ma-date-visible', String(dateVisible));
             dateEl.style.display = dateVisible ? '' : 'none';
+            if (dateVisible) {
+                dateEl.style.cssText =
+                    viewMode === 'web'
+                        ? 'display:inline-flex;align-items:center;flex-shrink:0;max-width:180px;padding:7px 12px;border-radius:999px;background:#EEF4FF;color:#0A4AA3;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+                        : 'display:inline-flex;align-items:center;flex-shrink:0;max-width:132px;padding:2px 10px;border-radius:4px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            }
         }
 
         // 총자산 (자동 계산값 반영)
@@ -164,13 +176,17 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const rowContainer = blockEl.querySelector<HTMLElement>('[data-ma-rows]');
         if (rowContainer) {
             const rowLabelStyle =
-                viewMode === 'web' ? 'font-size:15px;color:#475569;font-weight:600;' : 'font-size:14px;color:#6B7280;';
+                viewMode === 'web'
+                    ? 'min-width:0;font-size:15px;color:#475569;font-weight:600;overflow-wrap:anywhere;word-break:break-all;'
+                    : 'min-width:0;font-size:14px;color:#6B7280;overflow-wrap:anywhere;word-break:break-all;';
             const rowAmountBaseStyle =
-                viewMode === 'web' ? 'font-size:16px;font-weight:700;' : 'font-size:14px;font-weight:600;';
+                viewMode === 'web'
+                    ? 'display:block;min-width:0;font-size:16px;font-weight:700;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+                    : 'display:block;min-width:0;font-size:14px;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
             const rowPctStyle =
                 viewMode === 'web'
-                    ? 'font-size:13px;color:#94A3B8;min-width:42px;text-align:right;'
-                    : 'font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;';
+                    ? 'font-size:13px;color:#94A3B8;min-width:42px;text-align:right;flex-shrink:0;'
+                    : 'font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;flex-shrink:0;';
             const rowPadding = viewMode === 'web' ? '12px 0' : '9px 0';
             rowContainer.style.cssText = viewMode === 'web' ? 'padding:0;' : 'padding:0 16px;';
             rowContainer.innerHTML = sortedRows
@@ -182,12 +198,12 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     const amountColor = row.color;
 
                     return (
-                        `<div data-ma-row data-ma-row-type="${row.type}" style="display:flex;justify-content:space-between;align-items:center;padding:${rowPadding};${borderStyle}">` +
-                        `<span style="display:flex;align-items:center;gap:6px;">` +
+                        `<div data-ma-row data-ma-row-type="${row.type}" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:${rowPadding};${borderStyle}">` +
+                        `<span style="display:flex;align-items:flex-start;gap:6px;min-width:0;flex:1;">` +
                         `<span data-ma-dot data-ma-dot-color="${row.color}" style="width:8px;height:8px;border-radius:50%;background:${row.color};flex-shrink:0;display:inline-block;"></span>` +
                         `<span data-ma-label style="${rowLabelStyle}">${escapeHtml(row.label)}</span>` +
                         `</span>` +
-                        `<span style="display:flex;align-items:center;gap:8px;">` +
+                        `<span style="display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;flex:0 1 52%;min-width:0;">` +
                         `<span data-ma-amount data-ma-amount-color="${amountColor}" style="${rowAmountBaseStyle}color:${amountColor};">${escapeHtml(amountStr)}</span>` +
                         `<span data-ma-pct style="${rowPctStyle}">${pct}%</span>` +
                         `</span>` +
@@ -217,8 +233,8 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     const pct = totalAbsForLegend > 0 ? Math.round((Math.abs(r.amount) / totalAbsForLegend) * 100) : 0;
                     const legendItemStyle =
                         viewMode === 'web'
-                            ? 'display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#475569;padding:8px 10px;border-radius:999px;background:#ffffff;border:1px solid #E2E8F0;font-weight:600;white-space:nowrap;'
-                            : 'display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;';
+                            ? 'display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#475569;padding:8px 10px;border-radius:999px;background:#ffffff;border:1px solid #E2E8F0;font-weight:600;text-align:center;min-width:0;width:100%;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;'
+                            : 'display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;';
                     return (
                         `<span style="${legendItemStyle}">` +
                         `<span style="width:8px;height:8px;border-radius:2px;background:${r.color};flex-shrink:0;display:inline-block;"></span>` +

@@ -18,44 +18,55 @@ function buildInner(viewMode: AssetViewMode): string {
         ? 'width:108px;height:108px;border-radius:50%;background:#ffffff;box-shadow:inset 0 0 0 1px rgba(226,232,240,0.9);'
         : 'width:60px;height:60px;border-radius:50%;background:#ffffff;';
     const headerStyle = isWeb
-        ? 'display:flex;justify-content:space-between;align-items:center;padding:24px 28px 18px;border-bottom:1px solid #EEF2F7;'
-        : 'display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;';
+        ? 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:24px 28px 18px;border-bottom:1px solid #EEF2F7;'
+        : 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 16px 10px;';
     const titleStyle = isWeb
-        ? 'font-size:22px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;'
-        : 'font-size:15px;font-weight:700;color:#1A1A2E;';
+        ? 'display:block;flex:1;min-width:0;font-size:22px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+        : 'display:block;flex:1;min-width:0;font-size:15px;font-weight:700;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     const dateStyle = isWeb
-        ? 'display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;background:#EEF4FF;color:#0A4AA3;font-size:12px;font-weight:700;'
-        : 'padding:2px 10px;border-radius:4px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;';
-    const summaryStyle = 'display:flex;align-items:center;gap:20px;padding:6px 16px 14px;';
+        ? 'display:inline-flex;align-items:center;flex-shrink:0;max-width:180px;padding:7px 12px;border-radius:999px;background:#EEF4FF;color:#0A4AA3;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+        : 'display:inline-flex;align-items:center;flex-shrink:0;max-width:132px;padding:2px 10px;border-radius:4px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    const summaryStyle = 'display:flex;align-items:center;gap:20px;padding:6px 16px 14px;min-width:0;';
     const summaryMetaStyle = 'flex:1;min-width:0;';
     const totalWrapStyle = 'margin-bottom:8px;';
     const totalLabelStyle = 'font-size:12px;color:#6B7280;';
-    const totalValueStyle = 'font-size:16px;font-weight:700;color:#1A1A2E;';
+    const totalValueStyle =
+        'display:block;font-size:16px;font-weight:700;color:#1A1A2E;line-height:1.35;overflow-wrap:anywhere;word-break:break-all;';
     const legendStyle = isWeb
         ? 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;width:100%;'
         : 'display:flex;flex-wrap:wrap;gap:4px 12px;';
     const legendItemStyle = isWeb
-        ? 'display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#475569;padding:8px 10px;border-radius:999px;background:#ffffff;border:1px solid #E2E8F0;font-weight:600;white-space:nowrap;'
-        : 'display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;';
+        ? 'display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#475569;padding:8px 10px;border-radius:999px;background:#ffffff;border:1px solid #E2E8F0;font-weight:600;text-align:center;min-width:0;width:100%;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;'
+        : 'display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;';
     const rowsStyle = isWeb ? 'padding:0;' : 'padding:0 16px;';
     const rowBaseStyle = isWeb
-        ? 'display:flex;justify-content:space-between;align-items:center;padding:12px 0;'
-        : 'display:flex;justify-content:space-between;align-items:center;padding:9px 0;';
-    const labelStyle = isWeb ? 'font-size:15px;color:#475569;font-weight:600;' : 'font-size:14px;color:#6B7280;';
-    const amountStyle = isWeb ? 'font-size:16px;font-weight:700;color:#1A1A2E;' : 'font-size:14px;font-weight:600;color:#1A1A2E;';
-    const amountDebtStyle = isWeb ? 'font-size:16px;font-weight:700;color:#EF4444;' : 'font-size:14px;font-weight:600;color:#EF4444;';
-    const pctStyle = isWeb ? 'font-size:13px;color:#94A3B8;min-width:42px;text-align:right;' : 'font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;';
+        ? 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:12px 0;'
+        : 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:9px 0;';
+    const labelStyle = isWeb
+        ? 'min-width:0;font-size:15px;color:#475569;font-weight:600;overflow-wrap:anywhere;word-break:break-all;'
+        : 'min-width:0;font-size:14px;color:#6B7280;overflow-wrap:anywhere;word-break:break-all;';
+    const amountStyle = isWeb
+        ? 'display:block;min-width:0;font-size:16px;font-weight:700;color:#1A1A2E;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+        : 'display:block;min-width:0;font-size:14px;font-weight:600;color:#1A1A2E;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    const amountDebtStyle = isWeb
+        ? 'display:block;min-width:0;font-size:16px;font-weight:700;color:#EF4444;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+        : 'display:block;min-width:0;font-size:14px;font-weight:600;color:#EF4444;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    const pctStyle = isWeb
+        ? 'font-size:13px;color:#94A3B8;min-width:42px;text-align:right;flex-shrink:0;'
+        : 'font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;flex-shrink:0;';
     const netWrapStyle = isWeb
-        ? 'padding:18px 0 0;border-top:1px solid #E9EEF5;display:flex;justify-content:space-between;align-items:center;'
-        : 'margin:0 16px;border-top:1px solid #F3F4F6;padding:10px 0;display:flex;justify-content:space-between;align-items:center;';
-    const netLabelStyle = isWeb ? 'font-size:14px;font-weight:700;color:#0F172A;' : 'font-size:13px;font-weight:600;color:#1A1A2E;';
+        ? 'padding:18px 0 0;border-top:1px solid #E9EEF5;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;'
+        : 'margin:0 16px;border-top:1px solid #F3F4F6;padding:10px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;';
+    const netLabelStyle = isWeb
+        ? 'font-size:14px;font-weight:700;color:#0F172A;min-width:0;overflow-wrap:anywhere;word-break:break-all;'
+        : 'font-size:13px;font-weight:600;color:#1A1A2E;min-width:0;overflow-wrap:anywhere;word-break:break-all;';
     const netValueStyle = isWeb
-        ? 'font-size:24px;font-weight:800;color:#0046A4;letter-spacing:-0.02em;'
-        : 'font-size:14px;font-weight:700;color:#0046A4;';
+        ? 'font-size:24px;font-weight:800;color:#0046A4;letter-spacing:-0.02em;text-align:right;overflow-wrap:anywhere;word-break:break-all;'
+        : 'font-size:14px;font-weight:700;color:#0046A4;text-align:right;overflow-wrap:anywhere;word-break:break-all;';
     const buttonWrapStyle = isWeb ? 'padding:0;' : 'padding:4px 16px 16px;';
     const buttonStyle = isWeb
-        ? 'display:block;text-align:center;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#0046A4 0%,#0A5BD7 100%);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 10px 24px rgba(0,70,164,0.22);'
-        : 'display:block;text-align:center;padding:11px 0;border-radius:8px;background:#0046A4;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;';
+        ? 'display:block;text-align:center;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#0046A4 0%,#0A5BD7 100%);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 10px 24px rgba(0,70,164,0.22);line-height:1.4;overflow-wrap:anywhere;word-break:break-all;white-space:normal;'
+        : 'display:block;text-align:center;padding:11px 0;border-radius:8px;background:#0046A4;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;line-height:1.4;overflow-wrap:anywhere;word-break:break-all;white-space:normal;';
 
     if (isWeb) {
         return (
@@ -86,11 +97,11 @@ function buildInner(viewMode: AssetViewMode): string {
                     `</div>` +
                     `<div data-ma-rows style="${rowsStyle}">` +
                         `<div data-ma-row data-ma-row-type="asset" style="${rowBaseStyle}border-bottom:1px solid #F3F4F6;">` +
-                            `<span style="display:flex;align-items:center;gap:6px;">` +
+                            `<span style="display:flex;align-items:flex-start;gap:6px;min-width:0;flex:1;">` +
                                 `<span data-ma-dot style="width:8px;height:8px;border-radius:50%;background:#0046A4;flex-shrink:0;display:inline-block;" data-ma-dot-color="#0046A4"></span>` +
                                 `<span data-ma-label style="${labelStyle}">예금·적금</span>` +
                             `</span>` +
-                            `<span style="display:flex;align-items:center;gap:8px;">` +
+                            `<span style="display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;flex:0 1 52%;min-width:0;">` +
                                 `<span data-ma-amount data-ma-amount-color="#1A1A2E" style="${amountStyle}">25,000,000 원</span>` +
                                 `<span data-ma-pct style="${pctStyle}">53%</span>` +
                             `</span>` +
@@ -164,11 +175,11 @@ function buildInner(viewMode: AssetViewMode): string {
         `</div>` +
         `<div data-ma-rows style="${rowsStyle}">` +
             `<div data-ma-row data-ma-row-type="asset" style="${rowBaseStyle}border-bottom:1px solid #F3F4F6;">` +
-                `<span style="display:flex;align-items:center;gap:6px;">` +
+                `<span style="display:flex;align-items:flex-start;gap:6px;min-width:0;flex:1;">` +
                     `<span data-ma-dot style="width:8px;height:8px;border-radius:50%;background:#0046A4;flex-shrink:0;display:inline-block;" data-ma-dot-color="#0046A4"></span>` +
                     `<span data-ma-label style="${labelStyle}">예금·적금</span>` +
                 `</span>` +
-                `<span style="display:flex;align-items:center;gap:8px;">` +
+                `<span style="display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;flex:0 1 52%;min-width:0;">` +
                     `<span data-ma-amount data-ma-amount-color="#1A1A2E" style="${amountStyle}">25,000,000 원</span>` +
                     `<span data-ma-pct style="${pctStyle}">53%</span>` +
                 `</span>` +
