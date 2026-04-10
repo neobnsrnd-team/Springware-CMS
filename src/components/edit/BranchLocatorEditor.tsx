@@ -246,7 +246,7 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
                     const mapSrc = item.getAttribute('data-bl-map-src') ?? '';
                     return (
                         <ItemRow
-                            key={idx}
+                            key={`${type}-${name}-${idx}`}
                             type={type}
                             name={name}
                             mapSrc={mapSrc}
@@ -302,11 +302,16 @@ function ItemRow({
 }) {
     const [localSrc, setLocalSrc] = useState(mapSrc);
 
+    // mapSrc prop이 외부(DOM)에서 변경될 때 로컬 상태 동기화 (인덱스 이동으로 인한 stale state 방지)
+    useEffect(() => {
+        setLocalSrc(mapSrc);
+    }, [mapSrc]);
+
     const isValidSrc =
         !localSrc.trim() ||
-        localSrc.includes('google.com/maps/embed') ||
-        localSrc.includes('map.kakao.com/link/embed') ||
-        localSrc.includes('maps.google.com/maps?');
+        localSrc.startsWith('https://www.google.com/maps/embed') ||
+        localSrc.startsWith('https://map.kakao.com/link/embed') ||
+        localSrc.startsWith('https://maps.google.com/maps?');
 
     return (
         <div

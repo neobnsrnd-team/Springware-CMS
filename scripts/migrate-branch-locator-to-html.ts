@@ -20,8 +20,13 @@ const SEARCH_SVG =
         `<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>` +
     `</svg>`;
 
-function escapeAttr(str: string): string {
-    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
 
 interface BranchItem {
@@ -44,7 +49,7 @@ function buildBranchItem(item: BranchItem, isLast: boolean): string {
     const iconLbl = item.type === 'atm' ? 'ATM'     : '영';
     const border  = isLast ? 'none' : '1px solid #F3F4F6';
     return (
-        `<div data-bl-item="${item.type}" data-bl-map-src="${escapeAttr(item.mapSrc ?? '')}" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:${border};min-height:64px;">` +
+        `<div data-bl-item="${item.type}" data-bl-map-src="${escapeHtml(item.mapSrc ?? '')}" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:${border};min-height:64px;">` +
             `<div style="width:40px;height:40px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:${iconFs};font-weight:800;letter-spacing:-0.5px;flex-shrink:0;color:#fff;">${iconLbl}</div>` +
             `<div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;">` +
                 `<span data-bl-name style="font-size:14px;font-weight:600;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</span>` +
