@@ -362,7 +362,7 @@ function parseSlides(blockEl: HTMLElement): CardSlide[] {
                           href: el.getAttribute('href') || fallback.buttons?.[buttonIdx]?.href,
                       }))
                     : fallback.buttons;
-            const safeTitle = title || fallback.title || '?쒕ぉ';
+            const safeTitle = title || fallback.title || '제목';
             return {
                 tag,
                 showMore,
