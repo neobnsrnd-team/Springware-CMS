@@ -118,7 +118,7 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 
 const EXTRA_STYLES: Record<string, string> = {
     mobile: '',
-    web: 'max-width:480px;margin:0 auto;',
+    web: 'width:100%;box-sizing:border-box;',
     responsive: 'width:100%;box-sizing:border-box;',
 };
 
@@ -141,10 +141,10 @@ function buildEventBannerHtml(
         slidesHtml +
         `</div>` +
         `<div data-banner-pagination style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;">` +
-        `<button data-banner-prev style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:14px;color:#6B7280;">&#10094;</button>` +
+        `<button data-banner-prev style="background:none;border:none;cursor:pointer;min-width:44px;min-height:44px;font-size:14px;color:#6B7280;display:inline-flex;align-items:center;justify-content:center;">&#10094;</button>` +
         `<span data-banner-indicator style="font-size:13px;color:#6B7280;min-width:40px;text-align:center;">1 / ${total}</span>` +
-        `<button data-banner-next style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:14px;color:#6B7280;">&#10095;</button>` +
-        `<button data-banner-pause style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:16px;color:#6B7280;">&#10073;&#10073;</button>` +
+        `<button data-banner-next style="background:none;border:none;cursor:pointer;min-width:44px;min-height:44px;font-size:14px;color:#6B7280;display:inline-flex;align-items:center;justify-content:center;">&#10095;</button>` +
+        `<button data-banner-pause style="background:none;border:none;cursor:pointer;min-width:44px;min-height:44px;font-size:16px;color:#6B7280;display:inline-flex;align-items:center;justify-content:center;">&#10073;&#10073;</button>` +
         `</div>` +
         BANNER_SCRIPT +
         `</div>`
