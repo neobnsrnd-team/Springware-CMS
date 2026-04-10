@@ -247,6 +247,120 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             });
         });
 
+        // ── branch-locator 필터 버튼 ──
+        // 인라인 <script>가 dangerouslySetInnerHTML 환경에서 실행 안 되므로 직접 처리
+        const blCleanups: (() => void)[] = [];
+        document.querySelectorAll<HTMLElement>('[data-component-id^="branch-locator"]').forEach((root) => {
+            const filterBtns = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-filter]'));
+            const branchItems = Array.from(root.querySelectorAll<HTMLElement>('[data-bl-item]'));
+            // ── 바텀시트 드래그 핸들 ──
+            // flex 흐름 유지: 지도(flex:1) → 필터(고정) → 시트(명시 높이)
+            // 시트 줄이면 지도가 자연 확장 → 지도가 필터 뒤로 침범하지 않음
+            const sheet = root.querySelector<HTMLElement>('[data-bl-sheet]');
+            const handle = root.querySelector<HTMLElement>('[data-bl-handle]');
+            const mapArea = root.querySelector<HTMLElement>('[data-bl-map]')?.parentElement ?? null;
+            if (sheet && handle) {
+                let dragY = 0;
+                let dragH = 0;
+                let dragging = false;
+                let moved = false;
+
+                // 원본 style 속성 저장 — 복원 시 완벽하게 되돌리기 위해
+                const origRootStyle = root.getAttribute('style') ?? '';
+                const origMapStyle = mapArea?.getAttribute('style') ?? '';
+                const origSheetStyle = sheet.getAttribute('style') ?? '';
+
+                const activateLayout = () => {
+                    root.style.height = `${root.offsetHeight}px`;
+                    root.style.minHeight = '0';
+                    root.style.overflow = 'hidden';
+                    if (mapArea) {
+                        mapArea.style.aspectRatio = 'unset';
+                        mapArea.style.flex = '1';
+                    }
+                    sheet.style.flex = 'none';
+                    sheet.style.minHeight = '0';
+                    sheet.style.height = `${dragH}px`;
+                    sheet.style.transition = 'none';
+                };
+                const onStart = (e: MouseEvent | TouchEvent) => {
+                    e.preventDefault();
+                    dragging = true;
+                    moved = false;
+                    dragY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+                    dragH = sheet.offsetHeight;
+                };
+                const onMove = (e: MouseEvent | TouchEvent) => {
+                    if (!dragging) return;
+                    const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
+                    if (!moved) {
+                        if (Math.abs(y - dragY) < 25) return;
+                        moved = true;
+                        activateLayout();
+                    }
+                    e.preventDefault();
+                    const maxH = root.offsetHeight * 0.85;
+                    const newH = Math.max(24, Math.min(maxH, dragH + (dragY - y)));
+                    sheet.style.height = `${newH}px`;
+                };
+                const restoreAll = () => {
+                    root.setAttribute('style', origRootStyle);
+                    if (mapArea) mapArea.setAttribute('style', origMapStyle);
+                    sheet.setAttribute('style', origSheetStyle);
+                };
+                const initH = sheet.offsetHeight;
+                const onEnd = () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    if (!moved) return;
+                    sheet.style.transition = 'height 0.25s ease';
+                    const h = sheet.offsetHeight;
+                    const diff = Math.abs(h - dragH);
+                    if (diff < 20) {
+                        restoreAll();
+                    } else if (h < initH * 0.4) {
+                        sheet.style.height = '24px';
+                    } else if (h > initH * 1.2) {
+                        sheet.style.height = `${Math.round(root.offsetHeight * 0.75)}px`;
+                    } else {
+                        restoreAll();
+                    }
+                };
+
+                handle.addEventListener('mousedown', onStart);
+                handle.addEventListener('touchstart', onStart, { passive: false });
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('mouseup', onEnd);
+                document.addEventListener('touchend', onEnd);
+                blCleanups.push(() => {
+                    handle.removeEventListener('mousedown', onStart);
+                    handle.removeEventListener('touchstart', onStart);
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('touchmove', onMove);
+                    document.removeEventListener('mouseup', onEnd);
+                    document.removeEventListener('touchend', onEnd);
+                });
+            }
+
+            filterBtns.forEach((btn) => {
+                const onClick = () => {
+                    const filterType = btn.getAttribute('data-bl-filter');
+                    filterBtns.forEach((x) => {
+                        const isActive = x === btn;
+                        x.style.background = isActive ? '#0046A4' : '#fff';
+                        x.style.color = isActive ? '#fff' : '#6B7280';
+                    });
+                    branchItems.forEach((item) => {
+                        item.style.display =
+                            filterType === 'all' || item.getAttribute('data-bl-item') === filterType ? 'flex' : 'none';
+                    });
+                };
+                btn.addEventListener('click', onClick);
+                blCleanups.push(() => btn.removeEventListener('click', onClick));
+            });
+        });
+
         // 금융 컴포넌트 내 더미 링크(href="#") 클릭 시 상단 이동 차단
         // ContentBuilder가 onclick 속성을 제거하므로 이벤트 위임으로 처리
         const handleDummyLink = (e: MouseEvent) => {
@@ -256,6 +370,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         document.addEventListener('click', handleDummyLink);
 
         return () => {
+            blCleanups.forEach((fn) => fn());
             document.removeEventListener('click', handleDummyLink);
             runtime.destroy();
         };

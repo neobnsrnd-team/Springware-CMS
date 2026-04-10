@@ -99,7 +99,7 @@ function buildHtml(componentId: string, extraStyle: string): string {
             // ── 지도 영역 ──
             `<div style="position:relative;aspect-ratio:16/9;border-radius:20px 20px 0 0;flex-shrink:0;background:#E8EFF8;">` +
                 // iframe: src="" 초기값, 편집 패널에서 지도 embed URL 입력
-                `<iframe data-bl-map src="about:blank" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:20px 20px 0 0;" title="지도" allowfullscreen=""></iframe>` +
+                `<iframe data-bl-map src="about:blank" tabindex="-1" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:20px 20px 0 0;" title="지도" allowfullscreen=""></iframe>` +
                 // 플레이스홀더 (src 비어있을 때 표시)
                 `<div data-bl-map-ph style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(160deg,#E8F0FC 0%,#D1E3F8 100%);">` +
                     `<span style="font-size:40px;">📍</span>` +
@@ -113,12 +113,12 @@ function buildHtml(componentId: string, extraStyle: string): string {
                     `</div>` +
                     `<div style="width:44px;height:44px;background:#0046A4;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 12px rgba(0,70,164,0.3);">${SEARCH_SVG}</div>` +
                 `</div>` +
-                // 필터 버튼
-                `<div style="position:absolute;bottom:12px;left:12px;display:flex;gap:6px;z-index:10;">` +
-                    `<button data-bl-filter="all" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#0046A4;color:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">전체</button>` +
-                    `<button data-bl-filter="branch" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#fff;color:#6B7280;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">영업점</button>` +
-                    `<button data-bl-filter="atm" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#fff;color:#6B7280;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">ATM</button>` +
-                `</div>` +
+            `</div>` +
+            // ── 필터 버튼 (지도 컨테이너 밖 — iframe 터치 가로채기 방지) ──
+            `<div style="position:relative;display:flex;gap:6px;padding:8px 12px;z-index:10;flex-shrink:0;">` +
+                `<button data-bl-filter="all" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#0046A4;color:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">전체</button>` +
+                `<button data-bl-filter="branch" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#fff;color:#6B7280;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">영업점</button>` +
+                `<button data-bl-filter="atm" style="height:32px;padding:0 14px;border:none;border-radius:20px;background:#fff;color:#6B7280;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);">ATM</button>` +
             `</div>` +
             // ── 바텀 시트 ──
             `<div data-bl-sheet style="background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,0.08);flex:1;display:flex;flex-direction:column;min-height:200px;">` +
