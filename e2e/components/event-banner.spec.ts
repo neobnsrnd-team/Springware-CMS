@@ -20,6 +20,54 @@ body { margin: 0; }
 
 const FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
 
+// ── 인라인 슬라이더 스크립트 (실제 컴포넌트와 동일) ─────────────────────────
+// migrate-event-banner-to-html.ts 의 BANNER_SCRIPT 와 동기화
+const BANNER_SCRIPT =
+    `<script>` +
+    `(function(){` +
+    `var root=document.currentScript&&document.currentScript.closest('[data-spw-block]');` +
+    `if(!root||root.getAttribute('data-banner-inited')==='1')return;` +
+    `if(root.closest('.is-builder'))return;` +
+    `root.setAttribute('data-banner-inited','1');` +
+    `var track=root.querySelector('[data-banner-track]');` +
+    `if(!track)return;` +
+    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;` +
+    `-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;';` +
+    `var styleId='eb-hide-'+Math.random().toString(36).slice(2,8);` +
+    `track.setAttribute('data-eb-id',styleId);` +
+    `var styleEl=document.createElement('style');` +
+    `styleEl.textContent='[data-eb-id="'+styleId+'"]::-webkit-scrollbar{display:none}';` +
+    `root.appendChild(styleEl);` +
+    `var items=track.querySelectorAll('[data-banner-item]');` +
+    `items.forEach(function(item){item.style.flex='0 0 100%';item.style.scrollSnapAlign='start';});` +
+    `var total=items.length;` +
+    `var current=0;` +
+    `var indicator=root.querySelector('[data-banner-indicator]');` +
+    `var prevBtn=root.querySelector('[data-banner-prev]');` +
+    `var nextBtn=root.querySelector('[data-banner-next]');` +
+    `var pauseBtn=root.querySelector('[data-banner-pause]');` +
+    `var interval=parseInt(root.getAttribute('data-banner-interval')||'3000',10);` +
+    `var timer=null;var paused=false;` +
+    `function goTo(idx){` +
+    `current=(idx%total+total)%total;` +
+    `track.scrollTo({left:track.offsetWidth*current,behavior:'smooth'});` +
+    `if(indicator)indicator.textContent=(current+1)+' / '+total;` +
+    `}` +
+    `function startTimer(){if(paused)return;timer=setInterval(function(){if(!document.contains(root)){stopTimer();return;}goTo(current+1);},interval);}` +
+    `function stopTimer(){clearInterval(timer);timer=null;}` +
+    `startTimer();` +
+    `if(prevBtn)prevBtn.addEventListener('click',function(){stopTimer();goTo(current-1);startTimer();});` +
+    `if(nextBtn)nextBtn.addEventListener('click',function(){stopTimer();goTo(current+1);startTimer();});` +
+    `if(pauseBtn)pauseBtn.addEventListener('click',function(){` +
+    `paused=!paused;` +
+    `if(paused){stopTimer();pauseBtn.innerHTML='&#9654;';}` +
+    `else{pauseBtn.innerHTML='&#10073;&#10073;';startTimer();}` +
+    `});` +
+    `root.addEventListener('mouseover',function(){stopTimer();});` +
+    `root.addEventListener('mouseleave',function(){if(!paused)startTimer();});` +
+    `})();` +
+    `</script>`;
+
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
 
 interface BannerSlide {
@@ -78,11 +126,12 @@ const makeHtml = (slides: BannerSlide[], viewMode: ViewMode = 'mobile'): string 
       ${slides.map((s, i) => buildSlide(s, i)).join('')}
     </div>
     <div data-banner-pagination style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;">
-      <button data-banner-prev style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:14px;color:#6B7280;">&#10094;</button>
+      <button data-banner-prev style="background:none;border:none;cursor:pointer;min-width:44px;min-height:44px;font-size:14px;color:#6B7280;display:inline-flex;align-items:center;justify-content:center;">&#10094;</button>
       <span data-banner-indicator style="font-size:13px;color:#6B7280;min-width:40px;text-align:center;">1 / ${total}</span>
-      <button data-banner-next style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:14px;color:#6B7280;">&#10095;</button>
-      <button data-banner-pause style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:16px;color:#6B7280;">&#10073;&#10073;</button>
+      <button data-banner-next style="background:none;border:none;cursor:pointer;min-width:44px;min-height:44px;font-size:14px;color:#6B7280;display:inline-flex;align-items:center;justify-content:center;">&#10095;</button>
+      <button data-banner-pause style="background:none;border:none;cursor:pointer;min-width:44px;min-height:44px;font-size:16px;color:#6B7280;display:inline-flex;align-items:center;justify-content:center;">&#10073;&#10073;</button>
     </div>
+    ${BANNER_SCRIPT}
   </div>
 </body></html>`;
 };
@@ -128,9 +177,8 @@ test.describe('event-banner — 공통 체크', () => {
     test('공통 레이아웃·접근성 기준 충족 (가로스크롤·뷰포트·폰트·터치·alt)', async ({ page }) => {
         await runCommonChecks(page, {
             componentIdPrefix: 'event-banner',
-            // 슬라이드 링크(16:9 이미지)만 터치 영역 체크
-            // 제어 버튼(data-banner-prev/next/pause)은 padding:4px 8px → 44px 미달이므로 제외
-            buttonSelector: '[data-banner-item] a',
+            // 슬라이드 링크 + 페이지네이션 제어 버튼(min-width/height 44px 보장) 터치 영역 체크
+            buttonSelector: '[data-banner-item] a, [data-banner-prev], [data-banner-next], [data-banner-pause]',
             textSelector: '[data-banner-indicator]',
             minFontSize: 12,
         });
