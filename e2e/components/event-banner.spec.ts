@@ -112,6 +112,11 @@ const EMPTY_URL_HTML = makeHtml([
     { imageUrl: '', altText: '', linkHref: '#', overlayTitle: '이미지 없는 배너' },
 ]);
 
+// 세로형(portrait) 이미지 비율 처리 검증용
+const PORTRAIT_HTML = makeHtml([
+    { imageUrl: '/test/portrait.jpg', altText: '세로형 배너', linkHref: '#', overlayTitle: '세로 이미지 배너' },
+]);
+
 // ── 공통 체크 ─────────────────────────────────────────────────────────────────
 
 test.describe('event-banner — 공통 체크', () => {
@@ -255,6 +260,36 @@ test.describe('event-banner — 예외 처리 (슬라이드 1개)', () => {
     test('슬라이드 1개 — 가로 스크롤 없음', async ({ page }) => {
         await page.setContent(SINGLE_HTML);
         await checkNoHorizontalScroll(page);
+    });
+});
+
+// ── 엣지 케이스 — 세로형(portrait) 이미지 ────────────────────────────────────
+
+test.describe('event-banner — 세로형(portrait) 이미지 비율 처리', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.setContent(PORTRAIT_HTML);
+    });
+
+    test('슬라이드 컨테이너가 16:9 비율을 유지함 (aspect-ratio CSS 강제)', async ({ page }) => {
+        const img = page.locator('[data-banner-item] img').first();
+        const box = await img.boundingBox();
+        expect(box, '이미지 요소가 렌더링되어야 합니다').not.toBeNull();
+        // aspect-ratio:16/9 → height/width ≈ 0.5625 (오차 ±0.01 허용)
+        const ratio = box!.height / box!.width;
+        expect(ratio, `16:9 비율(0.5625)을 유지해야 합니다 (실제: ${ratio.toFixed(4)})`).toBeCloseTo(9 / 16, 1);
+    });
+
+    test('이미지에 object-fit:cover가 적용됨 (세로 이미지 crop 처리)', async ({ page }) => {
+        const objectFit = await page.locator('[data-banner-item] img').first().evaluate(
+            (el) => getComputedStyle(el).objectFit,
+        );
+        expect(objectFit, 'object-fit:cover로 portrait 이미지가 crop되어야 합니다').toBe('cover');
+    });
+
+    // eslint-disable-next-line playwright/expect-expect
+    test('세로형 이미지 — 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await checkNoHorizontalScroll(page);
+        await checkNotOutsideViewport(page, '[data-component-id^="event-banner"]');
     });
 });
 
