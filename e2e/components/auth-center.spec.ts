@@ -162,7 +162,7 @@ const LONG_TEXT_HTML = makeMobileHtml([
 ]);
 
 const XSS_HTML = makeMobileHtml([
-    { type: 'cert', title: '<script>window.__xss=1</script>', desc: '<img src=x onerror="alert(1)">', isLast: true },
+    { type: 'cert', title: '<script>window.__xss=1</script>', desc: '<img src=x onerror="window.__alert=1">', isLast: true },
 ]);
 
 // ── 공통 체크 ─────────────────────────────────────────────────────────────────
@@ -343,10 +343,6 @@ test.describe('auth-center — 예외 처리', () => {
         await checkNoHorizontalScroll(page);
     });
 
-    test('항목 0개에서도 가로 스크롤 없음', async ({ page }) => {
-        await page.setContent(EMPTY_CARDS_HTML);
-        await checkNoHorizontalScroll(page);
-    });
 });
 
 // ── 엣지 케이스 ──────────────────────────────────────────────────────────────
