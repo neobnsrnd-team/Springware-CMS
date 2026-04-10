@@ -20,17 +20,22 @@ const SEARCH_SVG =
         `<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>` +
     `</svg>`;
 
+function escapeAttr(str: string): string {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
 interface BranchItem {
     type: 'branch' | 'atm';
     name: string;
     addr: string;
     hours: string;
     phone: string;
+    mapSrc?: string; // 아이템 개별 지도 embed URL (클릭 시 지도 교체)
 }
 
 const DEFAULT_ITEMS: BranchItem[] = [
-    { type: 'branch', name: '[금융사명] 강남지점',           addr: '서울 강남구 테헤란로 123',  hours: '평일 09:00~16:00', phone: '1566-2566' },
-    { type: 'atm',    name: '[금융사명] ATM (강남역 2번출구)', addr: '서울 강남구 강남대로 396', hours: '24시간 운영',       phone: '1566-2566' },
+    { type: 'branch', name: '[금융사명] 강남지점',           addr: '서울 강남구 테헤란로 123',  hours: '평일 09:00~16:00', phone: '1566-2566', mapSrc: '' },
+    { type: 'atm',    name: '[금융사명] ATM (강남역 2번출구)', addr: '서울 강남구 강남대로 396', hours: '24시간 운영',       phone: '1566-2566', mapSrc: '' },
 ];
 
 function buildBranchItem(item: BranchItem, isLast: boolean): string {
@@ -39,7 +44,7 @@ function buildBranchItem(item: BranchItem, isLast: boolean): string {
     const iconLbl = item.type === 'atm' ? 'ATM'     : '영';
     const border  = isLast ? 'none' : '1px solid #F3F4F6';
     return (
-        `<div data-bl-item="${item.type}" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:${border};min-height:64px;">` +
+        `<div data-bl-item="${item.type}" data-bl-map-src="${escapeAttr(item.mapSrc ?? '')}" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:${border};min-height:64px;">` +
             `<div style="width:40px;height:40px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:${iconFs};font-weight:800;letter-spacing:-0.5px;flex-shrink:0;color:#fff;">${iconLbl}</div>` +
             `<div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;">` +
                 `<span data-bl-name style="font-size:14px;font-weight:600;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</span>` +
@@ -72,6 +77,28 @@ const VIEWER_SCRIPT =
                 `var t=b.getAttribute('data-bl-filter');` +
                 `fbs.forEach(function(x){var a=x===b;x.style.background=a?'#0046A4':'#fff';x.style.color=a?'#fff':'#6B7280';});` +
                 `bis.forEach(function(i){i.style.display=(t==='all'||i.getAttribute('data-bl-item')===t)?'flex':'none';});` +
+            `});` +
+        `});` +
+        // 아이템 클릭 → 지도 src 교체 (Issue #332)
+        // google.com/maps/embed, maps.google.com/maps?, map.kakao.com/link/embed 만 허용 — XSS 방지
+        `function sanitizeSrc(s){` +
+            `if(!s||!s.trim())return 'about:blank';` +
+            `var t=s.trim();` +
+            `if(t.indexOf('https://www.google.com/maps/embed')===0||t.indexOf('https://maps.google.com/maps?')===0||t.indexOf('https://map.kakao.com/link/embed')===0)return t;` +
+            `return 'about:blank';` +
+        `}` +
+        `var defaultSrc=sanitizeSrc(ms);` +
+        `bis.forEach(function(b){` +
+            `b.style.cursor='pointer';` +
+            `b.addEventListener('click',function(e){` +
+                // tel: 링크 클릭은 지도 변경 안 함
+                `if(e.target&&e.target.closest&&e.target.closest('a[href^="tel:"]'))return;` +
+                `var src=sanitizeSrc(b.getAttribute('data-bl-map-src')||'');` +
+                `var effectiveSrc=src!=='about:blank'?src:defaultSrc;` +
+                `if(mi)mi.setAttribute('src',effectiveSrc);` +
+                `if(mp)mp.style.display=effectiveSrc!=='about:blank'?'none':'flex';` +
+                // 선택 아이템 하이라이트
+                `bis.forEach(function(x){x.style.background=x===b?'#EEF4FF':'';});` +
             `});` +
         `});` +
         // 바텀 시트 드래그
