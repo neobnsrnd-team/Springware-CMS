@@ -46,13 +46,13 @@ function escapeHtml(str: string): string {
 function buildCardHtml(card: CardSlide, idx: number): string {
     // 상단: 태그 + 더보기
     const tagHtml = card.tag
-        ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;">${escapeHtml(card.tag)}</span>`
+        ? `<span style="display:inline-block;max-width:100%;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;overflow-wrap:anywhere;word-break:break-all;box-sizing:border-box;">${escapeHtml(card.tag)}</span>`
         : '';
     const moreHtml = card.showMore
-        ? `<a href="${sanitizeHref(card.moreHref || '#')}" style="color:#9CA3AF;font-size:18px;text-decoration:none;line-height:1;">⋮</a>`
+        ? `<a href="${sanitizeHref(card.moreHref || '#')}" style="color:#9CA3AF;font-size:13px;text-decoration:none;line-height:1.4;display:inline-flex;align-items:center;justify-content:flex-end;max-width:96px;min-width:0;overflow-wrap:anywhere;word-break:break-word;text-align:right;flex-shrink:1;">더보기</a>`
         : '';
     const headerHtml = (tagHtml || moreHtml)
-        ? `<div style="display:flex;align-items:center;justify-content:space-between;">${tagHtml}${moreHtml}</div>`
+        ? `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">${tagHtml}${moreHtml}</div>`
         : '';
 
     // 제목 + 복사 아이콘
@@ -61,37 +61,37 @@ function buildCardHtml(card: CardSlide, idx: number): string {
           `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
           `</button>`
         : '';
-    const titleHtml = `<div style="display:flex;align-items:center;gap:4px;">` +
-        `<span data-card-title style="font-size:18px;font-weight:700;color:#1A1A2E;flex:1;">${escapeHtml(card.title)}</span>` +
+    const titleHtml = `<div style="display:flex;align-items:flex-start;gap:4px;min-width:0;max-width:100%;">` +
+        `<span data-card-title style="display:block;font-size:18px;font-weight:700;color:#1A1A2E;flex:1;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-all;line-height:1.4;">${escapeHtml(card.title)}</span>` +
         copyBtnHtml +
         `</div>`;
 
     // 부제목
     const subtitleHtml = card.subtitle
-        ? `<span style="font-size:14px;color:#6B7280;">${escapeHtml(card.subtitle)}</span>`
+        ? `<span style="display:block;max-width:100%;font-size:14px;color:#6B7280;overflow-wrap:anywhere;word-break:break-all;line-height:1.45;">${escapeHtml(card.subtitle)}</span>`
         : '';
 
     // 보조 텍스트
     const infoHtml = (card.infoLines ?? [])
-        .map((line) => `<span style="font-size:13px;color:#6B7280;text-align:right;">${escapeHtml(line)}</span>`)
+        .map((line) => `<span style="display:block;max-width:100%;font-size:13px;color:#6B7280;text-align:right;overflow-wrap:anywhere;word-break:break-all;line-height:1.45;">${escapeHtml(line)}</span>`)
         .join('');
 
     // 하단 버튼
     const buttonsHtml = (card.buttons ?? []).length > 0
-        ? `<div style="display:flex;gap:8px;margin-top:4px;">` +
+        ? `<div style="display:flex;gap:8px;margin-top:4px;min-width:0;max-width:100%;flex-wrap:wrap;">` +
           (card.buttons ?? []).map((b) =>
               `<a href="${sanitizeHref(b.href || '#')}"` +
               ` style="flex:1;text-align:center;padding:10px;border-radius:8px;` +
-              `background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;">${escapeHtml(b.label)}</a>`,
+              `background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;flex:1 1 120px;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.35;box-sizing:border-box;">${escapeHtml(b.label)}</a>`,
           ).join('') +
           `</div>`
         : '';
 
     return (
         `<div data-card-item data-card-idx="${idx}"` +
-        ` style="flex-shrink:0;width:100%;padding:0 8px;box-sizing:border-box;">` +
+        ` style="flex-shrink:0;width:100%;max-width:100%;padding:0 8px;box-sizing:border-box;">` +
             `<div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;` +
-            `padding:20px;display:flex;flex-direction:column;gap:12px;min-height:180px;">` +
+            `padding:20px;display:flex;flex-direction:column;gap:12px;min-height:180px;width:100%;max-width:100%;overflow:hidden;box-sizing:border-box;">` +
                 headerHtml +
                 titleHtml +
                 subtitleHtml +
@@ -133,8 +133,7 @@ const SLIDE_SCRIPT =
     // 하단 버튼 텍스트 넘침 시 글자 크기 자동 축소
     `track.querySelectorAll('[data-card-item] a').forEach(function(btn){` +
     `if(!btn.style.borderRadius)return;` +
-    `btn.style.whiteSpace='nowrap';btn.style.overflow='hidden';` +
-    `var fs=13;while(btn.scrollWidth>btn.clientWidth&&fs>9){fs--;btn.style.fontSize=fs+'px';}` +
+    `btn.style.minWidth='0';btn.style.maxWidth='100%';btn.style.whiteSpace='normal';btn.style.overflowWrap='anywhere';btn.style.wordBreak='break-all';btn.style.boxSizing='border-box';` +
     `});` +
     `if(!track.getAttribute('data-ics-id')){` +
     `var styleId='ics-hide-'+Math.random().toString(36).slice(2,8);` +

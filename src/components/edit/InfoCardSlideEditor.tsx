@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
@@ -49,14 +49,14 @@ function escapeHtml(str: string): string {
 
 function buildCardHtml(card: CardSlide, idx: number): string {
     const tagHtml = card.tag
-        ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;">${escapeHtml(card.tag)}</span>`
+        ? `<span style="display:inline-block;max-width:100%;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;overflow-wrap:anywhere;word-break:break-all;box-sizing:border-box;">${escapeHtml(card.tag)}</span>`
         : '';
     const moreHtml = card.showMore
-        ? `<a href="${sanitizeHref(card.moreHref || '#')}" style="color:#9CA3AF;font-size:18px;text-decoration:none;line-height:1;">⋮</a>`
+        ? `<a href="${sanitizeHref(card.moreHref || '#')}" style="color:#9CA3AF;font-size:13px;text-decoration:none;line-height:1.4;display:inline-flex;align-items:center;justify-content:flex-end;max-width:96px;min-width:0;overflow-wrap:anywhere;word-break:break-word;text-align:right;flex-shrink:1;">더보기</a>`
         : '';
     const headerHtml =
         tagHtml || moreHtml
-            ? `<div style="display:flex;align-items:center;justify-content:space-between;">${tagHtml}${moreHtml}</div>`
+            ? `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">${tagHtml}${moreHtml}</div>`
             : '';
 
     const copyBtnHtml = card.copyable
@@ -65,27 +65,30 @@ function buildCardHtml(card: CardSlide, idx: number): string {
           `</button>`
         : '';
     const titleHtml =
-        `<div style="display:flex;align-items:center;gap:4px;">` +
-        `<span data-card-title style="font-size:18px;font-weight:700;color:#1A1A2E;flex:1;">${escapeHtml(card.title)}</span>` +
+        `<div style="display:flex;align-items:flex-start;gap:4px;min-width:0;max-width:100%;">` +
+        `<span data-card-title style="display:block;font-size:18px;font-weight:700;color:#1A1A2E;flex:1;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-all;line-height:1.4;">${escapeHtml(card.title)}</span>` +
         copyBtnHtml +
         `</div>`;
 
     const subtitleHtml = card.subtitle
-        ? `<span style="font-size:14px;color:#6B7280;">${escapeHtml(card.subtitle)}</span>`
+        ? `<span style="display:block;max-width:100%;font-size:14px;color:#6B7280;overflow-wrap:anywhere;word-break:break-all;line-height:1.45;">${escapeHtml(card.subtitle)}</span>`
         : '';
 
     const infoHtml = (card.infoLines ?? [])
-        .map((line) => `<span style="font-size:13px;color:#6B7280;text-align:right;">${escapeHtml(line)}</span>`)
+        .map(
+            (line) =>
+                `<span style="display:block;max-width:100%;font-size:13px;color:#6B7280;text-align:right;overflow-wrap:anywhere;word-break:break-all;line-height:1.45;">${escapeHtml(line)}</span>`,
+        )
         .join('');
 
     const buttonsHtml =
         (card.buttons ?? []).length > 0
-            ? `<div style="display:flex;gap:8px;margin-top:4px;">` +
+            ? `<div style="display:flex;gap:8px;margin-top:4px;min-width:0;max-width:100%;flex-wrap:wrap;">` +
               (card.buttons ?? [])
                   .map(
                       (b) =>
                           `<a href="${sanitizeHref(b.href || '#')}"` +
-                          ` style="flex:1;text-align:center;padding:10px;border-radius:8px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;">${escapeHtml(b.label)}</a>`,
+                          ` style="flex:1 1 120px;min-width:0;max-width:100%;text-align:center;padding:10px;border-radius:8px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.35;box-sizing:border-box;">${escapeHtml(b.label)}</a>`,
                   )
                   .join('') +
               `</div>`
@@ -93,8 +96,8 @@ function buildCardHtml(card: CardSlide, idx: number): string {
 
     return (
         `<div data-card-item data-card-idx="${idx}"` +
-        ` style="flex-shrink:0;width:100%;padding:0 8px;box-sizing:border-box;">` +
-        `<div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:180px;">` +
+        ` style="flex-shrink:0;width:100%;max-width:100%;padding:0 8px;box-sizing:border-box;">` +
+        `<div style="width:100%;max-width:100%;overflow:hidden;background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:180px;box-sizing:border-box;">` +
         headerHtml +
         titleHtml +
         subtitleHtml +
@@ -130,8 +133,7 @@ const SLIDE_SCRIPT =
     `});` +
     `track.querySelectorAll('[data-card-item] a').forEach(function(btn){` +
     `if(!btn.style.borderRadius)return;` +
-    `btn.style.whiteSpace='nowrap';btn.style.overflow='hidden';` +
-    `var fs=13;while(btn.scrollWidth>btn.clientWidth&&fs>9){fs--;btn.style.fontSize=fs+'px';}` +
+    `btn.style.minWidth='0';btn.style.maxWidth='100%';btn.style.whiteSpace='normal';btn.style.overflowWrap='anywhere';btn.style.wordBreak='break-all';btn.style.boxSizing='border-box';` +
     `});` +
     `if(!track.getAttribute('data-ics-id')){` +
     `var styleId='ics-hide-'+Math.random().toString(36).slice(2,8);` +
@@ -222,8 +224,7 @@ const S = {
         position: 'fixed' as const,
         inset: 0,
         zIndex: 99998,
-        background: 'rgba(0,0,0,0.35)',
-        backdropFilter: 'blur(2px)',
+        background: 'transparent',
     },
     panel: {
         position: 'fixed' as const,
@@ -353,6 +354,32 @@ const S = {
 
 export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
     const [slides, setSlides] = useState<CardSlide[]>(() => parseSlides(blockEl));
+    const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
+    const dragStateRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const dragState = dragStateRef.current;
+            if (!dragState) return;
+
+            setPanelPos({
+                left: Math.max(12, e.clientX - dragState.offsetX),
+                top: Math.max(12, e.clientY - dragState.offsetY),
+            });
+        };
+
+        const handleMouseUp = () => {
+            dragStateRef.current = null;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, []);
 
     const updateSlide = (idx: number, patch: Partial<CardSlide>) => {
         setSlides((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
@@ -386,12 +413,35 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
         onClose();
     };
 
+    const handleHeaderMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        if ((e.target as HTMLElement).closest('button')) return;
+
+        const panelEl = e.currentTarget.parentElement as HTMLDivElement | null;
+        if (!panelEl) return;
+
+        const rect = panelEl.getBoundingClientRect();
+        setPanelPos({ left: rect.left, top: rect.top });
+        dragStateRef.current = {
+            offsetX: e.clientX - rect.left,
+            offsetY: e.clientY - rect.top,
+        };
+    };
+
     return (
         <>
             <div onClick={onClose} style={S.overlay} />
-            <div onClick={(e) => e.stopPropagation()} style={S.panel}>
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    ...S.panel,
+                    left: panelPos ? panelPos.left : S.panel.left,
+                    top: panelPos ? panelPos.top : S.panel.top,
+                    transform: panelPos ? 'none' : S.panel.transform,
+                }}
+            >
                 {/* 헤더 */}
-                <div style={S.header}>
+                <div onMouseDown={handleHeaderMouseDown} style={{ ...S.header, cursor: 'move' }}>
                     <span style={{ fontWeight: 700, color: '#111827' }}>정보 카드 편집</span>
                     <button
                         onClick={onClose}
