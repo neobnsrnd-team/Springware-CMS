@@ -9,7 +9,7 @@ import { closePool } from '../src/db/connection';
 const VIEW_MODES = ['mobile', 'web', 'responsive'] as const;
 
 const COMPONENT_META: Record<string, { label: string; description: string }> = {
-    'app-header':       { label: '앱 헤더',      description: '로고·은행명 표시 헤더' },
+    'app-header':       { label: '상단 헤더',    description: '로고·은행명 표시 상단 헤더' },
     'product-menu':     { label: '퀵메뉴',        description: '아이콘 그리드 메뉴' },
     'product-gallery':  { label: '상품 갤러리',   description: '상품 카드 슬라이더' },
     'exchange-board':   { label: '환율 현황',      description: '실시간 환율 조회' },
