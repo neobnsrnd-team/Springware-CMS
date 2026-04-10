@@ -291,8 +291,9 @@ export default {
                     // ── 에디터 화면 즉시 반영 ──────────────────────
                     const ni = getCalcEl(tabType, `.lc-input[data-key="${f.calcKey}"]`);
                     const ri = getCalcEl(tabType, `.lc-range[data-key="${f.calcKey}"]`);
-                    if (ni) ni.value = v;
-                    if (ri) ri.value = v;
+                    // value 프로퍼티(현재값)와 어트리뷰트(직렬화 대상) 모두 업데이트
+                    if (ni) { ni.value = v; ni.setAttribute('value', v); }
+                    if (ri) { ri.value = v; ri.setAttribute('value', v); }
                     onChange();
                 });
                 wrap.appendChild(lbl);
