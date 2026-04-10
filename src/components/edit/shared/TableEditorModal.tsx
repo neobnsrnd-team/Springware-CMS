@@ -29,6 +29,34 @@ interface CellSelection {
 
 const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
 
+function normalizeColorForInput(color?: string): string {
+    if (!color) return '#ffffff';
+
+    const hexMatch = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (hexMatch) {
+        const hex = hexMatch[1];
+        return hex.length === 3
+            ? `#${hex
+                  .split('')
+                  .map((ch) => ch + ch)
+                  .join('')
+                  .toLowerCase()}`
+            : `#${hex.toLowerCase()}`;
+    }
+
+    const rgbMatch = color.match(
+        /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)$/i,
+    );
+    if (!rgbMatch) return '#ffffff';
+
+    const toHex = (value: string) => {
+        const clamped = Math.max(0, Math.min(255, Number.parseInt(value, 10) || 0));
+        return clamped.toString(16).padStart(2, '0');
+    };
+
+    return `#${toHex(rgbMatch[1])}${toHex(rgbMatch[2])}${toHex(rgbMatch[3])}`;
+}
+
 const S = {
     overlay: {
         position: 'fixed' as const,
@@ -375,7 +403,7 @@ export default function TableEditorModal({ initialModel, title = '표 편집', o
                                     <input
                                         type="color"
                                         style={{ ...S.input, padding: 4, height: 38 }}
-                                        value={selectedCell.styles['background-color'] ?? '#ffffff'}
+                                        value={normalizeColorForInput(selectedCell.styles['background-color'])}
                                         onChange={(e) => updateSelectedCell('background-color', e.target.value)}
                                     />
                                 </label>
