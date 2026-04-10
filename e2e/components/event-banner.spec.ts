@@ -60,7 +60,7 @@ type ViewMode = 'mobile' | 'web' | 'responsive';
 
 const VIEW_MODE_EXTRA_STYLE: Record<ViewMode, string> = {
     mobile:     '',
-    web:        'max-width:480px;margin:0 auto;',
+    web:        'width:100%;box-sizing:border-box;',
     responsive: 'width:100%;box-sizing:border-box;',
 };
 

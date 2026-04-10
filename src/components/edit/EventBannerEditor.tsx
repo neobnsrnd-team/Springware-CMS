@@ -118,7 +118,7 @@ const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD 
 
 const EXTRA_STYLES: Record<string, string> = {
     mobile: '',
-    web: 'max-width:480px;margin:0 auto;',
+    web: 'width:100%;box-sizing:border-box;',
     responsive: 'width:100%;box-sizing:border-box;',
 };
 
