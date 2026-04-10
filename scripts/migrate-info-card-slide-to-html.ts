@@ -60,13 +60,13 @@ function getCardStyles(viewMode: CardViewMode) {
                 'display:block;max-width:100%;font-size:16px;color:#4B5563;overflow-wrap:anywhere;word-break:break-all;line-height:1.6;',
             infoLine:
                 'display:block;max-width:100%;font-size:14px;color:#6B7280;text-align:left;overflow-wrap:anywhere;word-break:break-all;line-height:1.5;',
-            buttonsWrap: 'display:flex;gap:10px;margin-top:10px;min-width:0;max-width:100%;flex-wrap:wrap;',
+            buttonsWrap: 'display:flex;gap:8px;margin-top:6px;min-width:0;max-width:100%;flex-wrap:wrap;',
             button:
-                'flex:1 1 160px;min-width:0;max-width:100%;text-align:center;padding:13px 16px;border-radius:14px;background:linear-gradient(180deg,#F7FAFF 0%,#EDF3FF 100%);border:1px solid #D8E4F8;color:#123A78;font-size:14px;font-weight:700;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.4;box-sizing:border-box;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);',
-            itemOuter: 'flex-shrink:0;width:100%;max-width:100%;padding:0;box-sizing:border-box;',
+                'flex:1 1 140px;min-width:0;max-width:100%;text-align:center;padding:11px 12px;border-radius:10px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.35;box-sizing:border-box;',
+            itemOuter: 'width:100%;max-width:100%;min-width:0;padding:0;box-sizing:border-box;',
             itemInner:
                 'width:100%;max-width:100%;overflow:hidden;background:linear-gradient(180deg,#FFFFFF 0%,#FBFDFF 100%);border:1px solid #DCE4F2;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:14px;min-height:260px;box-sizing:border-box;box-shadow:0 20px 44px rgba(15,23,42,0.08);',
-            track: 'display:flex;flex-direction:row;gap:20px;padding:12px 0 20px;',
+            track: 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;',
         };
     }
 
@@ -235,7 +235,7 @@ const SLIDE_SCRIPT =
     `var track=root.querySelector('[data-card-track]');` +
     `if(track){` +
     `if(mode==='web'){` +
-    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:20px;padding:12px 0 20px;scroll-padding:0;';` +
+    `track.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;overflow:visible;';` +
     `}else if(mode==='responsive'){` +
     `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:14px;padding:10px 0 16px;scroll-padding:0 2%;';` +
     `}else{` +
@@ -252,7 +252,7 @@ const SLIDE_SCRIPT =
     `});` +
     // 카드 너비 92% + snap center + 정중앙 정렬
     `track.querySelectorAll('[data-card-item]').forEach(function(card){` +
-    `if(mode==='web'){card.style.flex='0 0 calc(50% - 10px)';card.style.width='calc(50% - 10px)';card.style.maxWidth='520px';card.style.scrollSnapAlign='start';}` +
+    `if(mode==='web'){card.style.flex='';card.style.width='100%';card.style.maxWidth='100%';card.style.minWidth='0';card.style.scrollSnapAlign='unset';}` +
     `else if(mode==='responsive'){card.style.flex='0 0 min(440px,78vw)';card.style.width='min(440px,78vw)';card.style.scrollSnapAlign='start';}` +
     `else{card.style.flex='0 0 92%';card.style.width='92%';card.style.scrollSnapAlign='center';}` +
     `});` +
