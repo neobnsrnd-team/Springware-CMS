@@ -29,7 +29,81 @@ interface Props {
     onClose: () => void;
 }
 
+type CardViewMode = 'mobile' | 'web' | 'responsive';
+
 const FONT_FAMILY = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+
+function getViewModeFromComponentId(componentId?: string | null): CardViewMode {
+    if (componentId?.endsWith('-web')) return 'web';
+    if (componentId?.endsWith('-responsive')) return 'responsive';
+    return 'mobile';
+}
+
+function getCardStyles(viewMode: CardViewMode) {
+    if (viewMode === 'web') {
+        return {
+            tag: 'display:inline-flex;align-items:center;max-width:100%;padding:6px 14px;border-radius:999px;background:linear-gradient(135deg,#E8F0FC 0%,#DCE8FF 100%);color:#0A4AA3;font-size:13px;font-weight:700;letter-spacing:-0.01em;overflow-wrap:anywhere;word-break:break-all;box-sizing:border-box;',
+            more: 'color:#4B5563;font-size:13px;text-decoration:none;line-height:1.4;display:inline-flex;align-items:center;justify-content:flex-end;max-width:128px;min-width:0;padding:8px 12px;border-radius:999px;background:#F3F6FB;overflow-wrap:anywhere;word-break:break-word;text-align:right;flex-shrink:1;font-weight:600;',
+            header: 'display:flex;align-items:flex-start;justify-content:space-between;gap:12px;',
+            copyButton:
+                'background:#F4F7FB;border:1px solid #E5EAF3;border-radius:10px;cursor:pointer;padding:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;',
+            titleWrap: 'display:flex;align-items:flex-start;gap:8px;min-width:0;max-width:100%;',
+            title: 'display:block;font-size:26px;font-weight:800;color:#111827;flex:1;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-all;line-height:1.28;letter-spacing:-0.03em;',
+            subtitle:
+                'display:block;max-width:100%;font-size:16px;color:#4B5563;overflow-wrap:anywhere;word-break:break-all;line-height:1.6;',
+            infoLine:
+                'display:block;max-width:100%;font-size:14px;color:#6B7280;text-align:left;overflow-wrap:anywhere;word-break:break-all;line-height:1.5;',
+            buttonsWrap: 'display:flex;gap:10px;margin-top:10px;min-width:0;max-width:100%;flex-wrap:wrap;',
+            button: 'flex:1 1 160px;min-width:0;max-width:100%;text-align:center;padding:13px 16px;border-radius:14px;background:linear-gradient(180deg,#F7FAFF 0%,#EDF3FF 100%);border:1px solid #D8E4F8;color:#123A78;font-size:14px;font-weight:700;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.4;box-sizing:border-box;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);',
+            itemOuter: 'flex-shrink:0;width:100%;max-width:100%;padding:0;box-sizing:border-box;',
+            itemInner:
+                'width:100%;max-width:100%;overflow:hidden;background:linear-gradient(180deg,#FFFFFF 0%,#FBFDFF 100%);border:1px solid #DCE4F2;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:14px;min-height:260px;box-sizing:border-box;box-shadow:0 20px 44px rgba(15,23,42,0.08);',
+            track: 'display:flex;flex-direction:row;gap:20px;padding:12px 0 20px;',
+        };
+    }
+
+    if (viewMode === 'responsive') {
+        return {
+            tag: 'display:inline-flex;align-items:center;max-width:100%;padding:5px 12px;border-radius:999px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:700;overflow-wrap:anywhere;word-break:break-all;box-sizing:border-box;',
+            more: 'color:#6B7280;font-size:13px;text-decoration:none;line-height:1.4;display:inline-flex;align-items:center;justify-content:flex-end;max-width:108px;min-width:0;padding:6px 10px;border-radius:999px;background:#F5F7FA;overflow-wrap:anywhere;word-break:break-word;text-align:right;flex-shrink:1;font-weight:600;',
+            header: 'display:flex;align-items:flex-start;justify-content:space-between;gap:10px;',
+            copyButton:
+                'background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;display:flex;align-items:center;',
+            titleWrap: 'display:flex;align-items:flex-start;gap:4px;min-width:0;max-width:100%;',
+            title: 'display:block;font-size:20px;font-weight:700;color:#1A1A2E;flex:1;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-all;line-height:1.36;',
+            subtitle:
+                'display:block;max-width:100%;font-size:15px;color:#6B7280;overflow-wrap:anywhere;word-break:break-all;line-height:1.5;',
+            infoLine:
+                'display:block;max-width:100%;font-size:13px;color:#6B7280;text-align:left;overflow-wrap:anywhere;word-break:break-all;line-height:1.45;',
+            buttonsWrap: 'display:flex;gap:8px;margin-top:6px;min-width:0;max-width:100%;flex-wrap:wrap;',
+            button: 'flex:1 1 140px;min-width:0;max-width:100%;text-align:center;padding:11px 12px;border-radius:10px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.35;box-sizing:border-box;',
+            itemOuter: 'flex-shrink:0;width:100%;max-width:100%;padding:0 4px;box-sizing:border-box;',
+            itemInner:
+                'width:100%;max-width:100%;overflow:hidden;background:#fff;border:1px solid #E5E7EB;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px;min-height:220px;box-sizing:border-box;',
+            track: 'display:flex;flex-direction:row;gap:14px;padding:10px 0 16px;',
+        };
+    }
+
+    return {
+        tag: 'display:inline-block;max-width:100%;padding:4px 12px;border-radius:12px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;overflow-wrap:anywhere;word-break:break-all;box-sizing:border-box;',
+        more: 'color:#9CA3AF;font-size:13px;text-decoration:none;line-height:1.4;display:inline-flex;align-items:center;justify-content:flex-end;max-width:96px;min-width:0;overflow-wrap:anywhere;word-break:break-word;text-align:right;flex-shrink:1;',
+        header: 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;',
+        copyButton:
+            'background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;display:flex;align-items:center;',
+        titleWrap: 'display:flex;align-items:flex-start;gap:4px;min-width:0;max-width:100%;',
+        title: 'display:block;font-size:18px;font-weight:700;color:#1A1A2E;flex:1;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-all;line-height:1.4;',
+        subtitle:
+            'display:block;max-width:100%;font-size:14px;color:#6B7280;overflow-wrap:anywhere;word-break:break-all;line-height:1.45;',
+        infoLine:
+            'display:block;max-width:100%;font-size:13px;color:#6B7280;text-align:right;overflow-wrap:anywhere;word-break:break-all;line-height:1.45;',
+        buttonsWrap: 'display:flex;gap:8px;margin-top:4px;min-width:0;max-width:100%;flex-wrap:wrap;',
+        button: 'flex:1 1 120px;min-width:0;max-width:100%;text-align:center;padding:10px;border-radius:8px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.35;box-sizing:border-box;',
+        itemOuter: 'flex-shrink:0;width:100%;max-width:100%;padding:0 8px;box-sizing:border-box;',
+        itemInner:
+            'width:100%;max-width:100%;overflow:hidden;background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:180px;box-sizing:border-box;',
+        track: 'display:flex;flex-direction:column;gap:12px;padding:8px 0;',
+    };
+}
 
 // ── href 보안 처리 ───────────────────────────────────────────────────────
 
@@ -107,6 +181,52 @@ function buildCardHtml(card: CardSlide, idx: number): string {
     );
 }
 
+function buildCardHtmlByMode(card: CardSlide, idx: number, viewMode: CardViewMode): string {
+    const styles = getCardStyles(viewMode);
+    const tagHtml = card.tag ? `<span style="${styles.tag}">${escapeHtml(card.tag)}</span>` : '';
+    const moreHtml = card.showMore
+        ? `<a href="${sanitizeHref(card.moreHref || '#')}" data-card-more style="${styles.more}">더보기</a>`
+        : '';
+    const headerHtml = tagHtml || moreHtml ? `<div style="${styles.header}">${tagHtml}${moreHtml}</div>` : '';
+    const copyBtnHtml = card.copyable
+        ? `<button data-card-copy style="${styles.copyButton}">` +
+          `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
+          `</button>`
+        : '';
+    const titleHtml =
+        `<div style="${styles.titleWrap}">` +
+        `<span data-card-title style="${styles.title}">${escapeHtml(card.title)}</span>` +
+        copyBtnHtml +
+        `</div>`;
+    const subtitleHtml = card.subtitle ? `<span style="${styles.subtitle}">${escapeHtml(card.subtitle)}</span>` : '';
+    const infoHtml = (card.infoLines ?? [])
+        .map((line) => `<span style="${styles.infoLine}">${escapeHtml(line)}</span>`)
+        .join('');
+    const buttonsHtml =
+        (card.buttons ?? []).length > 0
+            ? `<div style="${styles.buttonsWrap}">` +
+              (card.buttons ?? [])
+                  .map(
+                      (b) =>
+                          `<a href="${sanitizeHref(b.href || '#')}" style="${styles.button}">${escapeHtml(b.label)}</a>`,
+                  )
+                  .join('') +
+              `</div>`
+            : '';
+
+    return (
+        `<div data-card-item data-card-idx="${idx}"` +
+        ` style="${styles.itemOuter}">` +
+        `<div style="${styles.itemInner}">` +
+        headerHtml +
+        titleHtml +
+        subtitleHtml +
+        infoHtml +
+        buttonsHtml +
+        `</div></div>`
+    );
+}
+
 // ── 인라인 스크립트 (마이그레이션 스크립트와 동기화) ─────────────────────
 
 const SLIDE_SCRIPT =
@@ -116,10 +236,16 @@ const SLIDE_SCRIPT =
     `if(!root||root.getAttribute('data-card-slide-inited')==='1')return;` +
     `if(root.closest('.is-builder'))return;` +
     `root.setAttribute('data-card-slide-inited','1');` +
+    `var mode=root.getAttribute('data-card-view-mode')||(/-web$/.test(root.getAttribute('data-component-id')||'')?'web':(/-responsive$/.test(root.getAttribute('data-component-id')||'')?'responsive':'mobile'));` +
     `var track=root.querySelector('[data-card-track]');` +
     `if(track){` +
-    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;` +
-    `-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:8px 0 12px;scroll-padding:0 4%;';` +
+    `if(mode==='web'){` +
+    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:20px;padding:12px 0 20px;scroll-padding:0;';` +
+    `}else if(mode==='responsive'){` +
+    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:14px;padding:10px 0 16px;scroll-padding:0 2%;';` +
+    `}else{` +
+    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:0;padding:8px 0 12px;scroll-padding:0 4%;';` +
+    `}` +
     `var maxH=0;` +
     `track.querySelectorAll('[data-card-item] > div').forEach(function(inner){` +
     `inner.style.minHeight='0';` +
@@ -129,7 +255,9 @@ const SLIDE_SCRIPT =
     `inner.style.minHeight=maxH+'px';` +
     `});` +
     `track.querySelectorAll('[data-card-item]').forEach(function(card){` +
-    `card.style.flex='0 0 92%';card.style.width='92%';card.style.scrollSnapAlign='center';` +
+    `if(mode==='web'){card.style.flex='0 0 calc(50% - 10px)';card.style.width='calc(50% - 10px)';card.style.maxWidth='520px';card.style.scrollSnapAlign='start';}` +
+    `else if(mode==='responsive'){card.style.flex='0 0 min(440px,78vw)';card.style.width='min(440px,78vw)';card.style.scrollSnapAlign='start';}` +
+    `else{card.style.flex='0 0 92%';card.style.width='92%';card.style.scrollSnapAlign='center';}` +
     `});` +
     `track.querySelectorAll('[data-card-item] a').forEach(function(btn){` +
     `if(!btn.style.borderRadius)return;` +
@@ -161,11 +289,14 @@ const SLIDE_SCRIPT =
 // ── DOM 조작 함수 ────────────────────────────────────────────────────────
 
 function applyToBlock(blockEl: HTMLElement, slides: CardSlide[]) {
+    const viewMode = getViewModeFromComponentId(blockEl.getAttribute('data-component-id'));
     blockEl.setAttribute('data-card-slides', JSON.stringify(slides));
+    blockEl.setAttribute('data-card-view-mode', viewMode);
 
     const track = blockEl.querySelector<HTMLElement>('[data-card-track]');
     if (track) {
-        track.innerHTML = slides.map((card, i) => buildCardHtml(card, i)).join('');
+        track.setAttribute('style', getCardStyles(viewMode).track);
+        track.innerHTML = slides.map((card, i) => buildCardHtmlByMode(card, i, viewMode)).join('');
     }
 
     blockEl.querySelectorAll('script').forEach((el) => el.remove());
