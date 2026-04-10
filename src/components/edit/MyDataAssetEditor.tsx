@@ -53,6 +53,15 @@ interface BtnConfig {
     href: string;
 }
 
+type AssetViewMode = 'mobile' | 'web' | 'responsive';
+
+const getAssetViewMode = (blockEl: HTMLElement): AssetViewMode => {
+    const componentId = blockEl.getAttribute('data-component-id') ?? '';
+    if (componentId.endsWith('-web')) return 'web';
+    if (componentId.endsWith('-responsive')) return 'responsive';
+    return 'mobile';
+};
+
 export interface MyDataAssetEditorProps {
     blockEl: HTMLElement;
     onClose: () => void;
@@ -108,6 +117,7 @@ function parseBlock(blockEl: HTMLElement): {
 export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEditorProps) {
     // parseBlock을 매 렌더마다 호출하지 않도록 useState 초기화 함수로 실행
     const [initialData] = useState(() => parseBlock(blockEl));
+    const viewMode = getAssetViewMode(blockEl);
 
     // ── state ──
     const [title, setTitle] = useState(initialData.title);
@@ -153,6 +163,16 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const totalAbs = sortedRows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
         const rowContainer = blockEl.querySelector<HTMLElement>('[data-ma-rows]');
         if (rowContainer) {
+            const rowLabelStyle =
+                viewMode === 'web' ? 'font-size:15px;color:#475569;font-weight:600;' : 'font-size:14px;color:#6B7280;';
+            const rowAmountBaseStyle =
+                viewMode === 'web' ? 'font-size:16px;font-weight:700;' : 'font-size:14px;font-weight:600;';
+            const rowPctStyle =
+                viewMode === 'web'
+                    ? 'font-size:13px;color:#94A3B8;min-width:42px;text-align:right;'
+                    : 'font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;';
+            const rowPadding = viewMode === 'web' ? '12px 0' : '9px 0';
+            rowContainer.style.cssText = viewMode === 'web' ? 'padding:0;' : 'padding:0 16px;';
             rowContainer.innerHTML = sortedRows
                 .map((row, idx) => {
                     const isLast = idx === rows.length - 1;
@@ -162,14 +182,14 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     const amountColor = row.color;
 
                     return (
-                        `<div data-ma-row data-ma-row-type="${row.type}" style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;${borderStyle}">` +
+                        `<div data-ma-row data-ma-row-type="${row.type}" style="display:flex;justify-content:space-between;align-items:center;padding:${rowPadding};${borderStyle}">` +
                         `<span style="display:flex;align-items:center;gap:6px;">` +
                         `<span data-ma-dot data-ma-dot-color="${row.color}" style="width:8px;height:8px;border-radius:50%;background:${row.color};flex-shrink:0;display:inline-block;"></span>` +
-                        `<span data-ma-label style="font-size:14px;color:#6B7280;">${escapeHtml(row.label)}</span>` +
+                        `<span data-ma-label style="${rowLabelStyle}">${escapeHtml(row.label)}</span>` +
                         `</span>` +
                         `<span style="display:flex;align-items:center;gap:8px;">` +
-                        `<span data-ma-amount data-ma-amount-color="${amountColor}" style="font-size:14px;font-weight:600;color:${amountColor};">${escapeHtml(amountStr)}</span>` +
-                        `<span data-ma-pct style="font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;">${pct}%</span>` +
+                        `<span data-ma-amount data-ma-amount-color="${amountColor}" style="${rowAmountBaseStyle}color:${amountColor};">${escapeHtml(amountStr)}</span>` +
+                        `<span data-ma-pct style="${rowPctStyle}">${pct}%</span>` +
                         `</span>` +
                         `</div>`
                     );
@@ -188,11 +208,19 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const legendEl = blockEl.querySelector<HTMLElement>('[data-ma-legend]');
         if (legendEl) {
             const totalAbsForLegend = totalAbs;
+            legendEl.style.cssText =
+                viewMode === 'web'
+                    ? 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;width:100%;'
+                    : 'display:flex;flex-wrap:wrap;gap:4px 12px;';
             legendEl.innerHTML = sortedRows
                 .map((r) => {
                     const pct = totalAbsForLegend > 0 ? Math.round((Math.abs(r.amount) / totalAbsForLegend) * 100) : 0;
+                    const legendItemStyle =
+                        viewMode === 'web'
+                            ? 'display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#475569;padding:8px 10px;border-radius:999px;background:#ffffff;border:1px solid #E2E8F0;font-weight:600;white-space:nowrap;'
+                            : 'display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;';
                     return (
-                        `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;">` +
+                        `<span style="${legendItemStyle}">` +
                         `<span style="width:8px;height:8px;border-radius:2px;background:${r.color};flex-shrink:0;display:inline-block;"></span>` +
                         `${escapeHtml(r.label)} ${pct}%` +
                         `</span>`
@@ -214,7 +242,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         }
 
         onClose();
-    }, [blockEl, title, dateText, dateVisible, totalAsset, rows, btn, netAsset, sortByAmount, onClose]);
+    }, [blockEl, title, dateText, dateVisible, totalAsset, rows, btn, netAsset, sortByAmount, onClose, viewMode]);
 
     // ── effect ──
     useEffect(() => {
