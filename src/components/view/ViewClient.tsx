@@ -361,6 +361,23 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             });
         });
 
+        // menu-tab-grid sticky 강제 보장
+        // dangerouslySetInnerHTML + script 재실행 환경에서 ContentBuilderRuntime이
+        // 비동기로 .row 스타일을 재처리할 수 있으므로, 이중 rAF로 보장
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                document.querySelectorAll<HTMLElement>('[data-menu-sticky="true"]').forEach((block) => {
+                    const row = block.closest<HTMLElement>('.row');
+                    if (row) {
+                        row.style.position = 'sticky';
+                        row.style.top = '0';
+                        row.style.zIndex = '100';
+                        row.style.background = '#ffffff';
+                    }
+                });
+            });
+        });
+
         // 금융 컴포넌트 내 더미 링크(href="#") 클릭 시 상단 이동 차단
         // ContentBuilder가 onclick 속성을 제거하므로 이벤트 위임으로 처리
         const handleDummyLink = (e: MouseEvent) => {
@@ -381,10 +398,21 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         const iframeSrc = `/view?bank=${bank ?? 'ibk'}&embed=1`;
 
         return (
-            <div style={{ background: '#dde1e7', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                {/* 툴바 */}
+            // height:100vh + overflow:hidden → 툴바를 제외한 나머지 높이를 iframe이 flex로 채움
+            // (magic number calc(100vh - Npx) 없이 툴바 높이를 자동 반영)
+            <div
+                style={{
+                    background: '#dde1e7',
+                    height: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                }}
+            >
+                {/* 툴바 — flexShrink:0으로 높이 고정, iframe 영역이 나머지를 채움 */}
                 <div
                     style={{
+                        flexShrink: 0,
                         position: 'sticky',
                         top: 0,
                         zIndex: 50,
@@ -439,13 +467,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     </span>
                 </div>
 
-                {/* iframe 래퍼 — 너비만 직접 조작, iframe 자체는 100% */}
-                <div style={{ padding: '32px 0 80px', flex: 1 }}>
+                {/* iframe 영역 — flex:1로 툴바 이후 나머지 높이 전부 차지, iframe이 100% 채움 */}
+                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', padding: '24px 0' }}>
                     <div
                         ref={iframeWrapperRef}
                         style={{
                             width: `${RESPONSIVE_MAX}px`, // useEffect에서 window.innerWidth로 교정
                             maxWidth: '100%',
+                            height: '100%',
                             margin: '0 auto',
                             transition: 'width 0.1s ease',
                             boxShadow: '0 8px 48px rgba(0,70,164,0.10)',
@@ -456,11 +485,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                             src={iframeSrc}
                             style={{
                                 width: '100%',
-                                // 고정 높이로 실제 디바이스 스크린 시뮬레이션
-                                // scrollHeight 자동확장 방식은 iframe 내부 스크롤이 사라져
-                                // position:sticky(menu-tab-grid 등)가 무력화됨
-                                height: 'calc(100vh - 120px)',
-                                minHeight: '600px',
+                                height: '100%',
                                 border: 'none',
                                 display: 'block',
                             }}
