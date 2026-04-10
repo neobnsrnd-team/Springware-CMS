@@ -443,7 +443,7 @@ export default function TableEditorModal({ initialModel, title = '표 편집', o
                                                         ] as React.CSSProperties['textAlign']) ?? 'left',
                                                     minHeight: cell.styles.height || '84px',
                                                 }}
-                                                value={cell.content.replace(/<br\s*\/?>/gi, '')}
+                                                value={cell.content.replace(/<br\s*\/?>/gi, '\n')}
                                                 placeholder="셀 내용을 입력하세요"
                                                 onFocus={() => setSelected({ row: rowIdx, col: colIdx })}
                                                 onChange={(e) =>
