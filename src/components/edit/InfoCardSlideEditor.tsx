@@ -18,6 +18,8 @@ interface CardSlide {
     showMore?: boolean;
     moreHref?: string;
     title: string;
+    widthPx?: number;
+    heightPx?: number;
     copyable?: boolean;
     subtitle?: string;
     infoLines?: string[];
@@ -53,12 +55,12 @@ function getCardStyles(viewMode: CardViewMode) {
                 'display:block;max-width:100%;font-size:16px;color:#4B5563;overflow-wrap:anywhere;word-break:break-all;line-height:1.6;',
             infoLine:
                 'display:block;max-width:100%;font-size:14px;color:#6B7280;text-align:left;overflow-wrap:anywhere;word-break:break-all;line-height:1.5;',
-            buttonsWrap: 'display:flex;gap:10px;margin-top:10px;min-width:0;max-width:100%;flex-wrap:wrap;',
-            button: 'flex:1 1 160px;min-width:0;max-width:100%;text-align:center;padding:13px 16px;border-radius:14px;background:linear-gradient(180deg,#F7FAFF 0%,#EDF3FF 100%);border:1px solid #D8E4F8;color:#123A78;font-size:14px;font-weight:700;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.4;box-sizing:border-box;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);',
-            itemOuter: 'flex-shrink:0;width:100%;max-width:100%;padding:0;box-sizing:border-box;',
+            buttonsWrap: 'display:flex;gap:8px;margin-top:6px;min-width:0;max-width:100%;flex-wrap:wrap;',
+            button: 'flex:1 1 140px;min-width:0;max-width:100%;text-align:center;padding:11px 12px;border-radius:10px;background:#F5F7FA;color:#1A1A2E;font-size:13px;font-weight:600;text-decoration:none;white-space:normal;overflow-wrap:anywhere;word-break:break-all;line-height:1.35;box-sizing:border-box;',
+            itemOuter: 'width:100%;max-width:100%;min-width:0;padding:0;box-sizing:border-box;',
             itemInner:
                 'width:100%;max-width:100%;overflow:hidden;background:linear-gradient(180deg,#FFFFFF 0%,#FBFDFF 100%);border:1px solid #DCE4F2;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:14px;min-height:260px;box-sizing:border-box;box-shadow:0 20px 44px rgba(15,23,42,0.08);',
-            track: 'display:flex;flex-direction:row;gap:20px;padding:12px 0 20px;',
+            track: 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;',
         };
     }
 
@@ -216,8 +218,8 @@ function buildCardHtmlByMode(card: CardSlide, idx: number, viewMode: CardViewMod
 
     return (
         `<div data-card-item data-card-idx="${idx}"` +
-        ` style="${styles.itemOuter}">` +
-        `<div style="${styles.itemInner}">` +
+        ` style="${getCardOuterStyle(styles.itemOuter, card, viewMode)}">` +
+        `<div style="${getCardInnerStyle(styles.itemInner, card)}">` +
         headerHtml +
         titleHtml +
         subtitleHtml +
@@ -240,7 +242,7 @@ const SLIDE_SCRIPT =
     `var track=root.querySelector('[data-card-track]');` +
     `if(track){` +
     `if(mode==='web'){` +
-    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:20px;padding:12px 0 20px;scroll-padding:0;';` +
+    `track.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;overflow:visible;';` +
     `}else if(mode==='responsive'){` +
     `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:14px;padding:10px 0 16px;scroll-padding:0 2%;';` +
     `}else{` +
@@ -255,7 +257,7 @@ const SLIDE_SCRIPT =
     `inner.style.minHeight=maxH+'px';` +
     `});` +
     `track.querySelectorAll('[data-card-item]').forEach(function(card){` +
-    `if(mode==='web'){card.style.flex='0 0 calc(50% - 10px)';card.style.width='calc(50% - 10px)';card.style.maxWidth='520px';card.style.scrollSnapAlign='start';}` +
+    `if(mode==='web'){card.style.flex='';card.style.width='100%';card.style.maxWidth='100%';card.style.minWidth='0';card.style.scrollSnapAlign='unset';}` +
     `else if(mode==='responsive'){card.style.flex='0 0 min(440px,78vw)';card.style.width='min(440px,78vw)';card.style.scrollSnapAlign='start';}` +
     `else{card.style.flex='0 0 92%';card.style.width='92%';card.style.scrollSnapAlign='center';}` +
     `});` +
@@ -306,32 +308,73 @@ function applyToBlock(blockEl: HTMLElement, slides: CardSlide[]) {
 }
 
 function parseSlides(blockEl: HTMLElement): CardSlide[] {
+    let rawSlides: CardSlide[] = [];
+    const rawJson = blockEl.getAttribute('data-card-slides');
+    if (rawJson) {
+        try {
+            rawSlides = JSON.parse(rawJson) as CardSlide[];
+        } catch {
+            rawSlides = [];
+        }
+    }
     // 1순위: 현재 캔버스 DOM에서 추출
     const items = blockEl.querySelectorAll('[data-card-item]');
     if (items.length > 0) {
         return Array.from(items).map((item) => {
+            const idx = Number.parseInt(item.getAttribute('data-card-idx') || '0', 10);
+            const fallback = rawSlides[idx] ?? { title: '제목' };
+            const innerCard = item.querySelector<HTMLElement>(':scope > div');
             const tagEl = item.querySelector('span[style*="border-radius:12px"]');
-            const tag = tagEl?.textContent?.trim() || undefined;
+            const tag = tagEl?.textContent?.trim() || fallback.tag;
             const moreEl = item.querySelector('a[style*="justify-content:flex-end"]');
-            const showMore = !!moreEl;
-            const moreHref = moreEl?.getAttribute('href') || undefined;
+            const showMore = moreEl ? true : !!fallback.showMore;
+            const moreHref = moreEl?.getAttribute('href') || fallback.moreHref;
             const title = item.querySelector('[data-card-title]')?.textContent?.trim() ?? '제목';
-            const copyable = !!item.querySelector('[data-card-copy]');
-            const subtitleEl = item.querySelector('span[style*="font-size:14px"]');
-            const subtitle = subtitleEl?.textContent?.trim() || undefined;
+            const widthMatch = item.getAttribute('style')?.match(/(?:^|;)width:min\(100%,(\d+)px\)/i);
+            const innerStyle = innerCard?.getAttribute('style') || '';
+            const innerWidthMatch = innerStyle.match(/(?:^|;)width:min\(100%,(\d+)px\)/i);
+            const heightMatch = innerStyle.match(/(?:^|;)min-height:(\d+)px/i);
+            const liveWidth = innerCard?.getBoundingClientRect().width || item.getBoundingClientRect().width || 0;
+            const liveHeight = innerCard?.getBoundingClientRect().height || 0;
+            const widthPx = Number.parseInt(widthMatch?.[1] || innerWidthMatch?.[1] || '', 10);
+            const heightPx = Number.parseInt(heightMatch?.[1] || '', 10);
+            const copyable = !!item.querySelector('[data-card-copy]') || !!fallback.copyable;
+            const subtitleEl =
+                item.querySelector('span[style*="font-size:14px"]') ??
+                item.querySelector('span[style*="font-size:15px"]') ??
+                item.querySelector('span[style*="font-size:16px"]');
+            const subtitle = subtitleEl?.textContent?.trim() || fallback.subtitle;
             const infoEls = item.querySelectorAll('span[style*="text-align:right"]');
+            const infoElsLeft = item.querySelectorAll('span[style*="text-align:left"]');
             const infoLines =
-                infoEls.length > 0 ? Array.from(infoEls).map((el) => el.textContent?.trim() ?? '') : undefined;
-            const btnEls = item.querySelectorAll('a[style*="border-radius:8px"]');
+                (infoEls.length > 0 ? infoEls : infoElsLeft).length > 0
+                    ? Array.from(infoEls.length > 0 ? infoEls : infoElsLeft)
+                          .map((el) => el.textContent?.trim() ?? '')
+                          .filter(Boolean)
+                    : fallback.infoLines;
+            const btnEls8 = item.querySelectorAll('a[style*="border-radius:8px"]');
+            const btnEls10 = item.querySelectorAll('a[style*="border-radius:10px"]');
+            const btnEls = btnEls8.length > 0 ? btnEls8 : btnEls10;
             const buttons =
                 btnEls.length > 0
-                    ? Array.from(btnEls).map((el) => ({
-                          label: el.textContent?.trim() ?? '',
-                          href: el.getAttribute('href') || undefined,
+                    ? Array.from(btnEls).map((el, buttonIdx) => ({
+                          label: el.textContent?.trim() ?? fallback.buttons?.[buttonIdx]?.label ?? '',
+                          href: el.getAttribute('href') || fallback.buttons?.[buttonIdx]?.href,
                       }))
-                    : undefined;
-
-            return { tag, showMore, moreHref, title, copyable, subtitle, infoLines, buttons };
+                    : fallback.buttons;
+            const safeTitle = title || fallback.title || '?쒕ぉ';
+            return {
+                tag,
+                showMore,
+                moreHref,
+                title: safeTitle,
+                widthPx: Number.isFinite(widthPx) ? widthPx : liveWidth > 0 ? Math.round(liveWidth) : undefined,
+                heightPx: Number.isFinite(heightPx) ? heightPx : liveHeight > 0 ? Math.round(liveHeight) : undefined,
+                copyable,
+                subtitle,
+                infoLines,
+                buttons,
+            };
         });
     }
 
@@ -346,6 +389,57 @@ function parseSlides(blockEl: HTMLElement): CardSlide[] {
     }
 
     return [{ title: '새 카드' }];
+}
+
+function resizeStringArray(
+    values: string[] | undefined,
+    nextLength: number,
+    fallbackValue: string,
+): string[] | undefined {
+    const safeLength = Math.max(0, nextLength);
+    if (safeLength === 0) return undefined;
+
+    const source = values ? [...values] : [];
+    while (source.length < safeLength) {
+        source.push(fallbackValue);
+    }
+
+    return source.slice(0, safeLength);
+}
+
+function resizeButtons(values: CardButton[] | undefined, nextLength: number): CardButton[] | undefined {
+    const safeLength = Math.max(0, Math.min(3, nextLength));
+    if (safeLength === 0) return undefined;
+
+    const source = values ? [...values] : [];
+    while (source.length < safeLength) {
+        source.push({ label: `버튼 ${source.length + 1}` });
+    }
+
+    return source.slice(0, safeLength);
+}
+
+function normalizePositivePx(value: number | undefined): number | undefined {
+    if (!Number.isFinite(value) || !value) return undefined;
+    return Math.max(1, Math.round(value));
+}
+
+function getCardOuterStyle(baseStyle: string, card: CardSlide, viewMode: CardViewMode): string {
+    const widthPx = normalizePositivePx(card.widthPx);
+    if (!widthPx) return baseStyle;
+
+    if (viewMode === 'web') {
+        return `${baseStyle}max-width:min(100%,${widthPx}px);`;
+    }
+
+    return `${baseStyle}width:min(100%,${widthPx}px);`;
+}
+
+function getCardInnerStyle(baseStyle: string, card: CardSlide): string {
+    const widthPx = normalizePositivePx(card.widthPx);
+    const heightPx = normalizePositivePx(card.heightPx);
+
+    return baseStyle + (widthPx ? `width:min(100%,${widthPx}px);` : '') + (heightPx ? `min-height:${heightPx}px;` : '');
 }
 
 // ── 스타일 상수 ───────────────────────────────────────────────────────────
@@ -684,6 +778,79 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
 
                             {/* 슬롯 편집 */}
                             <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                        padding: '6px 8px',
+                                        border: '1px solid #dbe4f0',
+                                        borderRadius: 8,
+                                        background: '#f8fbff',
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            fontSize: 11,
+                                            fontWeight: 700,
+                                            color: '#4b6baf',
+                                            minWidth: 32,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        구조
+                                    </span>
+                                    <label
+                                        style={{
+                                            fontSize: 11,
+                                            color: '#6B7280',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 4,
+                                        }}
+                                    >
+                                        가로(px)
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            value={card.widthPx ?? ''}
+                                            onChange={(e) =>
+                                                updateSlide(idx, {
+                                                    widthPx: normalizePositivePx(
+                                                        Number.parseInt(e.target.value || '0', 10),
+                                                    ),
+                                                })
+                                            }
+                                            style={{ ...S.input, width: 68, flex: '0 0 68px', padding: '4px 6px' }}
+                                            placeholder="auto"
+                                        />
+                                    </label>
+                                    <label
+                                        style={{
+                                            fontSize: 11,
+                                            color: '#6B7280',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 4,
+                                        }}
+                                    >
+                                        세로(px)
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            value={card.heightPx ?? ''}
+                                            onChange={(e) =>
+                                                updateSlide(idx, {
+                                                    heightPx: normalizePositivePx(
+                                                        Number.parseInt(e.target.value || '0', 10),
+                                                    ),
+                                                })
+                                            }
+                                            style={{ ...S.input, width: 68, flex: '0 0 68px', padding: '4px 6px' }}
+                                            placeholder="auto"
+                                        />
+                                    </label>
+                                </div>
                                 {/* 태그 */}
                                 <div style={S.row}>
                                     <span style={S.label}>태그</span>
@@ -774,6 +941,33 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                     <div style={S.row}>
                                         <span style={S.label}>보조</span>
+                                        <label
+                                            style={{
+                                                fontSize: 10,
+                                                color: '#6B7280',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 4,
+                                            }}
+                                        >
+                                            행 수
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={6}
+                                                value={card.infoLines?.length ?? 0}
+                                                onChange={(e) =>
+                                                    updateSlide(idx, {
+                                                        infoLines: resizeStringArray(
+                                                            card.infoLines,
+                                                            Number.parseInt(e.target.value || '0', 10),
+                                                            '새 텍스트',
+                                                        ),
+                                                    })
+                                                }
+                                                style={{ ...S.input, width: 54, flex: '0 0 54px', padding: '4px 6px' }}
+                                            />
+                                        </label>
                                         <button
                                             type="button"
                                             onClick={() =>
@@ -834,6 +1028,32 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                     <div style={S.row}>
                                         <span style={S.label}>버튼</span>
+                                        <label
+                                            style={{
+                                                fontSize: 10,
+                                                color: '#6B7280',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 4,
+                                            }}
+                                        >
+                                            열 수
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={3}
+                                                value={card.buttons?.length ?? 0}
+                                                onChange={(e) =>
+                                                    updateSlide(idx, {
+                                                        buttons: resizeButtons(
+                                                            card.buttons,
+                                                            Number.parseInt(e.target.value || '0', 10),
+                                                        ),
+                                                    })
+                                                }
+                                                style={{ ...S.input, width: 54, flex: '0 0 54px', padding: '4px 6px' }}
+                                            />
+                                        </label>
                                         <button
                                             type="button"
                                             disabled={(card.buttons ?? []).length >= 3}
