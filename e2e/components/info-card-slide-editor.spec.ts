@@ -22,7 +22,6 @@ test.describe('InfoCardSlideEditor', () => {
 
     test('reflects latest canvas text when reopening the editor', async ({ page }) => {
         await page.getByTestId('info-card-slide-block').evaluate((el) => {
-            const title = el.querySelector('[data-card-item=""], [data-card-item] [data-card-title]');
             const directTitle = el.querySelector('[data-card-item] [data-card-title]');
             if (directTitle) directTitle.textContent = '캔버스 최신 제목';
         });
