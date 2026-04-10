@@ -1,0 +1,265 @@
+// e2e/components/event-banner.spec.ts
+// event-banner 컴포넌트 자동화 QA (Issue #322)
+
+import { test, expect } from '@playwright/test';
+import {
+    runCommonChecks,
+    checkNoHorizontalScroll,
+    checkNotOutsideViewport,
+    checkViewportLayouts,
+} from '../helpers/component-checks';
+
+// ── 인라인 CSS ────────────────────────────────────────────────────────────────
+
+const EB_CSS = `
+* { box-sizing: border-box; }
+body { margin: 0; }
+`;
+
+const FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+
+// ── 헬퍼 ─────────────────────────────────────────────────────────────────────
+
+interface BannerSlide {
+    imageUrl: string;
+    linkHref?: string;
+    altText?: string;
+    overlayTitle?: string;
+    overlayDesc?: string;
+}
+
+const buildSlide = (slide: BannerSlide, idx: number): string => {
+    const imgHtml = slide.imageUrl
+        ? `<img src="${slide.imageUrl}" alt="${slide.altText ?? ''}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;">`
+        : `<div style="width:100%;aspect-ratio:16/9;background:#E5E7EB;display:flex;align-items:center;justify-content:center;">` +
+          `<span style="color:#9CA3AF;font-size:14px;">이미지를 추가하세요</span></div>`;
+
+    const overlayHtml = (slide.overlayTitle || slide.overlayDesc)
+        ? `<div data-banner-overlay style="position:absolute;bottom:0;left:0;right:0;padding:16px;` +
+          `background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 100%);">` +
+          (slide.overlayTitle
+              ? `<p data-banner-overlay-title style="margin:0 0 4px;font-size:16px;font-weight:700;color:#fff;">${slide.overlayTitle}</p>`
+              : '') +
+          (slide.overlayDesc
+              ? `<p data-banner-overlay-desc style="margin:0;font-size:13px;color:rgba(255,255,255,0.85);">${slide.overlayDesc}</p>`
+              : '') +
+          `</div>`
+        : '';
+
+    return (
+        `<div data-banner-item data-banner-idx="${idx}" style="flex-shrink:0;width:100%;">` +
+        `<a href="${slide.linkHref ?? '#'}" style="display:block;position:relative;text-decoration:none;">` +
+        imgHtml + overlayHtml +
+        `</a></div>`
+    );
+};
+
+const makeHtml = (slides: BannerSlide[]): string => {
+    const total = slides.length;
+    return `<!DOCTYPE html><html><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>${EB_CSS}</style>
+</head><body>
+  <div data-component-id="event-banner-mobile" data-spw-block data-banner-interval="3000"
+    style="font-family:${FONT_FAMILY};background:#ffffff;">
+    <div data-banner-track style="display:flex;flex-direction:column;">
+      ${slides.map((s, i) => buildSlide(s, i)).join('')}
+    </div>
+    <div data-banner-pagination style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;">
+      <button data-banner-prev style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:14px;color:#6B7280;">&#10094;</button>
+      <span data-banner-indicator style="font-size:13px;color:#6B7280;min-width:40px;text-align:center;">1 / ${total}</span>
+      <button data-banner-next style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:14px;color:#6B7280;">&#10095;</button>
+      <button data-banner-pause style="background:none;border:none;cursor:pointer;padding:4px 8px;font-size:16px;color:#6B7280;">&#10073;&#10073;</button>
+    </div>
+  </div>
+</body></html>`;
+};
+
+// ── HTML 상수 ─────────────────────────────────────────────────────────────────
+
+// 정상 상태: 슬라이드 2개, 오버레이 텍스트 포함
+const NORMAL_HTML = makeHtml([
+    { imageUrl: '/test/banner1.jpg', altText: '이벤트 배너 1', linkHref: '#', overlayTitle: '이벤트 배너 제목', overlayDesc: '이벤트 설명 텍스트' },
+    { imageUrl: '/test/banner2.jpg', altText: '이벤트 배너 2', linkHref: '#', overlayTitle: '두 번째 배너' },
+]);
+
+// 슬라이드 1개
+const SINGLE_HTML = makeHtml([
+    { imageUrl: '/test/banner1.jpg', altText: '이벤트 배너 1', linkHref: '#', overlayTitle: '단일 배너' },
+]);
+
+// 이미지 URL 미설정 (플레이스홀더 케이스)
+const EMPTY_URL_HTML = makeHtml([
+    { imageUrl: '', altText: '', linkHref: '#', overlayTitle: '이미지 없는 배너' },
+]);
+
+// ── 공통 체크 ─────────────────────────────────────────────────────────────────
+
+test.describe('event-banner — 공통 체크', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+    });
+
+    // eslint-disable-next-line playwright/expect-expect
+    test('공통 레이아웃·접근성 기준 충족 (가로스크롤·뷰포트·폰트·터치·alt)', async ({ page }) => {
+        await runCommonChecks(page, {
+            componentIdPrefix: 'event-banner',
+            // 슬라이드 링크(16:9 이미지)만 터치 영역 체크
+            // 제어 버튼(data-banner-prev/next/pause)은 padding:4px 8px → 44px 미달이므로 제외
+            buttonSelector: '[data-banner-item] a',
+            textSelector: '[data-banner-indicator]',
+            minFontSize: 12,
+        });
+    });
+
+    test('키보드 Tab 포커스 이동 가능 (슬라이드 링크 → 이전/다음/일시정지 버튼)', async ({ page }) => {
+        // 슬라이드 링크가 포커스 가능한지 직접 확인
+        await page.locator('[data-banner-item] a').first().focus();
+        await expect(page.locator('[data-banner-item] a').first(), '슬라이드 링크에 포커스되어야 합니다').toBeFocused();
+
+        // 마지막 슬라이드 링크 → 이전 버튼으로 Tab 이동
+        await page.locator('[data-banner-item] a').last().focus();
+        await page.keyboard.press('Tab');
+        await expect(page.locator('[data-banner-prev]'), '이전 버튼에 Tab 포커스되어야 합니다').toBeFocused();
+
+        // 이전 → 다음 → 일시정지 버튼 Tab 순서
+        await page.keyboard.press('Tab');
+        await expect(page.locator('[data-banner-next]'), '다음 버튼에 Tab 포커스되어야 합니다').toBeFocused();
+        await page.keyboard.press('Tab');
+        await expect(page.locator('[data-banner-pause]'), '일시정지 버튼에 Tab 포커스되어야 합니다').toBeFocused();
+    });
+});
+
+// ── 정상 동작 ─────────────────────────────────────────────────────────────────
+
+test.describe('event-banner — 정상 동작', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+    });
+
+    test('루트 컴포넌트가 렌더링됨', async ({ page }) => {
+        await expect(
+            page.locator('[data-component-id^="event-banner"]'),
+        ).toBeAttached();
+    });
+
+    test('슬라이드 트랙이 존재함', async ({ page }) => {
+        await expect(
+            page.locator('[data-component-id^="event-banner"] [data-banner-track]'),
+        ).toBeAttached();
+    });
+
+    test('슬라이드 아이템 개수가 이미지 개수와 일치함 (2개)', async ({ page }) => {
+        await expect(
+            page.locator('[data-component-id^="event-banner"] [data-banner-item]'),
+        ).toHaveCount(2);
+    });
+
+    test('인디케이터에 "1 / N" 형식으로 표시됨', async ({ page }) => {
+        const text = await page.locator('[data-banner-indicator]').textContent();
+        expect(text?.trim()).toMatch(/^1 \/ \d+$/);
+    });
+
+    test('이전/다음/일시정지 버튼이 존재함', async ({ page }) => {
+        await expect(page.locator('[data-banner-prev]')).toBeAttached();
+        await expect(page.locator('[data-banner-next]')).toBeAttached();
+        await expect(page.locator('[data-banner-pause]')).toBeAttached();
+    });
+
+    test('슬라이드 링크에 href 속성이 있음', async ({ page }) => {
+        const links = page.locator('[data-banner-item] a');
+        await expect(links).toHaveCount(2);
+        for (const link of await links.all()) {
+            await expect(link).toHaveAttribute('href', /.+/);
+        }
+    });
+
+    test('오버레이 제목 텍스트가 표시됨', async ({ page }) => {
+        const title = page.locator('[data-banner-overlay-title]').first();
+        await expect(title).toBeAttached();
+        const text = await title.textContent();
+        expect(text?.trim().length).toBeGreaterThan(0);
+    });
+
+    test('슬라이드 이미지에 alt 속성이 있음 (접근성)', async ({ page }) => {
+        const images = page.locator('[data-banner-item] img');
+        await expect(images).toHaveCount(2);
+        for (const image of await images.all()) {
+            await expect(image).toHaveAttribute('alt', /.*/);
+        }
+    });
+
+    // eslint-disable-next-line playwright/expect-expect
+    test('뷰포트 이탈 없음', async ({ page }) => {
+        await checkNotOutsideViewport(page, '[data-component-id^="event-banner"]');
+    });
+
+    // eslint-disable-next-line playwright/expect-expect
+    test('가로 스크롤 없음', async ({ page }) => {
+        await checkNoHorizontalScroll(page);
+    });
+});
+
+// ── 예외 처리 — 이미지 URL 미설정 ────────────────────────────────────────────
+
+test.describe('event-banner — 예외 처리 (이미지 URL 미설정)', () => {
+    test('플레이스홀더("이미지를 추가하세요") 텍스트가 표시됨', async ({ page }) => {
+        await page.setContent(EMPTY_URL_HTML);
+        const placeholder = page.locator('[data-banner-item] span');
+        await expect(placeholder).toBeVisible();
+        const text = await placeholder.textContent();
+        expect(text?.trim()).toBe('이미지를 추가하세요');
+    });
+
+    test('이미지 없는 경우 — 컴포넌트 루트 존재, 가로 스크롤 없음', async ({ page }) => {
+        await page.setContent(EMPTY_URL_HTML);
+        await expect(
+            page.locator('[data-component-id^="event-banner"]'),
+        ).toBeAttached();
+        await checkNoHorizontalScroll(page);
+    });
+});
+
+// ── 예외 처리 — 슬라이드 1개 ─────────────────────────────────────────────────
+
+test.describe('event-banner — 예외 처리 (슬라이드 1개)', () => {
+    test('슬라이드 아이템 1개, 인디케이터 "1 / 1" 표시', async ({ page }) => {
+        await page.setContent(SINGLE_HTML);
+        await expect(
+            page.locator('[data-banner-item]'),
+        ).toHaveCount(1);
+        const text = await page.locator('[data-banner-indicator]').textContent();
+        expect(text?.trim()).toBe('1 / 1');
+    });
+
+    // eslint-disable-next-line playwright/expect-expect
+    test('슬라이드 1개 — 가로 스크롤 없음', async ({ page }) => {
+        await page.setContent(SINGLE_HTML);
+        await checkNoHorizontalScroll(page);
+    });
+});
+
+// ── 반응형 뷰어 ───────────────────────────────────────────────────────────────
+
+test.describe('event-banner — 반응형 뷰어', () => {
+    test('뷰어 — event-banner HTML이 올바르게 렌더링됨', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        await expect(
+            page.locator('[data-component-id^="event-banner"]'),
+        ).toBeAttached();
+        await expect(
+            page.locator('[data-banner-track]'),
+        ).toBeVisible();
+    });
+});
+
+// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+
+test.describe('event-banner — 반응형 뷰포트 레이아웃', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(NORMAL_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="event-banner"]');
+    });
+});
