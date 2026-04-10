@@ -130,6 +130,8 @@ function formatRangeLabel(key, val) {
     return `${v}만원`;
 }
 
+const APPLY_FEEDBACK_MS = 1800;
+
 export default {
     name: 'loan-calculator',
     displayName: '금융 계산기',
@@ -291,9 +293,9 @@ export default {
                     // ── 에디터 화면 즉시 반영 ──────────────────────
                     const ni = getCalcEl(tabType, `.lc-input[data-key="${f.calcKey}"]`);
                     const ri = getCalcEl(tabType, `.lc-range[data-key="${f.calcKey}"]`);
-                    if (ni) ni.value = v;
-                    if (ri) ri.value = v;
-                    onChange();
+                    // value 프로퍼티(현재값)와 어트리뷰트(직렬화 대상) 모두 업데이트
+                    if (ni) { ni.value = v; ni.setAttribute('value', v); }
+                    if (ri) { ri.value = v; ri.setAttribute('value', v); }
                 });
                 wrap.appendChild(lbl);
                 wrap.appendChild(inp);
@@ -329,7 +331,6 @@ export default {
                         const idx = isMin ? 0 : 1;
                         if (labelSpans[idx]) labelSpans[idx].textContent = formatRangeLabel(calcKey, v);
                     }
-                    onChange();
                 });
                 wrap.appendChild(lbl);
                 wrap.appendChild(inp);
@@ -389,10 +390,12 @@ export default {
                 panel.style.display = isFirst ? 'block' : 'none';
                 panelMap[tabDef.type] = panel;
 
-                // 섹션: 기본값
-                panel.appendChild(makeSectionHeader('기본값'));
+                // 섹션: 기본값 (비표시)
+                const defaultHeader = makeSectionHeader('기본값');
+                defaultHeader.style.display = 'none';
+                panel.appendChild(defaultHeader);
                 const defaultGrid = document.createElement('div');
-                defaultGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;';
+                defaultGrid.style.cssText = 'display:none;';
                 tabDef.defaults.forEach(f => defaultGrid.appendChild(makeDefaultField(f, tabDef.type)));
                 panel.appendChild(defaultGrid);
 
@@ -408,6 +411,34 @@ export default {
 
                 panelContainer.appendChild(panel);
             });
+
+            // ── 적용 버튼 ──────────────────────────────────────────
+            const applyRow = document.createElement('div');
+            applyRow.style.cssText = 'margin-top:16px;display:flex;align-items:center;gap:10px;';
+
+            const applyBtn = document.createElement('button');
+            applyBtn.textContent = '적용';
+            applyBtn.style.cssText = [
+                'flex:1;height:36px;border:none;border-radius:8px;cursor:pointer;',
+                'background:#0046A4;color:#fff;font-size:13px;font-weight:700;',
+                'font-family:inherit;transition:opacity 0.15s;',
+            ].join('');
+
+            const applyMsg = document.createElement('span');
+            applyMsg.style.cssText = 'font-size:12px;color:#16A34A;font-weight:600;opacity:0;transition:opacity 0.3s;white-space:nowrap;';
+            applyMsg.textContent = '✓ 적용됨';
+
+            applyBtn.addEventListener('mouseenter', () => { applyBtn.style.opacity = '0.85'; });
+            applyBtn.addEventListener('mouseleave', () => { applyBtn.style.opacity = '1'; });
+            applyBtn.addEventListener('click', () => {
+                onChange();
+                applyMsg.style.opacity = '1';
+                setTimeout(() => { applyMsg.style.opacity = '0'; }, APPLY_FEEDBACK_MS);
+            });
+
+            applyRow.appendChild(applyBtn);
+            applyRow.appendChild(applyMsg);
+            wrap.appendChild(applyRow);
 
             return wrap;
         },
