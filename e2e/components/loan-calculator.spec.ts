@@ -132,7 +132,6 @@ const COMPONENT_HTML = `
 </div>`;
 
 // ── HTML 생성 ─────────────────────────────────────────────────────────────────
-// baseURL: 'http://localhost:3000' 로 setContent 호출 → /assets/ 절대경로 해석 가능
 const makeHtml = (): string => `
 <!DOCTYPE html><html><head>
   <meta charset="utf-8">
@@ -147,10 +146,19 @@ const makeHtml = (): string => `
   </script>
 </body></html>`;
 
+// ── 테스트 전용 경로 ───────────────────────────────────────────────────────────
+// page.setContent() 는 null origin → ES module import 차단 → plugin 미실행
+// page.route() + page.goto() 로 http://localhost:3000 origin 확보하여 모듈 로드 정상화
+const TEST_PATH = '/loan-calculator-test';
+
 // ── 마운트 헬퍼 ───────────────────────────────────────────────────────────────
 // mount() → switchTab('loan') → calculate() 호출 → lc-val-monthly 가 "0원"에서 변경됨
 async function mountAndWait(page: import('@playwright/test').Page): Promise<void> {
-    await page.setContent(makeHtml(), { baseURL: 'http://localhost:3000' });
+    await page.route(TEST_PATH, route => route.fulfill({
+        contentType: 'text/html; charset=utf-8',
+        body: makeHtml(),
+    }));
+    await page.goto(TEST_PATH);
     await expect(page.locator('.lc-val-monthly')).not.toHaveText('0원');
 }
 
