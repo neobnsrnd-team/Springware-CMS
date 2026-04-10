@@ -210,7 +210,7 @@ export function updateCellStyle(
 ): TableModel {
     const nextRows = model.rows.map((row, rIdx) =>
         row.map((cell, cIdx) => {
-            if (rIdx !== rowIndex || cIdx !== columnIndex) return cloneCell(cell);
+            if (rIdx !== rowIndex || cIdx !== columnIndex) return cell;
             const nextStyles = { ...cell.styles };
             if (value.trim()) nextStyles[styleKey] = value.trim();
             else delete nextStyles[styleKey];
@@ -224,8 +224,8 @@ export function updateCellStyle(
 export function updateColumnWidth(model: TableModel, columnIndex: number, value: string): TableModel {
     const nextRows = model.rows.map((row) =>
         row.map((cell, cIdx) => {
+            if (cIdx !== columnIndex) return cell;
             const nextCell = cloneCell(cell);
-            if (cIdx !== columnIndex) return nextCell;
             if (value.trim()) nextCell.styles.width = value.trim();
             else delete nextCell.styles.width;
             return nextCell;
@@ -237,8 +237,8 @@ export function updateColumnWidth(model: TableModel, columnIndex: number, value:
 export function updateRowHeight(model: TableModel, rowIndex: number, value: string): TableModel {
     const nextRows = model.rows.map((row, rIdx) =>
         row.map((cell) => {
+            if (rIdx !== rowIndex) return cell;
             const nextCell = cloneCell(cell);
-            if (rIdx !== rowIndex) return nextCell;
             if (value.trim()) nextCell.styles.height = value.trim();
             else delete nextCell.styles.height;
             return nextCell;
