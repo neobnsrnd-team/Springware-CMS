@@ -388,10 +388,12 @@ export default {
                 panel.style.display = isFirst ? 'block' : 'none';
                 panelMap[tabDef.type] = panel;
 
-                // 섹션: 기본값
-                panel.appendChild(makeSectionHeader('기본값'));
+                // 섹션: 기본값 (비표시)
+                const defaultHeader = makeSectionHeader('기본값');
+                defaultHeader.style.display = 'none';
+                panel.appendChild(defaultHeader);
                 const defaultGrid = document.createElement('div');
-                defaultGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;';
+                defaultGrid.style.cssText = 'display:none;';
                 tabDef.defaults.forEach(f => defaultGrid.appendChild(makeDefaultField(f, tabDef.type)));
                 panel.appendChild(defaultGrid);
 
