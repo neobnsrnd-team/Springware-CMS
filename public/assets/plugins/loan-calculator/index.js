@@ -130,6 +130,8 @@ function formatRangeLabel(key, val) {
     return `${v}만원`;
 }
 
+const APPLY_FEEDBACK_MS = 1800;
+
 export default {
     name: 'loan-calculator',
     displayName: '금융 계산기',
@@ -431,7 +433,7 @@ export default {
             applyBtn.addEventListener('click', () => {
                 onChange();
                 applyMsg.style.opacity = '1';
-                setTimeout(() => { applyMsg.style.opacity = '0'; }, 1800);
+                setTimeout(() => { applyMsg.style.opacity = '0'; }, APPLY_FEEDBACK_MS);
             });
 
             applyRow.appendChild(applyBtn);

@@ -7,7 +7,6 @@ import {
     checkNotOutsideViewport,
     checkMinFontSize,
     checkMinTouchTarget,
-    checkKeyboardFocusable,
     checkViewportLayouts,
     MOBILE_VIEWPORTS,
     WEB_VIEWPORTS,
@@ -196,7 +195,6 @@ test.describe('loan-calculator — 공통 체크', () => {
         await checkMinTouchTarget(page, '.lc-tab, .lc-apply-btn');
     });
 
-    // eslint-disable-next-line playwright/expect-expect
     test('키보드 Tab 포커스 이동 가능', async ({ page }) => {
         await page.locator('.lc-tab').first().focus();
         await expect(page.locator('.lc-tab').first()).toBeFocused();
@@ -228,6 +226,7 @@ test.describe('loan-calculator — 대출 탭 계산', () => {
         await panel.locator('.lc-input[data-key="rate"]').fill('3.5');
         await panel.locator('.lc-input[data-key="period"]').fill('24');
         // debounce 300ms 대기
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         const monthly = await page.locator('.lc-val-monthly').textContent();
@@ -265,6 +264,7 @@ test.describe('loan-calculator — 예금 탭 계산', () => {
         await panel.locator('.lc-input[data-key="principal"]').fill('5000');
         await panel.locator('.lc-input[data-key="rate"]').fill('4.0');
         await panel.locator('.lc-input[data-key="period"]').fill('24');
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         const monthly = await page.locator('.lc-val-monthly').textContent();
@@ -302,6 +302,7 @@ test.describe('loan-calculator — 적금 탭 계산', () => {
         await panel.locator('.lc-input[data-key="monthly"]').fill('200');
         await panel.locator('.lc-input[data-key="rate"]').fill('4.5');
         await panel.locator('.lc-input[data-key="period"]').fill('36');
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         const monthly = await page.locator('.lc-val-monthly').textContent();
@@ -338,11 +339,11 @@ test.describe('loan-calculator — 예외 처리', () => {
                 el.dispatchEvent(new Event('input', { bubbles: true }));
             },
         );
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         // 플러그인이 NaN 입력을 무시하여 결과값이 변동되지 않아야 함
-        const afterMonthly = await page.locator('.lc-val-monthly').textContent();
-        expect(afterMonthly).toBe(prevMonthly);
+        await expect(page.locator('.lc-val-monthly')).toHaveText(prevMonthly ?? '');
     });
 
     test('금리 0% 입력 시 이자 0원, 원금만 반환됨', async ({ page }) => {
@@ -354,6 +355,7 @@ test.describe('loan-calculator — 예외 처리', () => {
                 el.dispatchEvent(new Event('input', { bubbles: true }));
             },
         );
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         // r=0 분기: monthlyAmt = P/n → interestAmt = totalAmt - P = 0
@@ -370,6 +372,7 @@ test.describe('loan-calculator — 예외 처리', () => {
                 el.dispatchEvent(new Event('input', { bubbles: true }));
             },
         );
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         await expect(page.locator(ROOT), '기간 0 입력 후에도 컴포넌트가 유지되어야 합니다').toBeAttached();
@@ -409,6 +412,7 @@ test.describe('loan-calculator — 엣지 케이스', () => {
         await panel.locator('.lc-input[data-key="principal"]').fill('500000'); // 50억 = max
         await panel.locator('.lc-input[data-key="rate"]').fill('30');           // max
         await panel.locator('.lc-input[data-key="period"]').fill('360');        // max (30년)
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         await checkResultsValid(page);
@@ -418,6 +422,7 @@ test.describe('loan-calculator — 엣지 케이스', () => {
         expect(total?.trim()).not.toBe('0원');
     });
 
+    // eslint-disable-next-line playwright/expect-expect
     test('금리 99.99% 입력 시 계산 결과 에러 없음', async ({ page }) => {
         // max(30) 초과이지만 calculate 내부에서 max 클램핑 후 계산
         await page.locator('.lc-panel[data-type="loan"] .lc-input[data-key="rate"]').evaluate(
@@ -427,12 +432,14 @@ test.describe('loan-calculator — 엣지 케이스', () => {
                 el.dispatchEvent(new Event('input', { bubbles: true }));
             },
         );
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
         await checkResultsValid(page);
     });
 
     test('소수점 금리 3.575% 입력 시 NaN 없음 (부동소수점 처리)', async ({ page }) => {
         await page.locator('.lc-panel[data-type="loan"] .lc-input[data-key="rate"]').fill('3.575');
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         await checkResultsValid(page);
@@ -448,6 +455,7 @@ test.describe('loan-calculator — 엣지 케이스', () => {
         await panel.locator('.lc-input[data-key="principal"]').fill('1000000'); // 100억 = max
         await panel.locator('.lc-input[data-key="rate"]').fill('20');
         await panel.locator('.lc-input[data-key="period"]').fill('60');
+        // eslint-disable-next-line playwright/no-wait-for-timeout
         await page.waitForTimeout(400);
 
         await checkResultsValid(page);
