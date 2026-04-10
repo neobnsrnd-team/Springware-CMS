@@ -175,23 +175,13 @@ function applyToBlock(blockEl: HTMLElement, slides: CardSlide[]) {
 }
 
 function parseSlides(blockEl: HTMLElement): CardSlide[] {
-    // 1순위: data-card-slides JSON
-    const raw = blockEl.getAttribute('data-card-slides');
-    if (raw) {
-        try {
-            return JSON.parse(raw) as CardSlide[];
-        } catch {
-            // 파싱 실패 시 DOM 폴백
-        }
-    }
-
-    // 2순위: DOM에서 추출
+    // 1순위: 현재 캔버스 DOM에서 추출
     const items = blockEl.querySelectorAll('[data-card-item]');
     if (items.length > 0) {
         return Array.from(items).map((item) => {
             const tagEl = item.querySelector('span[style*="border-radius:12px"]');
             const tag = tagEl?.textContent?.trim() || undefined;
-            const moreEl = item.querySelector('a[style*="font-size:18px"]');
+            const moreEl = item.querySelector('a[style*="justify-content:flex-end"]');
             const showMore = !!moreEl;
             const moreHref = moreEl?.getAttribute('href') || undefined;
             const title = item.querySelector('[data-card-title]')?.textContent?.trim() ?? '제목';
@@ -212,6 +202,16 @@ function parseSlides(blockEl: HTMLElement): CardSlide[] {
 
             return { tag, showMore, moreHref, title, copyable, subtitle, infoLines, buttons };
         });
+    }
+
+    // 2순위: data-card-slides JSON
+    const raw = blockEl.getAttribute('data-card-slides');
+    if (raw) {
+        try {
+            return JSON.parse(raw) as CardSlide[];
+        } catch {
+            // 파싱 실패 시 기본값 사용
+        }
     }
 
     return [{ title: '새 카드' }];
@@ -356,6 +356,12 @@ export default function InfoCardSlideEditor({ blockEl, onClose }: Props) {
     const [slides, setSlides] = useState<CardSlide[]>(() => parseSlides(blockEl));
     const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
     const dragStateRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
+
+    useEffect(() => {
+        setSlides(parseSlides(blockEl));
+        setPanelPos(null);
+        dragStateRef.current = null;
+    }, [blockEl]);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
