@@ -266,10 +266,16 @@ const S = {
 
 export default function InfoAccordionEditor({ blockEl, onClose }: Props) {
     const [items, setItems] = useState<AccordionItem[]>(() => parseItems(blockEl));
-    const [pos, setPos] = useState(() => ({
-        x: Math.max(8, window.innerWidth / 2 - 260),
-        y: Math.max(24, window.innerHeight / 2 - 240),
-    }));
+    const [pos, setPos] = useState(() => {
+        if (typeof window === 'undefined') {
+            return { x: 8, y: 24 };
+        }
+
+        return {
+            x: Math.max(8, window.innerWidth / 2 - 260),
+            y: Math.max(24, window.innerHeight / 2 - 240),
+        };
+    });
     const [editingTableIndex, setEditingTableIndex] = useState<number | null>(null);
     const [tableModel, setTableModel] = useState<TableModel | null>(null);
     const dragging = useRef(false);
