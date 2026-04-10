@@ -348,15 +348,13 @@ test.describe('menu-tab-grid — 정상 동작', () => {
     test('토글 클릭 시 그리드가 펼쳐짐', async ({ page }) => {
         const grid = page.locator('[data-menu-tab-grid]');
         // 초기: 숨김
-        await expect(grid).toHaveCSS('display', 'none');
+        await expect(grid).toBeHidden();
 
         // 토글 클릭
         await page.locator('[data-menu-tab-toggle]').click();
-        // 애니메이션 대기
-        await page.waitForTimeout(400);
 
-        // 펼침: display: grid
-        await expect(grid).toHaveCSS('display', 'grid');
+        // 펼침: Web-first assertion — 조건 충족까지 자동 대기
+        await expect(grid).toBeVisible();
     });
 
     test('그리드 내 항목이 탭 수만큼 존재', async ({ page }) => {
@@ -370,13 +368,11 @@ test.describe('menu-tab-grid — 정상 동작', () => {
 
         // 펼치기
         await toggle.click();
-        await page.waitForTimeout(400);
-        await expect(grid).toHaveCSS('display', 'grid');
+        await expect(grid).toBeVisible();
 
         // 접기
         await toggle.click();
-        await page.waitForTimeout(400);
-        await expect(grid).toHaveCSS('display', 'none');
+        await expect(grid).toBeHidden();
     });
 });
 
@@ -394,9 +390,8 @@ test.describe('menu-tab-grid — 탭 선택', () => {
 
         // 1번 클릭
         await tab1.click();
-        await page.waitForTimeout(100);
 
-        // 1번 활성, 0번 비활성
+        // 1번 활성, 0번 비활성 — Web-first assertion 자동 대기
         await expect(tab1).toHaveAttribute('data-tab-active', 'true');
         expect(await tab0.getAttribute('data-tab-active')).toBeNull();
     });
@@ -405,21 +400,20 @@ test.describe('menu-tab-grid — 탭 선택', () => {
         await page.setContent(NORMAL_HTML);
 
         // 그리드 펼치기
+        const grid = page.locator('[data-menu-tab-grid]');
         await page.locator('[data-menu-tab-toggle]').click();
-        await page.waitForTimeout(400);
+        await expect(grid).toBeVisible();
 
         // 그리드 항목 2번 클릭
         const gridItem2 = page.locator('[data-menu-grid-item][data-grid-idx="2"]');
         await gridItem2.click();
-        await page.waitForTimeout(400);
 
         // 탭바에서 2번 탭이 활성
         const tab2 = page.locator('[data-menu-tab][data-tab-idx="2"]');
         await expect(tab2).toHaveAttribute('data-tab-active', 'true');
 
         // 그리드가 접힘
-        const grid = page.locator('[data-menu-tab-grid]');
-        await expect(grid).toHaveCSS('display', 'none');
+        await expect(grid).toBeHidden();
     });
 });
 
