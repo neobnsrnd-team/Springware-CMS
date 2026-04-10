@@ -485,10 +485,7 @@ export default function TableEditorModal({ initialModel, title = '표 편집', o
                                                                               ? e.target.value.replace(/\n/g, '<br>')
                                                                               : '<br>',
                                                                       }
-                                                                    : {
-                                                                          ...prevCell,
-                                                                          styles: { ...prevCell.styles },
-                                                                      },
+                                                                    : prevCell,
                                                             ),
                                                         );
                                                         return { ...prev, rows: nextRows };
