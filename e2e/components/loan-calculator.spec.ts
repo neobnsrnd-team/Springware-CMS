@@ -398,7 +398,9 @@ test.describe('loan-calculator — 예외 처리', () => {
         });
         await expect(inputWrap).toHaveClass(/lc-out-of-range/);
 
-        // blur → max(500000)으로 클램핑, out-of-range 제거
+        // focus 후 blur → max(500000)으로 클램핑, out-of-range 제거
+        // el.blur()는 포커스가 없는 상태에서 no-op이므로 focus() 먼저 호출
+        await input.focus();
         await input.evaluate((el: HTMLInputElement) => el.blur());
         await expect(inputWrap).not.toHaveClass(/lc-out-of-range/);
 
