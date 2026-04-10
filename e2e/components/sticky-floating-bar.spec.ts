@@ -12,17 +12,6 @@ import {
     WEB_VIEWPORTS,
 } from '../helpers/component-checks';
 
-// ── 헬퍼 ──────────────────────────────────────────────────────────────────
-
-function escapeHtml(str: string): string {
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
 // ── 인라인 CSS (style.css 기반) ──────────────────────────────────────────
 
 const INLINE_CSS = `
@@ -87,7 +76,8 @@ function buildMountScript(options: {
     buttonColor?: string;
 }): string {
     // options 값을 JSON으로 전달하여 mount 함수 내부에서 파싱
-    const optsJson = JSON.stringify(options);
+    // </script> 포함 시 HTML 파서가 스크립트를 조기 종료하는 것을 방지
+    const optsJson = JSON.stringify(options).replace(/</g, '\\u003c');
     return `
     <script>
     (function() {
@@ -222,12 +212,6 @@ const SHORT_PAGE_HTML = buildHtml({
 const LONG_TEXT_HTML = buildHtml({
     text: '연말정산 간소화 서비스 지금 바로 신청하고 혜택받으세요',
     buttonLabel: '간편하게 신청하기',
-});
-
-/** XSS 삽입 시도 — mount()가 innerHTML 사용 */
-const XSS_HTML = buildHtml({
-    text: '<script>alert("xss")</script><img src=x onerror=alert(1)>',
-    buttonLabel: '<img src=x onerror=alert(2)>',
 });
 
 /** URL 디렉토리 트래버설 시도 */
