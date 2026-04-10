@@ -1184,7 +1184,7 @@ export default function EditClient({
             btn.title = '자산 편집';
             btn.style.cssText =
                 'display:none;width:28px;height:28px;flex-shrink:0;justify-content:center;align-items:center;background:rgba(0,70,164,0.9);cursor:pointer;border:none;padding:0;';
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();

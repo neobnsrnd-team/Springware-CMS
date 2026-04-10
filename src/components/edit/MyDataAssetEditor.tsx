@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 import { escapeHtml, rgbToHex } from '@/lib/html-utils';
 
@@ -116,6 +116,8 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const [rows, setRows] = useState<AssetRow[]>(initialData.rows);
     const [btn, setBtn] = useState<BtnConfig>(initialData.btn);
     const [sortByAmount, setSortByAmount] = useState(false);
+    const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
+    const dragStateRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
 
     // 총자산·순자산 실시간 자동 계산 (읽기 전용) — Math.round로 부동소수점 오차 방지
     const totalAsset = rows.filter((r) => r.type === 'asset').reduce((sum, r) => sum + Math.round(r.amount), 0);
@@ -223,6 +225,52 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
+    useEffect(() => {
+        setPanelPos(null);
+        dragStateRef.current = null;
+    }, [blockEl]);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const dragState = dragStateRef.current;
+            if (!dragState) return;
+
+            setPanelPos({
+                left: Math.max(12, e.clientX - dragState.offsetX),
+                top: Math.max(12, e.clientY - dragState.offsetY),
+            });
+        };
+
+        const handleMouseUp = () => {
+            dragStateRef.current = null;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, []);
+
+    const handleDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        if ((e.target as HTMLElement).closest('button')) return;
+
+        const panelEl = e.currentTarget.parentElement as HTMLDivElement | null;
+        if (!panelEl) return;
+
+        const rect = panelEl.getBoundingClientRect();
+        if (!rect) return;
+
+        setPanelPos({ left: rect.left, top: rect.top });
+        dragStateRef.current = {
+            offsetX: e.clientX - rect.left,
+            offsetY: e.clientY - rect.top,
+        };
+    };
+
     // ── 행 편집 헬퍼 ──
     const updateRow = (idx: number, patch: Partial<AssetRow>) =>
         setRows((prev) => prev.map((r, i) => (i === idx ? ({ ...r, ...patch } as AssetRow) : r)));
@@ -273,19 +321,23 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     // 미리보기용 순자산 표시
     // ── 렌더 ──
     return (
-        <div
-            style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 99999,
-                background: 'rgba(0,0,0,0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
-        >
+        <>
+            <div
+                onClick={onClose}
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 99998,
+                    background: 'transparent',
+                }}
+            />
             <div
                 style={{
+                    position: 'fixed',
+                    left: panelPos ? panelPos.left : '50%',
+                    top: panelPos ? panelPos.top : '50%',
+                    transform: panelPos ? 'none' : 'translate(-50%, -50%)',
+                    zIndex: 99999,
                     background: '#fff',
                     borderRadius: 12,
                     padding: 24,
@@ -295,10 +347,19 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
                     fontFamily: "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif",
                 }}
+                onClick={(e) => e.stopPropagation()}
             >
                 {/* 헤더: 제목 + 닫기 버튼 */}
                 <div
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}
+                    onMouseDown={handleDragStart}
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 16,
+                        cursor: 'move',
+                        userSelect: 'none',
+                    }}
                 >
                     <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>
                         마이데이터 자산 요약 편집
@@ -684,6 +745,6 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
