@@ -7,6 +7,8 @@ import {
     checkNoHorizontalScroll,
     checkNotOutsideViewport,
     checkViewportLayouts,
+    MOBILE_VIEWPORTS,
+    WEB_VIEWPORTS,
 } from '../helpers/component-checks';
 
 // ── 인라인 CSS ────────────────────────────────────────────────────────────────
@@ -54,15 +56,24 @@ const buildSlide = (slide: BannerSlide, idx: number): string => {
     );
 };
 
-const makeHtml = (slides: BannerSlide[]): string => {
+type ViewMode = 'mobile' | 'web' | 'responsive';
+
+const VIEW_MODE_EXTRA_STYLE: Record<ViewMode, string> = {
+    mobile:     '',
+    web:        'max-width:480px;margin:0 auto;',
+    responsive: 'width:100%;box-sizing:border-box;',
+};
+
+const makeHtml = (slides: BannerSlide[], viewMode: ViewMode = 'mobile'): string => {
     const total = slides.length;
+    const extraStyle = VIEW_MODE_EXTRA_STYLE[viewMode];
     return `<!DOCTYPE html><html><head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>${EB_CSS}</style>
 </head><body>
-  <div data-component-id="event-banner-mobile" data-spw-block data-banner-interval="3000"
-    style="font-family:${FONT_FAMILY};background:#ffffff;">
+  <div data-component-id="event-banner-${viewMode}" data-spw-block data-banner-interval="3000"
+    style="font-family:${FONT_FAMILY};background:#ffffff;${extraStyle}">
     <div data-banner-track style="display:flex;flex-direction:column;">
       ${slides.map((s, i) => buildSlide(s, i)).join('')}
     </div>
@@ -78,11 +89,18 @@ const makeHtml = (slides: BannerSlide[]): string => {
 
 // ── HTML 상수 ─────────────────────────────────────────────────────────────────
 
-// 정상 상태: 슬라이드 2개, 오버레이 텍스트 포함
-const NORMAL_HTML = makeHtml([
+const DEFAULT_SLIDES = [
     { imageUrl: '/test/banner1.jpg', altText: '이벤트 배너 1', linkHref: '#', overlayTitle: '이벤트 배너 제목', overlayDesc: '이벤트 설명 텍스트' },
     { imageUrl: '/test/banner2.jpg', altText: '이벤트 배너 2', linkHref: '#', overlayTitle: '두 번째 배너' },
-]);
+];
+
+// 정상 상태: 슬라이드 2개, 오버레이 텍스트 포함 (mobile 기준)
+const NORMAL_HTML = makeHtml(DEFAULT_SLIDES);
+
+// 뷰 모드별 HTML (반응형 뷰포트 레이아웃 테스트용)
+const MOBILE_HTML     = makeHtml(DEFAULT_SLIDES, 'mobile');
+const WEB_HTML        = makeHtml(DEFAULT_SLIDES, 'web');
+const RESPONSIVE_HTML = makeHtml(DEFAULT_SLIDES, 'responsive');
 
 // 슬라이드 1개
 const SINGLE_HTML = makeHtml([
@@ -254,12 +272,32 @@ test.describe('event-banner — 반응형 뷰어', () => {
     });
 });
 
-// ── 반응형 뷰포트 레이아웃 ────────────────────────────────────────────────────
+// ── 모바일 뷰 레이아웃 (360~430px) ──────────────────────────────────────────
 
-test.describe('event-banner — 반응형 뷰포트 레이아웃', () => {
+test.describe('event-banner — 모바일 뷰 레이아웃 (360~430px)', () => {
     // eslint-disable-next-line playwright/expect-expect
-    test('360~1440px 전 뷰포트에서 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
-        await page.setContent(NORMAL_HTML);
+    test('Galaxy S / iPhone SE / iPhone Pro Max — 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(MOBILE_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="event-banner"]', MOBILE_VIEWPORTS);
+    });
+});
+
+// ── 웹 뷰 레이아웃 (767~1440px) ─────────────────────────────────────────────
+
+test.describe('event-banner — 웹 뷰 레이아웃 (767~1440px)', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('태블릿 경계~1440px 데스크탑 — 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(WEB_HTML);
+        await checkViewportLayouts(page, '[data-component-id^="event-banner"]', WEB_VIEWPORTS);
+    });
+});
+
+// ── 반응형 뷰 레이아웃 (전체 구간) ──────────────────────────────────────────
+
+test.describe('event-banner — 반응형 뷰 레이아웃 (360~1440px)', () => {
+    // eslint-disable-next-line playwright/expect-expect
+    test('전체 뷰포트 구간 — 가로 스크롤·뷰포트 이탈 없음', async ({ page }) => {
+        await page.setContent(RESPONSIVE_HTML);
         await checkViewportLayouts(page, '[data-component-id^="event-banner"]');
     });
 });

@@ -151,19 +151,30 @@ export async function checkComponentIdExists(page: Page, componentIdPrefix: stri
 
 // ── 반응형 뷰포트 체크 ────────────────────────────────────────────────────
 
-interface ViewportEntry {
+export interface ViewportEntry {
     name: string;
     width: number;
     height: number;
 }
 
-const DEFAULT_VIEWPORTS: ViewportEntry[] = [
+/** 모바일 뷰 전용 뷰포트 세트 (360~430px) */
+export const MOBILE_VIEWPORTS: ViewportEntry[] = [
     { name: 'Galaxy S',         width: 360,  height: 800  },
     { name: 'iPhone SE',        width: 375,  height: 667  },
     { name: 'iPhone Pro Max',   width: 430,  height: 932  },
+];
+
+/** 웹·태블릿 뷰 전용 뷰포트 세트 (767px~1440px) */
+export const WEB_VIEWPORTS: ViewportEntry[] = [
     { name: '767px 경계',       width: 767,  height: 1024 },
     { name: '768px 경계',       width: 768,  height: 1024 },
     { name: '1440px 데스크탑',  width: 1440, height: 900  },
+];
+
+/** 전체 구간 뷰포트 세트 (모바일 + 웹, 기본값) */
+const DEFAULT_VIEWPORTS: ViewportEntry[] = [
+    ...MOBILE_VIEWPORTS,
+    ...WEB_VIEWPORTS,
 ];
 
 /**
