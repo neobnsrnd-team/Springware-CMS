@@ -238,12 +238,17 @@ jobs:
             docker system df || true
           REMOTE_SCRIPT
 
-      # ── 8. 최신 이미지 Pull ──────────────────────────────────────────────────
+      # ── 8. 서버에서 DockerHub 로그인 ─────────────────────────────────────────────
+      - name: 서버 DockerHub 로그인
+        run: |
+          ssh deploy-target "echo '${{ secrets.DOCKERHUB_TOKEN }}' | docker login -u '${{ secrets.DOCKERHUB_USERNAME }}' --password-stdin"
+
+      # ── 9. 최신 이미지 Pull ──────────────────────────────────────────────────
       - name: Docker 이미지 Pull
         run: |
           ssh deploy-target "docker pull ${{ env.DOCKER_IMAGE }}"
 
-      # ── 9. 컨테이너 재시작 (cms + operation) ────────────────────────────────
+      # ── 10. 컨테이너 재시작 (cms + operation) ───────────────────────────────
       - name: 컨테이너 배포
         run: |
           ssh deploy-target bash -s << 'REMOTE_SCRIPT'
@@ -255,7 +260,7 @@ jobs:
             docker compose -f docker-compose-prod.yml ps
           REMOTE_SCRIPT
 
-      # ── 10. 헬스체크 — cms(3000) / operation(3001) ──────────────────────────
+      # ── 11. 헬스체크 — cms(3000) / operation(3001) ──────────────────────────
       - name: 헬스체크
         run: |
           ssh deploy-target bash -s << 'REMOTE_SCRIPT'
