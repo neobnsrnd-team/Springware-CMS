@@ -53,22 +53,21 @@ export default {
         var bgColor     = options.bgColor     || '#ffffff';
         var buttonColor = options.buttonColor || '#0046A4';
 
-        // URL 보안 검증 — '..' 포함 경로 차단
-        if (typeof buttonUrl === 'string' && buttonUrl.includes('..')) {
-            buttonUrl = '#';
-        }
+        // URL 보안 검증 — javascript: 등 위험 프로토콜 차단, mailto:/tel:/프로토콜 상대경로 허용
+        var safeUrl = (typeof buttonUrl === 'string' && /^(https?:\/\/|\/\/|\/|#|mailto:|tel:)/i.test(buttonUrl))
+            ? buttonUrl
+            : '#';
 
-        // DOM 구성
-        element.innerHTML =
-            '<div class="sfb-inner">' +
-                '<span class="sfb-text">' + text + '</span>' +
-                '<a class="sfb-btn" href="' + buttonUrl + '">' + buttonLabel + '</a>' +
-            '</div>';
+        // DOM 구성 — XSS 방지: textContent + setAttribute 사용 (innerHTML 직접 삽입 금지)
+        element.innerHTML = '<div class="sfb-inner"><span class="sfb-text"></span><a class="sfb-btn"></a></div>';
+        element.querySelector('.sfb-text').textContent = text;
+        var btn = element.querySelector('.sfb-btn');
+        btn.textContent = buttonLabel;
+        btn.setAttribute('href', safeUrl);
 
         // 배경색·버튼색 적용
         element.style.background = bgColor;
-        var btn = element.querySelector('.sfb-btn');
-        if (btn) btn.style.background = buttonColor;
+        btn.style.background = buttonColor;
 
         // 바 위치 업데이트 — 하얀 콘텐츠 박스(.is-container) 하단에 맞춤
         // - 박스 하단이 뷰포트 안쪽: 박스 끝에 붙음
