@@ -410,8 +410,7 @@ test.describe('branch-locator — 지점 클릭 → 지도 연동', () => {
 
         await page.locator('[data-bl-item]').first().click();
 
-        const src = await page.locator('[data-bl-map]').getAttribute('src');
-        expect(src).toBe('about:blank');
+        await expect(page.locator('[data-bl-map]')).toHaveAttribute('src', 'about:blank');
     });
 
     test('보안: 허용되지 않는 URL(http://) 은 about:blank로 처리됨', async ({ page }) => {
@@ -423,8 +422,7 @@ test.describe('branch-locator — 지점 클릭 → 지도 연동', () => {
 
         await page.locator('[data-bl-item]').first().click();
 
-        const src = await page.locator('[data-bl-map]').getAttribute('src');
-        expect(src).toBe('about:blank');
+        await expect(page.locator('[data-bl-map]')).toHaveAttribute('src', 'about:blank');
     });
 
     test('클릭된 아이템에 선택 배경색(#EEF4FF)이 적용됨', async ({ page }) => {
