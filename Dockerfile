@@ -10,16 +10,8 @@
 #   최신 URL: https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
 # ──────────────────────────────────────────────────────────────────────────────
 
-# ── Stage 1: production 의존성 설치 ───────────────────────────────────────────
-FROM node:20-slim AS deps
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-# devDependencies 제외하고 production 의존성만 설치
-RUN npm ci --omit=dev
-
-
-# ── Stage 2: Next.js 빌드 ─────────────────────────────────────────────────────
+# ── Stage 1: Next.js 빌드 ─────────────────────────────────────────────────────
+# standalone 빌드가 필요한 node_modules를 자체 포함하므로 별도 deps 스테이지 불필요
 FROM node:20-slim AS builder
 WORKDIR /app
 
@@ -33,7 +25,7 @@ COPY . .
 RUN npm run build
 
 
-# ── Stage 3: 운영 이미지 ──────────────────────────────────────────────────────
+# ── Stage 2: 운영 이미지 ──────────────────────────────────────────────────────
 FROM node:20-slim AS runner
 WORKDIR /app
 
