@@ -1,11 +1,16 @@
 import 'dotenv/config';
 import { closePool } from '../src/db/connection';
 import { createComponent, getComponentById, updateComponent } from '../src/db/repository/component.repository';
+import {
+    type AssetViewMode,
+    getMyDataAssetDateStyle,
+    getMyDataAssetLegendItemStyle,
+    getMyDataAssetLegendStyle,
+    getMyDataAssetTitleStyle,
+} from '../src/lib/mydata-asset-styles';
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
 const THUMBNAIL = '/assets/minimalist-blocks/preview/ibk-mydata-asset.svg';
-
-type AssetViewMode = 'mobile' | 'web' | 'responsive';
 
 function buildInner(viewMode: AssetViewMode): string {
     const isWeb = viewMode === 'web';
@@ -20,24 +25,16 @@ function buildInner(viewMode: AssetViewMode): string {
     const headerStyle = isWeb
         ? 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:24px 28px 18px;border-bottom:1px solid #EEF2F7;'
         : 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 16px 10px;';
-    const titleStyle = isWeb
-        ? 'display:block;flex:1;min-width:0;font-size:22px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
-        : 'display:block;flex:1;min-width:0;font-size:15px;font-weight:700;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-    const dateStyle = isWeb
-        ? 'display:inline-flex;align-items:center;flex-shrink:0;max-width:180px;padding:7px 12px;border-radius:999px;background:#EEF4FF;color:#0A4AA3;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
-        : 'display:inline-flex;align-items:center;flex-shrink:0;max-width:132px;padding:2px 10px;border-radius:4px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    const titleStyle = getMyDataAssetTitleStyle(viewMode);
+    const dateStyle = getMyDataAssetDateStyle(viewMode);
     const summaryStyle = 'display:flex;align-items:center;gap:20px;padding:6px 16px 14px;min-width:0;';
     const summaryMetaStyle = 'flex:1;min-width:0;';
     const totalWrapStyle = 'margin-bottom:8px;';
     const totalLabelStyle = 'font-size:12px;color:#6B7280;';
     const totalValueStyle =
         'display:block;font-size:16px;font-weight:700;color:#1A1A2E;line-height:1.35;overflow-wrap:anywhere;word-break:break-all;';
-    const legendStyle = isWeb
-        ? 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;width:100%;'
-        : 'display:flex;flex-wrap:wrap;gap:4px 12px;';
-    const legendItemStyle = isWeb
-        ? 'display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#475569;padding:8px 10px;border-radius:999px;background:#ffffff;border:1px solid #E2E8F0;font-weight:600;text-align:center;min-width:0;width:100%;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;'
-        : 'display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;';
+    const legendStyle = getMyDataAssetLegendStyle(viewMode);
+    const legendItemStyle = getMyDataAssetLegendItemStyle(viewMode);
     const rowsStyle = isWeb ? 'padding:0;' : 'padding:0 16px;';
     const rowBaseStyle = isWeb
         ? 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:12px 0;'

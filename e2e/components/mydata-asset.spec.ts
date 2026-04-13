@@ -283,6 +283,7 @@ const LONG_TEXT_HTML = makeMyDataAssetHtml({
     viewMode: 'responsive',
     title: '내 자산 현황과 금융 생활 전반을 한눈에 확인할 수 있는 장문 타이틀 테스트',
     dateText: '2024.04.06 기준 장문 날짜 배지 텍스트 테스트',
+    dateVisible: true,
     rows: [
         {
             type: 'asset',

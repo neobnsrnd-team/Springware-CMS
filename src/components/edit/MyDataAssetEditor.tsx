@@ -6,6 +6,13 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 import { escapeHtml, rgbToHex } from '@/lib/html-utils';
+import {
+    type AssetViewMode,
+    getMyDataAssetDateStyle,
+    getMyDataAssetLegendItemStyle,
+    getMyDataAssetLegendStyle,
+    getMyDataAssetTitleStyle,
+} from '@/lib/mydata-asset-styles';
 
 /** "42,500,000 원" → 42500000 */
 const parseAmount = (str: string): number => {
@@ -52,8 +59,6 @@ interface BtnConfig {
     label: string;
     href: string;
 }
-
-type AssetViewMode = 'mobile' | 'web' | 'responsive';
 
 const getAssetViewMode = (blockEl: HTMLElement): AssetViewMode => {
     const componentId = blockEl.getAttribute('data-component-id') ?? '';
@@ -127,7 +132,12 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const [btn, setBtn] = useState<BtnConfig>(initialData.btn);
     const [sortByAmount, setSortByAmount] = useState(false);
     const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
-    const dragStateRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
+    const dragStateRef = useRef<{
+        offsetX: number;
+        offsetY: number;
+        panelWidth: number;
+        panelHeight: number;
+    } | null>(null);
 
     // 총자산·순자산 실시간 자동 계산 (읽기 전용) — Math.round로 부동소수점 오차 방지
     const totalAsset = rows.filter((r) => r.type === 'asset').reduce((sum, r) => sum + Math.round(r.amount), 0);
@@ -139,10 +149,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const titleEl = blockEl.querySelector<HTMLElement>('[data-ma-title]');
         if (titleEl) {
             titleEl.textContent = title;
-            titleEl.style.cssText =
-                viewMode === 'web'
-                    ? 'display:block;flex:1;min-width:0;font-size:22px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
-                    : 'display:block;flex:1;min-width:0;font-size:15px;font-weight:700;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            titleEl.style.cssText = getMyDataAssetTitleStyle(viewMode);
         }
 
         // 기준일 뱃지
@@ -152,10 +159,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
             dateEl.setAttribute('data-ma-date-visible', String(dateVisible));
             dateEl.style.display = dateVisible ? '' : 'none';
             if (dateVisible) {
-                dateEl.style.cssText =
-                    viewMode === 'web'
-                        ? 'display:inline-flex;align-items:center;flex-shrink:0;max-width:180px;padding:7px 12px;border-radius:999px;background:#EEF4FF;color:#0A4AA3;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
-                        : 'display:inline-flex;align-items:center;flex-shrink:0;max-width:132px;padding:2px 10px;border-radius:4px;background:#E8F0FC;color:#0046A4;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+                dateEl.style.cssText = getMyDataAssetDateStyle(viewMode);
             }
         }
 
@@ -224,17 +228,11 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const legendEl = blockEl.querySelector<HTMLElement>('[data-ma-legend]');
         if (legendEl) {
             const totalAbsForLegend = totalAbs;
-            legendEl.style.cssText =
-                viewMode === 'web'
-                    ? 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;width:100%;'
-                    : 'display:flex;flex-wrap:wrap;gap:4px 12px;';
+            legendEl.style.cssText = getMyDataAssetLegendStyle(viewMode);
             legendEl.innerHTML = sortedRows
                 .map((r) => {
                     const pct = totalAbsForLegend > 0 ? Math.round((Math.abs(r.amount) / totalAbsForLegend) * 100) : 0;
-                    const legendItemStyle =
-                        viewMode === 'web'
-                            ? 'display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#475569;padding:8px 10px;border-radius:999px;background:#ffffff;border:1px solid #E2E8F0;font-weight:600;text-align:center;min-width:0;width:100%;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;'
-                            : 'display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-all;';
+                    const legendItemStyle = getMyDataAssetLegendItemStyle(viewMode);
                     return (
                         `<span style="${legendItemStyle}">` +
                         `<span style="width:8px;height:8px;border-radius:2px;background:${r.color};flex-shrink:0;display:inline-block;"></span>` +
@@ -278,10 +276,15 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const handleMouseMove = (e: MouseEvent) => {
             const dragState = dragStateRef.current;
             if (!dragState) return;
+            const minPadding = 12;
+            const maxLeft = Math.max(minPadding, window.innerWidth - dragState.panelWidth - minPadding);
+            const maxTop = Math.max(minPadding, window.innerHeight - dragState.panelHeight - minPadding);
+            const nextLeft = Math.min(maxLeft, Math.max(minPadding, e.clientX - dragState.offsetX));
+            const nextTop = Math.min(maxTop, Math.max(minPadding, e.clientY - dragState.offsetY));
 
             setPanelPos({
-                left: Math.max(12, e.clientX - dragState.offsetX),
-                top: Math.max(12, e.clientY - dragState.offsetY),
+                left: nextLeft,
+                top: nextTop,
             });
         };
 
@@ -312,6 +315,8 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         dragStateRef.current = {
             offsetX: e.clientX - rect.left,
             offsetY: e.clientY - rect.top,
+            panelWidth: rect.width,
+            panelHeight: rect.height,
         };
     };
 
