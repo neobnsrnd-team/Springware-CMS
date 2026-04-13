@@ -81,7 +81,6 @@ export default function ApproveClient({
     // 승인 모달 상태
     const [approveModalPageId, setApproveModalPageId] = useState<string | null>(null);
     const [beginningDate, setBeginningDate] = useState('');
-    const [expiredDate, setExpiredDate] = useState('');
     const [approving, setApproving] = useState(false);
 
     // 날짜 관리 모달 상태
@@ -278,7 +277,6 @@ export default function ApproveClient({
         setBeginningDate(
             `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
         );
-        setExpiredDate('');
     }
 
     // 승인 확정 — API 호출 후 페이지 새로고침
@@ -292,7 +290,6 @@ export default function ApproveClient({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     beginningDate: beginningDate || null,
-                    expiredDate: expiredDate || null,
                 }),
             });
             const data = await res.json();
@@ -1084,38 +1081,14 @@ export default function ApproveClient({
                                 </p>
                             </div>
 
-                            {/* 만료일 입력 */}
+                            {/* 만료일 — 승인 요청 시 지정된 값 (읽기 전용) */}
                             <div className="mb-5">
-                                <label className="block text-sm font-medium text-[#374151] mb-1.5">
-                                    만료일 <span className="text-[#9ca3af] font-normal">(선택)</span>
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={expiredDate}
-                                        min={beginningDate || undefined}
-                                        onChange={(e) => setExpiredDate(e.target.value)}
-                                        onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
-                                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none pr-9 cursor-pointer"
-                                    />
-                                    {expiredDate && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setExpiredDate('')}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full border-0 bg-transparent text-[#9ca3af] text-sm cursor-pointer hover:bg-[#f3f4f6] hover:text-[#374151]"
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
+                                <label className="block text-sm font-medium text-[#374151] mb-1.5">만료일</label>
+                                <div className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] text-sm text-[#374151]">
+                                    {formatDate(pages.find((p) => p.id === approveModalPageId)?.expiredDate ?? null) ??
+                                        '-'}
                                 </div>
-                                <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">
-                                    설정하지 않으면 만료일 없이 승인됩니다.
-                                </p>
-                                {beginningDate && expiredDate && beginningDate > expiredDate && (
-                                    <p className="m-0 mt-1 text-[12px] text-[#dc2626] font-medium">
-                                        시작일은 만료일보다 이전이어야 합니다.
-                                    </p>
-                                )}
+                                <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">승인 요청 시 지정된 만료일입니다.</p>
                             </div>
 
                             {/* 버튼 */}
@@ -1128,13 +1101,9 @@ export default function ApproveClient({
                                 </button>
                                 <button
                                     onClick={handleApproveConfirm}
-                                    disabled={
-                                        approving || (!!beginningDate && !!expiredDate && beginningDate > expiredDate)
-                                    }
+                                    disabled={approving}
                                     className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                        approving || (!!beginningDate && !!expiredDate && beginningDate > expiredDate)
-                                            ? 'bg-[#d1d5db] cursor-not-allowed'
-                                            : 'bg-[#1e3a5f] cursor-pointer'
+                                        approving ? 'bg-[#d1d5db] cursor-not-allowed' : 'bg-[#1e3a5f] cursor-pointer'
                                     }`}
                                 >
                                     {approving ? '처리 중...' : '승인 확정'}

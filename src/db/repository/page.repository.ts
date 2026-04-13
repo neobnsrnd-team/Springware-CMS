@@ -186,10 +186,15 @@ export async function updatePage(input: {
     });
 }
 
-/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자 지정 */
-export async function requestApproval(pageId: string, approverId: string, approverName: string): Promise<void> {
+/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자 지정, 만료일 저장 */
+export async function requestApproval(
+    pageId: string,
+    approverId: string,
+    approverName: string,
+    expiredDate: string,
+): Promise<void> {
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName });
+        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName, expiredDate });
     });
 }
 
@@ -201,11 +206,10 @@ export async function updateApproveState(input: {
     approverName?: string;
     rejectedReason?: string;
     beginningDate?: string | null;
-    expiredDate?: string | null;
     lastModifierId: string;
 }): Promise<{ version?: number }> {
     return await withTransaction(async (conn) => {
-        // 1. 결재 상태 UPDATE
+        // 1. 결재 상태 UPDATE — EXPIRED_DATE는 승인 요청 시 저장된 값 유지
         await conn.execute(PAGE_UPDATE_APPROVE_STATE, {
             pageId: input.pageId,
             approveState: input.approveState,
@@ -213,7 +217,6 @@ export async function updateApproveState(input: {
             approverName: input.approverName ?? null,
             rejectedReason: clobBind(input.rejectedReason ?? null),
             beginningDate: input.beginningDate ?? null,
-            expiredDate: input.expiredDate ?? null,
             lastModifierId: input.lastModifierId,
         });
 
