@@ -49,7 +49,9 @@ export default async function DashboardPage({
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
         approveState: p.APPROVE_STATE,
         rejectedReason: p.REJECTED_REASON ?? null,
-        hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
+        hasFile:
+            !!p.PAGE_HTML ||
+            (p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false),
         isExpired: isPageExpired(p.IS_PUBLIC, p.EXPIRED_DATE),
         isPublic: p.IS_PUBLIC ?? 'Y',
     }));
