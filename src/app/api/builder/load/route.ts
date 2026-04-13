@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getPageById, getPageHtml } from '@/db/repository/page.repository';
+import { getPageById } from '@/db/repository/page.repository';
 import { isValidBankId } from '@/lib/validators';
 import { readPageHtml } from '@/lib/page-file';
 import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
@@ -23,10 +23,9 @@ async function loadPage(bank: string): Promise<{
     let html = '';
     let fileNotFound = false;
 
-    // DB PAGE_HTML 우선 조회
-    const dbHtml = await getPageHtml(bank);
-    if (dbHtml) {
-        html = dbHtml;
+    // DB PAGE_HTML 우선 (getPageById의 SELECT *에 이미 포함)
+    if (page.PAGE_HTML) {
+        html = page.PAGE_HTML;
     } else if (page.FILE_PATH) {
         // FILE_PATH 폴백 (기존 데이터 호환)
         const content = await readPageHtml(page.FILE_PATH);

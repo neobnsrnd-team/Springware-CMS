@@ -308,18 +308,18 @@ export async function updateApproveState(input: {
                 const assetRegex = /\/api\/assets\/([^/"']+)\/image/g;
                 const assetIds = [...new Set(Array.from(resolvedHtml.matchAll(assetRegex), (m) => m[1]))];
 
-                if (assetIds.length > 0) {
-                    await conn.execute(ASSET_MAP_DELETE_BY_PAGE_VERSION, {
+                // 기존 매핑 항상 초기화 (에셋 0개인 경우에도 이전 매핑 정리)
+                await conn.execute(ASSET_MAP_DELETE_BY_PAGE_VERSION, {
+                    pageId: input.pageId,
+                    version: nextVersion,
+                });
+
+                for (const assetId of assetIds) {
+                    await conn.execute(ASSET_MAP_INSERT, {
                         pageId: input.pageId,
                         version: nextVersion,
+                        assetId,
                     });
-                    for (const assetId of assetIds) {
-                        await conn.execute(ASSET_MAP_INSERT, {
-                            pageId: input.pageId,
-                            version: nextVersion,
-                            assetId,
-                        });
-                    }
                 }
             }
 

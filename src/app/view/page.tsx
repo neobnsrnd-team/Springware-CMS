@@ -2,7 +2,7 @@
 
 import { Metadata } from 'next';
 
-import { getPageById, getPageHtml } from '@/db/repository/page.repository';
+import { getPageById } from '@/db/repository/page.repository';
 import { readPageHtml } from '@/lib/page-file';
 import ViewClient from '@/components/view/ViewClient';
 import type { ViewMode } from '@/db/types';
@@ -25,9 +25,8 @@ async function loadPage(bank: string): Promise<{ html: string; viewMode: ViewMod
 
     if (!page) return { html: '', viewMode };
 
-    // DB PAGE_HTML 우선 조회
-    const dbHtml = await getPageHtml(bank);
-    if (dbHtml) return { html: dbHtml, viewMode };
+    // DB PAGE_HTML 우선 (getPageById의 SELECT *에 이미 포함)
+    if (page.PAGE_HTML) return { html: page.PAGE_HTML, viewMode };
 
     // FILE_PATH 폴백 (기존 데이터 호환)
     if (page.FILE_PATH) {
