@@ -60,6 +60,9 @@ RUN groupadd --gid 1001 nodejs && \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# oracledb 네이티브 바이너리 복사 (standalone 빌드가 .node 파일을 누락하므로 원본 덮어쓰기)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/oracledb ./node_modules/oracledb
+
 # public 에셋 복사 (plugins, scripts, fonts, runtime 등)
 # public/uploads, public/deployed 는 .dockerignore로 제외됨 → 볼륨 마운트로 처리
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
