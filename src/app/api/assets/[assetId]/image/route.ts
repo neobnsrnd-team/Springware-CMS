@@ -1,8 +1,6 @@
 // src/app/api/assets/[assetId]/image/route.ts
 // 에셋 이미지 바이너리 반환 API
 
-import { createHash } from 'crypto';
-
 import { NextRequest } from 'next/server';
 
 import { getAssetById } from '@/db/repository/asset.repository';
@@ -18,8 +16,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ asse
             return errorResponse('이미지를 찾을 수 없습니다.', 404);
         }
 
-        // ETag: BLOB 데이터의 MD5 해시
-        const etag = `"${createHash('md5').update(asset.ASSET_DATA).digest('hex')}"`;
+        // Weak ETag: 수정일시 + 파일 크기 조합 (BLOB 해싱 대비 경량)
+        const etag = `W/"${asset.LAST_MODIFIED_DTIME?.getTime() || 0}-${asset.FILE_SIZE || 0}"`;
 
         // 304 Not Modified — 브라우저 캐시 유효
         if (req.headers.get('if-none-match') === etag) {
