@@ -260,7 +260,8 @@ export const PAGE_SELECT_HTML_BY_ID = `
 export const PAGE_UPDATE_HTML = `
   UPDATE SPW_CMS_PAGE
   SET PAGE_HTML = :pageHtml,
-      LAST_MODIFIER_ID = :lastModifierId
+      LAST_MODIFIER_ID = :lastModifierId,
+      LAST_MODIFIER_NAME = :lastModifierName
   WHERE PAGE_ID = :pageId
     AND USE_YN = 'Y'
 `;

@@ -138,12 +138,18 @@ export async function getPageHtml(pageId: string): Promise<string | null> {
 }
 
 /** PAGE_HTML CLOB 업데이트 (에디터 HTML → DB 직접 저장) */
-export async function savePageHtml(pageId: string, html: string, lastModifierId: string): Promise<void> {
+export async function savePageHtml(
+    pageId: string,
+    html: string,
+    lastModifierId: string,
+    lastModifierName: string,
+): Promise<void> {
     await withTransaction(async (conn) => {
         await conn.execute(PAGE_UPDATE_HTML, {
             pageId,
             pageHtml: clobBind(html),
             lastModifierId,
+            lastModifierName,
         });
     });
 }
