@@ -38,8 +38,8 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
 
     const selectedApprover = APPROVER_LIST.find((u) => u.userId === approverId);
 
-    // 오늘 이후 날짜만 선택 가능
-    const minDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    // 오늘 이후 날짜만 선택 가능 — 로컬 타임 기준 내일 날짜 계산
+    const minDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleDateString('en-CA');
 
     async function handleSubmit() {
         if (!selectedApprover || !expiredDate || submitting) return;

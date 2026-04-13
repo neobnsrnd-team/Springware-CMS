@@ -1085,7 +1085,8 @@ export default function ApproveClient({
                             <div className="mb-5">
                                 <label className="block text-sm font-medium text-[#374151] mb-1.5">만료일</label>
                                 <div className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] text-sm text-[#374151]">
-                                    {pages.find((p) => p.id === approveModalPageId)?.expiredDate ?? '-'}
+                                    {formatDate(pages.find((p) => p.id === approveModalPageId)?.expiredDate ?? null) ??
+                                        '-'}
                                 </div>
                                 <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">승인 요청 시 지정된 만료일입니다.</p>
                             </div>
