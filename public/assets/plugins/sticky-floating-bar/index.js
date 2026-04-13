@@ -53,8 +53,8 @@ export default {
         var bgColor     = options.bgColor     || '#ffffff';
         var buttonColor = options.buttonColor || '#0046A4';
 
-        // URL 보안 검증 — javascript: 등 위험 프로토콜 및 '..' 포함 경로 차단
-        var safeUrl = (typeof buttonUrl === 'string' && /^(https?:\/\/|\/|#)/.test(buttonUrl))
+        // URL 보안 검증 — javascript: 등 위험 프로토콜 차단, mailto:/tel:/프로토콜 상대경로 허용
+        var safeUrl = (typeof buttonUrl === 'string' && /^(https?:\/\/|\/\/|\/|#|mailto:|tel:)/i.test(buttonUrl))
             ? buttonUrl
             : '#';
 
@@ -67,7 +67,7 @@ export default {
 
         // 배경색·버튼색 적용
         element.style.background = bgColor;
-        if (btn) btn.style.background = buttonColor;
+        btn.style.background = buttonColor;
 
         // 바 위치 업데이트 — 하얀 콘텐츠 박스(.is-container) 하단에 맞춤
         // - 박스 하단이 뷰포트 안쪽: 박스 끝에 붙음
