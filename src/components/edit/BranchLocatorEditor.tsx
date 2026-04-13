@@ -16,7 +16,7 @@ function buildNewItemHtml(type: 'branch' | 'atm'): string {
     const iconFs = type === 'atm' ? '10px' : '14px';
     const iconLbl = type === 'atm' ? 'ATM' : '영';
     return (
-        `<div data-bl-item="${type}" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #F3F4F6;min-height:64px;">` +
+        `<div data-bl-item="${type}" data-bl-map-src="" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #F3F4F6;min-height:64px;">` +
         `<div style="width:40px;height:40px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:${iconFs};font-weight:800;letter-spacing:-0.5px;flex-shrink:0;color:#fff;">${iconLbl}</div>` +
         `<div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;">` +
         `<span data-bl-name style="font-size:14px;font-weight:600;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">새 지점명</span>` +
@@ -243,7 +243,17 @@ export default function BranchLocatorEditor({ blockEl, onClose }: Props) {
                 {items.map((item, idx) => {
                     const type = (item.getAttribute('data-bl-item') ?? 'branch') as 'branch' | 'atm';
                     const name = item.querySelector('[data-bl-name]')?.textContent ?? '';
-                    return <ItemRow key={idx} type={type} name={name} onDelete={() => deleteItem(item)} />;
+                    const mapSrc = item.getAttribute('data-bl-map-src') ?? '';
+                    return (
+                        <ItemRow
+                            key={`${type}-${name}-${idx}`}
+                            type={type}
+                            name={name}
+                            mapSrc={mapSrc}
+                            onMapSrcChange={(url) => item.setAttribute('data-bl-map-src', url)}
+                            onDelete={() => deleteItem(item)}
+                        />
+                    );
                 })}
 
                 {/* ── 지점 추가 버튼 ── */}
@@ -275,84 +285,138 @@ function addBtnStyle(color: string): React.CSSProperties {
 }
 
 // ── 개별 지점 행 ────────────────────────────────────────────────────────────
-// 추가/삭제만 담당 — 지점명·주소·영업시간·전화번호는 캔버스 인라인 직접 편집
-function ItemRow({ type, name, onDelete }: { type: 'branch' | 'atm'; name: string; onDelete: () => void }) {
+// 추가/삭제 + 개별 지도 embed URL 입력 담당
+// 지점명·주소·영업시간·전화번호는 캔버스 인라인 직접 편집
+function ItemRow({
+    type,
+    name,
+    mapSrc,
+    onMapSrcChange,
+    onDelete,
+}: {
+    type: 'branch' | 'atm';
+    name: string;
+    mapSrc: string;
+    onMapSrcChange: (url: string) => void;
+    onDelete: () => void;
+}) {
+    const [localSrc, setLocalSrc] = useState(mapSrc);
+
+    // mapSrc prop이 외부(DOM)에서 변경될 때 로컬 상태 동기화 (인덱스 이동으로 인한 stale state 방지)
+    useEffect(() => {
+        setLocalSrc(mapSrc);
+    }, [mapSrc]);
+
+    const isValidSrc =
+        !localSrc.trim() ||
+        localSrc.startsWith('https://www.google.com/maps/embed') ||
+        localSrc.startsWith('https://map.kakao.com/link/embed') ||
+        localSrc.startsWith('https://maps.google.com/maps?');
+
     return (
         <div
             style={{
                 margin: '0 14px 6px',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 10px',
                 border: '1px solid #e5e7eb',
                 borderRadius: 8,
                 background: '#f9fafb',
-                gap: 8,
+                overflow: 'hidden',
             }}
         >
-            <div
-                style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: type === 'atm' ? '#FF6600' : '#0046A4',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: type === 'atm' ? 9 : 12,
-                    fontWeight: 800,
-                    flexShrink: 0,
-                }}
-            >
-                {type === 'atm' ? 'ATM' : '영'}
-            </div>
-            <span
-                style={{
-                    flex: 1,
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: '#374151',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                }}
-            >
-                {name || '(이름 없음)'}
-            </span>
-            <button
-                onClick={onDelete}
-                style={{
-                    width: 28,
-                    height: 28,
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#dc2626',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-            >
-                <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+            {/* 상단 행: 타입 배지 + 지점명 + 삭제 */}
+            <div style={{ display: 'flex', alignItems: 'center', padding: '8px 10px', gap: 8 }}>
+                <div
+                    style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        background: type === 'atm' ? '#FF6600' : '#0046A4',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: type === 'atm' ? 9 : 12,
+                        fontWeight: 800,
+                        flexShrink: 0,
+                    }}
                 >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                    <path d="M10 11v6" />
-                    <path d="M14 11v6" />
-                    <path d="M9 6V4h6v2" />
-                </svg>
-            </button>
+                    {type === 'atm' ? 'ATM' : '영'}
+                </div>
+                <span
+                    style={{
+                        flex: 1,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: '#374151',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {name || '(이름 없음)'}
+                </span>
+                <button
+                    onClick={onDelete}
+                    style={{
+                        width: 28,
+                        height: 28,
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#dc2626',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4h6v2" />
+                    </svg>
+                </button>
+            </div>
+            {/* 지도 embed URL 입력 */}
+            <div style={{ padding: '0 10px 8px' }}>
+                <input
+                    type="text"
+                    value={localSrc}
+                    onChange={(e) => {
+                        setLocalSrc(e.target.value);
+                        onMapSrcChange(e.target.value);
+                    }}
+                    placeholder="지도 embed URL (클릭 시 표시)"
+                    style={{
+                        width: '100%',
+                        padding: '4px 7px',
+                        border: `1px solid ${isValidSrc ? '#e5e7eb' : '#fca5a5'}`,
+                        borderRadius: 5,
+                        fontSize: 10,
+                        color: '#374151',
+                        background: isValidSrc ? '#fff' : '#fef2f2',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                    }}
+                />
+                {!isValidSrc && (
+                    <p style={{ fontSize: 9, color: '#ef4444', margin: '2px 0 0', lineHeight: 1.4 }}>
+                        Google Maps: 공유 → 지도 퍼가기 → embed URL
+                    </p>
+                )}
+            </div>
         </div>
     );
 }

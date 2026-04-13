@@ -359,6 +359,39 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 btn.addEventListener('click', onClick);
                 blCleanups.push(() => btn.removeEventListener('click', onClick));
             });
+
+            // ── 아이템 클릭 → 지도 src 교체 (Issue #332) ──
+            // VIEWER_SCRIPT와 달리 dangerouslySetInnerHTML 환경에서 확실히 동작
+            const mapIframe = root.querySelector<HTMLIFrameElement>('[data-bl-map]');
+            const mapPlaceholder = root.querySelector<HTMLElement>('[data-bl-map-ph]');
+            const defaultMapSrc = mapIframe?.getAttribute('src') ?? 'about:blank';
+
+            const sanitizeMapSrc = (url: string): string => {
+                const t = url.trim();
+                if (
+                    t.startsWith('https://www.google.com/maps/embed') ||
+                    t.startsWith('https://maps.google.com/maps?') ||
+                    t.startsWith('https://map.kakao.com/link/embed')
+                )
+                    return t;
+                return 'about:blank';
+            };
+
+            branchItems.forEach((item) => {
+                item.style.cursor = 'pointer';
+                const onItemClick = (e: MouseEvent) => {
+                    if ((e.target as HTMLElement).closest('a[href^="tel:"]')) return;
+                    const src = sanitizeMapSrc(item.getAttribute('data-bl-map-src') ?? '');
+                    const effectiveSrc = src !== 'about:blank' ? src : sanitizeMapSrc(defaultMapSrc);
+                    if (mapIframe) mapIframe.setAttribute('src', effectiveSrc);
+                    if (mapPlaceholder) mapPlaceholder.style.display = effectiveSrc !== 'about:blank' ? 'none' : 'flex';
+                    branchItems.forEach((x) => {
+                        x.style.background = x === item ? '#EEF4FF' : '';
+                    });
+                };
+                item.addEventListener('click', onItemClick);
+                blCleanups.push(() => item.removeEventListener('click', onItemClick));
+            });
         });
 
         // menu-tab-grid sticky 강제 보장
@@ -391,7 +424,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             document.removeEventListener('click', handleDummyLink);
             runtime.destroy();
         };
-    }, [viewMode, embed]);
+    }, [viewMode, embed, html]);
 
     // ── 반응형 모드: 툴바 + iframe ─────────────────────────────────────────
     if (viewMode === 'responsive' && !embed) {
