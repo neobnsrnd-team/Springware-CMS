@@ -251,14 +251,7 @@ jobs:
       # ── 10. 컨테이너 재시작 (cms + operation) ───────────────────────────────
       - name: 컨테이너 배포
         run: |
-          ssh deploy-target bash -s << 'REMOTE_SCRIPT'
-            set -euo pipefail
-            cd /app
-            echo ">>> cms / operation 컨테이너 재시작..."
-            docker compose -f docker-compose-prod.yml up -d --force-recreate cms operation
-            echo ">>> 컨테이너 상태"
-            docker compose -f docker-compose-prod.yml ps
-          REMOTE_SCRIPT
+          ssh deploy-target "cd /app && DOCKER_IMAGE=${{ env.DOCKER_IMAGE }} docker compose -f docker-compose-prod.yml up -d --force-recreate cms operation && docker compose -f docker-compose-prod.yml ps"
 
       # ── 11. 헬스체크 — cms(3000) / operation(3001) ──────────────────────────
       - name: 헬스체크
