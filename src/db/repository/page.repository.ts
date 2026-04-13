@@ -27,6 +27,8 @@ import {
     PAGE_UPDATE_DEPLOY,
     PAGE_ROLLBACK,
     PAGE_SELECT_AB_GROUP,
+    PAGE_SELECT_HTML_BY_ID,
+    PAGE_UPDATE_HTML,
     PAGE_UPDATE_AB_GROUP,
     PAGE_CLEAR_AB_GROUP,
     PAGE_CLEAR_PAGE_AB_GROUP,
@@ -118,6 +120,32 @@ export async function getPageList(
     } finally {
         await conn.close();
     }
+}
+
+// ═══════════════════════════════════════════════
+// PAGE_HTML (DB 직접 저장)
+// ═══════════════════════════════════════════════
+
+/** PAGE_HTML CLOB 단건 조회 (DB 직접 저장된 HTML) */
+export async function getPageHtml(pageId: string): Promise<string | null> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<{ PAGE_HTML: string | null }>(PAGE_SELECT_HTML_BY_ID, { pageId }, OBJ);
+        return result.rows?.[0]?.PAGE_HTML ?? null;
+    } finally {
+        await conn.close();
+    }
+}
+
+/** PAGE_HTML CLOB 업데이트 (에디터 HTML → DB 직접 저장) */
+export async function savePageHtml(pageId: string, html: string, lastModifierId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_UPDATE_HTML, {
+            pageId,
+            pageHtml: clobBind(html),
+            lastModifierId,
+        });
+    });
 }
 
 // ═══════════════════════════════════════════════

@@ -245,3 +245,22 @@ export const PAGE_UPDATE_DEPLOY = `
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
 `;
+
+// ── PAGE_HTML (DB 직접 저장) ──
+
+/** PAGE_HTML 단건 조회 */
+export const PAGE_SELECT_HTML_BY_ID = `
+  SELECT PAGE_HTML
+  FROM SPW_CMS_PAGE
+  WHERE PAGE_ID = :pageId
+    AND USE_YN = 'Y'
+`;
+
+/** PAGE_HTML 업데이트 (에디터 HTML → DB CLOB 직접 저장) */
+export const PAGE_UPDATE_HTML = `
+  UPDATE SPW_CMS_PAGE
+  SET PAGE_HTML = :pageHtml,
+      LAST_MODIFIER_ID = :lastModifierId
+  WHERE PAGE_ID = :pageId
+    AND USE_YN = 'Y'
+`;
