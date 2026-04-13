@@ -24,6 +24,8 @@
 .env.production.local
 .env.test
 .env.test.local
+.env.prod
+!.env.prod.example
 
 # ── 사용자 업로드 파일 ──
 # 런타임에 생성되는 파일 — 기본 제외, 공유 필요한 폴더만 예외 처리
