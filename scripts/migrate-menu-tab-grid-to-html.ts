@@ -126,11 +126,25 @@ const TOGGLE_SCRIPT =
         // Sticky 모드 — .row 래퍼에 적용해야 .is-container 전체 높이 안에서 고정됨
         `var stickyRow=root.closest('.row');` +
         `var isSticky=root.getAttribute('data-menu-sticky')==='true';` +
-        `if(isSticky&&stickyRow){` +
-            `stickyRow.style.position='sticky';` +
-            `stickyRow.style.top='0';` +
-            `stickyRow.style.zIndex='100';` +
-            `stickyRow.style.background='#ffffff';` +
+        // applySticky: 매번 root.closest('.row')로 재조회 — 런타임이 .row를 교체해도 stale 참조 방지
+        `function applySticky(){` +
+            `var row=root.closest('.row');` +
+            `if(!row)return;` +
+            `row.style.position='sticky';` +
+            `row.style.top='0';` +
+            `row.style.zIndex='100';` +
+            `row.style.background='#ffffff';` +
+        `}` +
+        `if(isSticky){` +
+            // 즉시 적용 (SSR 파싱 시점)
+            `applySticky();` +
+            // ContentBuilderRuntime init() 이후 재확인
+            // — 런타임이 .row style을 재처리하여 sticky가 소실될 경우 복원
+            `if(document.readyState==='complete'){` +
+                `requestAnimationFrame(applySticky);` +
+            `}else{` +
+                `window.addEventListener('load',function(){requestAnimationFrame(applySticky);},{once:true});` +
+            `}` +
         `}else if(stickyRow){` +
             `stickyRow.style.position='';` +
             `stickyRow.style.top='';` +
@@ -254,7 +268,7 @@ function buildMenuTabGridHtml(tabs: TabItem[], componentId: string, extraStyle: 
     return (
         `<div data-component-id="${componentId}" data-spw-block` +
         ` data-menu-tabs="${tabsJson}"` +
-        ` data-menu-sticky="false"` +
+        ` data-menu-sticky="true"` +
         ` data-menu-design="tab"` +
         ` data-chip-active-color="#7C5CFC"` +
         ` style="font-family:${FONT_FAMILY};background:#ffffff;${extraStyle}">` +
