@@ -96,6 +96,10 @@ jobs:
       DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/springware-cms:latest
 
     steps:
+      # ── 0. 코드 체크아웃 (docker-compose-prod.yml 전송용) ────────────────────
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
       # ── 1. Runner 공인 IP 조회 ───────────────────────────────────────────────
       - name: Runner 공인 IP 조회
         id: ip
@@ -202,7 +206,13 @@ jobs:
           echo "::error::60초 내 SSH 접속 실패"
           exit 1
 
-      # ── 6. 기존 Docker 이미지 정리 ──────────────────────────────────────────
+      # ── 6. /app 디렉토리 생성 및 docker-compose-prod.yml 전송 ──────────────────
+      - name: docker-compose-prod.yml 서버 전송
+        run: |
+          ssh deploy-target "mkdir -p /app"
+          scp docker-compose-prod.yml deploy-target:/app/docker-compose-prod.yml
+
+      # ── 7. 기존 Docker 이미지 정리 ──────────────────────────────────────────
       - name: 기존 Docker 이미지 정리
         run: |
           ssh deploy-target bash -s << 'REMOTE_SCRIPT'
@@ -215,24 +225,24 @@ jobs:
             docker system df || true
           REMOTE_SCRIPT
 
-      # ── 7. 최신 이미지 Pull ──────────────────────────────────────────────────
+      # ── 8. 최신 이미지 Pull ──────────────────────────────────────────────────
       - name: Docker 이미지 Pull
         run: |
           ssh deploy-target "docker pull ${{ env.DOCKER_IMAGE }}"
 
-      # ── 8. 컨테이너 재시작 (cms + operation) ────────────────────────────────
+      # ── 9. 컨테이너 재시작 (cms + operation) ────────────────────────────────
       - name: 컨테이너 배포
         run: |
           ssh deploy-target bash -s << 'REMOTE_SCRIPT'
             set -euo pipefail
-            cd ~/springware-cms
+            cd /app
             echo ">>> cms / operation 컨테이너 재시작..."
             docker compose -f docker-compose-prod.yml up -d --force-recreate cms operation
             echo ">>> 컨테이너 상태"
             docker compose -f docker-compose-prod.yml ps
           REMOTE_SCRIPT
 
-      # ── 9. 헬스체크 — cms(3000) / operation(3001) ───────────────────────────
+      # ── 10. 헬스체크 — cms(3000) / operation(3001) ──────────────────────────
       - name: 헬스체크
         run: |
           ssh deploy-target bash -s << 'REMOTE_SCRIPT'
