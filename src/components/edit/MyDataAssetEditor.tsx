@@ -3,9 +3,16 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 import { escapeHtml, rgbToHex } from '@/lib/html-utils';
+import {
+    type AssetViewMode,
+    getMyDataAssetDateStyle,
+    getMyDataAssetLegendItemStyle,
+    getMyDataAssetLegendStyle,
+    getMyDataAssetTitleStyle,
+} from '@/lib/mydata-asset-styles';
 
 /** "42,500,000 원" → 42500000 */
 const parseAmount = (str: string): number => {
@@ -52,6 +59,13 @@ interface BtnConfig {
     label: string;
     href: string;
 }
+
+const getAssetViewMode = (blockEl: HTMLElement): AssetViewMode => {
+    const componentId = blockEl.getAttribute('data-component-id') ?? '';
+    if (componentId.endsWith('-web')) return 'web';
+    if (componentId.endsWith('-responsive')) return 'responsive';
+    return 'mobile';
+};
 
 export interface MyDataAssetEditorProps {
     blockEl: HTMLElement;
@@ -108,6 +122,7 @@ function parseBlock(blockEl: HTMLElement): {
 export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEditorProps) {
     // parseBlock을 매 렌더마다 호출하지 않도록 useState 초기화 함수로 실행
     const [initialData] = useState(() => parseBlock(blockEl));
+    const viewMode = getAssetViewMode(blockEl);
 
     // ── state ──
     const [title, setTitle] = useState(initialData.title);
@@ -116,6 +131,13 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const [rows, setRows] = useState<AssetRow[]>(initialData.rows);
     const [btn, setBtn] = useState<BtnConfig>(initialData.btn);
     const [sortByAmount, setSortByAmount] = useState(false);
+    const [panelPos, setPanelPos] = useState<{ left: number; top: number } | null>(null);
+    const dragStateRef = useRef<{
+        offsetX: number;
+        offsetY: number;
+        panelWidth: number;
+        panelHeight: number;
+    } | null>(null);
 
     // 총자산·순자산 실시간 자동 계산 (읽기 전용) — Math.round로 부동소수점 오차 방지
     const totalAsset = rows.filter((r) => r.type === 'asset').reduce((sum, r) => sum + Math.round(r.amount), 0);
@@ -125,7 +147,10 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     const handleApply = useCallback(() => {
         // 제목
         const titleEl = blockEl.querySelector<HTMLElement>('[data-ma-title]');
-        if (titleEl) titleEl.textContent = title;
+        if (titleEl) {
+            titleEl.textContent = title;
+            titleEl.style.cssText = getMyDataAssetTitleStyle(viewMode);
+        }
 
         // 기준일 뱃지
         const dateEl = blockEl.querySelector<HTMLElement>('[data-ma-date]');
@@ -133,6 +158,9 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
             dateEl.textContent = dateText;
             dateEl.setAttribute('data-ma-date-visible', String(dateVisible));
             dateEl.style.display = dateVisible ? '' : 'none';
+            if (dateVisible) {
+                dateEl.style.cssText = getMyDataAssetDateStyle(viewMode);
+            }
         }
 
         // 총자산 (자동 계산값 반영)
@@ -151,6 +179,20 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const totalAbs = sortedRows.reduce((sum, r) => sum + Math.abs(r.amount), 0);
         const rowContainer = blockEl.querySelector<HTMLElement>('[data-ma-rows]');
         if (rowContainer) {
+            const rowLabelStyle =
+                viewMode === 'web'
+                    ? 'min-width:0;font-size:15px;color:#475569;font-weight:600;overflow-wrap:anywhere;word-break:break-all;'
+                    : 'min-width:0;font-size:14px;color:#6B7280;overflow-wrap:anywhere;word-break:break-all;';
+            const rowAmountBaseStyle =
+                viewMode === 'web'
+                    ? 'display:block;min-width:0;font-size:16px;font-weight:700;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
+                    : 'display:block;min-width:0;font-size:14px;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            const rowPctStyle =
+                viewMode === 'web'
+                    ? 'font-size:13px;color:#94A3B8;min-width:42px;text-align:right;flex-shrink:0;'
+                    : 'font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;flex-shrink:0;';
+            const rowPadding = viewMode === 'web' ? '12px 0' : '9px 0';
+            rowContainer.style.cssText = viewMode === 'web' ? 'padding:0;' : 'padding:0 16px;';
             rowContainer.innerHTML = sortedRows
                 .map((row, idx) => {
                     const isLast = idx === rows.length - 1;
@@ -160,14 +202,14 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     const amountColor = row.color;
 
                     return (
-                        `<div data-ma-row data-ma-row-type="${row.type}" style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;${borderStyle}">` +
-                        `<span style="display:flex;align-items:center;gap:6px;">` +
+                        `<div data-ma-row data-ma-row-type="${row.type}" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:${rowPadding};${borderStyle}">` +
+                        `<span style="display:flex;align-items:flex-start;gap:6px;min-width:0;flex:1;">` +
                         `<span data-ma-dot data-ma-dot-color="${row.color}" style="width:8px;height:8px;border-radius:50%;background:${row.color};flex-shrink:0;display:inline-block;"></span>` +
-                        `<span data-ma-label style="font-size:14px;color:#6B7280;">${escapeHtml(row.label)}</span>` +
+                        `<span data-ma-label style="${rowLabelStyle}">${escapeHtml(row.label)}</span>` +
                         `</span>` +
-                        `<span style="display:flex;align-items:center;gap:8px;">` +
-                        `<span data-ma-amount data-ma-amount-color="${amountColor}" style="font-size:14px;font-weight:600;color:${amountColor};">${escapeHtml(amountStr)}</span>` +
-                        `<span data-ma-pct style="font-size:12px;color:#9CA3AF;min-width:32px;text-align:right;">${pct}%</span>` +
+                        `<span style="display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;flex:0 1 52%;min-width:0;">` +
+                        `<span data-ma-amount data-ma-amount-color="${amountColor}" style="${rowAmountBaseStyle}color:${amountColor};">${escapeHtml(amountStr)}</span>` +
+                        `<span data-ma-pct style="${rowPctStyle}">${pct}%</span>` +
                         `</span>` +
                         `</div>`
                     );
@@ -186,11 +228,13 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         const legendEl = blockEl.querySelector<HTMLElement>('[data-ma-legend]');
         if (legendEl) {
             const totalAbsForLegend = totalAbs;
+            legendEl.style.cssText = getMyDataAssetLegendStyle(viewMode);
             legendEl.innerHTML = sortedRows
                 .map((r) => {
                     const pct = totalAbsForLegend > 0 ? Math.round((Math.abs(r.amount) / totalAbsForLegend) * 100) : 0;
+                    const legendItemStyle = getMyDataAssetLegendItemStyle(viewMode);
                     return (
-                        `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#6B7280;">` +
+                        `<span style="${legendItemStyle}">` +
                         `<span style="width:8px;height:8px;border-radius:2px;background:${r.color};flex-shrink:0;display:inline-block;"></span>` +
                         `${escapeHtml(r.label)} ${pct}%` +
                         `</span>`
@@ -212,7 +256,7 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         }
 
         onClose();
-    }, [blockEl, title, dateText, dateVisible, totalAsset, rows, btn, netAsset, sortByAmount, onClose]);
+    }, [blockEl, title, dateText, dateVisible, totalAsset, rows, btn, netAsset, sortByAmount, onClose, viewMode]);
 
     // ── effect ──
     useEffect(() => {
@@ -222,6 +266,59 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
+
+    useEffect(() => {
+        setPanelPos(null);
+        dragStateRef.current = null;
+    }, [blockEl]);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const dragState = dragStateRef.current;
+            if (!dragState) return;
+            const minPadding = 12;
+            const maxLeft = Math.max(minPadding, window.innerWidth - dragState.panelWidth - minPadding);
+            const maxTop = Math.max(minPadding, window.innerHeight - dragState.panelHeight - minPadding);
+            const nextLeft = Math.min(maxLeft, Math.max(minPadding, e.clientX - dragState.offsetX));
+            const nextTop = Math.min(maxTop, Math.max(minPadding, e.clientY - dragState.offsetY));
+
+            setPanelPos({
+                left: nextLeft,
+                top: nextTop,
+            });
+        };
+
+        const handleMouseUp = () => {
+            dragStateRef.current = null;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, []);
+
+    const handleDragStart = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        if ((e.target as HTMLElement).closest('button')) return;
+
+        const panelEl = e.currentTarget.parentElement as HTMLDivElement | null;
+        if (!panelEl) return;
+
+        const rect = panelEl.getBoundingClientRect();
+        if (!rect) return;
+
+        setPanelPos({ left: rect.left, top: rect.top });
+        dragStateRef.current = {
+            offsetX: e.clientX - rect.left,
+            offsetY: e.clientY - rect.top,
+            panelWidth: rect.width,
+            panelHeight: rect.height,
+        };
+    };
 
     // ── 행 편집 헬퍼 ──
     const updateRow = (idx: number, patch: Partial<AssetRow>) =>
@@ -273,19 +370,23 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
     // 미리보기용 순자산 표시
     // ── 렌더 ──
     return (
-        <div
-            style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 99999,
-                background: 'rgba(0,0,0,0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
-        >
+        <>
+            <div
+                onClick={onClose}
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 99998,
+                    background: 'transparent',
+                }}
+            />
             <div
                 style={{
+                    position: 'fixed',
+                    left: panelPos ? panelPos.left : '50%',
+                    top: panelPos ? panelPos.top : '50%',
+                    transform: panelPos ? 'none' : 'translate(-50%, -50%)',
+                    zIndex: 99999,
                     background: '#fff',
                     borderRadius: 12,
                     padding: 24,
@@ -295,10 +396,19 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
                     fontFamily: "-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif",
                 }}
+                onClick={(e) => e.stopPropagation()}
             >
                 {/* 헤더: 제목 + 닫기 버튼 */}
                 <div
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}
+                    onMouseDown={handleDragStart}
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 16,
+                        cursor: 'move',
+                        userSelect: 'none',
+                    }}
                 >
                     <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1A1A2E' }}>
                         마이데이터 자산 요약 편집
@@ -684,6 +794,6 @@ export default function MyDataAssetEditor({ blockEl, onClose }: MyDataAssetEdito
                     </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
