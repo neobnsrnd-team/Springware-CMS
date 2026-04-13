@@ -206,11 +206,24 @@ jobs:
           echo "::error::60초 내 SSH 접속 실패"
           exit 1
 
-      # ── 6. /app 디렉토리 생성 및 docker-compose-prod.yml 전송 ──────────────────
-      - name: docker-compose-prod.yml 서버 전송
+      # ── 6. /app 디렉토리 생성 및 설정 파일 전송 ────────────────────────────────
+      - name: 설정 파일 서버 전송
         run: |
           ssh deploy-target "mkdir -p /app"
           scp docker-compose-prod.yml deploy-target:/app/docker-compose-prod.yml
+          scp nginx/nginx.conf deploy-target:/app/nginx.conf
+
+      # ── 6-1. Nginx 설정 적용 ─────────────────────────────────────────────────
+      - name: Nginx 설정 적용
+        run: |
+          ssh deploy-target bash -s << 'REMOTE_SCRIPT'
+            set -euo pipefail
+            sudo cp /app/nginx.conf /etc/nginx/sites-available/springware
+            sudo ln -sf /etc/nginx/sites-available/springware /etc/nginx/sites-enabled/springware
+            sudo nginx -t
+            sudo systemctl reload nginx
+            echo ">>> Nginx 설정 적용 완료"
+          REMOTE_SCRIPT
 
       # ── 7. 기존 Docker 이미지 정리 ──────────────────────────────────────────
       - name: 기존 Docker 이미지 정리
