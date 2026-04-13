@@ -45,6 +45,7 @@ import {
     PAGE_HISTORY_SELECT_VERSION_BY_FILE_PATH,
 } from '@/db/queries/page-history.sql';
 import { COMP_MAP_DELETE_BY_PAGE_VERSION, COMP_MAP_INSERT } from '@/db/queries/component-map.sql';
+import { ASSET_MAP_INSERT, ASSET_MAP_DELETE_BY_PAGE_VERSION } from '@/db/queries/asset.sql';
 import { readPageHtml } from '@/lib/page-file';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
@@ -165,6 +166,7 @@ export async function createPage(input: {
     viewMode?: ViewMode;
     ownerDeptCode?: string;
     filePath?: string;
+    pageHtml?: string;
     createUserId: string;
     createUserName: string;
     pageDesc?: string;
@@ -180,6 +182,7 @@ export async function createPage(input: {
             viewMode: input.viewMode ?? null,
             ownerDeptCode: input.ownerDeptCode ?? null,
             filePath: input.filePath ?? null,
+            pageHtml: clobBind(input.pageHtml ?? null),
             createUserId: input.createUserId,
             createUserName: input.createUserName,
             lastModifierId: input.createUserId,
@@ -201,6 +204,7 @@ export async function updatePage(input: {
     pageDesc?: string;
     pageDescDetail?: string;
     filePath?: string;
+    pageHtml?: string;
     thumbnail?: string;
     lastModifierId: string;
     lastModifierName: string;
@@ -213,6 +217,7 @@ export async function updatePage(input: {
             pageDesc: clobBind(input.pageDesc ?? null),
             pageDescDetail: clobBind(input.pageDescDetail ?? null),
             filePath: input.filePath ?? null,
+            pageHtml: clobBind(input.pageHtml ?? null),
             thumbnail: input.thumbnail ?? null,
             lastModifierId: input.lastModifierId,
             lastModifierName: input.lastModifierName,
@@ -274,17 +279,18 @@ export async function updateApproveState(input: {
                 version: nextVersion,
             });
 
-            // 페이지 HTML 파일에서 data-component-id 추출
+            // 페이지 HTML에서 컴포넌트/에셋 ID 추출 — DB 우선, FILE_PATH 폴백
             const page = await conn.execute<CmsPage>(PAGE_SELECT_BY_ID, { pageId: input.pageId }, OBJ);
-            const filePath = page.rows?.[0]?.FILE_PATH;
-            if (filePath) {
-                const html = await readPageHtml(filePath);
-                if (!html) {
-                    throw new Error('페이지 파일이 존재하지 않습니다. 로컬에 파일을 동기화한 후 다시 시도해주세요.');
-                }
+            const pageRow = page.rows?.[0];
+            let resolvedHtml = pageRow?.PAGE_HTML ?? null;
+            if (!resolvedHtml && pageRow?.FILE_PATH) {
+                resolvedHtml = await readPageHtml(pageRow.FILE_PATH);
+            }
 
-                const regex = /data-component-id\s*=\s*["']([^"']+)["']/g;
-                const componentIds = Array.from(html.matchAll(regex), (m) => m[1]);
+            if (resolvedHtml) {
+                // (A) COMP_PAGE_MAP — data-component-id 추출 (기존 로직 유지)
+                const compRegex = /data-component-id\s*=\s*["']([^"']+)["']/g;
+                const componentIds = Array.from(resolvedHtml.matchAll(compRegex), (m) => m[1]);
 
                 if (componentIds.length > 0) {
                     const binds = componentIds.map((componentId, i) => ({
@@ -296,6 +302,24 @@ export async function updateApproveState(input: {
                     }));
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     await (conn as any).executeMany(COMP_MAP_INSERT, binds);
+                }
+
+                // (B) ASSET_PAGE_MAP — /api/assets/{assetId}/image URL 추출 (신규)
+                const assetRegex = /\/api\/assets\/([^/"']+)\/image/g;
+                const assetIds = [...new Set(Array.from(resolvedHtml.matchAll(assetRegex), (m) => m[1]))];
+
+                // 기존 매핑 항상 초기화 (에셋 0개인 경우에도 이전 매핑 정리)
+                await conn.execute(ASSET_MAP_DELETE_BY_PAGE_VERSION, {
+                    pageId: input.pageId,
+                    version: nextVersion,
+                });
+
+                for (const assetId of assetIds) {
+                    await conn.execute(ASSET_MAP_INSERT, {
+                        pageId: input.pageId,
+                        version: nextVersion,
+                        assetId,
+                    });
                 }
             }
 
@@ -360,7 +384,12 @@ export async function updatePageRollback(pageId: string, version: number, lastMo
         throw new Error(`버전 ${version}에 해당하는 이력이 존재하지 않습니다.`);
     }
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_ROLLBACK, { pageId, filePath: history.FILE_PATH, lastModifierId });
+        await conn.execute(PAGE_ROLLBACK, {
+            pageId,
+            pageHtml: clobBind(history.PAGE_HTML ?? null),
+            filePath: history.FILE_PATH,
+            lastModifierId,
+        });
     });
 }
 

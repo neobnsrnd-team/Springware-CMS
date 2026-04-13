@@ -1,6 +1,7 @@
 // src/app/view/page.tsx
 
 import { Metadata } from 'next';
+
 import { getPageById } from '@/db/repository/page.repository';
 import { readPageHtml } from '@/lib/page-file';
 import ViewClient from '@/components/view/ViewClient';
@@ -17,13 +18,17 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-// FILE_PATH 기반 파일 로드. 마이그레이션 이전 데이터는 PAGE_DESC 폴백.
+// DB PAGE_HTML 우선 → FILE_PATH 폴백 → PAGE_DESC 폴백
 async function loadPage(bank: string): Promise<{ html: string; viewMode: ViewMode }> {
     const page = await getPageById(bank);
     const viewMode: ViewMode = page?.VIEW_MODE ?? 'mobile';
 
     if (!page) return { html: '', viewMode };
 
+    // DB PAGE_HTML 우선 (getPageById의 SELECT *에 이미 포함)
+    if (page.PAGE_HTML) return { html: page.PAGE_HTML, viewMode };
+
+    // FILE_PATH 폴백 (기존 데이터 호환)
     if (page.FILE_PATH) {
         const content = await readPageHtml(page.FILE_PATH);
         if (content !== null) return { html: content, viewMode };

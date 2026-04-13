@@ -63,7 +63,9 @@ export default async function ApprovePage({
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
         approveState: p.APPROVE_STATE as ApproveStateFilter,
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
-        hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
+        hasFile:
+            !!p.PAGE_HTML ||
+            (p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false),
         isPublic: p.IS_PUBLIC ?? 'Y',
         beginningDate: p.BEGINNING_DATE ? formatDateOnly(new Date(p.BEGINNING_DATE)) : null,
         expiredDate: p.EXPIRED_DATE ? formatDateOnly(new Date(p.EXPIRED_DATE)) : null,

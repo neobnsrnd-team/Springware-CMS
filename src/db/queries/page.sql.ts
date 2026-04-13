@@ -50,13 +50,13 @@ export const PAGE_COUNT = `
 /** 페이지 신규 생성 (W-3: VIEW_MODE 바인딩 추가) */
 export const PAGE_INSERT = `
   INSERT INTO SPW_CMS_PAGE (
-    PAGE_ID, PAGE_NAME, VIEW_MODE, OWNER_DEPT_CODE, FILE_PATH,
+    PAGE_ID, PAGE_NAME, VIEW_MODE, OWNER_DEPT_CODE, FILE_PATH, PAGE_HTML,
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
     APPROVE_STATE, PAGE_DESC, PAGE_DESC_DETAIL,
     TEMPLATE_ID, THUMBNAIL, TARGET_CD, USE_YN, IS_PUBLIC
   ) VALUES (
-    :pageId, :pageName, NVL(:viewMode, 'mobile'), :ownerDeptCode, :filePath,
+    :pageId, :pageName, NVL(:viewMode, 'mobile'), :ownerDeptCode, :filePath, :pageHtml,
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName,
     'WORK', :pageDesc, :pageDescDetail,
@@ -72,6 +72,7 @@ export const PAGE_UPDATE = `
       PAGE_DESC = :pageDesc,
       PAGE_DESC_DETAIL = :pageDescDetail,
       FILE_PATH = NVL(:filePath, FILE_PATH),
+      PAGE_HTML = :pageHtml,
       THUMBNAIL = :thumbnail,
       LAST_MODIFIER_ID = :lastModifierId,
       LAST_MODIFIER_NAME = :lastModifierName
@@ -231,7 +232,8 @@ export const PAGE_SET_WINNER = `
 /** 버전 롤백 — 지정 버전의 FILE_PATH를 PAGE에 덮어쓰고 APPROVE_STATE = 'WORK' 전환 */
 export const PAGE_ROLLBACK = `
   UPDATE SPW_CMS_PAGE
-  SET FILE_PATH        = :filePath,
+  SET PAGE_HTML        = :pageHtml,
+      FILE_PATH        = :filePath,
       APPROVE_STATE    = 'WORK',
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId

@@ -38,6 +38,7 @@ export interface CmsPage {
     VIEW_MODE: ViewMode;
     OWNER_DEPT_CODE: string | null;
     FILE_PATH: string | null;
+    PAGE_HTML: string | null; // CLOB → string (fetchAsString) — FILE_PATH 대체
     CREATE_USER_ID: string | null;
     CREATE_USER_NAME: string | null;
     LAST_MODIFIER_ID: string | null;
