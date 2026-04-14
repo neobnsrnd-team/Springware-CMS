@@ -7,6 +7,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { rgbToHex } from '@/lib/html-utils';
+import { nextApi } from '@/lib/api-url';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -634,7 +635,7 @@ function PromoSlidesEditor({
                                             const formData = new FormData();
                                             formData.append('file', file);
                                             try {
-                                                const res = await fetch('/api/builder/upload', {
+                                                const res = await fetch(nextApi('/api/builder/upload'), {
                                                     method: 'POST',
                                                     body: formData,
                                                 });
@@ -933,7 +934,7 @@ function ProductCardsEditor({
                                             const formData = new FormData();
                                             formData.append('file', file);
                                             try {
-                                                const res = await fetch('/api/builder/upload', {
+                                                const res = await fetch(nextApi('/api/builder/upload'), {
                                                     method: 'POST',
                                                     body: formData,
                                                 });

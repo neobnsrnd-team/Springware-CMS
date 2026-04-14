@@ -1,28 +1,27 @@
-// src/components/dashboard/ApprovalRequestModal.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { DEMO_USERS } from '@/data/demo-users';
 import Modal from '@/components/ui/Modal';
+import { nextApi } from '@/lib/api-url';
 
 import type { DashboardPageCard } from './DashboardClient';
 
-// 결재자 목록 — admin 역할만 노출
-const APPROVER_LIST = DEMO_USERS.filter((u) => u.role === 'admin');
+interface Approver {
+    userId: string;
+    userName: string;
+}
 
-// 뷰 모드 한국어 라벨
 const VIEW_MODE_LABEL: Record<string, string> = {
-    mobile: '모바일',
-    web: '웹',
-    responsive: '반응형',
+    mobile: 'Mobile',
+    web: 'Web',
+    responsive: 'Responsive',
 };
 
-// 뷰 모드 아이콘
 const VIEW_MODE_ICON: Record<string, string> = {
-    mobile: '📱',
-    web: '🖥️',
-    responsive: '🔄',
+    mobile: 'M',
+    web: 'W',
+    responsive: 'R',
 };
 
 interface ApprovalRequestModalProps {
@@ -34,8 +33,29 @@ interface ApprovalRequestModalProps {
 export default function ApprovalRequestModal({ page, onClose, onSubmit }: ApprovalRequestModalProps) {
     const [approverId, setApproverId] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [approverList, setApproverList] = useState<Approver[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const selectedApprover = APPROVER_LIST.find((u) => u.userId === approverId);
+    useEffect(() => {
+        let mounted = true;
+        fetch(nextApi('/api/auth/approvers'))
+            .then((response) => response.json())
+            .then((data) => {
+                if (mounted) setApproverList(data.approvers ?? []);
+            })
+            .catch(() => {
+                if (mounted) setApproverList([]);
+            })
+            .finally(() => {
+                if (mounted) setLoading(false);
+            });
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    const selectedApprover = approverList.find((u) => u.userId === approverId);
 
     async function handleSubmit() {
         if (!selectedApprover || submitting) return;
@@ -48,8 +68,7 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
     }
 
     return (
-        <Modal title="승인 요청" onClose={onClose} width="440px">
-            {/* 썸네일 + 페이지 정보 */}
+        <Modal title="Approval request" onClose={onClose} width="440px">
             <div className="px-7 pb-5">
                 <div
                     className="w-full h-[140px] rounded-xl border border-[#f3f4f6] flex items-center justify-center mb-4 shrink-0"
@@ -58,7 +77,7 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                     }}
                 >
                     {!page.thumbnail && (
-                        <span className="text-[40px] opacity-40">{VIEW_MODE_ICON[page.viewMode] ?? '🔄'}</span>
+                        <span className="text-[40px] opacity-40">{VIEW_MODE_ICON[page.viewMode] ?? 'R'}</span>
                     )}
                 </div>
 
@@ -68,41 +87,45 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                 <p className="m-0 text-xs text-[#9ca3af]">{VIEW_MODE_LABEL[page.viewMode] ?? page.viewMode}</p>
             </div>
 
-            {/* 결재자 선택 */}
             <div className="px-7 pb-6">
                 <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
-                    결재자 선택 <span className="text-[#dc2626]">*</span>
+                    Approver <span className="text-[#dc2626]">*</span>
                 </label>
                 <select
                     value={approverId}
                     onChange={(e) => setApproverId(e.target.value)}
+                    disabled={loading}
                     className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none bg-white text-[#111827]"
                 >
-                    <option value="">선택해주세요</option>
-                    {APPROVER_LIST.map((u) => (
+                    <option value="">{loading ? 'Loading...' : 'Select an approver'}</option>
+                    {approverList.map((u) => (
                         <option key={u.userId} value={u.userId}>
                             {u.userName}
                         </option>
                     ))}
                 </select>
+                {!loading && approverList.length === 0 && (
+                    <p className="mt-2 text-xs text-[#dc2626]">Approver list is unavailable.</p>
+                )}
             </div>
 
-            {/* 버튼 */}
             <div className="flex justify-end gap-2 px-7 pb-6">
                 <button
                     onClick={onClose}
                     className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
                 >
-                    취소
+                    Cancel
                 </button>
                 <button
                     onClick={handleSubmit}
-                    disabled={!approverId || submitting}
+                    disabled={!approverId || submitting || loading}
                     className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                        !approverId || submitting ? 'bg-[#d1d5db] cursor-not-allowed' : 'bg-[#0046A4] cursor-pointer'
+                        !approverId || submitting || loading
+                            ? 'bg-[#d1d5db] cursor-not-allowed'
+                            : 'bg-[#0046A4] cursor-pointer'
                     }`}
                 >
-                    {submitting ? '요청 중...' : '승인 요청'}
+                    {submitting ? 'Submitting...' : 'Request approval'}
                 </button>
             </div>
         </Modal>

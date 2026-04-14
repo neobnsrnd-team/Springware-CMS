@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { getAbGroup, promoteWinner } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /**
@@ -32,7 +32,11 @@ export async function POST(req: NextRequest) {
             return errorResponse('winnerPageId가 해당 그룹에 속하지 않습니다.', 400);
         }
 
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
 
         await promoteWinner(groupId, winnerPageId, userId);
 

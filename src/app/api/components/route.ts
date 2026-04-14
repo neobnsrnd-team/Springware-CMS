@@ -6,6 +6,7 @@ import type { FinanceComponent } from '@/data/finance-component-data';
 import type { ComponentType, ViewMode, CmsComponentParsed } from '@/db/types';
 import { getComponentList, getComponentById, updateComponent } from '@/db/repository/component.repository';
 import { errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 
 const VALID_TYPES = new Set<string>(['finance', 'basic']);
 const VALID_VIEW_MODES = new Set<string>(['mobile', 'web', 'responsive']);
@@ -35,6 +36,11 @@ function toFinanceComponent(row: CmsComponentParsed): FinanceComponent | null {
 
 export async function GET(req: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
         const { searchParams } = req.nextUrl;
         const type = searchParams.get('type') ?? undefined;
         const mode = searchParams.get('viewMode') ?? undefined;
@@ -55,6 +61,11 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
         const body = await req.json();
         if (typeof body !== 'object' || body === null) {
             return errorResponse('잘못된 요청 본문입니다.', 400);
@@ -90,7 +101,7 @@ export async function PUT(req: NextRequest) {
             viewMode: existing.VIEW_MODE,
             componentThumbnail: existing.COMPONENT_THUMBNAIL ?? undefined,
             data: newData,
-            lastModifierId: 'system',
+            lastModifierId: currentUser.userId,
         });
 
         return NextResponse.json({ ok: true });

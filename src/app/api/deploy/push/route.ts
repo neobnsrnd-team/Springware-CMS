@@ -11,7 +11,7 @@ import { PAGE_SELECT_BY_ID } from '@/db/queries/page.sql';
 import { upsertFileSend, getServerList } from '@/db/repository/file-send.repository';
 import { updatePageDeploy, getLatestHistory, getHistoryVersionByFilePath } from '@/db/repository/page.repository';
 import type { CmsPage } from '@/db/types';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
 import { sendToServer } from '@/lib/deploy-utils';
 
@@ -126,7 +126,11 @@ ${html}
 export async function POST(req: NextRequest) {
     try {
         const { pageId } = (await req.json()) as { pageId?: string };
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
 
         if (!pageId || typeof pageId !== 'string') {
             return errorResponse('pageId가 필요합니다.', 400);

@@ -5,9 +5,15 @@ import path from 'path';
 
 import { UPLOAD_PATH, UPLOAD_URL } from '@/lib/upload';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 
 export async function POST(request: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+
         const body = await request.json();
         const { name, path: relativePath = '' } = body;
 

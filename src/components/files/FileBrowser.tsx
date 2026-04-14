@@ -10,6 +10,7 @@ import DeleteConfirmModal from '@/components/files/DeleteConfirmModal';
 import UploadProgressList from '@/components/files/UploadProgressList';
 import Breadcrumbs from '@/components/files/Breadcrumbs';
 import type { FileItem } from '@/components/files/types';
+import { nextApi } from '@/lib/api-url';
 
 export type { FileItem } from '@/components/files/types';
 
@@ -38,17 +39,18 @@ export interface ApiEndpoints {
 export interface FileBrowserProps {
     apiEndpoints?: Partial<ApiEndpoints>;
     className?: string;
+    canWrite?: boolean;
 }
 
 const DEFAULT_ENDPOINTS: ApiEndpoints = {
-    folders: '/api/manage/folders',
-    files: '/api/manage/files',
-    upload: '/api/manage/upload',
-    delete: '/api/manage/delete',
-    addFolder: '/api/manage/addfolder',
+    folders: nextApi('/api/manage/folders'),
+    files: nextApi('/api/manage/files'),
+    upload: nextApi('/api/manage/upload'),
+    delete: nextApi('/api/manage/delete'),
+    addFolder: nextApi('/api/manage/addfolder'),
 };
 
-export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileBrowserProps) {
+export default function FileBrowser({ apiEndpoints = {}, className = '', canWrite = true }: FileBrowserProps) {
     const endpoints = { ...DEFAULT_ENDPOINTS, ...apiEndpoints };
 
     const [files, setFiles] = useState<FileItem[]>([]);
@@ -113,6 +115,7 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
 
     // Upload files
     const uploadFiles = async (filesToUpload: File[]) => {
+        if (!canWrite) return;
         const newProgress: UploadProgress[] = filesToUpload.map((file) => ({
             name: file.name,
             progress: 0,
@@ -173,6 +176,7 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
 
     // Delete selected files
     const deleteSelectedFiles = async () => {
+        if (!canWrite) return;
         setIsDeleting(true);
         try {
             const filesToDelete = Array.from(selectedFiles).map((url) => {
@@ -238,6 +242,7 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
 
     // Toggle selection mode
     const toggleSelectionMode = () => {
+        if (!canWrite) return;
         setSelectionMode(!selectionMode);
         setSelectedFiles(new Set());
     };
@@ -457,27 +462,31 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
                                         <RefreshCw className="w-4 h-4" />
                                         <span className="text-sm">Refresh</span>
                                     </button>
-                                    <button
-                                        onClick={toggleSelectionMode}
-                                        className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
-                                    >
-                                        <Check className="w-4 h-4" />
-                                        <span className="text-sm">Select</span>
-                                    </button>
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="flex items-center gap-2 px-4 py-2 bg-[#0046A4] text-white rounded-lg hover:bg-[#003399] transition-colors cursor-pointer"
-                                    >
-                                        <Upload className="w-4 h-4" />
-                                        <span className="text-sm">Upload</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setShowCreateFolderModal(true)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
-                                    >
-                                        <FolderPlus className="w-4 h-4" />
-                                        <span className="text-sm">New Folder</span>
-                                    </button>
+                                    {canWrite && (
+                                        <>
+                                            <button
+                                                onClick={toggleSelectionMode}
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
+                                            >
+                                                <Check className="w-4 h-4" />
+                                                <span className="text-sm">Select</span>
+                                            </button>
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#0046A4] text-white rounded-lg hover:bg-[#003399] transition-colors cursor-pointer"
+                                            >
+                                                <Upload className="w-4 h-4" />
+                                                <span className="text-sm">Upload</span>
+                                            </button>
+                                            <button
+                                                onClick={() => setShowCreateFolderModal(true)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#F0F4FF] text-[#0046A4] border border-[#C7D8F4] rounded-lg hover:bg-[#EBF4FF] hover:border-[#0046A4] transition-colors cursor-pointer"
+                                            >
+                                                <FolderPlus className="w-4 h-4" />
+                                                <span className="text-sm">New Folder</span>
+                                            </button>
+                                        </>
+                                    )}
                                 </>
                             ) : (
                                 <button
@@ -588,7 +597,7 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
             </div>
 
             {/* Selection action bar */}
-            {selectionMode && selectedFiles.size > 0 && (
+            {canWrite && selectionMode && selectedFiles.size > 0 && (
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4 z-20">
                     <div className="max-w-6xl mx-auto flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -623,13 +632,15 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
                 </div>
             )}
 
-            <CreateFolderModal
-                isOpen={showCreateFolderModal}
-                onClose={() => setShowCreateFolderModal(false)}
-                currentPath={currentPath}
-                onFolderCreated={handleFolderCreated}
-                apiEndpoint={endpoints.addFolder}
-            />
+            {canWrite && (
+                <CreateFolderModal
+                    isOpen={showCreateFolderModal}
+                    onClose={() => setShowCreateFolderModal(false)}
+                    currentPath={currentPath}
+                    onFolderCreated={handleFolderCreated}
+                    apiEndpoint={endpoints.addFolder}
+                />
+            )}
 
             <DeleteConfirmModal
                 isOpen={showDeleteConfirm}

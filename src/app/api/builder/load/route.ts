@@ -5,6 +5,7 @@ import { getPageById } from '@/db/repository/page.repository';
 import { isValidBankId } from '@/lib/validators';
 import { readPageHtml } from '@/lib/page-file';
 import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
+import { canReadCms, getCurrentUser } from '@/lib/current-user';
 
 // FILE_PATH 기반 파일 로드. 마이그레이션 이전 데이터는 PAGE_DESC 폴백.
 async function loadPage(bank: string): Promise<{
@@ -47,6 +48,11 @@ async function loadPage(bank: string): Promise<{
 
 export async function POST(req: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return contentBuilderErrorResponse('Permission denied.');
+        }
+
         const body = await req.json().catch(() => ({}));
         const bank = isValidBankId(body.bank) ? body.bank : 'ibk';
 

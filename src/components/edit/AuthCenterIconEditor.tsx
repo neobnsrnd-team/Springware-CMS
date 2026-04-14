@@ -5,6 +5,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { nextApi } from '@/lib/api-url';
 
 // 아이콘 SVG 내부 path (svg 래퍼는 buildIconHtml에서 생성)
 // stroke="currentColor" → 부모 .ac-icon-wrap의 color CSS로 제어
@@ -160,7 +161,7 @@ export default function AuthCenterIconEditor({ blockEl, onClose }: Props) {
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const res = await fetch('/api/builder/upload', { method: 'POST', body: formData });
+                const res = await fetch(nextApi('/api/builder/upload'), { method: 'POST', body: formData });
                 const data = (await res.json()) as { url?: string };
                 const url = data.url?.replace(/\\/g, '/');
                 if (url) {

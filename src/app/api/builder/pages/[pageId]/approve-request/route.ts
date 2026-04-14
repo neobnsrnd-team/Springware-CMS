@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
 import { requestApproval } from '@/db/repository/page.repository';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
     try {
@@ -18,6 +19,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
 
         if (!approverId || !approverName) {
             return errorResponse('결재자 정보가 누락되었습니다.', 400);
+        }
+
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
         }
 
         await requestApproval(pageId, approverId, approverName);

@@ -3,7 +3,7 @@
 import { NextRequest } from 'next/server';
 
 import { updatePage, createPage, getPageById, resetApproveStateToWork } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { isValidBankId } from '@/lib/validators';
 import { writePageHtml, isPageExpired } from '@/lib/page-file';
 import { commitAndPushPage } from '@/lib/git-utils';
@@ -18,7 +18,10 @@ async function savePage(
     viewMode?: string,
     thumbnail?: string,
 ): Promise<void> {
-    const { userId, userName } = await getCurrentUser();
+    const { userId, userName, authorities } = await getCurrentUser();
+    if (!canWriteCms({ authorities })) {
+        throw new Error('권한이 없습니다.');
+    }
 
     // 1. 기존 페이지 확인 + 만료 체크
     const existing = await getPageById(bank);

@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { getPageList, getPageById, deletePage } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { deletePageHtml, deletePageThumbnail } from '@/lib/page-file';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
@@ -39,7 +39,11 @@ export async function GET(req: NextRequest) {
             rejectedReason: p.REJECTED_REASON ?? null,
         }));
 
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
         return successResponse({ pages, totalCount, currentUserId: userId });
     } catch (err: unknown) {
         console.error('페이지 목록 조회 실패:', err);
@@ -66,7 +70,11 @@ export async function DELETE(req: NextRequest) {
             return errorResponse('페이지를 찾을 수 없습니다', 404);
         }
 
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
 
         // DB 삭제 (미승인: 하드, 승인: 소프트)
         const { deleteType } = await deletePage(pageId, userId);

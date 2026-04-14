@@ -4,6 +4,7 @@ import path from 'path';
 import { writeFile } from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 
 export async function POST(req: NextRequest) {
     // 데모용: 업로드 파일을 public 폴더에 저장
@@ -14,6 +15,11 @@ export async function POST(req: NextRequest) {
 
     if (!uploadPath || !uploadUrl) {
         return contentBuilderErrorResponse('UPLOAD_PATH 또는 UPLOAD_URL이 설정되지 않았습니다.');
+    }
+
+    const currentUser = await getCurrentUser();
+    if (!canWriteCms(currentUser)) {
+        return contentBuilderErrorResponse('권한이 없습니다.');
     }
 
     const formData = await req.formData();

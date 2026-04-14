@@ -5,9 +5,15 @@ import { NextRequest } from 'next/server';
 
 import { getViewCountByPage, getClickCountByComponent } from '@/db/repository/page-view-log.repository';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canReadCms, getCurrentUser } from '@/lib/current-user';
 
 export async function GET(req: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
         const pageId = req.nextUrl.searchParams.get('pageId');
 
         if (!pageId) {

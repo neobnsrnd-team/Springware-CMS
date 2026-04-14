@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import PageCard from '@/components/ui/PageCard';
 import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
+import { nextApi } from '@/lib/api-url';
 
 import ApprovalRequestModal from './ApprovalRequestModal';
 import RejectedReasonModal from './RejectedReasonModal';
@@ -34,12 +35,14 @@ export interface DashboardPageCard {
 
 export interface DashboardClientProps {
     userId: string;
+    dashboardPath: string;
     initialPages: DashboardPageCard[];
     totalCount: number;
     currentPage: number;
     search: string;
     sortBy: SortBy;
     viewMode: ViewMode | null;
+    canWrite: boolean;
 }
 
 const PAGE_SIZE = 12;
@@ -54,12 +57,14 @@ const VIEW_MODE_FILTERS: { value: ViewMode | null; label: string }[] = [
 
 export default function DashboardClient({
     userId,
+    dashboardPath,
     initialPages,
     totalCount,
     currentPage,
     search: initialSearch,
     sortBy: initialSortBy,
     viewMode: initialViewMode,
+    canWrite,
 }: DashboardClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -120,7 +125,7 @@ export default function DashboardClient({
 
         const query = sp.toString();
         startTransition(() => {
-            router.push(`/${userId}${query ? `?${query}` : ''}`);
+            router.push(`/${dashboardPath}${query ? `?${query}` : ''}`);
         });
     }
 
@@ -157,18 +162,18 @@ export default function DashboardClient({
     // 새 페이지 생성
     async function handleCreatePage() {
         const label = newPageName.trim();
-        if (!label || creating) return;
+        if (!label || creating || !canWrite) return;
 
         setCreating(true);
         const id = `${userId}-${Date.now()}`;
 
         try {
-            await fetch('/api/builder/save', {
+            await fetch(nextApi('/api/builder/save'), {
                 method: 'POST',
                 body: JSON.stringify({ html: '', bank: id, pageName: label, viewMode: newPageViewMode }),
                 headers: { 'Content-Type': 'application/json' },
             });
-            window.location.href = `/edit?bank=${id}`;
+            window.location.href = nextApi(`/edit?bank=${id}`);
         } catch (err: unknown) {
             console.error('페이지 생성 실패:', err);
             setCreating(false);
@@ -177,7 +182,7 @@ export default function DashboardClient({
 
     // 승인 요청 — 낙관적 업데이트 후 API 호출
     async function handleApprovalRequest(approverId: string, approverName: string) {
-        if (!approvalTarget) return;
+        if (!approvalTarget || !canWrite) return;
 
         const { id: targetId, approveState: originalApproveState } = approvalTarget;
 
@@ -186,7 +191,7 @@ export default function DashboardClient({
         setApprovalTarget(null);
 
         try {
-            const res = await fetch(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ approverId, approverName }),
@@ -213,7 +218,7 @@ export default function DashboardClient({
         setLocalTotalCount((prev) => prev - 1);
 
         try {
-            const res = await fetch(`/api/builder/pages?pageId=${encodeURIComponent(pageId)}`, {
+            const res = await fetch(nextApi(`/api/builder/pages?pageId=${encodeURIComponent(pageId)}`), {
                 method: 'DELETE',
             });
             const data = await res.json();
@@ -265,6 +270,7 @@ export default function DashboardClient({
                         </div>
                         <button
                             onClick={() => setShowCreateModal(true)}
+                            disabled={!canWrite}
                             className="inline-flex items-center gap-1.5 px-[18px] py-[9px] rounded-lg bg-[#0046A4] text-white border-0 text-[13px] font-semibold cursor-pointer whitespace-nowrap shrink-0"
                         >
                             + 새 페이지
@@ -405,7 +411,10 @@ export default function DashboardClient({
                                                 alert('페이지 파일이 로컬에 존재하지 않습니다.');
                                                 return;
                                             }
-                                            window.location.href = `/edit?bank=${page.id}`;
+                                            if (!canWrite) {
+                                                return;
+                                            }
+                                            window.location.href = nextApi(`/edit?bank=${page.id}`);
                                         }}
                                         overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}
                                         footerSlot={
@@ -428,21 +437,24 @@ export default function DashboardClient({
                                                             반려 사유
                                                         </button>
                                                     )}
-                                                    {(page.approveState === 'WORK' ||
-                                                        page.approveState === 'REJECTED') && (
+                                                    {canWrite &&
+                                                        (page.approveState === 'WORK' ||
+                                                            page.approveState === 'REJECTED') && (
+                                                            <button
+                                                                onClick={() => setApprovalTarget(page)}
+                                                                className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                            >
+                                                                승인 요청
+                                                            </button>
+                                                        )}
+                                                    {canWrite && (
                                                         <button
-                                                            onClick={() => setApprovalTarget(page)}
-                                                            className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                            onClick={() => handleDeletePage(page.id, page.label)}
+                                                            className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
                                                         >
-                                                            승인 요청
+                                                            삭제
                                                         </button>
                                                     )}
-                                                    <button
-                                                        onClick={() => handleDeletePage(page.id, page.label)}
-                                                        className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
-                                                    >
-                                                        삭제
-                                                    </button>
                                                 </div>
                                             )
                                         }
@@ -567,9 +579,9 @@ export default function DashboardClient({
                         </button>
                         <button
                             onClick={handleCreatePage}
-                            disabled={!newPageName.trim() || creating}
+                            disabled={!newPageName.trim() || creating || !canWrite}
                             className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                !newPageName.trim() || creating
+                                !newPageName.trim() || creating || !canWrite
                                     ? 'bg-[#d1d5db] cursor-not-allowed'
                                     : 'bg-[#0046A4] cursor-pointer'
                             }`}
