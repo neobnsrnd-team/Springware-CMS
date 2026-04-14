@@ -1,49 +1,67 @@
-// src/lib/current-user.ts
-// 현재 로그인 사용자 정보 — JWT 기반 (HttpOnly 쿠키)
-
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
+import { fetchJavaAdminApi } from './java-admin-api';
 
 export interface CurrentUser {
     userId: string;
     userName: string;
-    role: 'admin' | 'user';
+    roleId: string;
+    authorities: string[];
 }
 
-interface JwtPayload {
+interface SpiderAdminCurrentUser {
     userId: string;
     userName: string;
-    role: 'admin' | 'user';
+    roleId: string;
+    authorities?: string[];
 }
 
-const JWT_SECRET_RAW = process.env.JWT_SECRET ?? '';
+const GUEST_USER: CurrentUser = {
+    userId: 'guest',
+    userName: 'Guest',
+    roleId: 'guest',
+    authorities: [],
+};
 
-function getSecretKey(): Uint8Array {
-    return new TextEncoder().encode(JWT_SECRET_RAW);
-}
-
-/**
- * 현재 사용자 반환 — cms-token 쿠키의 JWT 검증
- * 토큰 없음·검증 실패 시 비로그인 사용자(system/user)로 폴백
- * TODO: 2단계 — 폴백 제거 후 미인증 시 명시적 401 처리로 전환
- */
-export async function getCurrentUser(): Promise<CurrentUser> {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('cms-token')?.value;
-
-    if (!token || !JWT_SECRET_RAW) {
-        return { userId: 'system', userName: '시스템', role: 'user' };
+export class UnauthorizedError extends Error {
+    constructor(message = 'Authentication is required.') {
+        super(message);
+        this.name = 'UnauthorizedError';
     }
+}
 
+export async function getCurrentUser(): Promise<CurrentUser> {
     try {
-        const { payload } = await jwtVerify<JwtPayload>(token, getSecretKey());
+        const user = await fetchJavaAdminApi<SpiderAdminCurrentUser>('/api/auth/me');
         return {
-            userId: payload.userId,
-            userName: payload.userName,
-            role: payload.role,
+            userId: user.userId,
+            userName: user.userName,
+            roleId: user.roleId,
+            authorities: user.authorities ?? [],
         };
     } catch {
-        // 서명 검증 실패·만료 — 비로그인으로 처리
-        return { userId: 'system', userName: '시스템', role: 'user' };
+        return GUEST_USER;
     }
+}
+
+export function hasAuthority(user: Pick<CurrentUser, 'authorities'>, authority: 'CMS:R' | 'CMS:W'): boolean {
+    return user.authorities.includes(authority);
+}
+
+export function canReadCms(user: Pick<CurrentUser, 'authorities'>): boolean {
+    return hasAuthority(user, 'CMS:R') || hasAuthority(user, 'CMS:W');
+}
+
+export function canWriteCms(user: Pick<CurrentUser, 'authorities'>): boolean {
+    return hasAuthority(user, 'CMS:W');
+}
+
+export function getDefaultCmsPath(user: Pick<CurrentUser, 'authorities'>): '/approve' | '/system' {
+    return canWriteCms(user) ? '/approve' : '/system';
+}
+
+export async function requireCmsWrite(): Promise<CurrentUser> {
+    const user = await getCurrentUser();
+    if (!canWriteCms(user)) {
+        throw new UnauthorizedError('Permission denied.');
+    }
+    return user;
 }

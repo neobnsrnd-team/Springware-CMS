@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 
 import Modal from '@/components/ui/Modal';
+import { nextApi } from '@/lib/api-url';
 
 interface HistoryItem {
     PAGE_ID: string;
@@ -39,7 +40,7 @@ export default function RollbackModal({ pageId, pageLabel, onClose, onSuccess }:
     useEffect(() => {
         async function fetchHistory() {
             try {
-                const res = await fetch(`/api/builder/pages/${encodeURIComponent(pageId)}/history`);
+                const res = await fetch(nextApi(`/api/builder/pages/${encodeURIComponent(pageId)}/history`));
                 const data = await res.json();
                 if (data.ok) setHistoryList(data.history ?? []);
             } catch (err: unknown) {
@@ -58,7 +59,7 @@ export default function RollbackModal({ pageId, pageLabel, onClose, onSuccess }:
 
         setRolling(true);
         try {
-            const res = await fetch(`/api/builder/pages/${encodeURIComponent(pageId)}/rollback`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${encodeURIComponent(pageId)}/rollback`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ version: selectedVersion }),

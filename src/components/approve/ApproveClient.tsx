@@ -12,6 +12,7 @@ import StatsModal from './StatsModal';
 import RollbackModal from './RollbackModal';
 import { APPROVE_FILTERS } from '@/data/approve-config';
 import type { ApproveStateFilter } from '@/data/approve-config';
+import { nextApi } from '@/lib/api-url';
 
 export type { ApproveStateFilter };
 
@@ -47,6 +48,7 @@ export interface ApproveClientProps {
     sortBy: SortBy;
     approveState: ApproveStateFilter | null;
     createUser: string;
+    canWrite: boolean;
 }
 
 const PAGE_SIZE = 12;
@@ -59,6 +61,7 @@ export default function ApproveClient({
     sortBy: initialSortBy,
     approveState: initialApproveState,
     createUser: initialCreateUser,
+    canWrite,
 }: ApproveClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -214,14 +217,14 @@ export default function ApproveClient({
 
     // 날짜 관리 저장
     async function handleSaveDates() {
-        if (!dateModalPageId || savingDates) return;
+        if (!dateModalPageId || savingDates || !canWrite) return;
         if (editBeginningDate && editExpiredDate && editBeginningDate > editExpiredDate) {
             alert('시작일은 만료일보다 이전이어야 합니다.');
             return;
         }
         setSavingDates(true);
         try {
-            const res = await fetch(`/api/builder/pages/${dateModalPageId}/update-dates`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${dateModalPageId}/update-dates`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -246,10 +249,11 @@ export default function ApproveClient({
 
     // IS_PUBLIC 토글 — 비공개/공개 복원
     async function handleSetPublic(pageId: string, isPublic: 'Y' | 'N') {
+        if (!canWrite) return;
         const actionText = isPublic === 'Y' ? '공개 복원' : '비공개 처리';
         if (!confirm(`이 페이지를 ${actionText}하시겠습니까?`)) return;
         try {
-            const res = await fetch(`/api/builder/pages/${pageId}/set-public`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${pageId}/set-public`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isPublic }),
@@ -281,11 +285,11 @@ export default function ApproveClient({
 
     // 승인 확정 — API 호출 후 페이지 새로고침
     async function handleApproveConfirm() {
-        if (!approveModalPageId || approving) return;
+        if (!approveModalPageId || approving || !canWrite) return;
 
         setApproving(true);
         try {
-            const res = await fetch(`/api/builder/pages/${approveModalPageId}/approve`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${approveModalPageId}/approve`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -309,12 +313,13 @@ export default function ApproveClient({
 
     // 배포 실행 — 컨펌 후 API 호출
     async function handleDeploy(pageId: string) {
+        if (!canWrite) return;
         if (!window.confirm('배포하시겠습니까?\n승인된 페이지를 운영 서버로 전송합니다.')) return;
         if (deploying) return;
 
         setDeploying(pageId);
         try {
-            const res = await fetch('/api/deploy/push', {
+            const res = await fetch(nextApi('/api/deploy/push'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pageId }),
@@ -342,7 +347,7 @@ export default function ApproveClient({
         setHistoryList([]);
         setHistoryLoading(true);
         try {
-            const res = await fetch(`/api/deploy/history?pageId=${encodeURIComponent(pageId)}`);
+            const res = await fetch(nextApi(`/api/deploy/history?pageId=${encodeURIComponent(pageId)}`));
             const data = await res.json();
             if (data.ok) setHistoryList(data.history ?? []);
         } catch (err: unknown) {
@@ -359,11 +364,11 @@ export default function ApproveClient({
 
     // 반려 확정 — API 호출 후 페이지 새로고침
     async function handleRejectConfirm() {
-        if (!rejectModalPageId || !rejectReason.trim() || rejecting) return;
+        if (!rejectModalPageId || !rejectReason.trim() || rejecting || !canWrite) return;
 
         setRejecting(true);
         try {
-            const res = await fetch(`/api/builder/pages/${rejectModalPageId}/reject`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${rejectModalPageId}/reject`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rejectedReason: rejectReason.trim() }),

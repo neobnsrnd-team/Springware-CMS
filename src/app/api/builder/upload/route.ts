@@ -1,19 +1,17 @@
-// src/app/api/builder/upload/route.ts
-
 import crypto from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createAsset } from '@/db/repository/asset.repository';
-import { getCurrentUser } from '@/lib/current-user';
 import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
     if (!file) {
-        return contentBuilderErrorResponse('파일이 없습니다.');
+        return contentBuilderErrorResponse('File is required.');
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -21,7 +19,11 @@ export async function POST(req: NextRequest) {
     const assetId = crypto.randomUUID();
 
     try {
-        const { userId, userName } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return contentBuilderErrorResponse('Permission denied.');
+        }
+        const { userId, userName } = currentUser;
 
         await createAsset({
             assetId,
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ ok: true, url: `/api/assets/${assetId}/image` }, { status: 201 });
     } catch (err: unknown) {
-        console.error('파일 업로드 실패:', err);
+        console.error('File upload failed:', err);
         return contentBuilderErrorResponse(getErrorMessage(err));
     }
 }

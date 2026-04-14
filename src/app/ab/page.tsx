@@ -6,10 +6,17 @@ export const dynamic = 'force-dynamic';
 import { getPageList } from '@/db/repository/page.repository';
 import { getViewCountsByPages, getClickCountsByPages } from '@/db/repository/page-view-log.repository';
 import AbTestClient from '@/components/ab/AbTestClient';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { redirect } from 'next/navigation';
 import type { ViewMode } from '@/db/types';
 import type { AbGroupInfo, AbPageCard } from '@/components/ab/AbTestClient';
 
 export default async function AbTestPage() {
+    const currentUser = await getCurrentUser();
+    if (!canWriteCms(currentUser)) {
+        redirect('/not-authorized');
+    }
+
     // APPROVED 상태 페이지 전체 조회 (A/B 그룹 컬럼 포함)
     const { list } = await getPageList({
         approveState: 'APPROVED',

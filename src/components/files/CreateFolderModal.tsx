@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 import { useDraggable } from '@/hooks/useDraggable';
+import { nextApi } from '@/lib/api-url';
 
 interface CreateFolderModalProps {
     isOpen: boolean;
@@ -19,7 +20,7 @@ export default function CreateFolderModal({
     onClose,
     currentPath,
     onFolderCreated,
-    apiEndpoint = '/api/manage/addfolder',
+    apiEndpoint = nextApi('/api/manage/addfolder'),
 }: CreateFolderModalProps) {
     const [folderName, setFolderName] = useState('');
     const [isCreating, setIsCreating] = useState(false);

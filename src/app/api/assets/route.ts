@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 
 import { getAssetList, createAsset } from '@/db/repository/asset.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /**
@@ -70,7 +70,11 @@ export async function POST(req: NextRequest) {
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const { userId, userName } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+        const { userId, userName } = currentUser;
 
         const assetId = crypto.randomUUID();
         const assetName = (formData.get('assetName') as string) || file.name.replaceAll(' ', '_');

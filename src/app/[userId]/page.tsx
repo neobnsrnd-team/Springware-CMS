@@ -5,7 +5,8 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { redirect } from 'next/navigation';
 import { isPageExpired } from '@/lib/page-file';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ViewMode } from '@/db/types';
@@ -13,6 +14,8 @@ import type { ViewMode } from '@/db/types';
 const PAGE_SIZE = 12;
 
 const VIEW_MODE_VALUES: ViewMode[] = ['mobile', 'web', 'responsive'];
+
+export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage({
     params,
@@ -26,6 +29,9 @@ export default async function DashboardPage({
 
     // cookie 기반 현재 사용자 — admin이면 전체, user이면 본인 페이지만
     const currentUser = await getCurrentUser();
+    if (!canReadCms(currentUser)) {
+        redirect('/not-authorized');
+    }
 
     const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10));
     const search = searchParam ?? '';
@@ -33,7 +39,7 @@ export default async function DashboardPage({
     const viewMode = VIEW_MODE_VALUES.includes(viewModeParam as ViewMode) ? (viewModeParam as ViewMode) : undefined;
 
     const { list, totalCount } = await getPageList({
-        createUserId: currentUser.role === 'admin' ? undefined : currentUser.userId,
+        createUserId: canWriteCms(currentUser) ? undefined : currentUser.userId,
         page: currentPage,
         pageSize: PAGE_SIZE,
         search: search || undefined,
@@ -58,13 +64,15 @@ export default async function DashboardPage({
 
     return (
         <DashboardClient
-            userId={userId}
+            userId={currentUser.userId}
+            dashboardPath={userId}
             initialPages={pages}
             totalCount={totalCount}
             currentPage={currentPage}
             search={search}
             sortBy={sortBy}
             viewMode={viewMode ?? null}
+            canWrite={canWriteCms(currentUser)}
         />
     );
 }

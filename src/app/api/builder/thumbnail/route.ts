@@ -5,7 +5,7 @@ import { mkdir, writeFile } from 'fs/promises';
 import { NextRequest } from 'next/server';
 
 import { successResponse, contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { isValidBankId } from '@/lib/validators';
 
 // 썸네일 저장 디렉토리 (public/uploads/pages/thumbnails/)
@@ -27,7 +27,10 @@ async function saveThumbnailFile(pageId: string, buffer: Buffer): Promise<string
 
 export async function POST(req: NextRequest) {
     try {
-        await getCurrentUser(); // 사용자 인증 확인
+        const currentUser = await getCurrentUser(); // 사용자 인증 확인
+        if (!canWriteCms(currentUser)) {
+            return contentBuilderErrorResponse('권한이 없습니다.');
+        }
 
         const formData = await req.formData();
         const fileValue = formData.get('file');

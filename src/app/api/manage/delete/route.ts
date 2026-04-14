@@ -5,11 +5,17 @@ import path from 'path';
 import { rm } from 'fs/promises';
 
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 
 const UPLOAD_PATH = process.env.UPLOAD_PATH || 'public/uploads/';
 
 export async function DELETE(request: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+
         const body = await request.json();
         const { files } = body;
 

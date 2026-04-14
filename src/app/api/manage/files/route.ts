@@ -5,10 +5,16 @@ import path from 'path';
 
 import { UPLOAD_PATH, UPLOAD_URL } from '@/lib/upload';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canReadCms, getCurrentUser } from '@/lib/current-user';
 const PAGE_SIZE = 10; // 페이지당 파일 수
 
 export async function GET(request: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
         const relativePath = searchParams.get('path') || '';

@@ -13,10 +13,12 @@ export default function EditClientLoader({
     bank,
     userId,
     brandTheme,
+    canWrite,
 }: {
     bank: string;
     userId: string;
     brandTheme?: BrandTheme | null;
+    canWrite?: boolean;
 }) {
-    return <EditClient bank={bank} userId={userId} brandTheme={brandTheme} />;
+    return <EditClient bank={bank} userId={userId} brandTheme={brandTheme} canWrite={canWrite} />;
 }

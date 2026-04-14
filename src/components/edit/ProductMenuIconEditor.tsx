@@ -4,6 +4,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { nextApi } from '@/lib/api-url';
 
 // 아이콘 SVG — 피커 표시용 (크기는 컨테이너로 제어, stroke는 color 파라미터로 치환)
 const ICONS: Record<string, string> = {
@@ -159,7 +160,7 @@ export default function ProductMenuIconEditor({ blockEl, onClose }: Props) {
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const res = await fetch('/api/builder/upload', { method: 'POST', body: formData });
+                const res = await fetch(nextApi('/api/builder/upload'), { method: 'POST', body: formData });
                 const data = (await res.json()) as { url?: string };
                 const url = data.url?.replace(/\\/g, '/');
                 if (url) {
