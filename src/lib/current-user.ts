@@ -14,6 +14,13 @@ interface SpiderAdminCurrentUser {
     authorities?: string[];
 }
 
+const GUEST_USER: CurrentUser = {
+    userId: 'guest',
+    userName: 'Guest',
+    roleId: 'guest',
+    authorities: [],
+};
+
 export class UnauthorizedError extends Error {
     constructor(message = 'Authentication is required.') {
         super(message);
@@ -30,8 +37,8 @@ export async function getCurrentUser(): Promise<CurrentUser> {
             roleId: user.roleId,
             authorities: user.authorities ?? [],
         };
-    } catch (error) {
-        throw new UnauthorizedError(error instanceof Error ? error.message : undefined);
+    } catch {
+        return GUEST_USER;
     }
 }
 

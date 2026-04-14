@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { deleteAsset, getAssetMetaById } from '@/db/repository/asset.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /** DELETE /api/assets/:assetId — 에셋 논리 삭제 (USE_YN = 'N') */
@@ -17,7 +17,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ a
             return errorResponse('에셋을 찾을 수 없습니다.', 404);
         }
 
-        const { userId, userName } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+        const { userId, userName } = currentUser;
         await deleteAsset(assetId, userId, userName);
 
         return successResponse({ deleted: assetId });
