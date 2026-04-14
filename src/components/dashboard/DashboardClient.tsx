@@ -177,7 +177,12 @@ export default function DashboardClient({
                 headers: { 'Content-Type': 'application/json' },
             });
             const data = await res.json();
-            window.location.href = nextApi(`/edit?bank=${data.pageId}`);
+            if (res.ok && data.ok) {
+                window.location.href = nextApi(`/edit?bank=${data.pageId}`);
+            } else {
+                alert(data.error || '페이지 생성에 실패했습니다.');
+                setCreating(false);
+            }
         } catch (err: unknown) {
             console.error('페이지 생성 실패:', err);
             setCreating(false);
