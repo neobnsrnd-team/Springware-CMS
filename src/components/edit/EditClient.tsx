@@ -2232,7 +2232,7 @@ export default function EditClient({
             window.location.href = nextApi(`/edit?bank=${remaining[0].id}`);
         } else {
             // 탭이 없으면 대시보드로 이동
-            window.location.href = nextApi('/system');
+            window.location.href = nextApi('/dashboard');
         }
     }
 
@@ -2260,7 +2260,7 @@ export default function EditClient({
         // 삭제 후 탭 제거 후 이동
         const remaining = tabs.filter((t) => t.id !== bank);
         setTabs(remaining);
-        window.location.href = remaining.length > 0 ? nextApi(`/edit?bank=${remaining[0].id}`) : nextApi('/system');
+        window.location.href = remaining.length > 0 ? nextApi(`/edit?bank=${remaining[0].id}`) : nextApi('/dashboard');
     }
 
     // ── 저장 / 미리보기 / HTML 보기 ──────────────────────────────────────
@@ -2383,7 +2383,7 @@ export default function EditClient({
             >
                 {/* 대시보드 이동 버튼 */}
                 <a
-                    href={nextApi('/system')}
+                    href={nextApi('/dashboard')}
                     title="대시보드로 돌아가기"
                     style={{
                         display: 'inline-flex',

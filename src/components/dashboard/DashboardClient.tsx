@@ -35,7 +35,6 @@ export interface DashboardPageCard {
 
 export interface DashboardClientProps {
     userId: string;
-    dashboardPath: string;
     initialPages: DashboardPageCard[];
     totalCount: number;
     currentPage: number;
@@ -59,7 +58,6 @@ const VIEW_MODE_FILTERS: { value: ViewMode | null; label: string }[] = [
 
 export default function DashboardClient({
     userId,
-    dashboardPath,
     initialPages,
     totalCount,
     currentPage,
@@ -131,7 +129,7 @@ export default function DashboardClient({
 
         const query = sp.toString();
         startTransition(() => {
-            router.push(`/${dashboardPath}${query ? `?${query}` : ''}`);
+            router.push(`/dashboard${query ? `?${query}` : ''}`);
         });
     }
 
@@ -171,15 +169,15 @@ export default function DashboardClient({
         if (!label || creating || !canWrite) return;
 
         setCreating(true);
-        const id = `${userId}-${Date.now()}`;
 
         try {
-            await fetch(nextApi('/api/builder/save'), {
+            const res = await fetch(nextApi('/api/builder/save'), {
                 method: 'POST',
-                body: JSON.stringify({ html: '', bank: id, pageName: label, viewMode: newPageViewMode }),
+                body: JSON.stringify({ html: '', pageName: label, viewMode: newPageViewMode }),
                 headers: { 'Content-Type': 'application/json' },
             });
-            window.location.href = nextApi(`/edit?bank=${id}`);
+            const data = await res.json();
+            window.location.href = nextApi(`/edit?bank=${data.pageId}`);
         } catch (err: unknown) {
             console.error('페이지 생성 실패:', err);
             setCreating(false);

@@ -54,8 +54,8 @@ export function canWriteCms(user: Pick<CurrentUser, 'authorities'>): boolean {
     return hasAuthority(user, 'CMS:W');
 }
 
-export function getDefaultCmsPath(user: Pick<CurrentUser, 'authorities'>): '/approve' | '/system' {
-    return canWriteCms(user) ? '/approve' : '/system';
+export function getDefaultCmsPath(user: Pick<CurrentUser, 'authorities'>): '/approve' | '/dashboard' {
+    return canWriteCms(user) ? '/approve' : '/dashboard';
 }
 
 export async function requireCmsWrite(): Promise<CurrentUser> {

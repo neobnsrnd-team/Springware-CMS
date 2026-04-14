@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const { html, pageName, viewMode, thumbnail } = body;
-        const bank = isValidBankId(body.bank) ? body.bank : 'ibk';
+
+        // bank 미전달 또는 유효하지 않으면 서버에서 UUID 생성 (신규 페이지)
+        const bank = isValidBankId(body.bank) ? body.bank : crypto.randomUUID();
 
         if (html === undefined || html === null) {
             return contentBuilderErrorResponse('HTML 콘텐츠가 없습니다.');
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
             typeof thumbnail === 'string' ? thumbnail : undefined,
         );
 
-        return successResponse();
+        return successResponse({ pageId: bank });
     } catch (err: unknown) {
         console.error('페이지 저장 실패:', err);
         return contentBuilderErrorResponse(getErrorMessage(err));
