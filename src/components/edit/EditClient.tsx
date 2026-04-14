@@ -461,8 +461,7 @@ export default function EditClient({
             generateMediaUrl_Fal: '/api/fal/request',
             checkRequestStatusUrl_Fal: '/api/fal/status',
             getResultUrl_Fal: '/api/fal/result',
-            filePicker: '/files',
-            filePickerSize: 'large',
+            // filePicker 제거 — DB 전환 후 로컬 파일 브라우저 불필요, upload 함수로 이미지 삽입
 
             // 컬러 피커 색상 팔레트
             colors: CMS_COLORS,
