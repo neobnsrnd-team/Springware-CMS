@@ -2,7 +2,7 @@
 // 에셋 목록 조회 · 등록 API
 
 import crypto from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, unlink, writeFile } from 'fs/promises';
 import { dirname, join } from 'path';
 
 import { NextRequest } from 'next/server';
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
         const { userId, userName } = currentUser;
 
         const assetId = crypto.randomUUID();
-        const assetName = (formData.get('assetName') as string) || file.name.replaceAll(' ', '_');
+        const assetName = ((formData.get('assetName') as string) || file.name).replace(/[^a-zA-Z0-9._-]/g, '_');
         const businessCategory = (formData.get('businessCategory') as string) || undefined;
         const assetDesc = (formData.get('assetDesc') as string) || undefined;
 
@@ -91,18 +91,24 @@ export async function POST(req: NextRequest) {
         await writeFile(filepath, buffer);
         const assetUrl = `${ASSET_BASE_URL}/${filename}`;
 
-        await createAsset({
-            assetId,
-            assetName,
-            businessCategory,
-            mimeType: file.type || 'application/octet-stream',
-            fileSize: buffer.length,
-            assetPath: filepath,
-            assetUrl,
-            assetDesc,
-            createUserId: userId,
-            createUserName: userName,
-        });
+        try {
+            await createAsset({
+                assetId,
+                assetName,
+                businessCategory,
+                mimeType: file.type || 'application/octet-stream',
+                fileSize: buffer.length,
+                assetPath: filepath,
+                assetUrl,
+                assetDesc,
+                createUserId: userId,
+                createUserName: userName,
+            });
+        } catch (dbErr: unknown) {
+            // DB 실패 시 고아 파일 정리
+            await unlink(filepath).catch(() => {});
+            throw dbErr;
+        }
 
         return successResponse({ assetId, url: assetUrl });
     } catch (err: unknown) {

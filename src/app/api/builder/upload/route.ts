@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, unlink, writeFile } from 'fs/promises';
 import { dirname, join } from 'path';
 
 import { NextRequest } from 'next/server';
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const assetId = crypto.randomUUID();
-    const assetName = file.name.replaceAll(' ', '_');
+    const assetName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
     try {
         const currentUser = await getCurrentUser();
@@ -35,16 +35,22 @@ export async function POST(req: NextRequest) {
         await writeFile(filepath, buffer);
         const assetUrl = `${ASSET_BASE_URL}/${filename}`;
 
-        await createAsset({
-            assetId,
-            assetName,
-            mimeType: file.type || 'application/octet-stream',
-            fileSize: buffer.length,
-            assetPath: filepath,
-            assetUrl,
-            createUserId: userId,
-            createUserName: userName,
-        });
+        try {
+            await createAsset({
+                assetId,
+                assetName,
+                mimeType: file.type || 'application/octet-stream',
+                fileSize: buffer.length,
+                assetPath: filepath,
+                assetUrl,
+                createUserId: userId,
+                createUserName: userName,
+            });
+        } catch (dbErr: unknown) {
+            // DB 실패 시 고아 파일 정리
+            await unlink(filepath).catch(() => {});
+            throw dbErr;
+        }
 
         return successResponse({ url: assetUrl }, 201);
     } catch (err: unknown) {
