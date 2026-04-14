@@ -82,8 +82,8 @@ export default function DashboardClient({
     const [pages, setPages] = useState<DashboardPageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
 
-    // 승인 상태 레이블 (서버 전달값 우선, 없으면 기본값)
-    const approveLabels = initialApproveLabels ?? { ...APPROVE_DEFAULT_LABELS };
+    // 승인 상태 레이블 (기본값과 서버 전달값 병합)
+    const approveLabels = { ...APPROVE_DEFAULT_LABELS, ...initialApproveLabels };
 
     // 서버에서 새 데이터가 내려올 때 동기화
     useEffect(() => {

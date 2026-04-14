@@ -42,5 +42,8 @@ export async function getApproveLabels(): Promise<Partial<Record<ApproveStateVal
     const codes = await getCodesByGroup('CS00001');
     if (codes.length === 0) return { ...APPROVE_DEFAULT_LABELS };
 
-    return Object.fromEntries(codes.map((c) => [c.code, c.codeName])) as Partial<Record<ApproveStateValue, string>>;
+    const validValues = new Set<string>(APPROVE_STATE_VALUES);
+    return Object.fromEntries(
+        codes.filter((c) => validValues.has(c.code)).map((c) => [c.code, c.codeName]),
+    ) as Partial<Record<ApproveStateValue, string>>;
 }

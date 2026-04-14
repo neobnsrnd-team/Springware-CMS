@@ -75,16 +75,14 @@ export default function ApproveClient({
     const [createUserFilter, setCreateUserFilter] = useState(initialCreateUser);
     const [showExpired, setShowExpired] = useState(true);
 
-    // 승인 상태 레이블 (서버 전달값 우선, 없으면 기본값)
-    const [approveLabels, setApproveLabels] = useState<Partial<Record<ApproveStateValue, string>>>(
-        initialApproveLabels ?? { ...APPROVE_DEFAULT_LABELS },
-    );
+    // 승인 상태 레이블 (기본값과 서버 전달값 병합)
+    const approveLabels = { ...APPROVE_DEFAULT_LABELS, ...initialApproveLabels };
     // 필터 버튼 레이블 (approveLabels 기반으로 구성)
     const approveFilters = [
         { value: null as ApproveStateFilter | null, label: '전체' },
-        { value: 'PENDING' as ApproveStateFilter, label: approveLabels.PENDING ?? APPROVE_DEFAULT_LABELS.PENDING },
-        { value: 'APPROVED' as ApproveStateFilter, label: approveLabels.APPROVED ?? APPROVE_DEFAULT_LABELS.APPROVED },
-        { value: 'REJECTED' as ApproveStateFilter, label: approveLabels.REJECTED ?? APPROVE_DEFAULT_LABELS.REJECTED },
+        { value: 'PENDING' as ApproveStateFilter, label: approveLabels.PENDING },
+        { value: 'APPROVED' as ApproveStateFilter, label: approveLabels.APPROVED },
+        { value: 'REJECTED' as ApproveStateFilter, label: approveLabels.REJECTED },
     ];
 
     const [pages, setPages] = useState<ApprovePageCard[]>(initialPages);
