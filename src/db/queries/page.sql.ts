@@ -50,13 +50,13 @@ export const PAGE_COUNT = `
 /** 페이지 신규 생성 (W-3: VIEW_MODE 바인딩 추가) */
 export const PAGE_INSERT = `
   INSERT INTO SPW_CMS_PAGE (
-    PAGE_ID, PAGE_NAME, VIEW_MODE, OWNER_DEPT_CODE, FILE_PATH,
+    PAGE_ID, PAGE_NAME, VIEW_MODE, OWNER_DEPT_CODE, FILE_PATH, PAGE_HTML,
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
     APPROVE_STATE, PAGE_DESC, PAGE_DESC_DETAIL,
     TEMPLATE_ID, THUMBNAIL, TARGET_CD, USE_YN, IS_PUBLIC
   ) VALUES (
-    :pageId, :pageName, NVL(:viewMode, 'mobile'), :ownerDeptCode, :filePath,
+    :pageId, :pageName, NVL(:viewMode, 'mobile'), :ownerDeptCode, :filePath, :pageHtml,
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName,
     'WORK', :pageDesc, :pageDescDetail,
@@ -72,6 +72,7 @@ export const PAGE_UPDATE = `
       PAGE_DESC = :pageDesc,
       PAGE_DESC_DETAIL = :pageDescDetail,
       FILE_PATH = NVL(:filePath, FILE_PATH),
+      PAGE_HTML = :pageHtml,
       THUMBNAIL = :thumbnail,
       LAST_MODIFIER_ID = :lastModifierId,
       LAST_MODIFIER_NAME = :lastModifierName
@@ -79,18 +80,19 @@ export const PAGE_UPDATE = `
     AND USE_YN = 'Y'
 `;
 
-/** 승인 요청 — APPROVE_STATE를 PENDING으로, 결재자 지정, 요청 시각 기록 */
+/** 승인 요청 — APPROVE_STATE를 PENDING으로, 결재자 지정, 요청 시각·만료일 기록 */
 export const PAGE_REQUEST_APPROVAL = `
   UPDATE SPW_CMS_PAGE
   SET APPROVE_STATE = 'PENDING',
       APPROVER_ID   = :approverId,
       APPROVER_NAME = :approverName,
-      CONFIRM_DTIME = SYSTIMESTAMP
+      CONFIRM_DTIME = SYSTIMESTAMP,
+      EXPIRED_DATE  = TO_DATE(:expiredDate, 'YYYY-MM-DD')
   WHERE PAGE_ID     = :pageId
     AND APPROVE_STATE IN ('WORK', 'REJECTED')
 `;
 
-/** 결재 상태 변경 */
+/** 결재 상태 변경 — EXPIRED_DATE는 승인 요청 시 저장된 값 유지 */
 export const PAGE_UPDATE_APPROVE_STATE = `
   UPDATE SPW_CMS_PAGE
   SET APPROVE_STATE = :approveState,
@@ -99,7 +101,6 @@ export const PAGE_UPDATE_APPROVE_STATE = `
       APPROVE_DATE = SYSTIMESTAMP,
       REJECTED_REASON = :rejectedReason,
       BEGINNING_DATE = TO_DATE(:beginningDate, 'YYYY-MM-DD'),
-      EXPIRED_DATE = TO_DATE(:expiredDate, 'YYYY-MM-DD'),
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
 `;
@@ -231,7 +232,8 @@ export const PAGE_SET_WINNER = `
 /** 버전 롤백 — 지정 버전의 FILE_PATH를 PAGE에 덮어쓰고 APPROVE_STATE = 'WORK' 전환 */
 export const PAGE_ROLLBACK = `
   UPDATE SPW_CMS_PAGE
-  SET FILE_PATH        = :filePath,
+  SET PAGE_HTML        = :pageHtml,
+      FILE_PATH        = :filePath,
       APPROVE_STATE    = 'WORK',
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
@@ -244,4 +246,24 @@ export const PAGE_UPDATE_DEPLOY = `
   SET FILE_CRC_VALUE  = :fileCrcValue,
       LAST_MODIFIER_ID = :lastModifierId
   WHERE PAGE_ID = :pageId
+`;
+
+// ── PAGE_HTML (DB 직접 저장) ──
+
+/** PAGE_HTML 단건 조회 */
+export const PAGE_SELECT_HTML_BY_ID = `
+  SELECT PAGE_HTML
+  FROM SPW_CMS_PAGE
+  WHERE PAGE_ID = :pageId
+    AND USE_YN = 'Y'
+`;
+
+/** PAGE_HTML 업데이트 (에디터 HTML → DB CLOB 직접 저장) */
+export const PAGE_UPDATE_HTML = `
+  UPDATE SPW_CMS_PAGE
+  SET PAGE_HTML = :pageHtml,
+      LAST_MODIFIER_ID = :lastModifierId,
+      LAST_MODIFIER_NAME = :lastModifierName
+  WHERE PAGE_ID = :pageId
+    AND USE_YN = 'Y'
 `;

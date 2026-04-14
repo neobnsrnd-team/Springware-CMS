@@ -27,11 +27,12 @@ const VIEW_MODE_ICON: Record<string, string> = {
 interface ApprovalRequestModalProps {
     page: DashboardPageCard;
     onClose: () => void;
-    onSubmit: (approverId: string, approverName: string) => Promise<void>;
+    onSubmit: (approverId: string, approverName: string, expiredDate: string) => Promise<void>;
 }
 
 export default function ApprovalRequestModal({ page, onClose, onSubmit }: ApprovalRequestModalProps) {
     const [approverId, setApproverId] = useState('');
+    const [expiredDate, setExpiredDate] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [approverList, setApproverList] = useState<Approver[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,11 +58,14 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
 
     const selectedApprover = approverList.find((u) => u.userId === approverId);
 
+    // 오늘 이후 날짜만 선택 가능 — 로컬 타임 기준 내일 날짜 계산
+    const minDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleDateString('en-CA');
+
     async function handleSubmit() {
-        if (!selectedApprover || submitting) return;
+        if (!selectedApprover || !expiredDate || submitting) return;
         setSubmitting(true);
         try {
-            await onSubmit(selectedApprover.userId, selectedApprover.userName);
+            await onSubmit(selectedApprover.userId, selectedApprover.userName, expiredDate);
         } finally {
             setSubmitting(false);
         }
@@ -109,6 +113,21 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                 )}
             </div>
 
+            {/* 만료일 선택 */}
+            <div className="px-7 pb-6">
+                <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
+                    만료일 <span className="text-[#dc2626]">*</span>
+                </label>
+                <input
+                    type="date"
+                    value={expiredDate}
+                    min={minDate}
+                    onChange={(e) => setExpiredDate(e.target.value)}
+                    className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none bg-white text-[#111827]"
+                />
+            </div>
+
+            {/* 버튼 */}
             <div className="flex justify-end gap-2 px-7 pb-6">
                 <button
                     onClick={onClose}
@@ -118,9 +137,9 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                 </button>
                 <button
                     onClick={handleSubmit}
-                    disabled={!approverId || submitting || loading}
+                    disabled={!approverId || !expiredDate || submitting || loading}
                     className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                        !approverId || submitting || loading
+                        !approverId || !expiredDate || submitting || loading
                             ? 'bg-[#d1d5db] cursor-not-allowed'
                             : 'bg-[#0046A4] cursor-pointer'
                     }`}

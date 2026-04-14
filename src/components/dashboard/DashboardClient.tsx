@@ -181,7 +181,7 @@ export default function DashboardClient({
     }
 
     // 승인 요청 — 낙관적 업데이트 후 API 호출
-    async function handleApprovalRequest(approverId: string, approverName: string) {
+    async function handleApprovalRequest(approverId: string, approverName: string, expiredDate: string) {
         if (!approvalTarget || !canWrite) return;
 
         const { id: targetId, approveState: originalApproveState } = approvalTarget;
@@ -194,7 +194,7 @@ export default function DashboardClient({
             const res = await fetch(nextApi(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approverId, approverName }),
+                body: JSON.stringify({ approverId, approverName, expiredDate }),
             });
             const data = await res.json();
             if (!data.ok) {

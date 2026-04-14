@@ -1,43 +1,43 @@
-// src/app/api/builder/upload/route.ts
+import crypto from 'crypto';
 
-import path from 'path';
-import { writeFile } from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
+
+import { createAsset } from '@/db/repository/asset.repository';
 import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 
 export async function POST(req: NextRequest) {
-    // 데모용: 업로드 파일을 public 폴더에 저장
-    // 프로덕션에서는 S3 등 외부 스토리지로 교체 권장
-
-    const uploadPath = process.env.UPLOAD_PATH; // 실제 저장 경로 (예: "/public/uploads/")
-    const uploadUrl = process.env.UPLOAD_URL; // URL 기본 경로 (예: "/uploads/")
-
-    if (!uploadPath || !uploadUrl) {
-        return contentBuilderErrorResponse('UPLOAD_PATH 또는 UPLOAD_URL이 설정되지 않았습니다.');
-    }
-
-    const currentUser = await getCurrentUser();
-    if (!canWriteCms(currentUser)) {
-        return contentBuilderErrorResponse('권한이 없습니다.');
-    }
-
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
     if (!file) {
-        return contentBuilderErrorResponse('파일이 없습니다.');
+        return contentBuilderErrorResponse('File is required.');
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const filename = file.name.replaceAll(' ', '_');
+    const assetId = crypto.randomUUID();
 
     try {
-        await writeFile(path.join(process.cwd(), uploadPath, filename), buffer);
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return contentBuilderErrorResponse('Permission denied.');
+        }
+        const { userId, userName } = currentUser;
 
-        return NextResponse.json({ ok: true, url: path.join(uploadUrl, filename) }, { status: 201 });
+        await createAsset({
+            assetId,
+            assetName: filename,
+            mimeType: file.type || 'application/octet-stream',
+            fileSize: buffer.length,
+            assetData: buffer,
+            createUserId: userId,
+            createUserName: userName,
+        });
+
+        return NextResponse.json({ ok: true, url: `/api/assets/${assetId}/image` }, { status: 201 });
     } catch (err: unknown) {
-        console.error('파일 업로드 실패:', err);
+        console.error('File upload failed:', err);
         return contentBuilderErrorResponse(getErrorMessage(err));
     }
 }
