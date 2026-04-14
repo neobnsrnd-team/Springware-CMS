@@ -54,8 +54,13 @@ export function canWriteCms(user: Pick<CurrentUser, 'authorities'>): boolean {
     return hasAuthority(user, 'CMS:W');
 }
 
+export const CMS_ROLE = {
+    ADMIN: 'cms_admin',
+    USER: 'cms_user',
+} as const;
+
 export function canAdminScreen(user: Pick<CurrentUser, 'roleId'>): boolean {
-    return user.roleId === 'cms_admin';
+    return user.roleId === CMS_ROLE.ADMIN;
 }
 
 export function getDefaultCmsPath(user: Pick<CurrentUser, 'roleId'>): '/approve' | '/dashboard' {
