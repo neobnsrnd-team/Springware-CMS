@@ -6,8 +6,16 @@ import axios from 'axios';
 import path from 'path';
 import fs from 'fs';
 
-import { normalizeUploadUrl } from '@/lib/upload-utils';
 import { getErrorMessage } from '@/lib/api-response';
+
+/** 업로드 URL을 절대 경로(슬래시로 시작·끝)로 정규화 */
+function normalizeUploadUrl(url: string): string {
+    let safe = url.trim();
+    if (/^https?:\/\//i.test(safe)) return safe.endsWith('/') ? safe : safe + '/';
+    if (!safe.startsWith('/')) safe = '/' + safe;
+    if (!safe.endsWith('/')) safe += '/';
+    return safe.replace(/([^:]\/)\/+/g, '$1');
+}
 
 const FAL_API_KEY = process.env.FAL_API_KEY;
 const UPLOAD_PATH = process.env.UPLOAD_PATH || '';

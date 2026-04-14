@@ -2314,13 +2314,11 @@ export default function EditClient({
         const builder = builderRef.current;
         const html = builder.html();
 
-        // 썸네일 캡처 (실패 시 저장 중단)
-        const thumbnailPath = await captureThumbnail();
-
+        // 썸네일 캡처 비활성화 — DB 전환 후 thumbnail API 제거됨 (Phase 7)
         if (!canWrite) return;
         const response = await fetch(nextApi('/api/builder/save'), {
             method: 'POST',
-            body: JSON.stringify({ html, bank, thumbnail: thumbnailPath }),
+            body: JSON.stringify({ html, bank, thumbnail: '' }),
             headers: { 'Content-Type': 'application/json' },
         });
         const result = await response.json();

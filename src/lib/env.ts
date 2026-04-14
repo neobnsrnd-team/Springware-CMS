@@ -27,7 +27,7 @@ export const OPENAI_API_KEY = optionalEnv('OPENAI_API_KEY');
 export const FAL_API_KEY = optionalEnv('FAL_API_KEY');
 export const GEMINI_API_KEY = optionalEnv('GEMINI_API_KEY');
 
-// ── 파일 업로드 ──
+// ── 파일 업로드 (레거시 — 별도 이슈에서 정리 예정) ──
 export const UPLOAD_PATH_ENV = optionalEnv('UPLOAD_PATH', 'public/uploads/');
 export const UPLOAD_URL_ENV = optionalEnv('UPLOAD_URL', 'uploads/');
 

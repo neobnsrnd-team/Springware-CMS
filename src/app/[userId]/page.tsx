@@ -7,7 +7,7 @@ import { join } from 'path';
 import { getPageList } from '@/db/repository/page.repository';
 import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { redirect } from 'next/navigation';
-import { isPageExpired } from '@/lib/page-file';
+import { isPageExpired } from '@/lib/validators';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ViewMode } from '@/db/types';
 
