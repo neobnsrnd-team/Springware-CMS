@@ -36,8 +36,8 @@ async function loadPage(bank: string): Promise<{ html: string; viewMode: ViewMod
         return {
             html:
                 '<div style="padding:40px;text-align:center;color:#6b7280;">' +
-                '<p style="font-size:18px;font-weight:600;">페이지 파일이 로컬에 존재하지 않습니다.</p>' +
-                '<p style="margin-top:8px;">git pull 후 다시 시도하거나, 에디터에서 저장해 주세요.</p>' +
+                '<p style="font-size:18px;font-weight:600;">페이지 콘텐츠를 찾을 수 없습니다.</p>' +
+                '<p style="margin-top:8px;">에디터에서 저장 후 다시 시도해 주세요.</p>' +
                 '</div>',
             viewMode,
         };
