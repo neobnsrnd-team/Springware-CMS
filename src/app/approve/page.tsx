@@ -8,7 +8,7 @@ import { getPageList } from '@/db/repository/page.repository';
 import { isPageExpired } from '@/lib/validators';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import ApproveClient from '@/components/approve/ApproveClient';
-import { APPROVE_STATE_VALUES, type ApproveStateFilter } from '@/data/approve-config';
+import { APPROVE_STATE_VALUES, getApproveLabels, type ApproveStateFilter } from '@/data/approve-config';
 import type { ViewMode } from '@/db/types';
 import { redirect } from 'next/navigation';
 
@@ -54,15 +54,18 @@ export default async function ApprovePage({
         : undefined;
     const createUser = createUserParam ?? '';
 
-    const { list, totalCount } = await getPageList({
-        page: currentPage,
-        pageSize: PAGE_SIZE,
-        search: search || undefined,
-        sortBy,
-        approveState,
-        excludeNewWork: true,
-        createUserName: createUser || undefined,
-    });
+    const [{ list, totalCount }, approveLabels] = await Promise.all([
+        getPageList({
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+            search: search || undefined,
+            sortBy,
+            approveState,
+            excludeNewWork: true,
+            createUserName: createUser || undefined,
+        }),
+        getApproveLabels(),
+    ]);
 
     const pages = list.map((p) => ({
         id: p.PAGE_ID,
@@ -92,6 +95,7 @@ export default async function ApprovePage({
             approveState={approveState ?? null}
             createUser={createUser}
             canWrite={canWriteCms(currentUser)}
+            approveLabels={approveLabels}
         />
     );
 }

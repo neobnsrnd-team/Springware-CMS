@@ -14,11 +14,19 @@ export const VIEW_MODE_STYLE: Record<ViewMode, { bg: string; color: string; labe
     responsive: { bg: '#f0eaf9', color: '#6d28d9', label: '반응형' },
 };
 
-export const APPROVE_STYLE: Record<ApproveStateValue, { bg: string; color: string; label: string }> = {
-    WORK: { bg: '#f3f4f6', color: '#6b7280', label: '작업중' },
-    PENDING: { bg: '#fefce8', color: '#b45309', label: '승인대기' },
-    APPROVED: { bg: '#e6f4ef', color: '#008C6A', label: '승인' },
-    REJECTED: { bg: '#fef2f2', color: '#dc2626', label: '반려' },
+export const APPROVE_STYLE: Record<ApproveStateValue, { bg: string; color: string }> = {
+    WORK: { bg: '#f3f4f6', color: '#6b7280' },
+    PENDING: { bg: '#fefce8', color: '#b45309' },
+    APPROVED: { bg: '#e6f4ef', color: '#008C6A' },
+    REJECTED: { bg: '#fef2f2', color: '#dc2626' },
+};
+
+// DB 조회 실패 또는 미전달 시 사용하는 기본 레이블
+export const APPROVE_DEFAULT_LABELS: Record<ApproveStateValue, string> = {
+    WORK: '작업중',
+    PENDING: '승인대기',
+    APPROVED: '승인',
+    REJECTED: '반려',
 };
 
 // ── 공유 유틸 ──
@@ -64,11 +72,14 @@ export interface PageCardProps {
     authorSlot?: ReactNode;
     /** 카드 하단 버튼 영역 (미전달 시 푸터 없음) */
     footerSlot?: ReactNode;
+    /** 승인 상태 레이블 (FWK_CODE 동적 조회값, 미전달 시 APPROVE_DEFAULT_LABELS 사용) */
+    approveLabels?: Partial<Record<ApproveStateValue, string>>;
 }
 
-export default function PageCard({ page, onClick, overlay, authorSlot, footerSlot }: PageCardProps) {
+export default function PageCard({ page, onClick, overlay, authorSlot, footerSlot, approveLabels }: PageCardProps) {
     const vmStyle = VIEW_MODE_STYLE[page.viewMode];
     const apStyle = APPROVE_STYLE[page.approveState];
+    const apLabel = approveLabels?.[page.approveState] ?? APPROVE_DEFAULT_LABELS[page.approveState];
 
     return (
         <div
@@ -124,7 +135,7 @@ export default function PageCard({ page, onClick, overlay, authorSlot, footerSlo
                             color: page.isExpired ? '#dc2626' : page.isPublic === 'N' ? '#6b7280' : apStyle.color,
                         }}
                     >
-                        {page.isExpired ? '만료' : page.isPublic === 'N' ? '비공개' : apStyle.label}
+                        {page.isExpired ? '만료' : page.isPublic === 'N' ? '비공개' : apLabel}
                     </span>
                 </div>
 
