@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import type { ParsedBlock, BasicBlock } from './EditClient';
+import { nextApi } from '@/lib/api-url';
 
 interface Props {
     /** 컴포넌트를 캔버스에 삽입 */
@@ -903,7 +904,7 @@ function EditCompModal({
         setSaving(true);
         setError(null);
         try {
-            const res = await fetch('/api/components', {
+            const res = await fetch(nextApi('/api/components'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ componentId: comp.id, viewMode: comp.viewMode, label, description, html }),

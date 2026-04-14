@@ -6,11 +6,15 @@ import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
 import { isPageExpired } from '@/lib/validators';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import ApproveClient from '@/components/approve/ApproveClient';
 import { APPROVE_STATE_VALUES, type ApproveStateFilter } from '@/data/approve-config';
 import type { ViewMode } from '@/db/types';
+import { redirect } from 'next/navigation';
 
 const PAGE_SIZE = 12;
+
+export const dynamic = 'force-dynamic';
 
 // toISOString()은 UTC로 변환되므로 KST 자정(00:00)이 전날 15:00(UTC)로 밀려 날짜가 하루 차이남.
 // 로컬 타임 기준으로 YYYY-MM-DD 문자열을 직접 추출한다.
@@ -29,6 +33,11 @@ export default async function ApprovePage({
         createUser?: string;
     }>;
 }) {
+    const currentUser = await getCurrentUser();
+    if (!canWriteCms(currentUser)) {
+        redirect('/not-authorized');
+    }
+
     const {
         page: pageParam,
         search: searchParam,
@@ -82,6 +91,7 @@ export default async function ApprovePage({
             sortBy={sortBy}
             approveState={approveState ?? null}
             createUser={createUser}
+            canWrite={canWriteCms(currentUser)}
         />
     );
 }

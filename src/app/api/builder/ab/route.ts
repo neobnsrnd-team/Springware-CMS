@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { getAbGroup, setAbGroupForPages, clearAbGroup, clearPageAbGroup } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /**
@@ -16,6 +16,11 @@ export async function GET(req: NextRequest) {
         const groupId = req.nextUrl.searchParams.get('groupId');
         if (!groupId) {
             return errorResponse('groupId가 필요합니다.', 400);
+        }
+
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
         }
 
         const pages = await getAbGroup(groupId);
@@ -50,7 +55,11 @@ export async function POST(req: NextRequest) {
             return errorResponse('각 페이지의 pageId와 양수 weight가 필요합니다.', 400);
         }
 
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
 
         // 중복 그룹 ID 생성 방지 — 완전히 새로운 그룹인데 다른 페이지가 이미 같은 groupId를 사용 중이라면 거부
         // (단, 이 요청에 포함된 pageId들이 이미 같은 그룹에 속한 경우는 허용 — 가중치 수정)
@@ -98,7 +107,11 @@ export async function DELETE(req: NextRequest) {
             return errorResponse('groupId 또는 pageId가 필요합니다.', 400);
         }
 
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
 
         if (pageId) {
             await clearPageAbGroup(pageId, userId);

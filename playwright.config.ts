@@ -24,7 +24,7 @@ export default defineConfig({
     ],
 
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:3100',
 
         // 실패 시 트레이스 수집
         trace: 'on-first-retry',
@@ -60,8 +60,11 @@ export default defineConfig({
 
     // Next.js 개발 서버 자동 실행
     webServer: {
-        command: 'npm run dev',
-        url: 'http://localhost:3000',
+        command: 'npm run dev -- -p 3100',
+        env: {
+            NEXT_PUBLIC_CMS_BASE_PATH: '',
+        },
+        url: 'http://localhost:3100',
         // 로컬 개발 시 기존 서버 재사용, CI에서는 항상 새로 실행
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

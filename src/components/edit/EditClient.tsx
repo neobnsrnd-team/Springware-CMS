@@ -36,6 +36,7 @@ import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
 import ko from '@/data/ko';
 import useToast from '@/hooks/useToast';
+import { nextApi } from '@/lib/api-url';
 
 // 기본 블록 타입 — DB SPW_CMS_COMPONENT에서 로드
 export interface BasicBlock {
@@ -220,10 +221,12 @@ export default function EditClient({
     bank = 'ibk',
     userId,
     brandTheme,
+    canWrite = true,
 }: {
     bank?: string;
     userId: string;
     brandTheme?: BrandTheme | null;
+    canWrite?: boolean;
 }) {
     const builderRef = useRef<ContentBuilder | null>(null); // ContentBuilder 인스턴스
     const runtimeRef = useRef<ContentBuilderRuntime | null>(null); // Runtime 인스턴스
@@ -1765,7 +1768,7 @@ export default function EditClient({
 
         // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
         const loadController = new AbortController();
-        fetch('/api/builder/load', {
+        fetch(nextApi('/api/builder/load'), {
             method: 'POST',
             body: JSON.stringify({ bank }),
             headers: { 'Content-Type': 'application/json' },
@@ -1898,7 +1901,7 @@ export default function EditClient({
     // ── 기본 블록 DB 로드 (viewMode 변경 시 재조회) ─────────────────────
     useEffect(() => {
         let cancelled = false;
-        fetch(`/api/components?type=basic&viewMode=${viewMode}`)
+        fetch(nextApi(`/api/components?type=basic&viewMode=${viewMode}`))
             .then((res) => res.json())
             .then((data) => {
                 if (!cancelled && data.ok) {
@@ -1927,7 +1930,7 @@ export default function EditClient({
     // ── 금융 컴포넌트 API 로드 (viewMode 변경 시 재요청) ────────────────
     useEffect(() => {
         let cancelled = false;
-        fetch(`/api/components?type=finance&viewMode=${viewMode}`)
+        fetch(nextApi(`/api/components?type=finance&viewMode=${viewMode}`))
             .then((res) => res.json())
             .then((data) => {
                 if (!cancelled && data.ok) setFinanceComponents(data.components);
@@ -2188,7 +2191,7 @@ export default function EditClient({
         // financeComponents는 현재 탭 viewMode 기준이므로 직접 fetch해서 정확한 variant 사용
         let defaultHtml = '';
         try {
-            const res = await fetch(`/api/components?type=finance&viewMode=${selectedViewMode}`);
+            const res = await fetch(nextApi(`/api/components?type=finance&viewMode=${selectedViewMode}`));
             const data = await res.json();
             const comps: FinanceComponent[] = data.ok ? data.components : financeComponents;
             const headerComp =
@@ -2205,12 +2208,13 @@ export default function EditClient({
         }
 
         // DB에 페이지 생성 (pageName + viewMode 포함) → 이동
-        fetch('/api/builder/save', {
+        if (!canWrite) return;
+        fetch(nextApi('/api/builder/save'), {
             method: 'POST',
             body: JSON.stringify({ html: defaultHtml, bank: id, pageName: label, viewMode: selectedViewMode }),
             headers: { 'Content-Type': 'application/json' },
         }).finally(() => {
-            window.location.href = `/edit?bank=${id}`;
+            window.location.href = nextApi(`/edit?bank=${id}`);
         });
     }
 
@@ -2225,10 +2229,10 @@ export default function EditClient({
 
         if (remaining.length > 0) {
             // 남은 탭 중 첫 번째로 이동
-            window.location.href = `/edit?bank=${remaining[0].id}`;
+            window.location.href = nextApi(`/edit?bank=${remaining[0].id}`);
         } else {
             // 탭이 없으면 대시보드로 이동
-            window.location.href = `/${userId}`;
+            window.location.href = nextApi('/system');
         }
     }
 
@@ -2238,7 +2242,10 @@ export default function EditClient({
         if (!confirm(`'${currentLabel}' 페이지를 삭제하시겠습니까?\n저장된 내용도 함께 삭제됩니다.`)) return;
 
         try {
-            const res = await fetch(`/api/builder/pages?pageId=${encodeURIComponent(bank)}`, { method: 'DELETE' });
+            if (!canWrite) return;
+            const res = await fetch(nextApi(`/api/builder/pages?pageId=${encodeURIComponent(bank)}`), {
+                method: 'DELETE',
+            });
             const data = await res.json();
             if (!data.ok) {
                 alert('페이지 삭제에 실패했습니다.');
@@ -2253,7 +2260,7 @@ export default function EditClient({
         // 삭제 후 탭 제거 후 이동
         const remaining = tabs.filter((t) => t.id !== bank);
         setTabs(remaining);
-        window.location.href = remaining.length > 0 ? `/edit?bank=${remaining[0].id}` : `/${userId}`;
+        window.location.href = remaining.length > 0 ? nextApi(`/edit?bank=${remaining[0].id}`) : nextApi('/system');
     }
 
     // ── 저장 / 미리보기 / HTML 보기 ──────────────────────────────────────
@@ -2293,7 +2300,7 @@ export default function EditClient({
         formData.append('file', blob, `${bank}_thumb.jpg`);
         formData.append('pageId', bank);
 
-        const res = await fetch('/api/builder/thumbnail', {
+        const res = await fetch(nextApi('/api/builder/thumbnail'), {
             method: 'POST',
             body: formData,
         });
@@ -2308,7 +2315,8 @@ export default function EditClient({
         const html = builder.html();
 
         // 썸네일 캡처 비활성화 — DB 전환 후 thumbnail API 제거됨 (Phase 7)
-        const response = await fetch('/api/builder/save', {
+        if (!canWrite) return;
+        const response = await fetch(nextApi('/api/builder/save'), {
             method: 'POST',
             body: JSON.stringify({ html, bank, thumbnail: '' }),
             headers: { 'Content-Type': 'application/json' },
@@ -2342,7 +2350,7 @@ export default function EditClient({
         }
         try {
             await save();
-            window.open(`/view?bank=${bank}&preview=1`, '_blank');
+            window.open(nextApi(`/view?bank=${bank}&preview=1`), '_blank');
         } catch (err: unknown) {
             console.error('저장 실패:', err);
             alert('저장에 실패했습니다.\n다시 시도해 주세요.');
@@ -2375,7 +2383,7 @@ export default function EditClient({
             >
                 {/* 대시보드 이동 버튼 */}
                 <a
-                    href={`/${userId}`}
+                    href={nextApi('/system')}
                     title="대시보드로 돌아가기"
                     style={{
                         display: 'inline-flex',
@@ -2654,7 +2662,7 @@ export default function EditClient({
                     setDropLineY(null);
                 }}
                 onComponentUpdate={() => {
-                    fetch(`/api/components?type=finance&viewMode=${viewMode}`)
+                    fetch(nextApi(`/api/components?type=finance&viewMode=${viewMode}`))
                         .then((res) => res.json())
                         .then((data) => {
                             if (data.ok) setFinanceComponents(data.components);

@@ -3,9 +3,15 @@ import { NextRequest } from 'next/server';
 
 import { getFileSendByPage } from '@/db/repository/file-send.repository';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
+import { canReadCms, getCurrentUser } from '@/lib/current-user';
 
 export async function GET(req: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
         const pageId = req.nextUrl.searchParams.get('pageId');
 
         if (!pageId || typeof pageId !== 'string') {
