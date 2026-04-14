@@ -6,7 +6,7 @@ import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
 import { isPageExpired } from '@/lib/validators';
-import { canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { canAdminScreen, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import ApproveClient from '@/components/approve/ApproveClient';
 import { APPROVE_STATE_VALUES, getApproveLabels, type ApproveStateFilter } from '@/data/approve-config';
 import type { ViewMode } from '@/db/types';
@@ -34,7 +34,7 @@ export default async function ApprovePage({
     }>;
 }) {
     const currentUser = await getCurrentUser();
-    if (!canWriteCms(currentUser)) {
+    if (!canAdminScreen(currentUser)) {
         redirect('/not-authorized');
     }
 
