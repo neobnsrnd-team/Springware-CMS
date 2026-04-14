@@ -6,7 +6,7 @@ import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
-import { isPageExpired } from '@/lib/page-file';
+import { isPageExpired } from '@/lib/validators';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ViewMode } from '@/db/types';
 

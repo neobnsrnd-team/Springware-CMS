@@ -5,7 +5,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
-import { isPageExpired } from '@/lib/page-file';
+import { isPageExpired } from '@/lib/validators';
 import ApproveClient from '@/components/approve/ApproveClient';
 import { APPROVE_STATE_VALUES, type ApproveStateFilter } from '@/data/approve-config';
 import type { ViewMode } from '@/db/types';

@@ -4,8 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { updatePage, createPage, getPageById, resetApproveStateToWork } from '@/db/repository/page.repository';
 import { getCurrentUser } from '@/lib/current-user';
-import { isValidBankId } from '@/lib/validators';
-import { isPageExpired } from '@/lib/page-file';
+import { isValidBankId, isPageExpired } from '@/lib/validators';
 import { successResponse, contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
 // 페이지 저장: DB PAGE_HTML에 HTML 직접 저장

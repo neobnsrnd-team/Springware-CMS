@@ -27,10 +27,6 @@ export const OPENAI_API_KEY = optionalEnv('OPENAI_API_KEY');
 export const FAL_API_KEY = optionalEnv('FAL_API_KEY');
 export const GEMINI_API_KEY = optionalEnv('GEMINI_API_KEY');
 
-// ── 파일 업로드 ──
-export const UPLOAD_PATH_ENV = optionalEnv('UPLOAD_PATH', 'public/uploads/');
-export const UPLOAD_URL_ENV = optionalEnv('UPLOAD_URL', 'uploads/');
-
 // ── 브랜드 테마 ──
 export const BANK_BRAND = optionalEnv('BANK_BRAND', '');
 
