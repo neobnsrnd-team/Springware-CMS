@@ -4,11 +4,10 @@
 
 import oracledb from 'oracledb';
 
-import { getConnection, withTransaction, blobBind } from '@/db/connection';
-import type { CmsAsset, CmsAssetMeta } from '@/db/types';
+import { getConnection, withTransaction } from '@/db/connection';
+import type { CmsAsset } from '@/db/types';
 import {
     ASSET_SELECT_BY_ID,
-    ASSET_SELECT_META_BY_ID,
     ASSET_SELECT_LIST,
     ASSET_COUNT,
     ASSET_INSERT,
@@ -24,7 +23,7 @@ const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 // 에셋 CRUD
 // ═══════════════════════════════════════════════
 
-/** 에셋 단건 조회 — BLOB 포함 (이미지 바이너리 반환용) */
+/** 에셋 단건 조회 */
 export async function getAssetById(assetId: string): Promise<CmsAsset | null> {
     const conn = await getConnection();
     try {
@@ -35,23 +34,12 @@ export async function getAssetById(assetId: string): Promise<CmsAsset | null> {
     }
 }
 
-/** 에셋 메타 단건 조회 — BLOB 제외 */
-export async function getAssetMetaById(assetId: string): Promise<CmsAssetMeta | null> {
-    const conn = await getConnection();
-    try {
-        const result = await conn.execute<CmsAssetMeta>(ASSET_SELECT_META_BY_ID, { assetId }, OBJ);
-        return result.rows?.[0] ?? null;
-    } finally {
-        await conn.close();
-    }
-}
-
-/** 에셋 목록 조회 — BLOB 제외, 페이지네이션 */
+/** 에셋 목록 조회 (페이지네이션) */
 export async function getAssetList(options?: {
     businessCategory?: string;
     page?: number;
     pageSize?: number;
-}): Promise<{ list: CmsAssetMeta[]; totalCount: number }> {
+}): Promise<{ list: CmsAsset[]; totalCount: number }> {
     const page = options?.page ?? 1;
     const pageSize = options?.pageSize ?? 20;
     const startRow = (page - 1) * pageSize;
@@ -60,7 +48,7 @@ export async function getAssetList(options?: {
     const conn = await getConnection();
     try {
         const [listResult, countResult] = await Promise.all([
-            conn.execute<CmsAssetMeta>(
+            conn.execute<CmsAsset>(
                 ASSET_SELECT_LIST,
                 {
                     businessCategory: options?.businessCategory ?? null,
@@ -85,14 +73,15 @@ export async function getAssetList(options?: {
     }
 }
 
-/** 에셋 등록 (BLOB INSERT) */
+/** 에셋 등록 (파일 메타데이터 INSERT) */
 export async function createAsset(input: {
     assetId: string;
     assetName: string;
     businessCategory?: string;
     mimeType: string;
     fileSize: number;
-    assetData: Buffer;
+    assetPath: string;
+    assetUrl: string;
     assetDesc?: string;
     createUserId: string;
     createUserName: string;
@@ -104,7 +93,8 @@ export async function createAsset(input: {
             businessCategory: input.businessCategory ?? null,
             mimeType: input.mimeType,
             fileSize: input.fileSize,
-            assetData: blobBind(input.assetData),
+            assetPath: input.assetPath,
+            assetUrl: input.assetUrl,
             assetDesc: input.assetDesc ?? null,
             createUserId: input.createUserId,
             createUserName: input.createUserName,

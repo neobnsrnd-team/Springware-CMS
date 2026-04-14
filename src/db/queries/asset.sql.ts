@@ -2,19 +2,13 @@
 // SPW_CMS_ASSET — 에셋(이미지) 테이블 SQL 맵퍼
 // ============================================================================
 
-/** 에셋 단건 조회 (BLOB 포함) */
+/** 에셋 단건 조회 */
 export const ASSET_SELECT_BY_ID = `
-  SELECT *
-  FROM SPW_CMS_ASSET
-  WHERE ASSET_ID = :assetId
-    AND USE_YN = 'Y'
-`;
-
-/** 에셋 메타 단건 조회 (BLOB 제외) */
-export const ASSET_SELECT_META_BY_ID = `
   SELECT ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
-         ASSET_DESC, USE_YN, CREATE_USER_ID, CREATE_USER_NAME,
-         LAST_MODIFIER_ID, LAST_MODIFIER_NAME, CREATE_DATE, LAST_MODIFIED_DTIME
+         ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+         CREATE_USER_ID, CREATE_USER_NAME,
+         LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
+         CREATE_DATE, LAST_MODIFIED_DTIME
   FROM SPW_CMS_ASSET
   WHERE ASSET_ID = :assetId
     AND USE_YN = 'Y'
@@ -25,8 +19,10 @@ export const ASSET_SELECT_LIST = `
   SELECT * FROM (
     SELECT A.*, ROWNUM AS RN FROM (
       SELECT ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
-             ASSET_DESC, USE_YN, CREATE_USER_ID, CREATE_USER_NAME,
-             LAST_MODIFIER_ID, LAST_MODIFIER_NAME, CREATE_DATE, LAST_MODIFIED_DTIME
+             ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+             CREATE_USER_ID, CREATE_USER_NAME,
+             LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
+             CREATE_DATE, LAST_MODIFIED_DTIME
       FROM SPW_CMS_ASSET
       WHERE USE_YN = 'Y'
         AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
@@ -49,12 +45,12 @@ export const ASSET_COUNT = `
 export const ASSET_INSERT = `
   INSERT INTO SPW_CMS_ASSET (
     ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
-    ASSET_DATA, ASSET_DESC, USE_YN,
+    ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME
   ) VALUES (
     :assetId, :assetName, :businessCategory, :mimeType, :fileSize,
-    :assetData, :assetDesc, 'Y',
+    :assetPath, :assetUrl, :assetDesc, 'Y',
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName
   )

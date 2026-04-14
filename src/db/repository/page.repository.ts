@@ -304,9 +304,22 @@ export async function updateApproveState(input: {
                     await (conn as any).executeMany(COMP_MAP_INSERT, binds);
                 }
 
-                // (B) ASSET_PAGE_MAP — /api/assets/{assetId}/image URL 추출 (신규)
-                const assetRegex = /\/api\/assets\/([^/"']+)\/image/g;
-                const assetIds = [...new Set(Array.from(resolvedHtml.matchAll(assetRegex), (m) => m[1]))];
+                // (B) ASSET_PAGE_MAP — UUID 파일명 패턴으로 에셋 ID 추출 (URL 경로 무관)
+                const assetRegex = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})_[^"'\s)]+/gi;
+                const candidateIds = [...new Set(Array.from(resolvedHtml.matchAll(assetRegex), (m) => m[1]))];
+
+                // 실제 존재하는 에셋만 필터링 (FK 위반 방지)
+                const assetIds: string[] = [];
+                for (const id of candidateIds) {
+                    const exists = await conn.execute<{ CNT: number }>(
+                        `SELECT COUNT(*) AS CNT FROM SPW_CMS_ASSET WHERE ASSET_ID = :assetId AND USE_YN = 'Y'`,
+                        { assetId: id },
+                        { outFormat: oracledb.OUT_FORMAT_OBJECT },
+                    );
+                    if ((exists.rows?.[0]?.CNT ?? 0) > 0) {
+                        assetIds.push(id);
+                    }
+                }
 
                 // 기존 매핑 항상 초기화 (에셋 0개인 경우에도 이전 매핑 정리)
                 await conn.execute(ASSET_MAP_DELETE_BY_PAGE_VERSION, {

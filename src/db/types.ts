@@ -134,7 +134,8 @@ export interface CmsAsset {
     BUSINESS_CATEGORY: string | null;
     MIME_TYPE: string;
     FILE_SIZE: number | null;
-    ASSET_DATA: Buffer | null; // BLOB → Buffer (fetchAsBuffer)
+    ASSET_PATH: string | null;
+    ASSET_URL: string | null;
     ASSET_DESC: string | null;
     USE_YN: UseYn;
     CREATE_USER_ID: string | null;
@@ -144,9 +145,6 @@ export interface CmsAsset {
     CREATE_DATE: Date | null;
     LAST_MODIFIED_DTIME: Date | null;
 }
-
-/** ASSET_DATA 제외 — 목록 조회용 (BLOB 전송 방지) */
-export type CmsAssetMeta = Omit<CmsAsset, 'ASSET_DATA'>;
 
 // ── SPW_CMS_ASSET_PAGE_MAP ──
 

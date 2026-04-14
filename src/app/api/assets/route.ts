@@ -2,12 +2,15 @@
 // 에셋 목록 조회 · 등록 API
 
 import crypto from 'crypto';
+import { mkdir, unlink, writeFile } from 'fs/promises';
+import { dirname, join } from 'path';
 
 import { NextRequest } from 'next/server';
 
 import { getAssetList, createAsset } from '@/db/repository/asset.repository';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { ASSET_UPLOAD_DIR, ASSET_BASE_URL } from '@/lib/env';
 
 /**
  * GET /api/assets — 에셋 목록 조회 (페이지네이션 + 카테고리 필터)
@@ -41,7 +44,7 @@ export async function GET(req: NextRequest) {
             createUserId: a.CREATE_USER_ID,
             createUserName: a.CREATE_USER_NAME,
             createDate: a.CREATE_DATE ? new Date(a.CREATE_DATE).toISOString() : null,
-            url: `/api/assets/${a.ASSET_ID}/image`,
+            url: a.ASSET_URL,
         }));
 
         return successResponse({ assets, totalCount });
@@ -77,23 +80,37 @@ export async function POST(req: NextRequest) {
         const { userId, userName } = currentUser;
 
         const assetId = crypto.randomUUID();
-        const assetName = (formData.get('assetName') as string) || file.name.replaceAll(' ', '_');
+        const assetName = ((formData.get('assetName') as string) || file.name).replace(/[^a-zA-Z0-9._-]/g, '_');
         const businessCategory = (formData.get('businessCategory') as string) || undefined;
         const assetDesc = (formData.get('assetDesc') as string) || undefined;
 
-        await createAsset({
-            assetId,
-            assetName,
-            businessCategory,
-            mimeType: file.type || 'application/octet-stream',
-            fileSize: buffer.length,
-            assetData: buffer,
-            assetDesc,
-            createUserId: userId,
-            createUserName: userName,
-        });
+        // 파일 시스템에 저장
+        const filename = `${assetId}_${assetName}`;
+        const filepath = join(ASSET_UPLOAD_DIR, filename);
+        await mkdir(dirname(filepath), { recursive: true });
+        await writeFile(filepath, buffer);
+        const assetUrl = `${ASSET_BASE_URL}/${filename}`;
 
-        return successResponse({ assetId, url: `/api/assets/${assetId}/image` });
+        try {
+            await createAsset({
+                assetId,
+                assetName,
+                businessCategory,
+                mimeType: file.type || 'application/octet-stream',
+                fileSize: buffer.length,
+                assetPath: filepath,
+                assetUrl,
+                assetDesc,
+                createUserId: userId,
+                createUserName: userName,
+            });
+        } catch (dbErr: unknown) {
+            // DB 실패 시 고아 파일 정리
+            await unlink(filepath).catch(() => {});
+            throw dbErr;
+        }
+
+        return successResponse({ assetId, url: assetUrl });
     } catch (err: unknown) {
         console.error('에셋 등록 실패:', err);
         return errorResponse(getErrorMessage(err));

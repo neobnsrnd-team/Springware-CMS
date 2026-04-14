@@ -31,6 +31,10 @@ export const GEMINI_API_KEY = optionalEnv('GEMINI_API_KEY');
 export const UPLOAD_PATH_ENV = optionalEnv('UPLOAD_PATH', 'public/uploads/');
 export const UPLOAD_URL_ENV = optionalEnv('UPLOAD_URL', 'uploads/');
 
+// ── 에셋 저장소 ──
+export const ASSET_UPLOAD_DIR = optionalEnv('ASSET_UPLOAD_DIR', 'public/uploads');
+export const ASSET_BASE_URL = optionalEnv('ASSET_BASE_URL', '/uploads');
+
 // ── 브랜드 테마 ──
 export const BANK_BRAND = optionalEnv('BANK_BRAND', '');
 
