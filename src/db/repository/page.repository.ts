@@ -304,8 +304,8 @@ export async function updateApproveState(input: {
                     await (conn as any).executeMany(COMP_MAP_INSERT, binds);
                 }
 
-                // (B) ASSET_PAGE_MAP — /api/assets/{assetId}/image URL 추출 (신규)
-                const assetRegex = /\/api\/assets\/([^/"']+)\/image/g;
+                // (B) ASSET_PAGE_MAP — UUID 파일명 패턴으로 에셋 ID 추출 (URL 경로 무관)
+                const assetRegex = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})_[^"'\s)]+/gi;
                 const assetIds = [...new Set(Array.from(resolvedHtml.matchAll(assetRegex), (m) => m[1]))];
 
                 // 기존 매핑 항상 초기화 (에셋 0개인 경우에도 이전 매핑 정리)

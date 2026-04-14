@@ -1,10 +1,13 @@
 import crypto from 'crypto';
+import { mkdir, writeFile } from 'fs/promises';
+import { dirname, join } from 'path';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { createAsset } from '@/db/repository/asset.repository';
-import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
+import { contentBuilderErrorResponse, successResponse, getErrorMessage } from '@/lib/api-response';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { ASSET_UPLOAD_DIR, ASSET_BASE_URL } from '@/lib/env';
 
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
@@ -15,8 +18,8 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = file.name.replaceAll(' ', '_');
     const assetId = crypto.randomUUID();
+    const assetName = file.name.replaceAll(' ', '_');
 
     try {
         const currentUser = await getCurrentUser();
@@ -25,17 +28,25 @@ export async function POST(req: NextRequest) {
         }
         const { userId, userName } = currentUser;
 
+        // 파일 시스템에 저장
+        const filename = `${assetId}_${assetName}`;
+        const filepath = join(ASSET_UPLOAD_DIR, filename);
+        await mkdir(dirname(filepath), { recursive: true });
+        await writeFile(filepath, buffer);
+        const assetUrl = `${ASSET_BASE_URL}/${filename}`;
+
         await createAsset({
             assetId,
-            assetName: filename,
+            assetName,
             mimeType: file.type || 'application/octet-stream',
             fileSize: buffer.length,
-            assetData: buffer,
+            assetPath: filepath,
+            assetUrl,
             createUserId: userId,
             createUserName: userName,
         });
 
-        return NextResponse.json({ ok: true, url: `/api/assets/${assetId}/image` }, { status: 201 });
+        return successResponse({ url: assetUrl }, 201);
     } catch (err: unknown) {
         console.error('File upload failed:', err);
         return contentBuilderErrorResponse(getErrorMessage(err));

@@ -17,8 +17,6 @@ async function initPool(): Promise<void> {
             oracledb.initOracleClient();
             // CLOB 컬럼을 string으로 자동 변환 (DATA, PAGE_DESC 등)
             oracledb.fetchAsString = [oracledb.CLOB];
-            // BLOB 컬럼을 Buffer로 자동 변환 (ASSET_DATA 등)
-            oracledb.fetchAsBuffer = [oracledb.BLOB];
 
             await oracledb.createPool({
                 user: ORACLE_USER,
@@ -113,10 +111,4 @@ export async function withTransaction<T>(task: (conn: oracledb.Connection) => Pr
 export function clobBind(value: string | null): string | { val: string; type: number } | null {
     if (!value) return null;
     return value.length > 4000 ? { val: value, type: oracledb.CLOB } : value;
-}
-
-// BLOB 바인딩 헬퍼 — Buffer를 BLOB 타입으로 바인딩
-export function blobBind(value: Buffer | null): { val: Buffer; type: number } | null {
-    if (!value) return null;
-    return { val: value, type: oracledb.BLOB };
 }

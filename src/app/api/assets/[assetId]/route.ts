@@ -3,7 +3,7 @@
 
 import { NextRequest } from 'next/server';
 
-import { deleteAsset, getAssetMetaById } from '@/db/repository/asset.repository';
+import { deleteAsset, getAssetById } from '@/db/repository/asset.repository';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
@@ -12,7 +12,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ a
     try {
         const { assetId } = await params;
 
-        const asset = await getAssetMetaById(assetId);
+        const asset = await getAssetById(assetId);
         if (!asset) {
             return errorResponse('에셋을 찾을 수 없습니다.', 404);
         }
