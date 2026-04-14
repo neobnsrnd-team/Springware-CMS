@@ -54,8 +54,17 @@ export function canWriteCms(user: Pick<CurrentUser, 'authorities'>): boolean {
     return hasAuthority(user, 'CMS:W');
 }
 
-export function getDefaultCmsPath(user: Pick<CurrentUser, 'authorities'>): '/approve' | '/dashboard' {
-    return canWriteCms(user) ? '/approve' : '/dashboard';
+export const CMS_ROLE = {
+    ADMIN: 'cms_admin',
+    USER: 'cms_user',
+} as const;
+
+export function canAdminScreen(user: Pick<CurrentUser, 'roleId'>): boolean {
+    return user.roleId === CMS_ROLE.ADMIN;
+}
+
+export function getDefaultCmsPath(user: Pick<CurrentUser, 'roleId'>): '/approve' | '/dashboard' {
+    return canAdminScreen(user) ? '/approve' : '/dashboard';
 }
 
 export async function requireCmsWrite(): Promise<CurrentUser> {
