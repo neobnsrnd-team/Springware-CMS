@@ -70,7 +70,8 @@ async function buildDeployHtml(fragment: string, pageId: string, pageName: strin
     // 선행 슬래시 유무·역슬래시(Windows) 모두 처리
     const html = fragment
         .replace(/src="\/?(assets|uploads)[\/\\]/g, `src="${CMS_BASE_URL}/$1/`)
-        .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${CMS_BASE_URL}/$2/`);
+        .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${CMS_BASE_URL}/$2/`)
+        .replace(/src="\/api\/assets\//g, `src="${CMS_BASE_URL}/api/assets/`);
 
     // 3. 완전한 HTML 문서 조립
     return `<!DOCTYPE html>

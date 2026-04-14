@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         for (const page of pages) {
             try {
                 // a. DB IS_PUBLIC = 'N' 업데이트 (원본 FILE_PATH 유지)
-                await expirePage(page.PAGE_ID, '', 'scheduler');
+                await expirePage(page.PAGE_ID, page.FILE_PATH ?? '', 'scheduler');
 
                 // b. 운영 서버에 만료 안내 페이지 배포
                 await deployExpiredPage(page.PAGE_ID);
