@@ -8,6 +8,7 @@ import { getPageList } from '@/db/repository/page.repository';
 import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { redirect } from 'next/navigation';
 import { isPageExpired } from '@/lib/validators';
+import { getApproveLabels } from '@/data/approve-config';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ViewMode } from '@/db/types';
 
@@ -38,14 +39,17 @@ export default async function DashboardPage({
     const sortBy = sortByParam === 'name' ? 'name' : 'date';
     const viewMode = VIEW_MODE_VALUES.includes(viewModeParam as ViewMode) ? (viewModeParam as ViewMode) : undefined;
 
-    const { list, totalCount } = await getPageList({
-        createUserId: canWriteCms(currentUser) ? undefined : currentUser.userId,
-        page: currentPage,
-        pageSize: PAGE_SIZE,
-        search: search || undefined,
-        sortBy,
-        viewMode,
-    });
+    const [{ list, totalCount }, approveLabels] = await Promise.all([
+        getPageList({
+            createUserId: canWriteCms(currentUser) ? undefined : currentUser.userId,
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+            search: search || undefined,
+            sortBy,
+            viewMode,
+        }),
+        getApproveLabels(),
+    ]);
 
     const pages = list.map((p) => ({
         id: p.PAGE_ID,
@@ -73,6 +77,7 @@ export default async function DashboardPage({
             sortBy={sortBy}
             viewMode={viewMode ?? null}
             canWrite={canWriteCms(currentUser)}
+            approveLabels={approveLabels}
         />
     );
 }

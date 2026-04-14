@@ -5,12 +5,11 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
-import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard';
-import type { ViewMode } from '@/components/ui/PageCard';
+import PageCard, { VIEW_MODE_STYLE, formatDate, APPROVE_DEFAULT_LABELS } from '@/components/ui/PageCard';
+import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
 import AdminNavTabs from '@/components/admin/AdminNavTabs';
 import StatsModal from './StatsModal';
 import RollbackModal from './RollbackModal';
-import { APPROVE_FILTERS } from '@/data/approve-config';
 import type { ApproveStateFilter } from '@/data/approve-config';
 import { nextApi } from '@/lib/api-url';
 
@@ -49,6 +48,8 @@ export interface ApproveClientProps {
     approveState: ApproveStateFilter | null;
     createUser: string;
     canWrite: boolean;
+    /** FWK_CODE 조회 승인 상태 레이블 (서버에서 전달) */
+    approveLabels?: Partial<Record<ApproveStateValue, string>>;
 }
 
 const PAGE_SIZE = 12;
@@ -62,6 +63,7 @@ export default function ApproveClient({
     approveState: initialApproveState,
     createUser: initialCreateUser,
     canWrite,
+    approveLabels: initialApproveLabels,
 }: ApproveClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -72,6 +74,18 @@ export default function ApproveClient({
     const [approveStateFilter, setApproveStateFilter] = useState<ApproveStateFilter | null>(initialApproveState);
     const [createUserFilter, setCreateUserFilter] = useState(initialCreateUser);
     const [showExpired, setShowExpired] = useState(true);
+
+    // 승인 상태 레이블 (서버 전달값 우선, 없으면 기본값)
+    const [approveLabels, setApproveLabels] = useState<Partial<Record<ApproveStateValue, string>>>(
+        initialApproveLabels ?? { ...APPROVE_DEFAULT_LABELS },
+    );
+    // 필터 버튼 레이블 (approveLabels 기반으로 구성)
+    const approveFilters = [
+        { value: null as ApproveStateFilter | null, label: '전체' },
+        { value: 'PENDING' as ApproveStateFilter, label: approveLabels.PENDING ?? APPROVE_DEFAULT_LABELS.PENDING },
+        { value: 'APPROVED' as ApproveStateFilter, label: approveLabels.APPROVED ?? APPROVE_DEFAULT_LABELS.APPROVED },
+        { value: 'REJECTED' as ApproveStateFilter, label: approveLabels.REJECTED ?? APPROVE_DEFAULT_LABELS.REJECTED },
+    ];
 
     const [pages, setPages] = useState<ApprovePageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
@@ -462,7 +476,7 @@ export default function ApproveClient({
 
                     {/* 승인 상태 필터 버튼 */}
                     <div className="flex gap-1.5 mb-3">
-                        {APPROVE_FILTERS.map((f) => {
+                        {approveFilters.map((f) => {
                             const active = approveStateFilter === f.value;
                             return (
                                 <button
@@ -596,6 +610,7 @@ export default function ApproveClient({
                                     <PageCard
                                         key={page.id}
                                         page={page}
+                                        approveLabels={approveLabels}
                                         onClick={() => {
                                             if (page.isExpired) {
                                                 alert('만료된 페이지입니다.');

@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
-import PageCard from '@/components/ui/PageCard';
+import PageCard, { APPROVE_DEFAULT_LABELS } from '@/components/ui/PageCard';
 import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
 import { nextApi } from '@/lib/api-url';
 
@@ -43,6 +43,8 @@ export interface DashboardClientProps {
     sortBy: SortBy;
     viewMode: ViewMode | null;
     canWrite: boolean;
+    /** FWK_CODE 조회 승인 상태 레이블 (서버에서 전달) */
+    approveLabels?: Partial<Record<ApproveStateValue, string>>;
 }
 
 const PAGE_SIZE = 12;
@@ -65,6 +67,7 @@ export default function DashboardClient({
     sortBy: initialSortBy,
     viewMode: initialViewMode,
     canWrite,
+    approveLabels: initialApproveLabels,
 }: DashboardClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -78,6 +81,9 @@ export default function DashboardClient({
     // 삭제 후 낙관적 업데이트용 로컬 페이지 목록
     const [pages, setPages] = useState<DashboardPageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
+
+    // 승인 상태 레이블 (서버 전달값 우선, 없으면 기본값)
+    const approveLabels = initialApproveLabels ?? { ...APPROVE_DEFAULT_LABELS };
 
     // 서버에서 새 데이터가 내려올 때 동기화
     useEffect(() => {
@@ -402,6 +408,7 @@ export default function DashboardClient({
                                     <PageCard
                                         key={page.id}
                                         page={page}
+                                        approveLabels={approveLabels}
                                         onClick={() => {
                                             if (page.isExpired) {
                                                 alert('만료된 페이지는 수정할 수 없습니다.');
