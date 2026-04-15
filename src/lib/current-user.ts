@@ -28,7 +28,20 @@ export class UnauthorizedError extends Error {
     }
 }
 
+/** 인증 우회 모드 기본 사용자 (AUTH_BYPASS=true 시 사용) */
+const BYPASS_USER: CurrentUser = {
+    userId: 'dev',
+    userName: '개발자',
+    roleId: 'cms_admin',
+    authorities: ['CMS:R', 'CMS:W'],
+};
+
 export async function getCurrentUser(): Promise<CurrentUser> {
+    // 인증 우회 모드 — admin 미배포 환경 테스트용
+    if (process.env.AUTH_BYPASS === 'true') {
+        return BYPASS_USER;
+    }
+
     try {
         const user = await fetchJavaAdminApi<SpiderAdminCurrentUser>('/api/auth/me');
         return {
