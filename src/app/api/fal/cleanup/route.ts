@@ -37,6 +37,7 @@ async function cleanup(input: Record<string, unknown>): Promise<void> {
         } else if (typeof value === 'string') {
             const filename = path.basename(value);
             const inputFilePath = path.resolve(ASSET_UPLOAD_DIR, filename);
+            if (!inputFilePath.startsWith(path.resolve(ASSET_UPLOAD_DIR) + path.sep)) continue;
 
             await fs.access(inputFilePath);
             await fs.unlink(inputFilePath);
