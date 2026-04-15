@@ -372,7 +372,10 @@ export default function EditClient({
             const formData = new FormData();
             formData.append('file', file);
             const response = await fetch(nextApi('/api/builder/upload'), { method: 'POST', body: formData });
-            return response.json();
+            const result = await response.json();
+            // 서버 응답 URL에 basePath 적용 (ContentBuilder가 <img src>에 직접 사용)
+            if (result.url) result.url = nextApi(result.url);
+            return result;
         };
 
         // Create ContentBuilder instance
