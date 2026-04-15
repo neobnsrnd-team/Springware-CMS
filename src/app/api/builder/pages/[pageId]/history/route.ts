@@ -6,9 +6,15 @@ import { NextRequest } from 'next/server';
 import { getHistoryList } from '@/db/repository/page.repository';
 import { isValidBankId } from '@/lib/validators';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canReadCms, getCurrentUser } from '@/lib/current-user';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
         const { pageId } = await params;
 
         if (!pageId || !isValidBankId(pageId)) {

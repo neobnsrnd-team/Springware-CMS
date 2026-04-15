@@ -11,7 +11,7 @@ import { PAGE_SELECT_BY_ID } from '@/db/queries/page.sql';
 import { upsertFileSend, getServerList } from '@/db/repository/file-send.repository';
 import { updatePageDeploy, getLatestHistory, getHistoryVersionByFilePath } from '@/db/repository/page.repository';
 import type { CmsPage } from '@/db/types';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
 import { sendToServer } from '@/lib/deploy-utils';
 
@@ -70,7 +70,8 @@ async function buildDeployHtml(fragment: string, pageId: string, pageName: strin
     // 선행 슬래시 유무·역슬래시(Windows) 모두 처리
     const html = fragment
         .replace(/src="\/?(assets|uploads)[\/\\]/g, `src="${CMS_BASE_URL}/$1/`)
-        .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${CMS_BASE_URL}/$2/`);
+        .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${CMS_BASE_URL}/$2/`)
+        .replace(/src="\/api\/assets\//g, `src="${CMS_BASE_URL}/api/assets/`);
 
     // 3. 완전한 HTML 문서 조립
     return `<!DOCTYPE html>
@@ -126,7 +127,11 @@ ${html}
 export async function POST(req: NextRequest) {
     try {
         const { pageId } = (await req.json()) as { pageId?: string };
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
 
         if (!pageId || typeof pageId !== 'string') {
             return errorResponse('pageId가 필요합니다.', 400);
@@ -149,25 +154,28 @@ export async function POST(req: NextRequest) {
             return errorResponse('승인된 페이지만 배포할 수 있습니다.', 400);
         }
 
-        // 2. HTML 파일 읽기 — 경로 조작 방지 및 파일 존재 여부 선행 확인
-        if (!page.FILE_PATH) {
-            return errorResponse('배포할 HTML 파일 경로가 없습니다.', 400);
+        // 2. HTML 읽기 — DB PAGE_HTML 우선, FILE_PATH 폴백
+        let rawHtml = page.PAGE_HTML ?? null;
+        if (!rawHtml && page.FILE_PATH) {
+            const normalizedFilePath = page.FILE_PATH.replace(/^\//, '');
+            if (normalizedFilePath.includes('..') || path.isAbsolute(normalizedFilePath)) {
+                return errorResponse('유효하지 않은 파일 경로입니다.', 400);
+            }
+            const absolutePath = path.join(process.cwd(), 'public', normalizedFilePath);
+            try {
+                await access(absolutePath);
+            } catch {
+                return errorResponse(
+                    '페이지 HTML이 DB에 없고, 파일도 서버에 존재하지 않습니다. 에디터에서 저장 후 다시 시도해 주세요.',
+                    400,
+                );
+            }
+            rawHtml = await readFile(absolutePath, 'utf8');
         }
-        // FILE_PATH는 /uploads/pages/xxx.html 형태로 저장 — 앞 슬래시 제거 후 검증
-        const normalizedFilePath = page.FILE_PATH.replace(/^\//, '');
-        if (normalizedFilePath.includes('..') || path.isAbsolute(normalizedFilePath)) {
-            return errorResponse('유효하지 않은 파일 경로입니다.', 400);
+
+        if (!rawHtml) {
+            return errorResponse('배포할 HTML 콘텐츠가 없습니다.', 400);
         }
-        const absolutePath = path.join(process.cwd(), 'public', normalizedFilePath);
-        try {
-            await access(absolutePath);
-        } catch {
-            return errorResponse(
-                '페이지 HTML 파일이 서버에 존재하지 않습니다. 에디터에서 저장 후 다시 시도해 주세요.',
-                400,
-            );
-        }
-        const rawHtml = await readFile(absolutePath, 'utf8');
 
         // 프래그먼트 → 완전한 HTML 문서 조립 (CSS 인라인 + 경로 치환 + 트래커 포함)
         const pageName = page.PAGE_NAME ?? pageId;
@@ -192,7 +200,7 @@ export async function POST(req: NextRequest) {
 
         // 4. 현재 FILE_PATH에 해당하는 HISTORY VERSION 조회 (롤백 대응)
         // 롤백 상태에서 배포 시 FILE_SEND_HIS에 정확한 버전이 기록되도록 보정
-        const historyVersion = await getHistoryVersionByFilePath(pageId, page.FILE_PATH);
+        const historyVersion = page.FILE_PATH ? await getHistoryVersionByFilePath(pageId, page.FILE_PATH) : null;
         const latestHistory = await getLatestHistory(pageId);
         const version = historyVersion ?? latestHistory?.VERSION ?? 1;
         const fileId = `${pageId}_v${version}.html`;

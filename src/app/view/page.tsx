@@ -1,6 +1,7 @@
 // src/app/view/page.tsx
 
 import { Metadata } from 'next';
+
 import { getPageById } from '@/db/repository/page.repository';
 import { readPageHtml } from '@/lib/page-file';
 import ViewClient from '@/components/view/ViewClient';
@@ -17,13 +18,17 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-// FILE_PATH 기반 파일 로드. 마이그레이션 이전 데이터는 PAGE_DESC 폴백.
+// DB PAGE_HTML 우선 → FILE_PATH 폴백 → PAGE_DESC 폴백
 async function loadPage(bank: string): Promise<{ html: string; viewMode: ViewMode }> {
     const page = await getPageById(bank);
     const viewMode: ViewMode = page?.VIEW_MODE ?? 'mobile';
 
     if (!page) return { html: '', viewMode };
 
+    // DB PAGE_HTML 우선 (getPageById의 SELECT *에 이미 포함)
+    if (page.PAGE_HTML) return { html: page.PAGE_HTML, viewMode };
+
+    // FILE_PATH 폴백 (기존 데이터 호환)
     if (page.FILE_PATH) {
         const content = await readPageHtml(page.FILE_PATH);
         if (content !== null) return { html: content, viewMode };
@@ -31,8 +36,8 @@ async function loadPage(bank: string): Promise<{ html: string; viewMode: ViewMod
         return {
             html:
                 '<div style="padding:40px;text-align:center;color:#6b7280;">' +
-                '<p style="font-size:18px;font-weight:600;">페이지 파일이 로컬에 존재하지 않습니다.</p>' +
-                '<p style="margin-top:8px;">git pull 후 다시 시도하거나, 에디터에서 저장해 주세요.</p>' +
+                '<p style="font-size:18px;font-weight:600;">페이지 콘텐츠를 찾을 수 없습니다.</p>' +
+                '<p style="margin-top:8px;">에디터에서 저장 후 다시 시도해 주세요.</p>' +
                 '</div>',
             viewMode,
         };

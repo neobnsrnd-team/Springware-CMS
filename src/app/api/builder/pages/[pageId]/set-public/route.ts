@@ -4,15 +4,16 @@
 import { NextRequest } from 'next/server';
 
 import { setPagePublic } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
     try {
         const { pageId } = await params;
-        const { userId, role } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        const { userId } = currentUser;
 
-        if (role !== 'admin') {
+        if (!canWriteCms(currentUser)) {
             return errorResponse('이 작업을 수행할 권한이 없습니다.', 403);
         }
 

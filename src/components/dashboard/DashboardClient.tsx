@@ -5,8 +5,9 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
-import PageCard from '@/components/ui/PageCard';
+import PageCard, { APPROVE_DEFAULT_LABELS } from '@/components/ui/PageCard';
 import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
+import { nextApi } from '@/lib/api-url';
 
 import ApprovalRequestModal from './ApprovalRequestModal';
 import RejectedReasonModal from './RejectedReasonModal';
@@ -40,6 +41,9 @@ export interface DashboardClientProps {
     search: string;
     sortBy: SortBy;
     viewMode: ViewMode | null;
+    canWrite: boolean;
+    /** FWK_CODE 조회 승인 상태 레이블 (서버에서 전달) */
+    approveLabels?: Partial<Record<ApproveStateValue, string>>;
 }
 
 const PAGE_SIZE = 12;
@@ -60,6 +64,8 @@ export default function DashboardClient({
     search: initialSearch,
     sortBy: initialSortBy,
     viewMode: initialViewMode,
+    canWrite,
+    approveLabels: initialApproveLabels,
 }: DashboardClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -73,6 +79,9 @@ export default function DashboardClient({
     // 삭제 후 낙관적 업데이트용 로컬 페이지 목록
     const [pages, setPages] = useState<DashboardPageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
+
+    // 승인 상태 레이블 (기본값과 서버 전달값 병합)
+    const approveLabels = { ...APPROVE_DEFAULT_LABELS, ...initialApproveLabels };
 
     // 서버에서 새 데이터가 내려올 때 동기화
     useEffect(() => {
@@ -120,7 +129,7 @@ export default function DashboardClient({
 
         const query = sp.toString();
         startTransition(() => {
-            router.push(`/${userId}${query ? `?${query}` : ''}`);
+            router.push(`/dashboard${query ? `?${query}` : ''}`);
         });
     }
 
@@ -157,18 +166,23 @@ export default function DashboardClient({
     // 새 페이지 생성
     async function handleCreatePage() {
         const label = newPageName.trim();
-        if (!label || creating) return;
+        if (!label || creating || !canWrite) return;
 
         setCreating(true);
-        const id = `${userId}-${Date.now()}`;
 
         try {
-            await fetch('/api/builder/save', {
+            const res = await fetch(nextApi('/api/builder/save'), {
                 method: 'POST',
-                body: JSON.stringify({ html: '', bank: id, pageName: label, viewMode: newPageViewMode }),
+                body: JSON.stringify({ html: '', pageName: label, viewMode: newPageViewMode }),
                 headers: { 'Content-Type': 'application/json' },
             });
-            window.location.href = `/edit?bank=${id}`;
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                window.location.href = nextApi(`/edit?bank=${data.pageId}`);
+            } else {
+                alert(data.error || '페이지 생성에 실패했습니다.');
+                setCreating(false);
+            }
         } catch (err: unknown) {
             console.error('페이지 생성 실패:', err);
             setCreating(false);
@@ -176,8 +190,8 @@ export default function DashboardClient({
     }
 
     // 승인 요청 — 낙관적 업데이트 후 API 호출
-    async function handleApprovalRequest(approverId: string, approverName: string) {
-        if (!approvalTarget) return;
+    async function handleApprovalRequest(approverId: string, approverName: string, expiredDate: string) {
+        if (!approvalTarget || !canWrite) return;
 
         const { id: targetId, approveState: originalApproveState } = approvalTarget;
 
@@ -186,10 +200,10 @@ export default function DashboardClient({
         setApprovalTarget(null);
 
         try {
-            const res = await fetch(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approverId, approverName }),
+                body: JSON.stringify({ approverId, approverName, expiredDate }),
             });
             const data = await res.json();
             if (!data.ok) {
@@ -213,7 +227,7 @@ export default function DashboardClient({
         setLocalTotalCount((prev) => prev - 1);
 
         try {
-            const res = await fetch(`/api/builder/pages?pageId=${encodeURIComponent(pageId)}`, {
+            const res = await fetch(nextApi(`/api/builder/pages?pageId=${encodeURIComponent(pageId)}`), {
                 method: 'DELETE',
             });
             const data = await res.json();
@@ -265,6 +279,7 @@ export default function DashboardClient({
                         </div>
                         <button
                             onClick={() => setShowCreateModal(true)}
+                            disabled={!canWrite}
                             className="inline-flex items-center gap-1.5 px-[18px] py-[9px] rounded-lg bg-[#0046A4] text-white border-0 text-[13px] font-semibold cursor-pointer whitespace-nowrap shrink-0"
                         >
                             + 새 페이지
@@ -396,6 +411,7 @@ export default function DashboardClient({
                                     <PageCard
                                         key={page.id}
                                         page={page}
+                                        approveLabels={approveLabels}
                                         onClick={() => {
                                             if (page.isExpired) {
                                                 alert('만료된 페이지는 수정할 수 없습니다.');
@@ -405,7 +421,10 @@ export default function DashboardClient({
                                                 alert('페이지 파일이 로컬에 존재하지 않습니다.');
                                                 return;
                                             }
-                                            window.location.href = `/edit?bank=${page.id}`;
+                                            if (!canWrite) {
+                                                return;
+                                            }
+                                            window.location.href = nextApi(`/edit?bank=${page.id}`);
                                         }}
                                         overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}
                                         footerSlot={
@@ -428,21 +447,24 @@ export default function DashboardClient({
                                                             반려 사유
                                                         </button>
                                                     )}
-                                                    {(page.approveState === 'WORK' ||
-                                                        page.approveState === 'REJECTED') && (
+                                                    {canWrite &&
+                                                        (page.approveState === 'WORK' ||
+                                                            page.approveState === 'REJECTED') && (
+                                                            <button
+                                                                onClick={() => setApprovalTarget(page)}
+                                                                className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                            >
+                                                                승인 요청
+                                                            </button>
+                                                        )}
+                                                    {canWrite && (
                                                         <button
-                                                            onClick={() => setApprovalTarget(page)}
-                                                            className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
+                                                            onClick={() => handleDeletePage(page.id, page.label)}
+                                                            className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
                                                         >
-                                                            승인 요청
+                                                            삭제
                                                         </button>
                                                     )}
-                                                    <button
-                                                        onClick={() => handleDeletePage(page.id, page.label)}
-                                                        className="px-2.5 py-1 rounded-md border border-[#fca5a5] bg-transparent text-[#dc2626] text-xs cursor-pointer"
-                                                    >
-                                                        삭제
-                                                    </button>
                                                 </div>
                                             )
                                         }
@@ -567,9 +589,9 @@ export default function DashboardClient({
                         </button>
                         <button
                             onClick={handleCreatePage}
-                            disabled={!newPageName.trim() || creating}
+                            disabled={!newPageName.trim() || creating || !canWrite}
                             className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                !newPageName.trim() || creating
+                                !newPageName.trim() || creating || !canWrite
                                     ? 'bg-[#d1d5db] cursor-not-allowed'
                                     : 'bg-[#0046A4] cursor-pointer'
                             }`}

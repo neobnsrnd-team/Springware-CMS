@@ -4,6 +4,7 @@ import path from 'path';
 
 import { UPLOAD_PATH } from '@/lib/upload';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canReadCms, getCurrentUser } from '@/lib/current-user';
 
 interface FolderNode {
     name: string;
@@ -38,6 +39,11 @@ function buildFolderTree(dirPath: string, basePath: string = '', relativePath: s
 
 export async function GET() {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
         const absolutePath = path.join(process.cwd(), UPLOAD_PATH);
 
         if (!fs.existsSync(absolutePath)) {

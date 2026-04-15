@@ -29,8 +29,10 @@ declare module 'oracledb' {
 
     namespace oracledb {
         const CLOB: number;
+        const BLOB: number;
         const OUT_FORMAT_OBJECT: number;
         let fetchAsString: number[];
+        let fetchAsBuffer: number[];
 
         function initOracleClient(options?: unknown): void;
         function createPool(options: CreatePoolOptions): Promise<Pool>;

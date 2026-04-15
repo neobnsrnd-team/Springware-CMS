@@ -27,6 +27,8 @@ import {
     PAGE_UPDATE_DEPLOY,
     PAGE_ROLLBACK,
     PAGE_SELECT_AB_GROUP,
+    PAGE_SELECT_HTML_BY_ID,
+    PAGE_UPDATE_HTML,
     PAGE_UPDATE_AB_GROUP,
     PAGE_CLEAR_AB_GROUP,
     PAGE_CLEAR_PAGE_AB_GROUP,
@@ -43,6 +45,7 @@ import {
     PAGE_HISTORY_SELECT_VERSION_BY_FILE_PATH,
 } from '@/db/queries/page-history.sql';
 import { COMP_MAP_DELETE_BY_PAGE_VERSION, COMP_MAP_INSERT } from '@/db/queries/component-map.sql';
+import { ASSET_MAP_INSERT, ASSET_MAP_DELETE_BY_PAGE_VERSION } from '@/db/queries/asset.sql';
 import { readPageHtml } from '@/lib/page-file';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
@@ -121,6 +124,38 @@ export async function getPageList(
 }
 
 // ═══════════════════════════════════════════════
+// PAGE_HTML (DB 직접 저장)
+// ═══════════════════════════════════════════════
+
+/** PAGE_HTML CLOB 단건 조회 (DB 직접 저장된 HTML) */
+export async function getPageHtml(pageId: string): Promise<string | null> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<{ PAGE_HTML: string | null }>(PAGE_SELECT_HTML_BY_ID, { pageId }, OBJ);
+        return result.rows?.[0]?.PAGE_HTML ?? null;
+    } finally {
+        await conn.close();
+    }
+}
+
+/** PAGE_HTML CLOB 업데이트 (에디터 HTML → DB 직접 저장) */
+export async function savePageHtml(
+    pageId: string,
+    html: string,
+    lastModifierId: string,
+    lastModifierName: string,
+): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(PAGE_UPDATE_HTML, {
+            pageId,
+            pageHtml: clobBind(html),
+            lastModifierId,
+            lastModifierName,
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════
 // 페이지 저장 (W-6.3: PAGE만 INSERT/UPDATE, HISTORY INSERT 제거)
 // ═══════════════════════════════════════════════
 
@@ -131,6 +166,7 @@ export async function createPage(input: {
     viewMode?: ViewMode;
     ownerDeptCode?: string;
     filePath?: string;
+    pageHtml?: string;
     createUserId: string;
     createUserName: string;
     pageDesc?: string;
@@ -146,6 +182,7 @@ export async function createPage(input: {
             viewMode: input.viewMode ?? null,
             ownerDeptCode: input.ownerDeptCode ?? null,
             filePath: input.filePath ?? null,
+            pageHtml: clobBind(input.pageHtml ?? null),
             createUserId: input.createUserId,
             createUserName: input.createUserName,
             lastModifierId: input.createUserId,
@@ -167,6 +204,7 @@ export async function updatePage(input: {
     pageDesc?: string;
     pageDescDetail?: string;
     filePath?: string;
+    pageHtml?: string;
     thumbnail?: string;
     lastModifierId: string;
     lastModifierName: string;
@@ -179,6 +217,7 @@ export async function updatePage(input: {
             pageDesc: clobBind(input.pageDesc ?? null),
             pageDescDetail: clobBind(input.pageDescDetail ?? null),
             filePath: input.filePath ?? null,
+            pageHtml: clobBind(input.pageHtml ?? null),
             thumbnail: input.thumbnail ?? null,
             lastModifierId: input.lastModifierId,
             lastModifierName: input.lastModifierName,
@@ -186,10 +225,15 @@ export async function updatePage(input: {
     });
 }
 
-/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자 지정 */
-export async function requestApproval(pageId: string, approverId: string, approverName: string): Promise<void> {
+/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자 지정, 만료일 저장 */
+export async function requestApproval(
+    pageId: string,
+    approverId: string,
+    approverName: string,
+    expiredDate: string,
+): Promise<void> {
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName });
+        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName, expiredDate });
     });
 }
 
@@ -201,11 +245,10 @@ export async function updateApproveState(input: {
     approverName?: string;
     rejectedReason?: string;
     beginningDate?: string | null;
-    expiredDate?: string | null;
     lastModifierId: string;
 }): Promise<{ version?: number }> {
     return await withTransaction(async (conn) => {
-        // 1. 결재 상태 UPDATE
+        // 1. 결재 상태 UPDATE — EXPIRED_DATE는 승인 요청 시 저장된 값 유지
         await conn.execute(PAGE_UPDATE_APPROVE_STATE, {
             pageId: input.pageId,
             approveState: input.approveState,
@@ -213,7 +256,6 @@ export async function updateApproveState(input: {
             approverName: input.approverName ?? null,
             rejectedReason: clobBind(input.rejectedReason ?? null),
             beginningDate: input.beginningDate ?? null,
-            expiredDate: input.expiredDate ?? null,
             lastModifierId: input.lastModifierId,
         });
 
@@ -237,17 +279,18 @@ export async function updateApproveState(input: {
                 version: nextVersion,
             });
 
-            // 페이지 HTML 파일에서 data-component-id 추출
+            // 페이지 HTML에서 컴포넌트/에셋 ID 추출 — DB 우선, FILE_PATH 폴백
             const page = await conn.execute<CmsPage>(PAGE_SELECT_BY_ID, { pageId: input.pageId }, OBJ);
-            const filePath = page.rows?.[0]?.FILE_PATH;
-            if (filePath) {
-                const html = await readPageHtml(filePath);
-                if (!html) {
-                    throw new Error('페이지 파일이 존재하지 않습니다. 로컬에 파일을 동기화한 후 다시 시도해주세요.');
-                }
+            const pageRow = page.rows?.[0];
+            let resolvedHtml = pageRow?.PAGE_HTML ?? null;
+            if (!resolvedHtml && pageRow?.FILE_PATH) {
+                resolvedHtml = await readPageHtml(pageRow.FILE_PATH);
+            }
 
-                const regex = /data-component-id\s*=\s*["']([^"']+)["']/g;
-                const componentIds = Array.from(html.matchAll(regex), (m) => m[1]);
+            if (resolvedHtml) {
+                // (A) COMP_PAGE_MAP — data-component-id 추출 (기존 로직 유지)
+                const compRegex = /data-component-id\s*=\s*["']([^"']+)["']/g;
+                const componentIds = Array.from(resolvedHtml.matchAll(compRegex), (m) => m[1]);
 
                 if (componentIds.length > 0) {
                     const binds = componentIds.map((componentId, i) => ({
@@ -259,6 +302,37 @@ export async function updateApproveState(input: {
                     }));
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     await (conn as any).executeMany(COMP_MAP_INSERT, binds);
+                }
+
+                // (B) ASSET_PAGE_MAP — UUID 파일명 패턴으로 에셋 ID 추출 (URL 경로 무관)
+                const assetRegex = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})_[^"'\s)]+/gi;
+                const candidateIds = [...new Set(Array.from(resolvedHtml.matchAll(assetRegex), (m) => m[1]))];
+
+                // 실제 존재하는 에셋만 필터링 (FK 위반 방지)
+                const assetIds: string[] = [];
+                for (const id of candidateIds) {
+                    const exists = await conn.execute<{ CNT: number }>(
+                        `SELECT COUNT(*) AS CNT FROM SPW_CMS_ASSET WHERE ASSET_ID = :assetId AND USE_YN = 'Y'`,
+                        { assetId: id },
+                        { outFormat: oracledb.OUT_FORMAT_OBJECT },
+                    );
+                    if ((exists.rows?.[0]?.CNT ?? 0) > 0) {
+                        assetIds.push(id);
+                    }
+                }
+
+                // 기존 매핑 항상 초기화 (에셋 0개인 경우에도 이전 매핑 정리)
+                await conn.execute(ASSET_MAP_DELETE_BY_PAGE_VERSION, {
+                    pageId: input.pageId,
+                    version: nextVersion,
+                });
+
+                for (const assetId of assetIds) {
+                    await conn.execute(ASSET_MAP_INSERT, {
+                        pageId: input.pageId,
+                        version: nextVersion,
+                        assetId,
+                    });
                 }
             }
 
@@ -323,7 +397,12 @@ export async function updatePageRollback(pageId: string, version: number, lastMo
         throw new Error(`버전 ${version}에 해당하는 이력이 존재하지 않습니다.`);
     }
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_ROLLBACK, { pageId, filePath: history.FILE_PATH, lastModifierId });
+        await conn.execute(PAGE_ROLLBACK, {
+            pageId,
+            pageHtml: clobBind(history.PAGE_HTML ?? null),
+            filePath: history.FILE_PATH,
+            lastModifierId,
+        });
     });
 }
 

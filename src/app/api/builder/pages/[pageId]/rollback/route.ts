@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { updatePageRollback } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { isValidBankId } from '@/lib/validators';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
@@ -16,9 +16,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
             return errorResponse('유효하지 않은 페이지 ID입니다.', 400);
         }
 
-        const { userId, role } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        const { userId } = currentUser;
 
-        if (role !== 'admin') {
+        if (!canWriteCms(currentUser)) {
             return errorResponse('이 작업을 수행할 권한이 없습니다.', 403);
         }
 

@@ -4,8 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { getPageList, getPageById, deletePage } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
-import { deletePageHtml, deletePageThumbnail } from '@/lib/page-file';
+import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /**
@@ -39,7 +38,11 @@ export async function GET(req: NextRequest) {
             rejectedReason: p.REJECTED_REASON ?? null,
         }));
 
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
         return successResponse({ pages, totalCount, currentUserId: userId });
     } catch (err: unknown) {
         console.error('페이지 목록 조회 실패:', err);
@@ -50,8 +53,8 @@ export async function GET(req: NextRequest) {
 /**
  * DELETE /api/builder/pages?pageId=xxx
  * 이슈 #26 삭제 정책:
- * - 미승인 (HISTORY 없음): DB 하드 삭제 (PAGE + COMP_MAP) + 파일 삭제
- * - 승인됨 (HISTORY 있음): DB 소프트 삭제 (USE_YN='N') + 파일 삭제
+ * - 미승인 (HISTORY 없음): DB 하드 삭제 (PAGE + COMP_MAP)
+ * - 승인됨 (HISTORY 있음): DB 소프트 삭제 (USE_YN='N')
  */
 export async function DELETE(req: NextRequest) {
     try {
@@ -60,24 +63,19 @@ export async function DELETE(req: NextRequest) {
             return errorResponse('pageId가 필요합니다', 400);
         }
 
-        // 페이지 조회 — FILE_PATH 확인 (삭제 전 경로 보존)
         const page = await getPageById(pageId);
         if (!page) {
             return errorResponse('페이지를 찾을 수 없습니다', 404);
         }
 
-        const { userId } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+        const { userId } = currentUser;
 
         // DB 삭제 (미승인: 하드, 승인: 소프트)
         const { deleteType } = await deletePage(pageId, userId);
-
-        // 물리적 파일 삭제 (미승인·승인 모두 삭제)
-        if (page.FILE_PATH) {
-            await deletePageHtml(page.FILE_PATH);
-        }
-
-        // 썸네일 파일 삭제 (없으면 무시)
-        await deletePageThumbnail(pageId);
 
         return successResponse({ deleteType });
     } catch (err: unknown) {

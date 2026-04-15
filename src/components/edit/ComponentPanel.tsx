@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import type { ParsedBlock, BasicBlock } from './EditClient';
+import { nextApi } from '@/lib/api-url';
 
 interface Props {
     /** 컴포넌트를 캔버스에 삽입 */
@@ -412,7 +413,7 @@ export default function ComponentPanel({
                                             {/* 미리보기 썸네일 */}
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
-                                                src={comp.preview}
+                                                src={nextApi(comp.preview)}
                                                 alt={comp.label}
                                                 draggable={false}
                                                 style={{
@@ -903,7 +904,7 @@ function EditCompModal({
         setSaving(true);
         setError(null);
         try {
-            const res = await fetch('/api/components', {
+            const res = await fetch(nextApi('/api/components'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ componentId: comp.id, viewMode: comp.viewMode, label, description, html }),
@@ -1122,7 +1123,7 @@ function BasicBlockCard({
     onInsert: (html: string) => void;
 }) {
     const [hovered, setHovered] = useState(false);
-    const thumbSrc = BASIC_THUMB_BASE + block.thumbnail;
+    const thumbSrc = nextApi(BASIC_THUMB_BASE + block.thumbnail);
 
     return (
         <div

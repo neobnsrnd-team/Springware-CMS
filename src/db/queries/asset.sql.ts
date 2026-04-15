@@ -1,0 +1,93 @@
+// ============================================================================
+// SPW_CMS_ASSET — 에셋(이미지) 테이블 SQL 맵퍼
+// ============================================================================
+
+/** 에셋 단건 조회 */
+export const ASSET_SELECT_BY_ID = `
+  SELECT ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
+         ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+         CREATE_USER_ID, CREATE_USER_NAME,
+         LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
+         CREATE_DATE, LAST_MODIFIED_DTIME
+  FROM SPW_CMS_ASSET
+  WHERE ASSET_ID = :assetId
+    AND USE_YN = 'Y'
+`;
+
+/** 에셋 목록 조회 (카테고리 필터, BLOB 제외, 페이지네이션 — Oracle 11g 호환) */
+export const ASSET_SELECT_LIST = `
+  SELECT * FROM (
+    SELECT A.*, ROWNUM AS RN FROM (
+      SELECT ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
+             ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+             CREATE_USER_ID, CREATE_USER_NAME,
+             LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
+             CREATE_DATE, LAST_MODIFIED_DTIME
+      FROM SPW_CMS_ASSET
+      WHERE USE_YN = 'Y'
+        AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
+      ORDER BY CREATE_DATE DESC
+    ) A
+    WHERE ROWNUM <= :endRow
+  )
+  WHERE RN > :startRow
+`;
+
+/** 에셋 전체 건수 (페이지네이션용) */
+export const ASSET_COUNT = `
+  SELECT COUNT(*) AS TOTAL_COUNT
+  FROM SPW_CMS_ASSET
+  WHERE USE_YN = 'Y'
+    AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
+`;
+
+/** 에셋 등록 */
+export const ASSET_INSERT = `
+  INSERT INTO SPW_CMS_ASSET (
+    ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
+    ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+    CREATE_USER_ID, CREATE_USER_NAME,
+    LAST_MODIFIER_ID, LAST_MODIFIER_NAME
+  ) VALUES (
+    :assetId, :assetName, :businessCategory, :mimeType, :fileSize,
+    :assetPath, :assetUrl, :assetDesc, 'Y',
+    :createUserId, :createUserName,
+    :lastModifierId, :lastModifierName
+  )
+`;
+
+/** 에셋 논리 삭제 */
+export const ASSET_DELETE = `
+  UPDATE SPW_CMS_ASSET
+  SET USE_YN = 'N',
+      LAST_MODIFIER_ID = :lastModifierId,
+      LAST_MODIFIER_NAME = :lastModifierName
+  WHERE ASSET_ID = :assetId
+`;
+
+// ============================================================================
+// SPW_CMS_ASSET_PAGE_MAP — 에셋-페이지 매핑 SQL 맵퍼
+// ============================================================================
+
+/** 페이지 버전별 에셋 매핑 조회 */
+export const ASSET_MAP_SELECT_BY_PAGE = `
+  SELECT M.PAGE_ID, M.VERSION, M.ASSET_ID,
+         A.ASSET_NAME, A.MIME_TYPE, A.FILE_SIZE
+  FROM SPW_CMS_ASSET_PAGE_MAP M
+  JOIN SPW_CMS_ASSET A ON A.ASSET_ID = M.ASSET_ID AND A.USE_YN = 'Y'
+  WHERE M.PAGE_ID = :pageId
+    AND M.VERSION = :version
+`;
+
+/** 에셋-페이지 매핑 등록 (단건) */
+export const ASSET_MAP_INSERT = `
+  INSERT INTO SPW_CMS_ASSET_PAGE_MAP (PAGE_ID, VERSION, ASSET_ID)
+  VALUES (:pageId, :version, :assetId)
+`;
+
+/** 에셋-페이지 매핑 삭제 (페이지+버전 단위) */
+export const ASSET_MAP_DELETE_BY_PAGE_VERSION = `
+  DELETE FROM SPW_CMS_ASSET_PAGE_MAP
+  WHERE PAGE_ID = :pageId
+    AND VERSION = :version
+`;

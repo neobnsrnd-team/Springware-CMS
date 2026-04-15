@@ -5,12 +5,16 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
-import { isPageExpired } from '@/lib/page-file';
+import { isPageExpired } from '@/lib/validators';
+import { canAdminScreen, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import ApproveClient from '@/components/approve/ApproveClient';
-import { APPROVE_STATE_VALUES, type ApproveStateFilter } from '@/data/approve-config';
+import { APPROVE_STATE_VALUES, getApproveLabels, type ApproveStateFilter } from '@/data/approve-config';
 import type { ViewMode } from '@/db/types';
+import { redirect } from 'next/navigation';
 
 const PAGE_SIZE = 12;
+
+export const dynamic = 'force-dynamic';
 
 // toISOString()은 UTC로 변환되므로 KST 자정(00:00)이 전날 15:00(UTC)로 밀려 날짜가 하루 차이남.
 // 로컬 타임 기준으로 YYYY-MM-DD 문자열을 직접 추출한다.
@@ -29,6 +33,11 @@ export default async function ApprovePage({
         createUser?: string;
     }>;
 }) {
+    const currentUser = await getCurrentUser();
+    if (!canAdminScreen(currentUser)) {
+        redirect('/not-authorized');
+    }
+
     const {
         page: pageParam,
         search: searchParam,
@@ -45,15 +54,18 @@ export default async function ApprovePage({
         : undefined;
     const createUser = createUserParam ?? '';
 
-    const { list, totalCount } = await getPageList({
-        page: currentPage,
-        pageSize: PAGE_SIZE,
-        search: search || undefined,
-        sortBy,
-        approveState,
-        excludeNewWork: true,
-        createUserName: createUser || undefined,
-    });
+    const [{ list, totalCount }, approveLabels] = await Promise.all([
+        getPageList({
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+            search: search || undefined,
+            sortBy,
+            approveState,
+            excludeNewWork: true,
+            createUserName: createUser || undefined,
+        }),
+        getApproveLabels(),
+    ]);
 
     const pages = list.map((p) => ({
         id: p.PAGE_ID,
@@ -63,7 +75,9 @@ export default async function ApprovePage({
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
         approveState: p.APPROVE_STATE as ApproveStateFilter,
         createUserName: p.CREATE_USER_NAME ?? '알 수 없음',
-        hasFile: p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false,
+        hasFile:
+            !!p.PAGE_HTML ||
+            (p.FILE_PATH ? existsSync(join(process.cwd(), 'public', p.FILE_PATH.replace(/^\//, ''))) : false),
         isPublic: p.IS_PUBLIC ?? 'Y',
         beginningDate: p.BEGINNING_DATE ? formatDateOnly(new Date(p.BEGINNING_DATE)) : null,
         expiredDate: p.EXPIRED_DATE ? formatDateOnly(new Date(p.EXPIRED_DATE)) : null,
@@ -80,6 +94,8 @@ export default async function ApprovePage({
             sortBy={sortBy}
             approveState={approveState ?? null}
             createUser={createUser}
+            canWrite={canWriteCms(currentUser)}
+            approveLabels={approveLabels}
         />
     );
 }

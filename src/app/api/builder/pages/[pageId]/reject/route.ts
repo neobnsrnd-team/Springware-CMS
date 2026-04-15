@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { updateApproveState } from '@/db/repository/page.repository';
-import { getCurrentUser } from '@/lib/current-user';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
@@ -22,9 +22,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
             return errorResponse('반려 사유를 입력해 주세요.', 400);
         }
 
-        const { userId, userName, role } = await getCurrentUser();
+        const currentUser = await getCurrentUser();
+        const { userId, userName } = currentUser;
 
-        if (role !== 'admin') {
+        if (!canWriteCms(currentUser)) {
             return errorResponse('이 작업을 수행할 권한이 없습니다.', 403);
         }
 

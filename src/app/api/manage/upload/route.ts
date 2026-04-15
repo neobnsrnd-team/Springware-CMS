@@ -6,10 +6,16 @@ import { writeFile, mkdir } from 'fs/promises';
 
 import { UPLOAD_PATH, UPLOAD_URL } from '@/lib/upload';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
+import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 export async function POST(request: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canWriteCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+
         const formData = await request.formData();
         const file = formData.get('file') as File | null;
         const targetPath = (formData.get('path') as string) || '';

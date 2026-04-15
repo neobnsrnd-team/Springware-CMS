@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 
 import Modal from '@/components/ui/Modal';
+import { nextApi } from '@/lib/api-url';
 
 interface ClickItem {
     componentId: string;
@@ -29,7 +30,7 @@ export default function StatsModal({ pageId, pageLabel, onClose }: StatsModalPro
 
     useEffect(() => {
         let cancelled = false;
-        fetch(`/api/track/stats?pageId=${encodeURIComponent(pageId)}`)
+        fetch(nextApi(`/api/track/stats?pageId=${encodeURIComponent(pageId)}`))
             .then((res) => res.json())
             .then((data) => {
                 if (!cancelled && data.ok) {

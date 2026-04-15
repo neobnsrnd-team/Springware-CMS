@@ -5,13 +5,13 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
-import PageCard, { VIEW_MODE_STYLE, formatDate } from '@/components/ui/PageCard';
-import type { ViewMode } from '@/components/ui/PageCard';
+import PageCard, { VIEW_MODE_STYLE, formatDate, APPROVE_DEFAULT_LABELS } from '@/components/ui/PageCard';
+import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
 import AdminNavTabs from '@/components/admin/AdminNavTabs';
 import StatsModal from './StatsModal';
 import RollbackModal from './RollbackModal';
-import { APPROVE_FILTERS } from '@/data/approve-config';
 import type { ApproveStateFilter } from '@/data/approve-config';
+import { nextApi } from '@/lib/api-url';
 
 export type { ApproveStateFilter };
 
@@ -47,6 +47,9 @@ export interface ApproveClientProps {
     sortBy: SortBy;
     approveState: ApproveStateFilter | null;
     createUser: string;
+    canWrite: boolean;
+    /** FWK_CODE 조회 승인 상태 레이블 (서버에서 전달) */
+    approveLabels?: Partial<Record<ApproveStateValue, string>>;
 }
 
 const PAGE_SIZE = 12;
@@ -59,6 +62,8 @@ export default function ApproveClient({
     sortBy: initialSortBy,
     approveState: initialApproveState,
     createUser: initialCreateUser,
+    canWrite,
+    approveLabels: initialApproveLabels,
 }: ApproveClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -69,6 +74,16 @@ export default function ApproveClient({
     const [approveStateFilter, setApproveStateFilter] = useState<ApproveStateFilter | null>(initialApproveState);
     const [createUserFilter, setCreateUserFilter] = useState(initialCreateUser);
     const [showExpired, setShowExpired] = useState(true);
+
+    // 승인 상태 레이블 (기본값과 서버 전달값 병합)
+    const approveLabels = { ...APPROVE_DEFAULT_LABELS, ...initialApproveLabels };
+    // 필터 버튼 레이블 (approveLabels 기반으로 구성)
+    const approveFilters = [
+        { value: null as ApproveStateFilter | null, label: '전체' },
+        { value: 'PENDING' as ApproveStateFilter, label: approveLabels.PENDING },
+        { value: 'APPROVED' as ApproveStateFilter, label: approveLabels.APPROVED },
+        { value: 'REJECTED' as ApproveStateFilter, label: approveLabels.REJECTED },
+    ];
 
     const [pages, setPages] = useState<ApprovePageCard[]>(initialPages);
     const [localTotalCount, setLocalTotalCount] = useState(totalCount);
@@ -81,7 +96,6 @@ export default function ApproveClient({
     // 승인 모달 상태
     const [approveModalPageId, setApproveModalPageId] = useState<string | null>(null);
     const [beginningDate, setBeginningDate] = useState('');
-    const [expiredDate, setExpiredDate] = useState('');
     const [approving, setApproving] = useState(false);
 
     // 날짜 관리 모달 상태
@@ -215,14 +229,14 @@ export default function ApproveClient({
 
     // 날짜 관리 저장
     async function handleSaveDates() {
-        if (!dateModalPageId || savingDates) return;
+        if (!dateModalPageId || savingDates || !canWrite) return;
         if (editBeginningDate && editExpiredDate && editBeginningDate > editExpiredDate) {
             alert('시작일은 만료일보다 이전이어야 합니다.');
             return;
         }
         setSavingDates(true);
         try {
-            const res = await fetch(`/api/builder/pages/${dateModalPageId}/update-dates`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${dateModalPageId}/update-dates`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -247,10 +261,11 @@ export default function ApproveClient({
 
     // IS_PUBLIC 토글 — 비공개/공개 복원
     async function handleSetPublic(pageId: string, isPublic: 'Y' | 'N') {
+        if (!canWrite) return;
         const actionText = isPublic === 'Y' ? '공개 복원' : '비공개 처리';
         if (!confirm(`이 페이지를 ${actionText}하시겠습니까?`)) return;
         try {
-            const res = await fetch(`/api/builder/pages/${pageId}/set-public`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${pageId}/set-public`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isPublic }),
@@ -278,21 +293,19 @@ export default function ApproveClient({
         setBeginningDate(
             `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
         );
-        setExpiredDate('');
     }
 
     // 승인 확정 — API 호출 후 페이지 새로고침
     async function handleApproveConfirm() {
-        if (!approveModalPageId || approving) return;
+        if (!approveModalPageId || approving || !canWrite) return;
 
         setApproving(true);
         try {
-            const res = await fetch(`/api/builder/pages/${approveModalPageId}/approve`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${approveModalPageId}/approve`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     beginningDate: beginningDate || null,
-                    expiredDate: expiredDate || null,
                 }),
             });
             const data = await res.json();
@@ -312,12 +325,13 @@ export default function ApproveClient({
 
     // 배포 실행 — 컨펌 후 API 호출
     async function handleDeploy(pageId: string) {
+        if (!canWrite) return;
         if (!window.confirm('배포하시겠습니까?\n승인된 페이지를 운영 서버로 전송합니다.')) return;
         if (deploying) return;
 
         setDeploying(pageId);
         try {
-            const res = await fetch('/api/deploy/push', {
+            const res = await fetch(nextApi('/api/deploy/push'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pageId }),
@@ -345,7 +359,7 @@ export default function ApproveClient({
         setHistoryList([]);
         setHistoryLoading(true);
         try {
-            const res = await fetch(`/api/deploy/history?pageId=${encodeURIComponent(pageId)}`);
+            const res = await fetch(nextApi(`/api/deploy/history?pageId=${encodeURIComponent(pageId)}`));
             const data = await res.json();
             if (data.ok) setHistoryList(data.history ?? []);
         } catch (err: unknown) {
@@ -362,11 +376,11 @@ export default function ApproveClient({
 
     // 반려 확정 — API 호출 후 페이지 새로고침
     async function handleRejectConfirm() {
-        if (!rejectModalPageId || !rejectReason.trim() || rejecting) return;
+        if (!rejectModalPageId || !rejectReason.trim() || rejecting || !canWrite) return;
 
         setRejecting(true);
         try {
-            const res = await fetch(`/api/builder/pages/${rejectModalPageId}/reject`, {
+            const res = await fetch(nextApi(`/api/builder/pages/${rejectModalPageId}/reject`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rejectedReason: rejectReason.trim() }),
@@ -460,7 +474,7 @@ export default function ApproveClient({
 
                     {/* 승인 상태 필터 버튼 */}
                     <div className="flex gap-1.5 mb-3">
-                        {APPROVE_FILTERS.map((f) => {
+                        {approveFilters.map((f) => {
                             const active = approveStateFilter === f.value;
                             return (
                                 <button
@@ -594,6 +608,7 @@ export default function ApproveClient({
                                     <PageCard
                                         key={page.id}
                                         page={page}
+                                        approveLabels={approveLabels}
                                         onClick={() => {
                                             if (page.isExpired) {
                                                 alert('만료된 페이지입니다.');
@@ -1084,38 +1099,14 @@ export default function ApproveClient({
                                 </p>
                             </div>
 
-                            {/* 만료일 입력 */}
+                            {/* 만료일 — 승인 요청 시 지정된 값 (읽기 전용) */}
                             <div className="mb-5">
-                                <label className="block text-sm font-medium text-[#374151] mb-1.5">
-                                    만료일 <span className="text-[#9ca3af] font-normal">(선택)</span>
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={expiredDate}
-                                        min={beginningDate || undefined}
-                                        onChange={(e) => setExpiredDate(e.target.value)}
-                                        onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
-                                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none pr-9 cursor-pointer"
-                                    />
-                                    {expiredDate && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setExpiredDate('')}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full border-0 bg-transparent text-[#9ca3af] text-sm cursor-pointer hover:bg-[#f3f4f6] hover:text-[#374151]"
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
+                                <label className="block text-sm font-medium text-[#374151] mb-1.5">만료일</label>
+                                <div className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] text-sm text-[#374151]">
+                                    {formatDate(pages.find((p) => p.id === approveModalPageId)?.expiredDate ?? null) ??
+                                        '-'}
                                 </div>
-                                <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">
-                                    설정하지 않으면 만료일 없이 승인됩니다.
-                                </p>
-                                {beginningDate && expiredDate && beginningDate > expiredDate && (
-                                    <p className="m-0 mt-1 text-[12px] text-[#dc2626] font-medium">
-                                        시작일은 만료일보다 이전이어야 합니다.
-                                    </p>
-                                )}
+                                <p className="m-0 mt-1 text-[12px] text-[#9ca3af]">승인 요청 시 지정된 만료일입니다.</p>
                             </div>
 
                             {/* 버튼 */}
@@ -1128,13 +1119,9 @@ export default function ApproveClient({
                                 </button>
                                 <button
                                     onClick={handleApproveConfirm}
-                                    disabled={
-                                        approving || (!!beginningDate && !!expiredDate && beginningDate > expiredDate)
-                                    }
+                                    disabled={approving}
                                     className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                        approving || (!!beginningDate && !!expiredDate && beginningDate > expiredDate)
-                                            ? 'bg-[#d1d5db] cursor-not-allowed'
-                                            : 'bg-[#1e3a5f] cursor-pointer'
+                                        approving ? 'bg-[#d1d5db] cursor-not-allowed' : 'bg-[#1e3a5f] cursor-pointer'
                                     }`}
                                 >
                                     {approving ? '처리 중...' : '승인 확정'}

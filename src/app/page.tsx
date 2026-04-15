@@ -1,7 +1,17 @@
 // src/app/page.tsx
 
-import HomeClient from '@/components/home/HomeClient';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
-    return <HomeClient />;
+import { canReadCms, getCurrentUser, getDefaultCmsPath } from '@/lib/current-user';
+
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+    const currentUser = await getCurrentUser();
+
+    if (!canReadCms(currentUser)) {
+        redirect('/not-authorized');
+    }
+
+    redirect(getDefaultCmsPath(currentUser));
 }

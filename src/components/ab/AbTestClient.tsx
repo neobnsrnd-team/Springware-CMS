@@ -1,4 +1,4 @@
-// src/components/ab/AbTestClient.tsx
+﻿// src/components/ab/AbTestClient.tsx
 'use client';
 
 import { useState, useTransition, useCallback, useEffect } from 'react';
@@ -8,6 +8,7 @@ import Modal from '@/components/ui/Modal';
 import { VIEW_MODE_STYLE } from '@/components/ui/PageCard';
 import type { ViewMode } from '@/components/ui/PageCard';
 import AdminNavTabs from '@/components/admin/AdminNavTabs';
+import { nextApi } from '@/lib/api-url';
 
 // 그룹 페이지 구분 색상 팔레트
 const GROUP_COLORS = ['#0046A4', '#008C6A', '#b45309', '#dc2626', '#6d28d9'];
@@ -49,7 +50,7 @@ export interface AbTestClientProps {
 
 // ── 상수 ──
 
-const GUIDE_URL = '/api/ab/';
+const GUIDE_URL = '/cms/api/ab/';
 
 // ── 메인 컴포넌트 ──
 
@@ -127,7 +128,7 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
 
         setCreateLoading(true);
         try {
-            const res = await fetch('/api/builder/ab', {
+            const res = await fetch(nextApi('/api/builder/ab'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ groupId: newGroupId, pages: selectedPages }),
@@ -158,7 +159,9 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
         )
             return;
         try {
-            const res = await fetch(`/api/builder/ab?groupId=${encodeURIComponent(groupId)}`, { method: 'DELETE' });
+            const res = await fetch(nextApi(`/api/builder/ab?groupId=${encodeURIComponent(groupId)}`), {
+                method: 'DELETE',
+            });
             if (!res.ok) {
                 const data = await res.json().catch(() => null);
                 alert(data?.error ?? '그룹 해제에 실패했습니다.');
@@ -182,7 +185,7 @@ export default function AbTestClient({ pages: initialPages, groups: initialGroup
             return;
 
         try {
-            const res = await fetch('/api/builder/ab/promote', {
+            const res = await fetch(nextApi('/api/builder/ab/promote'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ groupId: winnerGroup.groupId, winnerPageId }),
