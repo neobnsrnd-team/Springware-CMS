@@ -265,7 +265,7 @@ jobs:
               local NAME=$1
               local PORT=$2
               for i in $(seq 1 6); do
-                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PORT}/api/health" || true)
+                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PORT}/cms/api/health" || true)
                 if [ "$HTTP_CODE" = "200" ]; then
                   echo ">>> [${NAME}] 헬스체크 통과 (HTTP 200)"
                   return 0
