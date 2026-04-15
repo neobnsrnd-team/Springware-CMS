@@ -11,8 +11,6 @@ import '@innovastudio/contentbuilder-runtime/dist/contentbuilder-runtime.css';
 import ContentBuilder from '@innovastudio/contentbuilder';
 import '@innovastudio/contentbuilder/public/contentbuilder/contentbuilder.css';
 
-import html2canvas from 'html2canvas';
-
 import ComponentPanel from '@/components/edit/ComponentPanel';
 import AppHeaderBorderEditor from '@/components/edit/AppHeaderBorderEditor';
 import AuthCenterIconEditor from '@/components/edit/AuthCenterIconEditor';
@@ -2268,57 +2266,11 @@ export default function EditClient({
     }
 
     // ── 저장 / 미리보기 / HTML 보기 ──────────────────────────────────────
-    /** 캔버스 썸네일 캡처 → 리사이즈 → JPG 업로드 */
-    const THUMBNAIL_CAPTURE_WIDTH = 390; // 모바일 뷰포트 기준 캡처 너비
-    const THUMBNAIL_OUTPUT_WIDTH = 400; // 최종 썸네일 이미지 너비
-    const THUMBNAIL_JPG_QUALITY = 0.85; // JPG 압축 품질 (0~1)
-
-    const captureThumbnail = async (): Promise<string> => {
-        const container = document.querySelector('.container') as HTMLElement | null;
-        if (!container) throw new Error('캔버스 요소를 찾을 수 없습니다.');
-
-        const canvas = await html2canvas(container, {
-            scale: 1,
-            useCORS: true,
-            windowWidth: THUMBNAIL_CAPTURE_WIDTH,
-        });
-
-        // 출력 너비로 리사이즈
-        const ratio = THUMBNAIL_OUTPUT_WIDTH / canvas.width;
-        const thumbHeight = Math.round(canvas.height * ratio);
-
-        const resized = document.createElement('canvas');
-        resized.width = THUMBNAIL_OUTPUT_WIDTH;
-        resized.height = thumbHeight;
-        const ctx = resized.getContext('2d');
-        if (!ctx) throw new Error('Canvas 2D 컨텍스트를 생성할 수 없습니다.');
-        ctx.drawImage(canvas, 0, 0, THUMBNAIL_OUTPUT_WIDTH, thumbHeight);
-
-        // JPG Blob → FormData → 업로드
-        const blob = await new Promise<Blob | null>((resolve) =>
-            resized.toBlob(resolve, 'image/jpeg', THUMBNAIL_JPG_QUALITY),
-        );
-        if (!blob) throw new Error('썸네일 이미지 변환에 실패했습니다.');
-
-        const formData = new FormData();
-        formData.append('file', blob, `${bank}_thumb.jpg`);
-        formData.append('pageId', bank);
-
-        const res = await fetch(nextApi('/api/builder/thumbnail'), {
-            method: 'POST',
-            body: formData,
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error ?? '썸네일 업로드에 실패했습니다.');
-        return data.thumbnailPath;
-    };
-
     const save = async () => {
         if (!builderRef.current) return;
         const builder = builderRef.current;
         const html = builder.html();
 
-        // 썸네일 캡처 비활성화 — DB 전환 후 thumbnail API 제거됨 (Phase 7)
         if (!canWrite) return;
         const response = await fetch(nextApi('/api/builder/save'), {
             method: 'POST',
