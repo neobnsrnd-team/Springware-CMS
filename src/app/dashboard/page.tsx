@@ -37,7 +37,7 @@ export default async function DashboardPage({
 
     const [{ list, totalCount }, approveLabels] = await Promise.all([
         getPageList({
-            createUserId: canWriteCms(currentUser) ? undefined : currentUser.userId,
+            createUserId: currentUser.userId,
             page: currentPage,
             pageSize: PAGE_SIZE,
             search: search || undefined,
