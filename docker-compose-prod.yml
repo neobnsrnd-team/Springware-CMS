@@ -12,12 +12,12 @@
 # [전제 조건]
 #   - .env.prod 파일이 동일 디렉토리에 존재해야 합니다.
 #   - Oracle DB는 외부(개발 DB 공용)로 연결합니다. (ORACLE_HOST 기준)
+#   - 호스트에 /data/uploads, /data/deployed 디렉토리가 사전 생성되어야 합니다.
 # ──────────────────────────────────────────────────────────────────────────────
 
 services:
 
   # ── CMS 관리자 컨테이너 ────────────────────────────────────────────────────
-  # 역할: 콘텐츠 편집·승인·배포 요청 처리, /api/deploy/push 실행
   cms:
     image: ${DOCKER_IMAGE:-neobns/springware-cms:latest}
     pull_policy: never
@@ -30,8 +30,8 @@ services:
     environment:
       PORT: "3000"
     volumes:
-      # 에디터 업로드 파일 영속 (컨테이너 재시작 시 유지)
-      - uploads-data:/app/public/uploads
+      # 호스트 바인드 마운트 — nginx 정적 서빙 공유용
+      - /data/uploads:/app/public/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -45,8 +45,6 @@ services:
         max-file: "5"
 
   # ── 운영 배포 컨테이너 ─────────────────────────────────────────────────────
-  # 역할: /api/deploy/receive 수신 → HTML 저장 → /deployed/{pageId}.html 서빙
-  # Oracle DB 접근 없음 — 파일 서빙 전용
   operation:
     image: ${DOCKER_IMAGE:-neobns/springware-cms:latest}
     pull_policy: never
@@ -59,8 +57,8 @@ services:
     environment:
       PORT: "3000"
     volumes:
-      # 배포된 HTML 영속 (컨테이너 재시작 시 유지)
-      - deployed-data:/app/public/deployed
+      # 호스트 바인드 마운트 — 배포 HTML 영속
+      - /data/deployed:/app/public/deployed
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -72,10 +70,3 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
-
-# ── Named Volumes ──────────────────────────────────────────────────────────────
-volumes:
-  # CMS 업로드 파일 (에디터에서 삽입한 이미지 등)
-  uploads-data:
-  # 운영 배포 HTML (승인 후 배포된 페이지)
-  deployed-data:
