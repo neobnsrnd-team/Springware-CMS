@@ -413,7 +413,7 @@ export default function ComponentPanel({
                                             {/* 미리보기 썸네일 */}
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
-                                                src={comp.preview}
+                                                src={nextApi(comp.preview)}
                                                 alt={comp.label}
                                                 draggable={false}
                                                 style={{
@@ -1123,7 +1123,7 @@ function BasicBlockCard({
     onInsert: (html: string) => void;
 }) {
     const [hovered, setHovered] = useState(false);
-    const thumbSrc = BASIC_THUMB_BASE + block.thumbnail;
+    const thumbSrc = nextApi(BASIC_THUMB_BASE + block.thumbnail);
 
     return (
         <div

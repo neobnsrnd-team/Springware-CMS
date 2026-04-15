@@ -371,7 +371,7 @@ export default function EditClient({
         const upload = async (file: File) => {
             const formData = new FormData();
             formData.append('file', file);
-            const response = await fetch(`/api/builder/upload`, { method: 'POST', body: formData });
+            const response = await fetch(nextApi('/api/builder/upload'), { method: 'POST', body: formData });
             return response.json();
         };
 
@@ -401,8 +401,8 @@ export default function EditClient({
             // clearChatSettings: true, // clear chat settings on load
 
             // OpenRouter:
-            sendCommandUrl: '/api/openrouter',
-            sendCommandStreamUrl: '/api/openrouter/stream',
+            sendCommandUrl: nextApi('/api/openrouter'),
+            sendCommandStreamUrl: nextApi('/api/openrouter/stream'),
             systemModel: 'openai/gpt-4o-mini', // Configure model for analyzing request
             codeModels: [
                 // Configure available models for code generation
@@ -461,9 +461,9 @@ export default function EditClient({
             },
 
             defaultImageGenerationProvider: 'fal',
-            generateMediaUrl_Fal: '/api/fal/request',
-            checkRequestStatusUrl_Fal: '/api/fal/status',
-            getResultUrl_Fal: '/api/fal/result',
+            generateMediaUrl_Fal: nextApi('/api/fal/request'),
+            checkRequestStatusUrl_Fal: nextApi('/api/fal/status'),
+            getResultUrl_Fal: nextApi('/api/fal/result'),
             // filePicker 제거 — DB 전환 후 로컬 파일 브라우저 불필요, upload 함수로 이미지 삽입
 
             // 컬러 피커 색상 팔레트
@@ -1910,10 +1910,10 @@ export default function EditClient({
                             id: c.id,
                             thumbnail: c.preview ?? '',
                             html: c.html
-                                .replace(/src="assets\//g, 'src="/assets/')
-                                .replace(/url\(&quot;assets\//g, 'url(&quot;/assets/')
-                                .replace(/url\('assets\//g, "url('/assets/")
-                                .replace(/url\(assets\//g, 'url(/assets/'),
+                                .replace(/src="assets\//g, `src="${nextApi('/assets')}/`)
+                                .replace(/url\(&quot;assets\//g, `url(&quot;${nextApi('/assets')}/`)
+                                .replace(/url\('assets\//g, `url('${nextApi('/assets')}/`)
+                                .replace(/url\(assets\//g, `url(${nextApi('/assets')}/`),
                             viewMode: c.viewMode as BasicBlock['viewMode'],
                             label: c.label || undefined,
                         }),
