@@ -2,10 +2,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getErrorMessage } from '@/lib/api-response';
+import { ASSET_UPLOAD_DIR } from '@/lib/env';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-
-const UPLOAD_PATH = process.env.UPLOAD_PATH || '';
 
 export async function POST(request: NextRequest) {
     try {
@@ -37,7 +36,7 @@ async function cleanup(input: Record<string, unknown>): Promise<void> {
             // S3 URL은 삭제하지 않음
         } else if (typeof value === 'string') {
             const filename = path.basename(value);
-            const inputFilePath = path.join(UPLOAD_PATH, filename);
+            const inputFilePath = path.resolve(ASSET_UPLOAD_DIR, filename);
 
             await fs.access(inputFilePath);
             await fs.unlink(inputFilePath);
