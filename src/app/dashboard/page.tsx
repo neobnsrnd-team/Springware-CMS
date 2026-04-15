@@ -5,7 +5,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
-import { canAdminScreen, canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { redirect } from 'next/navigation';
 import { isPageExpired } from '@/lib/validators';
 import { getApproveLabels } from '@/data/approve-config';
@@ -37,7 +37,7 @@ export default async function DashboardPage({
 
     const [{ list, totalCount }, approveLabels] = await Promise.all([
         getPageList({
-            createUserId: canAdminScreen(currentUser) ? undefined : currentUser.userId,
+            createUserId: currentUser.userId,
             page: currentPage,
             pageSize: PAGE_SIZE,
             search: search || undefined,
