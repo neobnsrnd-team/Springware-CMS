@@ -33,7 +33,7 @@ services:
       # 호스트 바인드 마운트 — nginx 정적 서빙 공유용
       - /data/uploads:/app/public/uploads
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/cms/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -60,7 +60,7 @@ services:
       # 호스트 바인드 마운트 — 배포 HTML 영속
       - /data/deployed:/app/public/deployed
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/cms/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
