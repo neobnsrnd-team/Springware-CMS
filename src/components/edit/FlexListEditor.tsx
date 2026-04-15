@@ -723,7 +723,6 @@ function ColumnEditor({
     linkMode,
     onUpdate,
     onDelete,
-    onRequestImagePick,
     canDelete,
 }: {
     col: FlexListColumn;
@@ -731,7 +730,6 @@ function ColumnEditor({
     linkMode: 'row' | 'column' | 'none';
     onUpdate: (colIdx: number, col: FlexListColumn) => void;
     onDelete: (colIdx: number) => void;
-    onRequestImagePick: (colIdx: number) => void;
     canDelete: boolean;
 }) {
     const [showIconPicker, setShowIconPicker] = useState(false);
@@ -985,41 +983,6 @@ function ColumnEditor({
                         </span>
                     )}
 
-                    {/* 파일 선택 버튼 */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            onRequestImagePick(colIdx);
-                        }}
-                        style={{
-                            padding: '4px 10px',
-                            border: '1px solid #c7d8f4',
-                            borderRadius: 4,
-                            background: '#f0f4ff',
-                            color: '#0046A4',
-                            fontSize: 11,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                        }}
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="12"
-                            height="12"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                        </svg>
-                        파일 선택
-                    </button>
-
                     {/* URL 직접 입력 */}
                     <input
                         type="text"
@@ -1223,15 +1186,9 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         });
     }, []);
 
-    // 이미지 파일 선택 대기 상태 — 어떤 행/컬럼이 파일 피커 결과를 기다리는지 추적
-    const pendingImagePick = useRef<{ rowIdx: number; colIdx: number } | null>(null);
+    // drag 상태
     const dragging = useRef(false);
     const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 });
-
-    const requestImagePick = useCallback((rowIdx: number, colIdx: number) => {
-        pendingImagePick.current = { rowIdx, colIdx };
-        window.open('/files', '_blank', 'width=900,height=600');
-    }, []);
 
     const handleHeaderMouseDown = useCallback(
         (e: React.MouseEvent) => {
@@ -1242,29 +1199,6 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
         },
         [pos],
     );
-
-    // FileBrowser에서 ASSET_SELECTED 메시지 수신
-    useEffect(() => {
-        const handleMessage = (e: MessageEvent) => {
-            if (e.data?.type !== 'ASSET_SELECTED' || !pendingImagePick.current) return;
-            const { rowIdx, colIdx } = pendingImagePick.current;
-            pendingImagePick.current = null;
-
-            setRows((prev) =>
-                prev.map((row, ri) =>
-                    ri === rowIdx
-                        ? {
-                              ...row,
-                              columns: row.columns.map((c, ci) => (ci === colIdx ? { ...c, imageSrc: e.data.url } : c)),
-                          }
-                        : row,
-                ),
-            );
-            window.focus();
-        };
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, []);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -1801,7 +1735,6 @@ export default function FlexListEditor({ blockEl, onClose }: Props) {
                                         linkMode={row.linkMode ?? 'none'}
                                         onUpdate={(ci, c) => updateColumn(rowIdx, ci, c)}
                                         onDelete={(ci) => deleteColumn(rowIdx, ci)}
-                                        onRequestImagePick={(ci) => requestImagePick(rowIdx, ci)}
                                         canDelete={row.columns.length > 1}
                                     />
                                 ))}

@@ -3,7 +3,7 @@
 // migrate-event-banner-to-html.ts 와 빌더 함수 동기화 필수
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
@@ -348,37 +348,13 @@ export default function EventBannerEditor({ blockEl, onClose }: Props) {
     // 입력 도중 빈 문자열·중간값 허용을 위해 string으로 별도 관리
     const [intervalStr, setIntervalStr] = useState('3000');
 
-    // 2. ref
-    const filePickerRef = useRef<Window | null>(null);
-    const pendingImgIdxRef = useRef<number | null>(null);
-
-    // 3. effect — 초기값 로드
+    // 2. effect — 초기값 로드
     useEffect(() => {
         const { slides: s, interval } = parseBannerData(blockEl);
         setSlides(s);
         setAutoInterval(interval);
         setIntervalStr(String(interval));
     }, [blockEl]);
-
-    // 4. effect — 파일 피커 postMessage 수신
-    useEffect(() => {
-        const handler = (e: MessageEvent) => {
-            if (e.origin !== window.location.origin) return;
-            if (e.data?.type !== 'ASSET_SELECTED') return;
-            const idx = pendingImgIdxRef.current;
-            if (idx === null) return;
-            setSlides((prev) => prev.map((s, i) => (i === idx ? { ...s, imageUrl: e.data.url as string } : s)));
-            pendingImgIdxRef.current = null;
-        };
-        window.addEventListener('message', handler);
-        return () => window.removeEventListener('message', handler);
-    }, []);
-
-    // 이미지 선택 버튼 클릭
-    const openImagePicker = useCallback((idx: number) => {
-        pendingImgIdxRef.current = idx;
-        filePickerRef.current = window.open('/files', 'file-picker', 'width=900,height=600');
-    }, []);
 
     // 슬라이드 부분 업데이트
     const updateSlide = useCallback((idx: number, patch: Partial<BannerSlide>) => {
@@ -489,20 +465,12 @@ export default function EventBannerEditor({ blockEl, onClose }: Props) {
                             {/* 이미지 */}
                             <div>
                                 <label style={S.label}>이미지</label>
-                                <div style={{ display: 'flex', gap: 6 }}>
-                                    <input
-                                        readOnly
-                                        value={slide.imageUrl}
-                                        placeholder="이미지 URL"
-                                        style={{ ...S.input, flex: 1 }}
-                                    />
-                                    <button
-                                        style={{ ...S.cancelBtn, whiteSpace: 'nowrap', padding: '5px 10px' }}
-                                        onClick={() => openImagePicker(idx)}
-                                    >
-                                        선택
-                                    </button>
-                                </div>
+                                <input
+                                    value={slide.imageUrl}
+                                    onChange={(e) => updateSlide(idx, { imageUrl: e.target.value })}
+                                    placeholder="이미지 URL"
+                                    style={S.input}
+                                />
                             </div>
 
                             {/* 링크 */}
