@@ -30,9 +30,9 @@ export class UnauthorizedError extends Error {
 
 /** 인증 우회 모드 기본 사용자 (AUTH_BYPASS=true 시 사용) */
 const BYPASS_USER: CurrentUser = {
-    userId: 'dev',
-    userName: '개발자',
-    roleId: 'cms_admin',
+    userId: 'cmsUser01',
+    userName: 'cms일반유저',
+    roleId: 'cms_user',
     authorities: ['CMS:R', 'CMS:W'],
 };
 
