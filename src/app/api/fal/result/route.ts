@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
 import axios from 'axios';
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs/promises';
 
 import { getErrorMessage } from '@/lib/api-response';
 import { ASSET_UPLOAD_DIR, ASSET_BASE_URL } from '@/lib/env';
@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
                     const imageData = fileUrl.split(',')[1];
 
                     if (LOCAL_SAVE) {
-                        const filePath = path.join(process.cwd(), ASSET_UPLOAD_DIR, folderPath, filename);
-                        fs.writeFileSync(filePath, imageData);
-                        newFileUrl = ASSET_BASE_URL + '/' + path.posix.join(folderPath, filename);
+                        const filePath = path.resolve(ASSET_UPLOAD_DIR, folderPath, filename);
+                        await fs.writeFile(filePath, imageData);
+                        newFileUrl = `${ASSET_BASE_URL.replace(/\/$/, '')}/${path.posix.join(folderPath, filename)}`;
                     } else {
                         // S3 저장 시 아래 주석 해제
                         // newFileUrl = await saveFileToS3(folderPath, filename, imageData);
@@ -78,9 +78,9 @@ export async function POST(req: NextRequest) {
 
                     if (LOCAL_SAVE) {
                         const fileData = Buffer.from(response.data);
-                        const filePath = path.join(process.cwd(), ASSET_UPLOAD_DIR, folderPath, filename);
-                        fs.writeFileSync(filePath, fileData);
-                        newFileUrl = ASSET_BASE_URL + '/' + path.posix.join(folderPath, filename);
+                        const filePath = path.resolve(ASSET_UPLOAD_DIR, folderPath, filename);
+                        await fs.writeFile(filePath, fileData);
+                        newFileUrl = `${ASSET_BASE_URL.replace(/\/$/, '')}/${path.posix.join(folderPath, filename)}`;
                     } else {
                         // S3 저장 시 아래 주석 해제
                         // newFileUrl = await saveFileToS3(folderPath, filename, response.data);
@@ -117,9 +117,9 @@ export async function POST(req: NextRequest) {
 
             if (LOCAL_SAVE) {
                 const fileData = Buffer.from(response.data);
-                const filePath = path.join(process.cwd(), ASSET_UPLOAD_DIR, folderPath, filename);
-                fs.writeFileSync(filePath, fileData);
-                newFileUrl = ASSET_BASE_URL + '/' + path.posix.join(folderPath, filename);
+                const filePath = path.resolve(ASSET_UPLOAD_DIR, folderPath, filename);
+                await fs.writeFile(filePath, fileData);
+                newFileUrl = `${ASSET_BASE_URL.replace(/\/$/, '')}/${path.posix.join(folderPath, filename)}`;
             } else {
                 // S3 저장 시 아래 주석 해제
                 // newFileUrl = await saveFileToS3(folderPath, filename, response.data);
