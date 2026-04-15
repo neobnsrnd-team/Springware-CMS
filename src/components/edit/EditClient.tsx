@@ -1908,15 +1908,16 @@ export default function EditClient({
             .then((res) => res.json())
             .then((data) => {
                 if (!cancelled && data.ok) {
+                    const assetPrefix = nextApi('/assets');
                     const blocks: BasicBlock[] = data.components.map(
                         (c: { id: string; label?: string; preview?: string; html: string; viewMode: string }) => ({
                             id: c.id,
                             thumbnail: c.preview ?? '',
                             html: c.html
-                                .replace(/src="assets\//g, `src="${nextApi('/assets')}/`)
-                                .replace(/url\(&quot;assets\//g, `url(&quot;${nextApi('/assets')}/`)
-                                .replace(/url\('assets\//g, `url('${nextApi('/assets')}/`)
-                                .replace(/url\(assets\//g, `url(${nextApi('/assets')}/`),
+                                .replace(/src="assets\//g, `src="${assetPrefix}/`)
+                                .replace(/url\(&quot;assets\//g, `url(&quot;${assetPrefix}/`)
+                                .replace(/url\('assets\//g, `url('${assetPrefix}/`)
+                                .replace(/url\(assets\//g, `url(${assetPrefix}/`),
                             viewMode: c.viewMode as BasicBlock['viewMode'],
                             label: c.label || undefined,
                         }),
