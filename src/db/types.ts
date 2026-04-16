@@ -9,6 +9,8 @@ export type ComponentType = 'finance' | 'basic';
 export type ViewMode = 'mobile' | 'web' | 'responsive';
 export type UseYn = 'Y' | 'N';
 export type ApproveState = 'WORK' | 'PENDING' | 'APPROVED' | 'REJECTED';
+export type PageType = 'PAGE' | 'TEMPLATE';
+export type AssetState = 'WORK' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 // ── SPW_CMS_COMPONENT ──
 
@@ -50,6 +52,7 @@ export interface CmsPage {
     BEGINNING_DATE: Date | null;
     EXPIRED_DATE: Date | null;
     APPROVE_STATE: ApproveState;
+    PAGE_TYPE: PageType;
     LAST_MODIFIED_DTIME: Date | null;
     PAGE_DESC: string | null;
     PAGE_DESC_DETAIL: string | null;
@@ -137,6 +140,7 @@ export interface CmsAsset {
     ASSET_PATH: string | null;
     ASSET_URL: string | null;
     ASSET_DESC: string | null;
+    ASSET_STATE: AssetState;
     USE_YN: UseYn;
     CREATE_USER_ID: string | null;
     CREATE_USER_NAME: string | null;

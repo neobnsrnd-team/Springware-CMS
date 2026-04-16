@@ -5,12 +5,13 @@
 import oracledb from 'oracledb';
 
 import { getConnection, withTransaction } from '@/db/connection';
-import type { CmsAsset } from '@/db/types';
+import type { CmsAsset, AssetState } from '@/db/types';
 import {
     ASSET_SELECT_BY_ID,
     ASSET_SELECT_LIST,
     ASSET_COUNT,
     ASSET_INSERT,
+    ASSET_UPDATE_STATE,
     ASSET_DELETE,
     ASSET_MAP_SELECT_BY_PAGE,
     ASSET_MAP_INSERT,
@@ -83,6 +84,7 @@ export async function createAsset(input: {
     assetPath: string;
     assetUrl: string;
     assetDesc?: string;
+    assetState?: AssetState;
     createUserId: string;
     createUserName: string;
 }): Promise<void> {
@@ -96,11 +98,19 @@ export async function createAsset(input: {
             assetPath: input.assetPath,
             assetUrl: input.assetUrl,
             assetDesc: input.assetDesc ?? null,
+            assetState: input.assetState ?? null,
             createUserId: input.createUserId,
             createUserName: input.createUserName,
             lastModifierId: input.createUserId,
             lastModifierName: input.createUserName,
         });
+    });
+}
+
+/** 에셋 승인 상태 변경 */
+export async function updateAssetState(assetId: string, assetState: AssetState): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(ASSET_UPDATE_STATE, { assetId, assetState });
     });
 }
 
