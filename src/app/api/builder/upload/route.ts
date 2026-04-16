@@ -7,9 +7,13 @@ import { NextRequest } from 'next/server';
 import { createAsset } from '@/db/repository/asset.repository';
 import { contentBuilderErrorResponse, successResponse, getErrorMessage } from '@/lib/api-response';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
-import { ASSET_UPLOAD_DIR, ASSET_BASE_URL } from '@/lib/env';
+import { ASSET_UPLOAD_DIR, ASSET_BASE_URL, SERVER_MODE } from '@/lib/env';
 
 export async function POST(req: NextRequest) {
+    if (SERVER_MODE === 'operation') {
+        return contentBuilderErrorResponse('이미지 업로드는 관리자 서버에서만 가능합니다.');
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 

@@ -29,6 +29,7 @@ services:
       - .env.prod
     environment:
       PORT: "3000"
+      SERVER_MODE: "cms"
     volumes:
       # 호스트 바인드 마운트 — nginx 정적 서빙 공유용
       - /data/uploads:/app/public/uploads
@@ -56,6 +57,7 @@ services:
       - .env.prod
     environment:
       PORT: "3000"
+      SERVER_MODE: "operation"
     volumes:
       # 호스트 바인드 마운트 — 배포 HTML 영속
       - /data/deployed:/app/public/deployed
