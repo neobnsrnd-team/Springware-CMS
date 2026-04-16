@@ -7,7 +7,7 @@
 
 import oracledb from 'oracledb';
 import { getConnection, withTransaction, clobBind } from '@/db/connection';
-import type { CmsPage, CmsPageHistory, ApproveState, ViewMode } from '@/db/types';
+import type { CmsPage, CmsPageHistory, ApproveState, ViewMode, PageType } from '@/db/types';
 import {
     PAGE_SELECT_BY_ID,
     PAGE_SELECT_LIST,
@@ -164,6 +164,7 @@ export async function createPage(input: {
     pageId: string;
     pageName: string;
     viewMode?: ViewMode;
+    pageType?: PageType;
     ownerDeptCode?: string;
     filePath?: string;
     pageHtml?: string;
@@ -180,6 +181,7 @@ export async function createPage(input: {
             pageId: input.pageId,
             pageName: input.pageName,
             viewMode: input.viewMode ?? null,
+            pageType: input.pageType ?? null,
             ownerDeptCode: input.ownerDeptCode ?? null,
             filePath: input.filePath ?? null,
             pageHtml: clobBind(input.pageHtml ?? null),
@@ -225,15 +227,16 @@ export async function updatePage(input: {
     });
 }
 
-/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자 지정, 만료일 저장 */
+/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자와 노출 기간 지정 */
 export async function requestApproval(
     pageId: string,
     approverId: string,
     approverName: string,
+    beginningDate: string,
     expiredDate: string,
 ): Promise<void> {
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName, expiredDate });
+        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName, beginningDate, expiredDate });
     });
 }
 

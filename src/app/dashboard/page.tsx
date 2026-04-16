@@ -54,6 +54,8 @@ export default async function DashboardPage({
         thumbnail: p.THUMBNAIL ?? null,
         lastModifiedDtime: p.LAST_MODIFIED_DTIME ? new Date(p.LAST_MODIFIED_DTIME).toISOString() : null,
         approveState: p.APPROVE_STATE,
+        beginningDate: p.BEGINNING_DATE ? new Date(p.BEGINNING_DATE).toLocaleDateString('en-CA') : null,
+        expiredDate: p.EXPIRED_DATE ? new Date(p.EXPIRED_DATE).toLocaleDateString('en-CA') : null,
         rejectedReason: p.REJECTED_REASON ?? null,
         hasFile:
             !!p.PAGE_HTML ||
