@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
-import PageCard, { APPROVE_DEFAULT_LABELS } from '@/components/ui/PageCard';
+import PageCard, { APPROVE_DEFAULT_LABELS, formatDate } from '@/components/ui/PageCard';
 import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
 import { nextApi } from '@/lib/api-url';
 
@@ -17,6 +17,10 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
     { value: 'date', label: '최신 수정순' },
     { value: 'name', label: '이름순' },
 ];
+
+function displayDate(date: string | null): string {
+    return date || '-';
+}
 
 type SortBy = 'date' | 'name';
 
@@ -434,6 +438,17 @@ export default function DashboardClient({
                                             window.location.href = nextApi(`/edit?bank=${page.id}`);
                                         }}
                                         overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}
+                                        authorSlot={
+                                            <div className="flex flex-col gap-1">
+                                                <p className="m-0 text-[11px] text-[#9ca3af]">
+                                                    수정: {formatDate(page.lastModifiedDtime)}
+                                                </p>
+                                                <p className="m-0 text-[11px] text-[#6b7280]">
+                                                    노출: {displayDate(page.beginningDate)} ~{' '}
+                                                    {displayDate(page.expiredDate)}
+                                                </p>
+                                            </div>
+                                        }
                                         footerSlot={
                                             page.isExpired ? (
                                                 <div className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end">
