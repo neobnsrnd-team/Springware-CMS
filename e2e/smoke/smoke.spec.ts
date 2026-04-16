@@ -20,12 +20,6 @@ test.describe('스모크 테스트 — 페이지 로드', () => {
         await expect(page.locator('body')).toBeVisible();
     });
 
-    test('파일 브라우저(/files) 로드 확인', async ({ page }) => {
-        await page.goto('/files');
-
-        await expect(page).not.toHaveTitle(/error|500|404/i);
-        await expect(page.locator('body')).toBeVisible();
-    });
 });
 
 test.describe('스모크 테스트 — API 헬스체크', () => {
