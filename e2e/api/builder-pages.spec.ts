@@ -129,8 +129,6 @@ test.describe('빌더 페이지 API', () => {
                     body: JSON.stringify({
                         approverId: 'admin',
                         approverName: '관리자',
-                        beginningDate: '2099-04-16',
-                        expiredDate: '2099-04-30',
                     }),
                 });
                 return { status: res.status, body: await res.json() };

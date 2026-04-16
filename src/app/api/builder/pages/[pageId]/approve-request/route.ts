@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
         }
 
         const body = await req.json();
-        const { approverId, approverName, beginningDate, expiredDate } = body;
+        const { approverId, approverName } = body;
 
         if (!approverId || !approverName) {
             return errorResponse('Approver information is required.', 400);
@@ -24,32 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
             return errorResponse('Permission denied.', 403);
         }
 
-        if (!beginningDate) {
-            return errorResponse('Beginning date is required.', 400);
-        }
-
-        if (!expiredDate) {
-            return errorResponse('Expiration date is required.', 400);
-        }
-
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(beginningDate) || isNaN(Date.parse(beginningDate))) {
-            return errorResponse('Beginning date must use YYYY-MM-DD format.', 400);
-        }
-
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(expiredDate) || isNaN(Date.parse(expiredDate))) {
-            return errorResponse('Expiration date must use YYYY-MM-DD format.', 400);
-        }
-
-        const kstToday = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        if (beginningDate < kstToday) {
-            return errorResponse('Beginning date cannot be in the past.', 400);
-        }
-
-        if (expiredDate < beginningDate) {
-            return errorResponse('Expiration date cannot be before beginning date.', 400);
-        }
-
-        await requestApproval(pageId, approverId, approverName, beginningDate, expiredDate);
+        await requestApproval(pageId, approverId, approverName);
 
         return successResponse({ message: 'Approval request completed.' });
     } catch (err: unknown) {

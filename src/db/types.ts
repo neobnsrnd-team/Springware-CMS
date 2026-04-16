@@ -47,8 +47,6 @@ export interface CmsPage {
     APPROVER_NAME: string | null;
     CREATE_DATE: Date | null;
     CONFIRM_DTIME: Date | null;
-    REQUEST_BEGINNING_DATE: Date | null;
-    REQUEST_EXPIRED_DATE: Date | null;
     BEGINNING_DATE: Date | null;
     EXPIRED_DATE: Date | null;
     APPROVE_STATE: ApproveState;
