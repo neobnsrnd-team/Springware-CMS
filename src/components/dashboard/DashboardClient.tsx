@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Modal from '@/components/ui/Modal';
-import PageCard, { APPROVE_DEFAULT_LABELS } from '@/components/ui/PageCard';
+import PageCard, { APPROVE_DEFAULT_LABELS, formatDate } from '@/components/ui/PageCard';
 import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
 import { nextApi } from '@/lib/api-url';
 
@@ -18,6 +18,10 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
     { value: 'name', label: '이름순' },
 ];
 
+function displayDate(date: string | null): string {
+    return date || '-';
+}
+
 type SortBy = 'date' | 'name';
 
 export interface DashboardPageCard {
@@ -27,6 +31,8 @@ export interface DashboardPageCard {
     thumbnail: string | null;
     lastModifiedDtime: string | null;
     approveState: ApproveStateValue;
+    beginningDate: string | null;
+    expiredDate: string | null;
     rejectedReason: string | null;
     hasFile: boolean;
     isExpired: boolean;
@@ -190,7 +196,12 @@ export default function DashboardClient({
     }
 
     // 승인 요청 — 낙관적 업데이트 후 API 호출
-    async function handleApprovalRequest(approverId: string, approverName: string, expiredDate: string) {
+    async function handleApprovalRequest(
+        approverId: string,
+        approverName: string,
+        beginningDate: string,
+        expiredDate: string,
+    ) {
         if (!approvalTarget || !canWrite) return;
 
         const { id: targetId, approveState: originalApproveState } = approvalTarget;
@@ -203,7 +214,7 @@ export default function DashboardClient({
             const res = await fetch(nextApi(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approverId, approverName, expiredDate }),
+                body: JSON.stringify({ approverId, approverName, beginningDate, expiredDate }),
             });
             const data = await res.json();
             if (!data.ok) {
@@ -427,6 +438,17 @@ export default function DashboardClient({
                                             window.location.href = nextApi(`/edit?bank=${page.id}`);
                                         }}
                                         overlay={{ label: '편집하기', color: 'rgba(0,70,164,0.45)' }}
+                                        authorSlot={
+                                            <div className="flex flex-col gap-1">
+                                                <p className="m-0 text-[11px] text-[#9ca3af]">
+                                                    수정: {formatDate(page.lastModifiedDtime)}
+                                                </p>
+                                                <p className="m-0 text-[11px] text-[#6b7280]">
+                                                    노출: {displayDate(page.beginningDate)} ~{' '}
+                                                    {displayDate(page.expiredDate)}
+                                                </p>
+                                            </div>
+                                        }
                                         footerSlot={
                                             page.isExpired ? (
                                                 <div className="px-4 py-2 border-t border-[#f3f4f6] flex justify-end">
@@ -449,12 +471,16 @@ export default function DashboardClient({
                                                     )}
                                                     {canWrite &&
                                                         (page.approveState === 'WORK' ||
-                                                            page.approveState === 'REJECTED') && (
+                                                            page.approveState === 'REJECTED' ||
+                                                            page.approveState === 'APPROVED') && (
                                                             <button
                                                                 onClick={() => setApprovalTarget(page)}
                                                                 className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
                                                             >
-                                                                승인 요청
+                                                                {page.approveState === 'APPROVED' ||
+                                                                page.approveState === 'REJECTED'
+                                                                    ? '재승인요청'
+                                                                    : '승인 요청'}
                                                             </button>
                                                         )}
                                                     {canWrite && (

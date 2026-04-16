@@ -54,12 +54,17 @@ test.describe('승인 플로우 — API 시나리오', () => {
         );
         expect(saveResult.body.ok).toBe(true);
 
-        // 승인 요청 API 호출 (PATCH) — 요청 body: { approverId, approverName }
+        // 승인 요청 API 호출 (PATCH) — 요청 body: { approverId, approverName, beginningDate, expiredDate }
         const requestResult = await page.evaluate(async (id) => {
             const res = await fetch(`/api/builder/pages/${id}/approve-request`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approverId: 'admin', approverName: '관리자' }),
+                body: JSON.stringify({
+                    approverId: 'admin',
+                    approverName: '관리자',
+                    beginningDate: '2099-04-16',
+                    expiredDate: '2099-04-30',
+                }),
             });
             return { body: await res.json() };
         }, TEST_PAGE_ID);
