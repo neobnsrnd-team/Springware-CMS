@@ -53,13 +53,13 @@ export const PAGE_INSERT = `
     PAGE_ID, PAGE_NAME, VIEW_MODE, OWNER_DEPT_CODE, FILE_PATH, PAGE_HTML,
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
-    APPROVE_STATE, PAGE_DESC, PAGE_DESC_DETAIL,
+    APPROVE_STATE, PAGE_TYPE, PAGE_DESC, PAGE_DESC_DETAIL,
     TEMPLATE_ID, THUMBNAIL, TARGET_CD, USE_YN, IS_PUBLIC
   ) VALUES (
     :pageId, :pageName, NVL(:viewMode, 'mobile'), :ownerDeptCode, :filePath, :pageHtml,
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName,
-    'WORK', :pageDesc, :pageDescDetail,
+    'WORK', NVL(:pageType, 'PAGE'), :pageDesc, :pageDescDetail,
     :templateId, :thumbnail, :targetCd, 'Y', 'Y'
   )
 `;

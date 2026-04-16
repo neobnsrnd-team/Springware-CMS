@@ -5,7 +5,7 @@
 /** 에셋 단건 조회 */
 export const ASSET_SELECT_BY_ID = `
   SELECT ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
-         ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+         ASSET_PATH, ASSET_URL, ASSET_DESC, ASSET_STATE, USE_YN,
          CREATE_USER_ID, CREATE_USER_NAME,
          LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
          CREATE_DATE, LAST_MODIFIED_DTIME
@@ -19,7 +19,7 @@ export const ASSET_SELECT_LIST = `
   SELECT * FROM (
     SELECT A.*, ROWNUM AS RN FROM (
       SELECT ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
-             ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+             ASSET_PATH, ASSET_URL, ASSET_DESC, ASSET_STATE, USE_YN,
              CREATE_USER_ID, CREATE_USER_NAME,
              LAST_MODIFIER_ID, LAST_MODIFIER_NAME,
              CREATE_DATE, LAST_MODIFIED_DTIME
@@ -45,15 +45,26 @@ export const ASSET_COUNT = `
 export const ASSET_INSERT = `
   INSERT INTO SPW_CMS_ASSET (
     ASSET_ID, ASSET_NAME, BUSINESS_CATEGORY, MIME_TYPE, FILE_SIZE,
-    ASSET_PATH, ASSET_URL, ASSET_DESC, USE_YN,
+    ASSET_PATH, ASSET_URL, ASSET_DESC, ASSET_STATE, USE_YN,
     CREATE_USER_ID, CREATE_USER_NAME,
     LAST_MODIFIER_ID, LAST_MODIFIER_NAME
   ) VALUES (
     :assetId, :assetName, :businessCategory, :mimeType, :fileSize,
-    :assetPath, :assetUrl, :assetDesc, 'Y',
+    :assetPath, :assetUrl, :assetDesc, NVL(:assetState, 'WORK'), 'Y',
     :createUserId, :createUserName,
     :lastModifierId, :lastModifierName
   )
+`;
+
+/** 에셋 승인 상태 변경 */
+export const ASSET_UPDATE_STATE = `
+  UPDATE SPW_CMS_ASSET
+  SET ASSET_STATE = :assetState,
+      LAST_MODIFIER_ID = :lastModifierId,
+      LAST_MODIFIER_NAME = :lastModifierName,
+      LAST_MODIFIED_DTIME = SYSTIMESTAMP
+  WHERE ASSET_ID = :assetId
+    AND USE_YN = 'Y'
 `;
 
 /** 에셋 논리 삭제 */

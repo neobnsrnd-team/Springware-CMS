@@ -7,7 +7,7 @@
 
 import oracledb from 'oracledb';
 import { getConnection, withTransaction, clobBind } from '@/db/connection';
-import type { CmsPage, CmsPageHistory, ApproveState, ViewMode } from '@/db/types';
+import type { CmsPage, CmsPageHistory, ApproveState, ViewMode, PageType } from '@/db/types';
 import {
     PAGE_SELECT_BY_ID,
     PAGE_SELECT_LIST,
@@ -164,6 +164,7 @@ export async function createPage(input: {
     pageId: string;
     pageName: string;
     viewMode?: ViewMode;
+    pageType?: PageType;
     ownerDeptCode?: string;
     filePath?: string;
     pageHtml?: string;
@@ -180,6 +181,7 @@ export async function createPage(input: {
             pageId: input.pageId,
             pageName: input.pageName,
             viewMode: input.viewMode ?? null,
+            pageType: input.pageType ?? null,
             ownerDeptCode: input.ownerDeptCode ?? null,
             filePath: input.filePath ?? null,
             pageHtml: clobBind(input.pageHtml ?? null),
