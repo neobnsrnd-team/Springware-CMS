@@ -59,7 +59,10 @@ test.describe('승인 플로우 — API 시나리오', () => {
             const res = await fetch(`/api/builder/pages/${id}/approve-request`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approverId: 'admin', approverName: '관리자' }),
+                body: JSON.stringify({
+                    approverId: 'admin',
+                    approverName: '관리자',
+                }),
             });
             return { body: await res.json() };
         }, TEST_PAGE_ID);

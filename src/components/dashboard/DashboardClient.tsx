@@ -190,7 +190,7 @@ export default function DashboardClient({
     }
 
     // 승인 요청 — 낙관적 업데이트 후 API 호출
-    async function handleApprovalRequest(approverId: string, approverName: string, expiredDate: string) {
+    async function handleApprovalRequest(approverId: string, approverName: string) {
         if (!approvalTarget || !canWrite) return;
 
         const { id: targetId, approveState: originalApproveState } = approvalTarget;
@@ -203,7 +203,7 @@ export default function DashboardClient({
             const res = await fetch(nextApi(`/api/builder/pages/${encodeURIComponent(targetId)}/approve-request`), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approverId, approverName, expiredDate }),
+                body: JSON.stringify({ approverId, approverName }),
             });
             const data = await res.json();
             if (!data.ok) {
@@ -449,12 +449,15 @@ export default function DashboardClient({
                                                     )}
                                                     {canWrite &&
                                                         (page.approveState === 'WORK' ||
-                                                            page.approveState === 'REJECTED') && (
+                                                            page.approveState === 'REJECTED' ||
+                                                            page.approveState === 'APPROVED') && (
                                                             <button
                                                                 onClick={() => setApprovalTarget(page)}
                                                                 className="px-2.5 py-1 rounded-md border border-[#93c5fd] bg-transparent text-[#0046A4] text-xs cursor-pointer"
                                                             >
-                                                                승인 요청
+                                                                {page.approveState === 'APPROVED'
+                                                                    ? '기간 변경 요청'
+                                                                    : '승인 요청'}
                                                             </button>
                                                         )}
                                                     {canWrite && (

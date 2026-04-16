@@ -126,7 +126,10 @@ test.describe('빌더 페이지 API', () => {
                 const res = await fetch('/api/builder/pages/test-page-001/approve-request', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ approverId: 'admin', approverName: '관리자' }),
+                    body: JSON.stringify({
+                        approverId: 'admin',
+                        approverName: '관리자',
+                    }),
                 });
                 return { status: res.status, body: await res.json() };
             });

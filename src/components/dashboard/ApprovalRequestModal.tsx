@@ -27,12 +27,11 @@ const VIEW_MODE_ICON: Record<string, string> = {
 interface ApprovalRequestModalProps {
     page: DashboardPageCard;
     onClose: () => void;
-    onSubmit: (approverId: string, approverName: string, expiredDate: string) => Promise<void>;
+    onSubmit: (approverId: string, approverName: string) => Promise<void>;
 }
 
 export default function ApprovalRequestModal({ page, onClose, onSubmit }: ApprovalRequestModalProps) {
     const [approverId, setApproverId] = useState('');
-    const [expiredDate, setExpiredDate] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [approverList, setApproverList] = useState<Approver[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,22 +56,20 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
     }, []);
 
     const selectedApprover = approverList.find((u) => u.userId === approverId);
-
-    // 오늘 이후 날짜만 선택 가능 — 로컬 타임 기준 내일 날짜 계산
-    const minDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleDateString('en-CA');
+    const canSubmit = Boolean(selectedApprover) && !submitting && !loading;
 
     async function handleSubmit() {
-        if (!selectedApprover || !expiredDate || submitting) return;
+        if (!selectedApprover || !canSubmit) return;
         setSubmitting(true);
         try {
-            await onSubmit(selectedApprover.userId, selectedApprover.userName, expiredDate);
+            await onSubmit(selectedApprover.userId, selectedApprover.userName);
         } finally {
             setSubmitting(false);
         }
     }
 
     return (
-        <Modal title="Approval request" onClose={onClose} width="440px">
+        <Modal title="승인 요청" onClose={onClose} width="440px">
             <div className="px-7 pb-5">
                 <div
                     className="w-full h-[140px] rounded-xl border border-[#f3f4f6] flex items-center justify-center mb-4 shrink-0"
@@ -93,7 +90,7 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
 
             <div className="px-7 pb-6">
                 <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
-                    Approver <span className="text-[#dc2626]">*</span>
+                    승인 요청 대상 <span className="text-[#dc2626]">*</span>
                 </label>
                 <select
                     value={approverId}
@@ -101,7 +98,7 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                     disabled={loading}
                     className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none bg-white text-[#111827]"
                 >
-                    <option value="">{loading ? 'Loading...' : 'Select an approver'}</option>
+                    <option value="">{loading ? '불러오는 중...' : '승인 요청할 관리자를 선택하세요'}</option>
                     {approverList.map((u) => (
                         <option key={u.userId} value={u.userId}>
                             {u.userName}
@@ -109,22 +106,8 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                     ))}
                 </select>
                 {!loading && approverList.length === 0 && (
-                    <p className="mt-2 text-xs text-[#dc2626]">Approver list is unavailable.</p>
+                    <p className="mt-2 text-xs text-[#dc2626]">승인 요청 대상 목록을 불러올 수 없습니다.</p>
                 )}
-            </div>
-
-            {/* 만료일 선택 */}
-            <div className="px-7 pb-6">
-                <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
-                    만료일 <span className="text-[#dc2626]">*</span>
-                </label>
-                <input
-                    type="date"
-                    value={expiredDate}
-                    min={minDate}
-                    onChange={(e) => setExpiredDate(e.target.value)}
-                    className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none bg-white text-[#111827]"
-                />
             </div>
 
             {/* 버튼 */}
@@ -133,18 +116,16 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                     onClick={onClose}
                     className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
                 >
-                    Cancel
+                    취소
                 </button>
                 <button
                     onClick={handleSubmit}
-                    disabled={!approverId || !expiredDate || submitting || loading}
+                    disabled={!canSubmit}
                     className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                        !approverId || !expiredDate || submitting || loading
-                            ? 'bg-[#d1d5db] cursor-not-allowed'
-                            : 'bg-[#0046A4] cursor-pointer'
+                        !canSubmit ? 'bg-[#d1d5db] cursor-not-allowed' : 'bg-[#0046A4] cursor-pointer'
                     }`}
                 >
-                    {submitting ? 'Submitting...' : 'Request approval'}
+                    {submitting ? '요청 중...' : '승인 요청'}
                 </button>
             </div>
         </Modal>

@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
         }
 
         const body = await req.json();
-        const { approverId, approverName, expiredDate } = body;
+        const { approverId, approverName } = body;
 
         if (!approverId || !approverName) {
             return errorResponse('Approver information is required.', 400);
@@ -24,20 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
             return errorResponse('Permission denied.', 403);
         }
 
-        if (!expiredDate) {
-            return errorResponse('Expiration date is required.', 400);
-        }
-
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(expiredDate) || isNaN(Date.parse(expiredDate))) {
-            return errorResponse('Expiration date must use YYYY-MM-DD format.', 400);
-        }
-
-        const kstToday = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        if (expiredDate <= kstToday) {
-            return errorResponse('Expiration date must be after today.', 400);
-        }
-
-        await requestApproval(pageId, approverId, approverName, expiredDate);
+        await requestApproval(pageId, approverId, approverName);
 
         return successResponse({ message: 'Approval request completed.' });
     } catch (err: unknown) {
