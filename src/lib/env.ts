@@ -27,6 +27,11 @@ export const OPENAI_API_KEY = optionalEnv('OPENAI_API_KEY');
 export const FAL_API_KEY = optionalEnv('FAL_API_KEY');
 export const GEMINI_API_KEY = optionalEnv('GEMINI_API_KEY');
 
+// ── 서버 운영 모드 ──
+// 'cms': 현업 관리자 서버 (:3000) — 이미지 업로드 가능
+// 'operation': 현업 제작자 서버 (:3001) — 이미지 업로드 차단, 대고객 서빙
+export const SERVER_MODE = optionalEnv('SERVER_MODE', 'cms');
+
 // ── 에셋 저장소 ──
 export const ASSET_UPLOAD_DIR = optionalEnv('ASSET_UPLOAD_DIR', 'public/uploads');
 export const ASSET_BASE_URL = optionalEnv('ASSET_BASE_URL', '/uploads');
