@@ -59,6 +59,7 @@ services:
     volumes:
       # 호스트 바인드 마운트 — 배포 HTML 영속
       - /data/deployed:/app/public/deployed
+      - /data/uploads:/app/public/uploads:ro   # 이미지 접근용 (읽기 전용)
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/cms/api/health || exit 1"]
       interval: 30s

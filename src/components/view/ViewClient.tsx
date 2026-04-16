@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { nextApi } from '@/lib/api-url';
 
 // Runtime library for rendering ContentBuilder-generated content
 import ContentBuilderRuntime from '@innovastudio/contentbuilder-runtime';
@@ -428,7 +429,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
 
     // ── 반응형 모드: 툴바 + iframe ─────────────────────────────────────────
     if (viewMode === 'responsive' && !embed) {
-        const iframeSrc = `/view?bank=${bank ?? 'ibk'}&embed=1`;
+        const iframeSrc = nextApi(`/view?bank=${bank ?? 'ibk'}&embed=1`);
 
         return (
             // height:100vh + overflow:hidden → 툴바를 제외한 나머지 높이를 iframe이 flex로 채움
