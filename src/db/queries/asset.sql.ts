@@ -26,6 +26,7 @@ export const ASSET_SELECT_LIST = `
       FROM SPW_CMS_ASSET
       WHERE USE_YN = 'Y'
         AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
+        AND (:assetState IS NULL OR ASSET_STATE = :assetState)
       ORDER BY CREATE_DATE DESC
     ) A
     WHERE ROWNUM <= :endRow
@@ -39,6 +40,7 @@ export const ASSET_COUNT = `
   FROM SPW_CMS_ASSET
   WHERE USE_YN = 'Y'
     AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
+    AND (:assetState IS NULL OR ASSET_STATE = :assetState)
 `;
 
 /** 에셋 등록 */
