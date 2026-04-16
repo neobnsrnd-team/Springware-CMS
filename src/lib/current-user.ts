@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+
 import { fetchJavaAdminApi } from './java-admin-api';
 
 export interface CurrentUser {
@@ -28,7 +30,15 @@ export class UnauthorizedError extends Error {
     }
 }
 
-/** 인증 우회 모드 기본 사용자 (AUTH_BYPASS=true 시 사용) */
+/** 인증 우회 모드 — 관리자 (AUTH_BYPASS + /dev/admin 쿠키) */
+const BYPASS_ADMIN: CurrentUser = {
+    userId: 'admin',
+    userName: '관리자',
+    roleId: 'cms_admin',
+    authorities: ['CMS:R', 'CMS:W'],
+};
+
+/** 인증 우회 모드 — 일반 사용자 (AUTH_BYPASS=true 기본값) */
 const BYPASS_USER: CurrentUser = {
     userId: 'cmsUser01',
     userName: 'cms일반유저',
@@ -36,10 +46,23 @@ const BYPASS_USER: CurrentUser = {
     authorities: ['CMS:R', 'CMS:W'],
 };
 
+/** AUTH_BYPASS 모드에서 쿠키 기반 역할 분기 */
+async function getBypassUser(): Promise<CurrentUser> {
+    try {
+        const cookieStore = await cookies();
+        if (cookieStore.get('cms_bypass_role')?.value === 'cms_admin') {
+            return BYPASS_ADMIN;
+        }
+    } catch {
+        // cookies() 사용 불가 환경 — 기본값 유지
+    }
+    return BYPASS_USER;
+}
+
 export async function getCurrentUser(): Promise<CurrentUser> {
     // 인증 우회 모드 — admin 미배포 환경 테스트용
     if (process.env.AUTH_BYPASS === 'true') {
-        return BYPASS_USER;
+        return getBypassUser();
     }
 
     try {
