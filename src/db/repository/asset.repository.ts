@@ -108,9 +108,14 @@ export async function createAsset(input: {
 }
 
 /** 에셋 승인 상태 변경 */
-export async function updateAssetState(assetId: string, assetState: AssetState): Promise<void> {
+export async function updateAssetState(
+    assetId: string,
+    assetState: AssetState,
+    lastModifierId: string,
+    lastModifierName: string,
+): Promise<void> {
     await withTransaction(async (conn) => {
-        await conn.execute(ASSET_UPDATE_STATE, { assetId, assetState });
+        await conn.execute(ASSET_UPDATE_STATE, { assetId, assetState, lastModifierId, lastModifierName });
     });
 }
 

@@ -60,6 +60,8 @@ export const ASSET_INSERT = `
 export const ASSET_UPDATE_STATE = `
   UPDATE SPW_CMS_ASSET
   SET ASSET_STATE = :assetState,
+      LAST_MODIFIER_ID = :lastModifierId,
+      LAST_MODIFIER_NAME = :lastModifierName,
       LAST_MODIFIED_DTIME = SYSTIMESTAMP
   WHERE ASSET_ID = :assetId
     AND USE_YN = 'Y'
