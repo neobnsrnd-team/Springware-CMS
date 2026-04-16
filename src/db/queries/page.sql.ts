@@ -80,13 +80,15 @@ export const PAGE_UPDATE = `
     AND USE_YN = 'Y'
 `;
 
-/** 승인 요청 — APPROVE_STATE를 PENDING으로, 결재자 지정, 요청 시각 기록 */
+/** 승인 요청 — APPROVE_STATE를 PENDING으로, 결재자/노출 기간 지정, 요청 시각 기록 */
 export const PAGE_REQUEST_APPROVAL = `
   UPDATE SPW_CMS_PAGE
   SET APPROVE_STATE = 'PENDING',
       APPROVER_ID   = :approverId,
       APPROVER_NAME = :approverName,
-      CONFIRM_DTIME = SYSTIMESTAMP
+      CONFIRM_DTIME = SYSTIMESTAMP,
+      BEGINNING_DATE = TO_DATE(:beginningDate, 'YYYY-MM-DD'),
+      EXPIRED_DATE  = TO_DATE(:expiredDate, 'YYYY-MM-DD')
   WHERE PAGE_ID     = :pageId
     AND APPROVE_STATE IN ('WORK', 'REJECTED', 'APPROVED')
 `;

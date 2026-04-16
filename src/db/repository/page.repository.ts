@@ -225,10 +225,16 @@ export async function updatePage(input: {
     });
 }
 
-/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자만 지정 */
-export async function requestApproval(pageId: string, approverId: string, approverName: string): Promise<void> {
+/** 승인 요청 — APPROVE_STATE를 PENDING으로 변경, 결재자와 노출 기간 지정 */
+export async function requestApproval(
+    pageId: string,
+    approverId: string,
+    approverName: string,
+    beginningDate: string,
+    expiredDate: string,
+): Promise<void> {
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName });
+        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName, beginningDate, expiredDate });
     });
 }
 

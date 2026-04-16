@@ -27,11 +27,25 @@ const VIEW_MODE_ICON: Record<string, string> = {
 interface ApprovalRequestModalProps {
     page: DashboardPageCard;
     onClose: () => void;
-    onSubmit: (approverId: string, approverName: string) => Promise<void>;
+    onSubmit: (approverId: string, approverName: string, beginningDate: string, expiredDate: string) => Promise<void>;
+}
+
+function todayValue(): string {
+    return new Date().toLocaleDateString('en-CA');
+}
+
+function maxDate(left: string, right: string): string {
+    if (!left) return right;
+    if (!right) return left;
+    return left > right ? left : right;
 }
 
 export default function ApprovalRequestModal({ page, onClose, onSubmit }: ApprovalRequestModalProps) {
     const [approverId, setApproverId] = useState('');
+    const today = todayValue();
+    const defaultBeginningDate = page.beginningDate || today;
+    const [beginningDate, setBeginningDate] = useState(defaultBeginningDate);
+    const [expiredDate, setExpiredDate] = useState(page.expiredDate || '');
     const [submitting, setSubmitting] = useState(false);
     const [approverList, setApproverList] = useState<Approver[]>([]);
     const [loading, setLoading] = useState(true);
@@ -56,13 +70,22 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
     }, []);
 
     const selectedApprover = approverList.find((u) => u.userId === approverId);
-    const canSubmit = Boolean(selectedApprover) && !submitting && !loading;
+    const invalidDateRange = Boolean(beginningDate && expiredDate && expiredDate < beginningDate);
+    const canSubmit =
+        Boolean(selectedApprover) &&
+        Boolean(beginningDate) &&
+        Boolean(expiredDate) &&
+        !invalidDateRange &&
+        !submitting &&
+        !loading;
+    const beginningMin = page.beginningDate && page.beginningDate < today ? page.beginningDate : today;
+    const expiredMin = maxDate(beginningDate, beginningMin);
 
     async function handleSubmit() {
         if (!selectedApprover || !canSubmit) return;
         setSubmitting(true);
         try {
-            await onSubmit(selectedApprover.userId, selectedApprover.userName);
+            await onSubmit(selectedApprover.userId, selectedApprover.userName, beginningDate, expiredDate);
         } finally {
             setSubmitting(false);
         }
@@ -107,6 +130,41 @@ export default function ApprovalRequestModal({ page, onClose, onSubmit }: Approv
                 </select>
                 {!loading && approverList.length === 0 && (
                     <p className="mt-2 text-xs text-[#dc2626]">승인 요청 대상 목록을 불러올 수 없습니다.</p>
+                )}
+            </div>
+
+            <div className="px-7 pb-4">
+                <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
+                    노출 시작일 <span className="text-[#dc2626]">*</span>
+                </label>
+                <input
+                    type="date"
+                    value={beginningDate}
+                    min={beginningMin}
+                    onChange={(e) => {
+                        const nextBeginningDate = e.target.value;
+                        setBeginningDate(nextBeginningDate);
+                        if (expiredDate && expiredDate < nextBeginningDate) {
+                            setExpiredDate(nextBeginningDate);
+                        }
+                    }}
+                    className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none bg-white text-[#111827]"
+                />
+            </div>
+
+            <div className="px-7 pb-6">
+                <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
+                    노출 종료일 <span className="text-[#dc2626]">*</span>
+                </label>
+                <input
+                    type="date"
+                    value={expiredDate}
+                    min={expiredMin}
+                    onChange={(e) => setExpiredDate(e.target.value)}
+                    className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm outline-none bg-white text-[#111827]"
+                />
+                {invalidDateRange && (
+                    <p className="mt-2 text-xs text-[#dc2626]">노출 종료일은 시작일보다 빠를 수 없습니다.</p>
                 )}
             </div>
 
