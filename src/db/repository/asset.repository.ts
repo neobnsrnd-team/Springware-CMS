@@ -38,6 +38,7 @@ export async function getAssetById(assetId: string): Promise<CmsAsset | null> {
 /** 에셋 목록 조회 (페이지네이션) */
 export async function getAssetList(options?: {
     businessCategory?: string;
+    assetState?: AssetState;
     page?: number;
     pageSize?: number;
 }): Promise<{ list: CmsAsset[]; totalCount: number }> {
@@ -53,6 +54,7 @@ export async function getAssetList(options?: {
                 ASSET_SELECT_LIST,
                 {
                     businessCategory: options?.businessCategory ?? null,
+                    assetState: options?.assetState ?? null,
                     startRow,
                     endRow,
                 },
@@ -60,7 +62,10 @@ export async function getAssetList(options?: {
             ),
             conn.execute<{ TOTAL_COUNT: number }>(
                 ASSET_COUNT,
-                { businessCategory: options?.businessCategory ?? null },
+                {
+                    businessCategory: options?.businessCategory ?? null,
+                    assetState: options?.assetState ?? null,
+                },
                 OBJ,
             ),
         ]);
