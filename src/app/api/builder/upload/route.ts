@@ -21,6 +21,12 @@ export async function POST(req: NextRequest) {
         return contentBuilderErrorResponse('File is required.');
     }
 
+    // Spider Admin 연동용 선택 파라미터 — 없으면 현재 사용자·기본값 사용
+    const bodyUserId = formData.get('userId')?.toString() || null;
+    const bodyUserName = formData.get('userName')?.toString() || null;
+    const businessCategory = formData.get('businessCategory')?.toString() || null;
+    const assetDesc = formData.get('assetDesc')?.toString() || null;
+
     const buffer = Buffer.from(await file.arrayBuffer());
     const assetId = crypto.randomUUID();
     const assetName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -30,7 +36,8 @@ export async function POST(req: NextRequest) {
         if (!canWriteCms(currentUser)) {
             return contentBuilderErrorResponse('Permission denied.');
         }
-        const { userId, userName } = currentUser;
+        const userId = bodyUserId ?? currentUser.userId;
+        const userName = bodyUserName ?? currentUser.userName;
 
         // 파일 시스템에 저장
         const filename = `${assetId}_${assetName}`;
@@ -43,10 +50,12 @@ export async function POST(req: NextRequest) {
             await createAsset({
                 assetId,
                 assetName,
+                businessCategory: businessCategory ?? undefined,
                 mimeType: file.type || 'application/octet-stream',
                 fileSize: buffer.length,
                 assetPath: filepath,
                 assetUrl,
+                assetDesc: assetDesc ?? undefined,
                 createUserId: userId,
                 createUserName: userName,
             });
@@ -56,7 +65,7 @@ export async function POST(req: NextRequest) {
             throw dbErr;
         }
 
-        return successResponse({ url: assetUrl }, 201);
+        return successResponse({ url: assetUrl, assetId }, 201);
     } catch (err: unknown) {
         console.error('File upload failed:', err);
         return contentBuilderErrorResponse(getErrorMessage(err));
