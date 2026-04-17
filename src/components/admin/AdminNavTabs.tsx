@@ -4,9 +4,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+const ADMIN_BASE_URL = process.env.NEXT_PUBLIC_SPIDER_ADMIN_BASE_URL ?? process.env.NEXT_PUBLIC_JAVA_API_BASE_URL ?? '';
+
+function adminHref(path: string): string {
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return ADMIN_BASE_URL ? `${ADMIN_BASE_URL.replace(/\/$/, '')}${normalizedPath}` : normalizedPath;
+}
+
 const TABS = [
-    { label: '승인 관리', href: '/approve' },
-    { label: '콘텐츠 최적화', href: '/ab' },
+    { label: '승인 관리', href: adminHref('/cms-admin/approvals'), activePath: '/cms-admin/approvals' },
+    { label: '콘텐츠 최적화', href: adminHref('/cms-admin/ab-tests'), activePath: '/cms-admin/ab-tests' },
 ];
 
 export default function AdminNavTabs() {
@@ -15,7 +22,7 @@ export default function AdminNavTabs() {
     return (
         <div className="flex gap-1">
             {TABS.map((tab) => {
-                const isActive = pathname === tab.href;
+                const isActive = pathname === tab.activePath;
                 return (
                     <Link
                         key={tab.href}

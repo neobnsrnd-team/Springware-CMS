@@ -91,12 +91,13 @@ export function canWriteCms(user: Pick<CurrentUser, 'authorities'>): boolean {
 }
 
 export const CMS_ROLE = {
-    ADMIN: 'cms_admin',
+    SPIDER_ADMIN: 'ADMIN',
+    CMS_ADMIN: 'cms_admin',
     USER: 'cms_user',
 } as const;
 
 export function canAdminScreen(user: Pick<CurrentUser, 'roleId'>): boolean {
-    return user.roleId === CMS_ROLE.ADMIN;
+    return user.roleId === CMS_ROLE.SPIDER_ADMIN || user.roleId === CMS_ROLE.CMS_ADMIN;
 }
 
 export function getDefaultCmsPath(user: Pick<CurrentUser, 'roleId'>): '/approve' | '/dashboard' {
