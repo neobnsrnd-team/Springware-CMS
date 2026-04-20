@@ -4,16 +4,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+import { adminPath } from '@/lib/cms-admin-boundary';
 
-const basePath = process.env.NEXT_PUBLIC_CMS_BASE_PATH || '/cms';
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     if (process.env.AUTH_BYPASS !== 'true') {
         redirect('/not-authorized');
     }
 
-    const response = NextResponse.redirect(new URL(`${basePath}/approve`, req.url));
+    const response = NextResponse.redirect(new URL(adminPath('/cms-admin/approvals'), req.url));
     response.cookies.set('cms_bypass_role', 'cms_admin', { path: '/' });
     return response;
 }
