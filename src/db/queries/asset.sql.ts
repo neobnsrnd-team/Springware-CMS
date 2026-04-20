@@ -74,6 +74,8 @@ export const ASSET_UPDATE_PATH_URL = `
   UPDATE SPW_CMS_ASSET
   SET ASSET_PATH = :assetPath,
       ASSET_URL = :assetUrl,
+      LAST_MODIFIER_ID = :lastModifierId,
+      LAST_MODIFIER_NAME = :lastModifierName,
       LAST_MODIFIED_DTIME = SYSTIMESTAMP
   WHERE ASSET_ID = :assetId
     AND USE_YN = 'Y'

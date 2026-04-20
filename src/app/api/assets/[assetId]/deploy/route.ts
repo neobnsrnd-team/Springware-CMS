@@ -55,12 +55,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ass
         const deployedPath = join(deployedImgDir, filename);
         const deployedUrl = `${DEPLOYED_BASE_URL}/${filename}`;
 
+        // 멱등성 — 이미 배포된 경로면 조기 반환 (중복 호출 시 unlink 로 배포 파일 삭제되는 사고 방지)
+        if (asset.ASSET_PATH === deployedPath) {
+            return successResponse({ url: deployedUrl });
+        }
+
         // 대상 디렉토리 생성 + 파일 복사
         await mkdir(deployedImgDir, { recursive: true });
         await copyFile(asset.ASSET_PATH, deployedPath);
 
         // DB 경로·URL 업데이트 (복사 성공 후)
-        await updateAssetPathUrl(assetId, deployedPath, deployedUrl);
+        await updateAssetPathUrl(assetId, deployedPath, deployedUrl, currentUser.userId, currentUser.userName);
 
         // 원본 파일 삭제 (실패해도 복사는 성공이므로 경고만)
         await unlink(asset.ASSET_PATH).catch((err) => {

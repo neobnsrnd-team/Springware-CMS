@@ -128,9 +128,21 @@ export async function updateAssetState(
 }
 
 /** 에셋 파일 경로·URL 업데이트 (승인 후 파일 이동 시 사용) */
-export async function updateAssetPathUrl(assetId: string, assetPath: string, assetUrl: string): Promise<void> {
+export async function updateAssetPathUrl(
+    assetId: string,
+    assetPath: string,
+    assetUrl: string,
+    lastModifierId: string,
+    lastModifierName: string,
+): Promise<void> {
     await withTransaction(async (conn) => {
-        await conn.execute(ASSET_UPDATE_PATH_URL, { assetId, assetPath, assetUrl });
+        await conn.execute(ASSET_UPDATE_PATH_URL, {
+            assetId,
+            assetPath,
+            assetUrl,
+            lastModifierId,
+            lastModifierName,
+        });
     });
 }
 
