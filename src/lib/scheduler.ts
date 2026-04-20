@@ -1,15 +1,12 @@
 // src/lib/scheduler.ts
 // 만료 페이지 배치 처리 — 내장 스케줄러와 HTTP 엔드포인트가 공유하는 비즈니스 로직
+//
+// ※ 주의: 이 파일의 최상위 import는 webpack 정적 추적 대상이 됩니다.
+//    instrumentation.ts에서 dynamic import되므로, Node.js 전용 모듈(fs, path, oracledb 등)은
+//    반드시 함수 내부에서 dynamic import하여 webpack 번들 포함을 방지합니다.
 
-import fs from 'fs/promises';
-import path from 'path';
-
-import { getExpiredPages, expirePage, getLatestHistory } from '@/db/repository/page.repository';
-import { getServerList, upsertFileSend } from '@/db/repository/file-send.repository';
 import { getErrorMessage } from '@/lib/api-response';
 import { sendToServer } from '@/lib/deploy-utils';
-
-const EXPIRED_HTML_PATH = path.join(process.cwd(), 'public', 'system', 'page-expired.html');
 
 // 중복 초기화 방지 플래그
 let schedulerInitialized = false;
@@ -21,6 +18,14 @@ export interface ExpireJobResult {
 
 /** 만료 안내 페이지를 활성 운영 서버 전체에 배포 */
 async function deployExpiredPage(pageId: string): Promise<void> {
+    // Node.js 전용 모듈 — 함수 내부 dynamic import로 webpack 정적 추적 차단
+    const { default: fs } = await import('fs/promises');
+    const { default: path } = await import('path');
+    const { getServerList, upsertFileSend } = await import('@/db/repository/file-send.repository');
+    const { getLatestHistory } = await import('@/db/repository/page.repository');
+
+    const EXPIRED_HTML_PATH = path.join(process.cwd(), 'public', 'system', 'page-expired.html');
+
     const servers = await getServerList('Y');
     if (servers.length === 0) return;
 
@@ -51,6 +56,9 @@ async function deployExpiredPage(pageId: string): Promise<void> {
 
 /** 만료 페이지 일괄 처리 — route.ts와 내장 스케줄러가 공유 */
 export async function runExpireJob(): Promise<ExpireJobResult> {
+    // Node.js 전용 모듈 — 함수 내부 dynamic import로 webpack 정적 추적 차단
+    const { getExpiredPages, expirePage } = await import('@/db/repository/page.repository');
+
     console.log('[만료 스케줄러] 실행 시작');
 
     const pages = await getExpiredPages();
@@ -62,7 +70,7 @@ export async function runExpireJob(): Promise<ExpireJobResult> {
     const failed: Array<{ pageId: string; error: string }> = [];
     let processed = 0;
 
-    // 순차 처리 — DB 커넥션 풀 고갈 방지 (페이지 수가 많아도 안전)
+    // 순차 처리 — DB 커넥션 풀 고갈 방지
     for (const page of pages) {
         try {
             // a. 운영 서버 배포 먼저 — 배포 실패 시 DB 업데이트 건너뜀
