@@ -14,6 +14,7 @@ async function savePage(
     pageName?: string,
     viewMode?: string,
     thumbnail?: string,
+    templateId?: string,
 ): Promise<void> {
     const { userId, userName, authorities } = await getCurrentUser();
     if (!canWriteCms({ authorities })) {
@@ -49,6 +50,7 @@ async function savePage(
             thumbnail,
             createUserId: userId,
             createUserName: userName,
+            templateId,
         });
     }
 }
@@ -56,7 +58,7 @@ async function savePage(
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { html, pageName, viewMode, thumbnail } = body;
+        const { html, pageName, viewMode, thumbnail, templateId } = body;
 
         // bank 미전달 또는 유효하지 않으면 서버에서 UUID 생성 (신규 페이지)
         const bank = isValidBankId(body.bank) ? body.bank : crypto.randomUUID();
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
             typeof pageName === 'string' ? pageName : undefined,
             typeof viewMode === 'string' ? viewMode : undefined,
             typeof thumbnail === 'string' ? thumbnail : undefined,
+            typeof templateId === 'string' && templateId !== 'blank' ? templateId : undefined,
         );
 
         return successResponse({ pageId: bank });

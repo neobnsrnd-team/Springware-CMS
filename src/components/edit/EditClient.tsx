@@ -176,12 +176,39 @@ const PANEL_WIDTH_OPEN = 264;
 
 // ── 뷰 모드 ──────────────────────────────────────────────────────────────
 type ViewMode = 'mobile' | 'web' | 'responsive';
+type PageTemplateId = 'blank';
 
 const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon: string }> = {
     mobile: { label: '모바일', maxWidth: '390px', icon: '📱' },
     web: { label: '웹', maxWidth: '1280px', icon: '🖥️' },
     responsive: { label: '반응형', maxWidth: '100%', icon: '🔄' },
 };
+
+const PAGE_TEMPLATE_CONFIG: Record<PageTemplateId, { label: string; description: string }> = {
+    blank: {
+        label: '빈 페이지',
+        description: '아무 컴포넌트도 없는 빈 화면에서 시작합니다.',
+    },
+};
+
+const PAGE_TEMPLATE_OPTIONS = Object.entries(PAGE_TEMPLATE_CONFIG).map(([id, template]) => ({
+    id: id as PageTemplateId,
+    ...template,
+}));
+
+function roundMs(value: number) {
+    return Math.round(value * 10) / 10;
+}
+
+function logEditPerf(label: string, metrics: Record<string, unknown>) {
+    console.warn(`[cms/edit perf] ${label}`, metrics);
+}
+
+function normalizeViewMode(value: unknown): ViewMode {
+    if (value === 'web' || value === 'PC') return 'web';
+    if (value === 'responsive') return 'responsive';
+    return 'mobile';
+}
 
 /** hex 색상(#RRGGBB)을 "R,G,B" 문자열로 변환 — rgba() 치환용 */
 function hexToRgbValues(hex: string): string {
@@ -257,9 +284,13 @@ export default function EditClient({
 
     // content-plugins.js 기본 블록 (우측 패널 "기본 블록" 탭에서 사용)
     const [basicBlocks, setBasicBlocks] = useState<BasicBlock[]>([]);
+    const [basicBlocksLoading, setBasicBlocksLoading] = useState(true);
+    const [basicBlocksError, setBasicBlocksError] = useState<string | null>(null);
 
     // 금융 컴포넌트 (DB 또는 파일에서 로드)
     const [financeComponents, setFinanceComponents] = useState<FinanceComponent[]>([]);
+    const [financeComponentsLoading, setFinanceComponentsLoading] = useState(true);
+    const [financeComponentsError, setFinanceComponentsError] = useState<string | null>(null);
     const financeComponentsMap = useMemo(
         () =>
             financeComponents.reduce(
@@ -288,6 +319,8 @@ export default function EditClient({
     const [newTabName, setNewTabName] = useState('');
     // 새 탭 생성 시 선택할 뷰 모드
     const [newTabViewMode, setNewTabViewMode] = useState<ViewMode>('mobile');
+    const [newTabTemplateId, setNewTabTemplateId] = useState<PageTemplateId>('blank');
+    const [newTabTemplateOpen, setNewTabTemplateOpen] = useState(true);
 
     // product-menu 아이콘 편집 모달
     const [productMenuBlock, setProductMenuBlock] = useState<HTMLElement | null>(null);
@@ -325,7 +358,7 @@ export default function EditClient({
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
     const currentTab = tabs.find((t) => t.id === bank);
-    const viewMode: ViewMode = currentTab?.viewMode ?? 'mobile';
+    const viewMode: ViewMode = normalizeViewMode(currentTab?.viewMode);
 
     // ── 퀵 메뉴 아이콘 보호 패치 ────────────────────────────────────────
     // .pm-icon-wrap에 contenteditable="false"가 없으면 동적 주입
@@ -343,6 +376,7 @@ export default function EditClient({
     const patchMaxChars = useCallback(() => {}, []);
 
     useEffect(() => {
+        const editorBootStart = performance.now();
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
         // reinitialize(): Runtime이 data-cb-type 플러그인 DOM을 재마운트
         // applyBehavior(): ContentBuilder가 모든 row에 편집 이벤트 핸들러 재연결
@@ -377,6 +411,7 @@ export default function EditClient({
         };
 
         // Create ContentBuilder instance
+        const builderInitStart = performance.now();
         builderRef.current = new ContentBuilder({
             container: '.container',
             previewURL: 'preview-with-plugins.html',
@@ -475,6 +510,7 @@ export default function EditClient({
             onSnippetAdd: debouncedReinit,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder 생성자 옵션 타입이 불완전하여 불가피하게 사용
         } as any);
+        const builderInitMs = roundMs(performance.now() - builderInitStart);
 
         // ContentBuilder 기본 피커는 사용하지 않습니다.
         // 기본 블록은 아래 별도 useEffect에서 로드하여 우측 패널에 표시합니다.
@@ -483,6 +519,7 @@ export default function EditClient({
         const basePath = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '');
 
         // Initialize runtime BEFORE loading content
+        const runtimeInitStart = performance.now();
         try {
             runtimeRef.current = new ContentBuilderRuntime({
                 // Registers available plugins (not yet loaded).
@@ -619,6 +656,12 @@ export default function EditClient({
         } catch (err: unknown) {
             console.error('런타임 초기화 오류:', err);
         }
+        const runtimeInitMs = roundMs(performance.now() - runtimeInitStart);
+        logEditPerf('editor-init', {
+            builderInitMs,
+            runtimeInitMs,
+            initTotalMs: roundMs(performance.now() - editorBootStart),
+        });
 
         // ── RTE 툴바 위치 보정 ────────────────────────────────────────────
         // ContentBuilder JS가 positionToolbar()에서 style.top을 반복 갱신하므로
@@ -1769,14 +1812,23 @@ export default function EditClient({
 
         // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
         const loadController = new AbortController();
+        const pageLoadStart = performance.now();
         fetch(nextApi('/api/builder/load'), {
             method: 'POST',
             body: JSON.stringify({ bank }),
             headers: { 'Content-Type': 'application/json' },
             signal: loadController.signal,
         })
-            .then((response) => response.json())
-            .then((response) => {
+            .then(async (response) => {
+                const jsonStart = performance.now();
+                const json = await response.json();
+                return {
+                    json,
+                    networkMs: roundMs(jsonStart - pageLoadStart),
+                    jsonMs: roundMs(performance.now() - jsonStart),
+                };
+            })
+            .then(({ json: response, networkMs, jsonMs }) => {
                 if (loadController.signal.aborted) return;
                 if (response.fileNotFound) {
                     alert(
@@ -1784,7 +1836,12 @@ export default function EditClient({
                     );
                 }
                 if (response.html && builderRef.current) {
+                    const loadHtmlStart = performance.now();
                     builderRef.current.loadHtml(response.html);
+                    logEditPerf('page-loadHtml', {
+                        loadHtmlMs: roundMs(performance.now() - loadHtmlStart),
+                        htmlBytes: response._timing?.htmlBytes,
+                    });
                 }
                 // 로드 응답에서 탭 정보 등록 — 최근 접근 순(왼쪽), 최대 10개
                 if (response.pageName) {
@@ -1794,7 +1851,7 @@ export default function EditClient({
                             {
                                 id: bank,
                                 label: response.pageName,
-                                viewMode: (response.viewMode as ViewMode) ?? 'mobile',
+                                viewMode: normalizeViewMode(response.viewMode),
                             },
                             ...filtered,
                         ];
@@ -1803,6 +1860,7 @@ export default function EditClient({
                 }
                 // 플러그인 CSS·JS 로드 및 mount() 실행 + ContentBuilder 핸들러 재연결
                 setTimeout(async () => {
+                    const reinitStart = performance.now();
                     await runtimeRef.current?.reinitialize();
                     builderRef.current?.applyBehavior();
                     patchPmIconWrap();
@@ -1810,7 +1868,16 @@ export default function EditClient({
                     setContainerOpacity(1);
                     // 초기 블록 목록 파싱
                     const html = builderRef.current?.html() ?? '';
-                    setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
+                    const blocks = parseBuilderBlocks(html, financeComponentsMapRef.current);
+                    setCanvasBlocks(blocks);
+                    logEditPerf('page-ready', {
+                        totalMs: roundMs(performance.now() - pageLoadStart),
+                        networkMs,
+                        jsonMs,
+                        reinitializeMs: roundMs(performance.now() - reinitStart),
+                        server: response._timing,
+                        blockCount: blocks.length,
+                    });
                 }, 300);
             })
             .catch((error) => {
@@ -1880,7 +1947,12 @@ export default function EditClient({
             const stored = sessionStorage.getItem(SESSION_TABS_KEY);
             if (stored) {
                 const parsed: TabData[] = JSON.parse(stored);
-                setTabs(parsed);
+                setTabs(
+                    parsed.map((tab) => ({
+                        ...tab,
+                        viewMode: normalizeViewMode(tab.viewMode),
+                    })),
+                );
             }
         } catch (err: unknown) {
             console.warn('탭 목록 세션 로드 실패:', err);
@@ -1902,10 +1974,22 @@ export default function EditClient({
     // ── 기본 블록 DB 로드 (viewMode 변경 시 재조회) ─────────────────────
     useEffect(() => {
         let cancelled = false;
+        const componentLoadStart = performance.now();
+        setBasicBlocksLoading(true);
+        setBasicBlocksError(null);
         fetch(nextApi(`/api/components?type=basic&viewMode=${viewMode}`))
-            .then((res) => res.json())
-            .then((data) => {
+            .then(async (res) => {
+                const jsonStart = performance.now();
+                const data = await res.json();
+                return {
+                    data,
+                    networkMs: roundMs(jsonStart - componentLoadStart),
+                    jsonMs: roundMs(performance.now() - jsonStart),
+                };
+            })
+            .then(({ data, networkMs, jsonMs }) => {
                 if (!cancelled && data.ok) {
+                    const mapStart = performance.now();
                     const assetPrefix = nextApi('/assets');
                     const blocks: BasicBlock[] = data.components.map(
                         (c: { id: string; label?: string; preview?: string; html: string; viewMode: string }) => ({
@@ -1921,9 +2005,27 @@ export default function EditClient({
                         }),
                     );
                     setBasicBlocks(blocks);
+                    logEditPerf('components-basic', {
+                        totalMs: roundMs(performance.now() - componentLoadStart),
+                        networkMs,
+                        jsonMs,
+                        mapMs: roundMs(performance.now() - mapStart),
+                        count: blocks.length,
+                        server: data._timing,
+                    });
+                    setBasicBlocksLoading(false);
+                } else if (!cancelled) {
+                    setBasicBlocksError(data.error ?? '기본 블록을 불러오지 못했습니다.');
+                    setBasicBlocksLoading(false);
                 }
             })
-            .catch((err) => console.error('기본 블록 로드 오류:', err));
+            .catch((err) => {
+                console.error('기본 블록 로드 오류:', err);
+                if (!cancelled) {
+                    setBasicBlocksError('기본 블록을 불러오지 못했습니다.');
+                    setBasicBlocksLoading(false);
+                }
+            });
         return () => {
             cancelled = true;
         };
@@ -1932,12 +2034,42 @@ export default function EditClient({
     // ── 금융 컴포넌트 API 로드 (viewMode 변경 시 재요청) ────────────────
     useEffect(() => {
         let cancelled = false;
+        const componentLoadStart = performance.now();
+        setFinanceComponentsLoading(true);
+        setFinanceComponentsError(null);
         fetch(nextApi(`/api/components?type=finance&viewMode=${viewMode}`))
-            .then((res) => res.json())
-            .then((data) => {
-                if (!cancelled && data.ok) setFinanceComponents(data.components);
+            .then(async (res) => {
+                const jsonStart = performance.now();
+                const data = await res.json();
+                return {
+                    data,
+                    networkMs: roundMs(jsonStart - componentLoadStart),
+                    jsonMs: roundMs(performance.now() - jsonStart),
+                };
             })
-            .catch((err) => console.error('금융 컴포넌트 로드 오류:', err));
+            .then(({ data, networkMs, jsonMs }) => {
+                if (!cancelled && data.ok) {
+                    setFinanceComponents(data.components);
+                    logEditPerf('components-finance', {
+                        totalMs: roundMs(performance.now() - componentLoadStart),
+                        networkMs,
+                        jsonMs,
+                        count: data.components.length,
+                        server: data._timing,
+                    });
+                    setFinanceComponentsLoading(false);
+                } else if (!cancelled) {
+                    setFinanceComponentsError(data.error ?? '금융 컴포넌트를 불러오지 못했습니다.');
+                    setFinanceComponentsLoading(false);
+                }
+            })
+            .catch((err) => {
+                console.error('금융 컴포넌트 로드 오류:', err);
+                if (!cancelled) {
+                    setFinanceComponentsError('금융 컴포넌트를 불러오지 못했습니다.');
+                    setFinanceComponentsLoading(false);
+                }
+            });
         return () => {
             cancelled = true;
         };
@@ -2182,42 +2314,42 @@ export default function EditClient({
     async function handleAddTab() {
         const label = newTabName.trim();
         if (!label) return;
-        const id = `${userId}-${Date.now()}`;
+        if (!canWrite) return;
+        const id = crypto.randomUUID();
         const selectedViewMode = newTabViewMode;
+        const selectedTemplateId = newTabTemplateId;
 
         setShowAddTab(false);
         setNewTabName('');
         setNewTabViewMode('mobile');
+        setNewTabTemplateId('blank');
+        setNewTabTemplateOpen(true);
 
-        // 새 캔버스 기본 콘텐츠: selectedViewMode에 맞는 app-header 컴포넌트
-        // financeComponents는 현재 탭 viewMode 기준이므로 직접 fetch해서 정확한 variant 사용
-        let defaultHtml = '';
-        try {
-            const res = await fetch(nextApi(`/api/components?type=finance&viewMode=${selectedViewMode}`));
-            const data = await res.json();
-            const comps: FinanceComponent[] = data.ok ? data.components : financeComponents;
-            const headerComp =
-                comps.find((c) => c.id === 'app-header') ?? financeComponents.find((c) => c.id === 'app-header');
-            // spw-finance-col: handleInsertComponent와 동일하게 padding 제거 + 전체 너비 보장
-            if (headerComp) {
-                defaultHtml = `<div class="row"><div class="column spw-finance-col">\n${headerComp.html}\n</div></div>`;
-            }
-        } catch {
-            const headerComp = financeComponents.find((c) => c.id === 'app-header');
-            if (headerComp) {
-                defaultHtml = `<div class="row"><div class="column spw-finance-col">\n${headerComp.html}\n</div></div>`;
-            }
-        }
+        const defaultHtml = selectedTemplateId === 'blank' ? '' : '';
 
         // DB에 페이지 생성 (pageName + viewMode 포함) → 이동
-        if (!canWrite) return;
-        fetch(nextApi('/api/builder/save'), {
-            method: 'POST',
-            body: JSON.stringify({ html: defaultHtml, bank: id, pageName: label, viewMode: selectedViewMode }),
-            headers: { 'Content-Type': 'application/json' },
-        }).finally(() => {
-            window.location.href = nextApi(`/edit?bank=${id}`);
-        });
+        try {
+            const res = await fetch(nextApi('/api/builder/save'), {
+                method: 'POST',
+                body: JSON.stringify({
+                    html: defaultHtml,
+                    bank: id,
+                    pageName: label,
+                    viewMode: selectedViewMode,
+                    templateId: selectedTemplateId,
+                }),
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok || !data.pageId) {
+                alert(data.error || '페이지 생성에 실패했습니다.');
+                return;
+            }
+            window.location.href = nextApi(`/edit?bank=${data.pageId}`);
+        } catch (err: unknown) {
+            console.error('페이지 생성 실패:', err);
+            alert('페이지 생성 중 오류가 발생했습니다.');
+        }
     }
 
     // ── 탭 닫기 ──────────────────────────────────────────────────────────
@@ -2605,6 +2737,10 @@ export default function EditClient({
                 viewMode={viewMode}
                 basicBlocks={basicBlocks}
                 financeComponents={financeComponents}
+                basicBlocksLoading={basicBlocksLoading}
+                financeComponentsLoading={financeComponentsLoading}
+                basicBlocksError={basicBlocksError}
+                financeComponentsError={financeComponentsError}
                 onDragStart={() => {
                     // ref는 즉시 갱신 (dragover 핸들러에서 동기 참조)
                     isDraggingRef.current = true;
@@ -2618,12 +2754,24 @@ export default function EditClient({
                     setDropLineY(null);
                 }}
                 onComponentUpdate={() => {
+                    setFinanceComponentsLoading(true);
+                    setFinanceComponentsError(null);
                     fetch(nextApi(`/api/components?type=finance&viewMode=${viewMode}`))
                         .then((res) => res.json())
                         .then((data) => {
-                            if (data.ok) setFinanceComponents(data.components);
+                            if (data.ok) {
+                                setFinanceComponents(data.components);
+                                setFinanceComponentsLoading(false);
+                            } else {
+                                setFinanceComponentsError(data.error ?? '금융 컴포넌트를 불러오지 못했습니다.');
+                                setFinanceComponentsLoading(false);
+                            }
                         })
-                        .catch((err) => console.error('금융 컴포넌트 재로드 오류:', err));
+                        .catch((err) => {
+                            console.error('금융 컴포넌트 재로드 오류:', err);
+                            setFinanceComponentsError('금융 컴포넌트를 불러오지 못했습니다.');
+                            setFinanceComponentsLoading(false);
+                        });
                 }}
             />
 
@@ -2710,6 +2858,8 @@ export default function EditClient({
                         setShowAddTab(false);
                         setNewTabName('');
                         setNewTabViewMode('mobile');
+                        setNewTabTemplateId('blank');
+                        setNewTabTemplateOpen(true);
                     }}
                     style={{
                         position: 'fixed',
@@ -2759,6 +2909,8 @@ export default function EditClient({
                                     setShowAddTab(false);
                                     setNewTabName('');
                                     setNewTabViewMode('mobile');
+                                    setNewTabTemplateId('blank');
+                                    setNewTabTemplateOpen(true);
                                 }
                             }}
                             placeholder="예: 메인 페이지"
@@ -2841,6 +2993,118 @@ export default function EditClient({
                             레이아웃은 페이지 생성 후 변경할 수 없습니다.
                         </p>
 
+                        <div style={{ marginTop: '22px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setNewTabTemplateOpen((open) => !open)}
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '12px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    background: '#ffffff',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>템플릿 선택</span>
+                                <span
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        fontSize: '12px',
+                                        color: '#6b7280',
+                                    }}
+                                >
+                                    <span>{PAGE_TEMPLATE_CONFIG[newTabTemplateId].label}</span>
+                                    <span
+                                        style={{
+                                            transform: newTabTemplateOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                            transition: 'transform 0.15s',
+                                        }}
+                                    >
+                                        ▼
+                                    </span>
+                                </span>
+                            </button>
+
+                            {newTabTemplateOpen && (
+                                <div
+                                    style={{
+                                        marginTop: '8px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px',
+                                        maxHeight: '220px',
+                                        overflowY: 'auto',
+                                        paddingRight: '4px',
+                                    }}
+                                >
+                                    {PAGE_TEMPLATE_OPTIONS.map((template) => {
+                                        const selected = newTabTemplateId === template.id;
+                                        return (
+                                            <button
+                                                key={template.id}
+                                                type="button"
+                                                onClick={() => setNewTabTemplateId(template.id)}
+                                                style={{
+                                                    display: 'flex',
+                                                    gap: '10px',
+                                                    alignItems: 'flex-start',
+                                                    width: '100%',
+                                                    padding: '12px 14px',
+                                                    borderRadius: '8px',
+                                                    border: selected ? '2px solid #0046A4' : '1px solid #e5e7eb',
+                                                    background: selected ? '#f0f4ff' : '#ffffff',
+                                                    color: '#374151',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'left',
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        width: '16px',
+                                                        height: '16px',
+                                                        marginTop: '1px',
+                                                        borderRadius: '50%',
+                                                        border: selected ? '5px solid #0046A4' : '1px solid #d1d5db',
+                                                        background: '#ffffff',
+                                                        flexShrink: 0,
+                                                    }}
+                                                />
+                                                <span>
+                                                    <span
+                                                        style={{
+                                                            display: 'block',
+                                                            fontSize: '13px',
+                                                            fontWeight: 700,
+                                                            color: selected ? '#0046A4' : '#111827',
+                                                        }}
+                                                    >
+                                                        {template.label}
+                                                    </span>
+                                                    <span
+                                                        style={{
+                                                            display: 'block',
+                                                            marginTop: '3px',
+                                                            fontSize: '11px',
+                                                            lineHeight: 1.4,
+                                                            color: '#6b7280',
+                                                        }}
+                                                    >
+                                                        {template.description}
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
                         {/* 하단 버튼 */}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
                             <button
@@ -2848,6 +3112,8 @@ export default function EditClient({
                                     setShowAddTab(false);
                                     setNewTabName('');
                                     setNewTabViewMode('mobile');
+                                    setNewTabTemplateId('blank');
+                                    setNewTabTemplateOpen(true);
                                 }}
                                 style={{ ...btnStyle, padding: '8px 20px' }}
                             >

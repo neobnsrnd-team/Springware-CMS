@@ -11,6 +11,10 @@ import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
 const VALID_TYPES = new Set<string>(['finance', 'basic']);
 const VALID_VIEW_MODES = new Set<string>(['mobile', 'web', 'responsive']);
 
+function durationMs(start: number) {
+    return Math.round((performance.now() - start) * 10) / 10;
+}
+
 /** DB 컴포넌트 → 프론트엔드 FinanceComponent 변환 */
 function toFinanceComponent(row: CmsComponentParsed): FinanceComponent | null {
     const d = row.DATA;
@@ -35,12 +39,16 @@ function toFinanceComponent(row: CmsComponentParsed): FinanceComponent | null {
 }
 
 export async function GET(req: NextRequest) {
+    const totalStart = performance.now();
     try {
+        const authStart = performance.now();
         const currentUser = await getCurrentUser();
+        const authMs = durationMs(authStart);
         if (!canReadCms(currentUser)) {
             return errorResponse('Permission denied.', 403);
         }
 
+        const parseStart = performance.now();
         const { searchParams } = req.nextUrl;
         const type = searchParams.get('type') ?? undefined;
         const mode = searchParams.get('viewMode') ?? undefined;
@@ -48,11 +56,35 @@ export async function GET(req: NextRequest) {
         // 입력 검증
         const componentType = type && VALID_TYPES.has(type) ? (type as ComponentType) : undefined;
         const viewMode = mode && VALID_VIEW_MODES.has(mode) ? (mode as ViewMode) : undefined;
+        const parseMs = durationMs(parseStart);
 
+        const queryStart = performance.now();
         const rows = await getComponentList({ componentType, viewMode });
+        const queryMs = durationMs(queryStart);
+        const transformStart = performance.now();
         const components = rows.map(toFinanceComponent).filter((c): c is FinanceComponent => c !== null);
+        const transformMs = durationMs(transformStart);
+        const totalMs = durationMs(totalStart);
 
-        return NextResponse.json({ ok: true, components });
+        return NextResponse.json(
+            {
+                ok: true,
+                components,
+                _timing: {
+                    totalMs,
+                    authMs,
+                    parseMs,
+                    queryMs,
+                    transformMs,
+                    count: components.length,
+                },
+            },
+            {
+                headers: {
+                    'Server-Timing': `auth;dur=${authMs}, parse;dur=${parseMs}, query;dur=${queryMs}, transform;dur=${transformMs}, total;dur=${totalMs}`,
+                },
+            },
+        );
     } catch (err: unknown) {
         console.error('컴포넌트 목록 조회 오류:', err);
         return errorResponse(getErrorMessage(err));
