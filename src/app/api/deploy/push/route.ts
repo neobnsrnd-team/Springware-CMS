@@ -18,6 +18,10 @@ import { sendToServer } from '@/lib/deploy-utils';
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
 const CMS_BASE_URL = process.env.CMS_BASE_URL || 'http://localhost:3000';
+// Next.js basePath('/cms') 포함 — public/ 정적 파일·API 라우트 URL 기준
+const CMS_PATH_PREFIX = process.env.NEXT_PUBLIC_CMS_BASE_PATH ?? '/cms';
+const BASE = `${CMS_BASE_URL}${CMS_PATH_PREFIX}`;
+
 const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
 
 /** 타이밍 공격 방지 토큰 비교 */
@@ -73,14 +77,14 @@ async function buildDeployHtml(fragment: string, pageId: string, pageName: strin
         throw new Error('ContentBuilder 런타임 CSS를 찾을 수 없습니다. public/runtime/ 디렉토리를 확인해주세요.');
     }
 
-    // 2. 에셋 경로 치환 — CMS 서버 절대 URL로 변환
+    // 2. 에셋 경로 치환 — CMS 서버 절대 URL로 변환 (basePath 포함)
     // 선행 슬래시 유무·역슬래시(Windows), 큰따옴표·작은따옴표 모두 처리
     const html = fragment
-        .replace(/src=(['"])\/?(assets|uploads)[\/\\]/g, `src=$1${CMS_BASE_URL}/$2/`)
-        .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${CMS_BASE_URL}/$2/`)
-        .replace(/src=(['"])\/api\/assets\//g, `src=$1${CMS_BASE_URL}/api/assets/`);
+        .replace(/src=(['"])\/?(assets|uploads)[\/\\]/g, `src=$1${BASE}/$2/`)
+        .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${BASE}/$2/`)
+        .replace(/src=(['"])\/api\/assets\//g, `src=$1${BASE}/api/assets/`);
 
-    // 3. 완전한 HTML 문서 조립
+    // 3. 완전한 HTML 문서 조립 — 스크립트 URL에 basePath 반영
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -94,12 +98,12 @@ async function buildDeployHtml(fragment: string, pageId: string, pageName: strin
 </head>
 <body class="is-container">
 ${html}
-    <script src="${CMS_BASE_URL}/runtime/contentbuilder-runtime.min.js"></script>
+    <script src="${BASE}/runtime/contentbuilder-runtime.min.js"></script>
     <script>
     // ContentBuilder 런타임 초기화 — 플러그인 동적 로드 + mount
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof ContentBuilderRuntime === 'undefined') return;
-        var base = '${CMS_BASE_URL}';
+        var base = '${BASE}';
         var pluginNames = [
             'logo-loop','click-counter','card-list','accordion','hero-animation',
             'animated-stats','timeline','before-after-slider','more-info','social-share',
@@ -126,7 +130,7 @@ ${html}
         });
     });
     </script>
-    <script src="${CMS_BASE_URL}/cms-tracker.js" data-page-id="${pageId}" data-cms-url="${CMS_BASE_URL}"></script>
+    <script src="${BASE}/cms-tracker.js" data-page-id="${pageId}" data-cms-url="${BASE}"></script>
 </body>
 </html>`;
 }
