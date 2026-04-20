@@ -69,6 +69,18 @@ export const ASSET_UPDATE_STATE = `
     AND USE_YN = 'Y'
 `;
 
+/** 에셋 파일 경로·URL 업데이트 (승인 후 파일 이동 시 사용) */
+export const ASSET_UPDATE_PATH_URL = `
+  UPDATE SPW_CMS_ASSET
+  SET ASSET_PATH = :assetPath,
+      ASSET_URL = :assetUrl,
+      LAST_MODIFIER_ID = :lastModifierId,
+      LAST_MODIFIER_NAME = :lastModifierName,
+      LAST_MODIFIED_DTIME = SYSTIMESTAMP
+  WHERE ASSET_ID = :assetId
+    AND USE_YN = 'Y'
+`;
+
 /** 에셋 논리 삭제 (APPROVED 상태 전용 — 페이지 참조 보존) */
 export const ASSET_DELETE = `
   UPDATE SPW_CMS_ASSET
