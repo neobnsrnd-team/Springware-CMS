@@ -13,6 +13,7 @@ import {
     ASSET_INSERT,
     ASSET_UPDATE_STATE,
     ASSET_DELETE,
+    ASSET_HARD_DELETE,
     ASSET_MAP_SELECT_BY_PAGE,
     ASSET_MAP_INSERT,
     ASSET_MAP_DELETE_BY_PAGE_VERSION,
@@ -124,7 +125,7 @@ export async function updateAssetState(
     });
 }
 
-/** 에셋 논리 삭제 */
+/** 에셋 논리 삭제 (APPROVED 상태용 — 페이지 참조 보존) */
 export async function deleteAsset(assetId: string, lastModifierId: string, lastModifierName: string): Promise<void> {
     await withTransaction(async (conn) => {
         await conn.execute(ASSET_DELETE, {
@@ -132,6 +133,13 @@ export async function deleteAsset(assetId: string, lastModifierId: string, lastM
             lastModifierId,
             lastModifierName,
         });
+    });
+}
+
+/** 에셋 물리 삭제 (WORK/PENDING/REJECTED 상태용 — DB row 완전 제거) */
+export async function hardDeleteAsset(assetId: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(ASSET_HARD_DELETE, { assetId });
     });
 }
 

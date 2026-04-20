@@ -69,12 +69,18 @@ export const ASSET_UPDATE_STATE = `
     AND USE_YN = 'Y'
 `;
 
-/** 에셋 논리 삭제 */
+/** 에셋 논리 삭제 (APPROVED 상태 전용 — 페이지 참조 보존) */
 export const ASSET_DELETE = `
   UPDATE SPW_CMS_ASSET
   SET USE_YN = 'N',
       LAST_MODIFIER_ID = :lastModifierId,
       LAST_MODIFIER_NAME = :lastModifierName
+  WHERE ASSET_ID = :assetId
+`;
+
+/** 에셋 물리 삭제 (WORK/PENDING/REJECTED 상태용) */
+export const ASSET_HARD_DELETE = `
+  DELETE FROM SPW_CMS_ASSET
   WHERE ASSET_ID = :assetId
 `;
 
