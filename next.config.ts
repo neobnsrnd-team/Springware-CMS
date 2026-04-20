@@ -18,17 +18,51 @@ const nextConfig: NextConfig = {
         return [{ source: '/api/batch/execute', destination: '/cms/api/batch/execute' }];
     },
     webpack(config, { nextRuntime }) {
-        // edge 런타임 빌드 시 Node.js 내장 모듈(fs, path 등) 번들 오류 방지
-        // instrumentation.ts → scheduler.ts → page.repository.ts 체인이 edge용으로 컴파일될 때
-        // fs/promises 등을 resolve하지 못하는 문제를 fallback: false 로 해결
-        // (실제 edge 실행은 register() 상단 NEXT_RUNTIME 가드로 차단)
+        // edge 런타임 빌드 시 Node.js 전용 모듈 번들 오류 방지
+        // instrumentation.ts → scheduler.ts → (repository 체인) 경로에서
+        // serverExternalPackages는 nodejs 런타임에만 적용되므로 edge용으로 별도 처리
         if (nextRuntime === 'edge') {
+            // Node.js 내장 모듈 — 빈 모듈(false)로 처리하여 resolve 오류 방지
             config.resolve.fallback = {
                 ...config.resolve.fallback,
-                'fs/promises': false,
                 fs: false,
+                'fs/promises': false,
                 path: false,
+                stream: false,
+                'stream/promises': false,
+                crypto: false,
+                os: false,
+                events: false,
+                util: false,
+                buffer: false,
+                net: false,
+                tls: false,
+                http: false,
+                https: false,
+                zlib: false,
+                assert: false,
+                url: false,
+                worker_threads: false,
             };
+
+            // Node.js 전용 npm 패키지 — commonjs external로 처리
+            // (실제 edge 실행은 instrumentation.ts register() 상단 NEXT_RUNTIME 가드로 차단)
+            const nodeOnlyPackages = new Set(['oracledb', 'node-cron']);
+            const existingExternals = config.externals;
+            config.externals = [
+                ...(Array.isArray(existingExternals)
+                    ? existingExternals
+                    : existingExternals
+                      ? [existingExternals]
+                      : []),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (data: { request?: string }, callback: (err?: Error | null, result?: string) => void) => {
+                    if (data.request && nodeOnlyPackages.has(data.request.split('/')[0])) {
+                        return callback(null, `commonjs ${data.request}`);
+                    }
+                    callback();
+                },
+            ];
         }
         return config;
     },
