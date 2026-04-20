@@ -33,6 +33,7 @@ services:
     volumes:
       # 호스트 바인드 마운트 — nginx 정적 서빙 공유용
       - /data/uploads:/app/public/uploads
+      - /data/deployed:/app/public/deployed   # 승인 이미지 복사 대상 + :3000 에디터 읽기용
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/cms/api/health || exit 1"]
       interval: 30s

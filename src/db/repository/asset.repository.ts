@@ -12,6 +12,7 @@ import {
     ASSET_COUNT,
     ASSET_INSERT,
     ASSET_UPDATE_STATE,
+    ASSET_UPDATE_PATH_URL,
     ASSET_DELETE,
     ASSET_HARD_DELETE,
     ASSET_MAP_SELECT_BY_PAGE,
@@ -123,6 +124,13 @@ export async function updateAssetState(
 ): Promise<void> {
     await withTransaction(async (conn) => {
         await conn.execute(ASSET_UPDATE_STATE, { assetId, assetState, lastModifierId, lastModifierName });
+    });
+}
+
+/** 에셋 파일 경로·URL 업데이트 (승인 후 파일 이동 시 사용) */
+export async function updateAssetPathUrl(assetId: string, assetPath: string, assetUrl: string): Promise<void> {
+    await withTransaction(async (conn) => {
+        await conn.execute(ASSET_UPDATE_PATH_URL, { assetId, assetPath, assetUrl });
     });
 }
 
