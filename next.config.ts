@@ -13,6 +13,19 @@ const nextConfig: NextConfig = {
     serverExternalPackages: ['oracledb', 'node-cron'],
     // Docker 배포용 standalone 빌드 — .next/standalone/server.js 생성
     output: 'standalone',
+    // instrumentation.ts가 edge 번들로 컴파일될 때 fs/promises 등 Node.js 내장 모듈 해석 실패 방지
+    webpack: (config, { isServer }) => {
+        if (!isServer) {
+            config.resolve.fallback = {
+                ...(config.resolve.fallback || {}),
+                fs: false,
+                'fs/promises': false,
+                path: false,
+                crypto: false,
+            };
+        }
+        return config;
+    },
 };
 
 export default nextConfig;
