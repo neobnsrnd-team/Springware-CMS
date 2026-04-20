@@ -21,16 +21,26 @@ export async function POST(req: NextRequest) {
         return contentBuilderErrorResponse('File is required.');
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const assetId = crypto.randomUUID();
-    const assetName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    // Spider Admin 연동용 선택 파라미터 — 없으면 현재 사용자·기본값 사용
+    const bodyUserId = formData.get('userId')?.toString() || null;
+    const bodyUserName = formData.get('userName')?.toString() || null;
+    const businessCategory = formData.get('businessCategory')?.toString() || null;
+    const assetDesc = formData.get('assetDesc')?.toString() || null;
 
     try {
+        // 권한 체크는 파일 바이트 로드 전에 수행 — 권한 없는 대용량 업로드 조기 차단
         const currentUser = await getCurrentUser();
         if (!canWriteCms(currentUser)) {
             return contentBuilderErrorResponse('Permission denied.');
         }
-        const { userId, userName } = currentUser;
+
+        // 외부 userId가 주어지면 userName도 외부 값 우선 사용 — 감사 로그 짝 일관성 유지
+        const userId = bodyUserId ?? currentUser.userId;
+        const userName = bodyUserId ? (bodyUserName ?? userId) : currentUser.userName;
+
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const assetId = crypto.randomUUID();
+        const assetName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
         // 파일 시스템에 저장
         const filename = `${assetId}_${assetName}`;
@@ -43,10 +53,12 @@ export async function POST(req: NextRequest) {
             await createAsset({
                 assetId,
                 assetName,
+                businessCategory: businessCategory ?? undefined,
                 mimeType: file.type || 'application/octet-stream',
                 fileSize: buffer.length,
                 assetPath: filepath,
                 assetUrl,
+                assetDesc: assetDesc ?? undefined,
                 createUserId: userId,
                 createUserName: userName,
             });
@@ -56,7 +68,7 @@ export async function POST(req: NextRequest) {
             throw dbErr;
         }
 
-        return successResponse({ url: assetUrl }, 201);
+        return successResponse({ url: assetUrl, assetId }, 201);
     } catch (err: unknown) {
         console.error('File upload failed:', err);
         return contentBuilderErrorResponse(getErrorMessage(err));
