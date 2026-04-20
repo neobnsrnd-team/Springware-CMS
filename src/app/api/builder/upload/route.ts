@@ -27,17 +27,20 @@ export async function POST(req: NextRequest) {
     const businessCategory = formData.get('businessCategory')?.toString() || null;
     const assetDesc = formData.get('assetDesc')?.toString() || null;
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const assetId = crypto.randomUUID();
-    const assetName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-
     try {
+        // 권한 체크는 파일 바이트 로드 전에 수행 — 권한 없는 대용량 업로드 조기 차단
         const currentUser = await getCurrentUser();
         if (!canWriteCms(currentUser)) {
             return contentBuilderErrorResponse('Permission denied.');
         }
+
+        // 외부 userId가 주어지면 userName도 외부 값 우선 사용 — 감사 로그 짝 일관성 유지
         const userId = bodyUserId ?? currentUser.userId;
-        const userName = bodyUserName ?? currentUser.userName;
+        const userName = bodyUserId ? (bodyUserName ?? userId) : currentUser.userName;
+
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const assetId = crypto.randomUUID();
+        const assetName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
         // 파일 시스템에 저장
         const filename = `${assetId}_${assetName}`;
