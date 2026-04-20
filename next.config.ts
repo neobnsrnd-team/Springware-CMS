@@ -17,6 +17,21 @@ const nextConfig: NextConfig = {
     async rewrites() {
         return [{ source: '/api/batch/execute', destination: '/cms/api/batch/execute' }];
     },
+    webpack(config, { nextRuntime }) {
+        // edge 런타임 빌드 시 Node.js 내장 모듈(fs, path 등) 번들 오류 방지
+        // instrumentation.ts → scheduler.ts → page.repository.ts 체인이 edge용으로 컴파일될 때
+        // fs/promises 등을 resolve하지 못하는 문제를 fallback: false 로 해결
+        // (실제 edge 실행은 register() 상단 NEXT_RUNTIME 가드로 차단)
+        if (nextRuntime === 'edge') {
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                'fs/promises': false,
+                fs: false,
+                path: false,
+            };
+        }
+        return config;
+    },
 };
 
 export default nextConfig;
