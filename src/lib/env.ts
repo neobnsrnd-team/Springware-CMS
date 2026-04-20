@@ -36,6 +36,10 @@ export const SERVER_MODE = optionalEnv('SERVER_MODE', 'cms');
 export const ASSET_UPLOAD_DIR = optionalEnv('ASSET_UPLOAD_DIR', 'public/uploads');
 export const ASSET_BASE_URL = optionalEnv('ASSET_BASE_URL', '/uploads');
 
+// ── 배포 저장소 (승인 완료 이미지) ──
+export const DEPLOYED_UPLOAD_DIR = optionalEnv('DEPLOYED_UPLOAD_DIR', 'public/deployed');
+export const DEPLOYED_BASE_URL = optionalEnv('DEPLOYED_BASE_URL', '/deployed/static');
+
 // ── 브랜드 테마 ──
 export const BANK_BRAND = optionalEnv('BANK_BRAND', '');
 
