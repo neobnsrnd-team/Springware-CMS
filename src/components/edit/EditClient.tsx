@@ -183,6 +183,12 @@ const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon
     responsive: { label: '반응형', maxWidth: '100%', icon: '🔄' },
 };
 
+function normalizeViewMode(value: unknown): ViewMode {
+    if (value === 'web' || value === 'PC') return 'web';
+    if (value === 'responsive') return 'responsive';
+    return 'mobile';
+}
+
 /** hex 색상(#RRGGBB)을 "R,G,B" 문자열로 변환 — rgba() 치환용 */
 function hexToRgbValues(hex: string): string {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -325,7 +331,7 @@ export default function EditClient({
 
     // ── 현재 탭의 뷰 모드 (생성 시 결정, 이후 변경 불가) ─────────────────
     const currentTab = tabs.find((t) => t.id === bank);
-    const viewMode: ViewMode = currentTab?.viewMode ?? 'mobile';
+    const viewMode: ViewMode = normalizeViewMode(currentTab?.viewMode);
 
     // ── 퀵 메뉴 아이콘 보호 패치 ────────────────────────────────────────
     // .pm-icon-wrap에 contenteditable="false"가 없으면 동적 주입
@@ -1794,7 +1800,7 @@ export default function EditClient({
                             {
                                 id: bank,
                                 label: response.pageName,
-                                viewMode: (response.viewMode as ViewMode) ?? 'mobile',
+                                viewMode: normalizeViewMode(response.viewMode),
                             },
                             ...filtered,
                         ];
@@ -1880,7 +1886,12 @@ export default function EditClient({
             const stored = sessionStorage.getItem(SESSION_TABS_KEY);
             if (stored) {
                 const parsed: TabData[] = JSON.parse(stored);
-                setTabs(parsed);
+                setTabs(
+                    parsed.map((tab) => ({
+                        ...tab,
+                        viewMode: normalizeViewMode(tab.viewMode),
+                    })),
+                );
             }
         } catch (err: unknown) {
             console.warn('탭 목록 세션 로드 실패:', err);
@@ -2182,7 +2193,8 @@ export default function EditClient({
     async function handleAddTab() {
         const label = newTabName.trim();
         if (!label) return;
-        const id = `${userId}-${Date.now()}`;
+        if (!canWrite) return;
+        const id = crypto.randomUUID();
         const selectedViewMode = newTabViewMode;
 
         setShowAddTab(false);
@@ -2210,14 +2222,22 @@ export default function EditClient({
         }
 
         // DB에 페이지 생성 (pageName + viewMode 포함) → 이동
-        if (!canWrite) return;
-        fetch(nextApi('/api/builder/save'), {
-            method: 'POST',
-            body: JSON.stringify({ html: defaultHtml, bank: id, pageName: label, viewMode: selectedViewMode }),
-            headers: { 'Content-Type': 'application/json' },
-        }).finally(() => {
-            window.location.href = nextApi(`/edit?bank=${id}`);
-        });
+        try {
+            const res = await fetch(nextApi('/api/builder/save'), {
+                method: 'POST',
+                body: JSON.stringify({ html: defaultHtml, bank: id, pageName: label, viewMode: selectedViewMode }),
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok || !data.pageId) {
+                alert(data.error || '페이지 생성에 실패했습니다.');
+                return;
+            }
+            window.location.href = nextApi(`/edit?bank=${data.pageId}`);
+        } catch (err: unknown) {
+            console.error('페이지 생성 실패:', err);
+            alert('페이지 생성 중 오류가 발생했습니다.');
+        }
     }
 
     // ── 탭 닫기 ──────────────────────────────────────────────────────────
