@@ -2,7 +2,15 @@
 
 import oracledb from 'oracledb';
 
-import { ORACLE_USER, ORACLE_PASSWORD, ORACLE_HOST, ORACLE_PORT, ORACLE_SERVICE, ORACLE_SCHEMA } from '@/lib/env';
+import {
+    ORACLE_USER,
+    ORACLE_PASSWORD,
+    ORACLE_HOST,
+    ORACLE_PORT,
+    ORACLE_SERVICE,
+    ORACLE_SCHEMA,
+    ORACLE_POOL_MAX,
+} from '@/lib/env';
 
 let poolInitPromise: Promise<void> | null = null;
 
@@ -23,7 +31,7 @@ async function initPool(): Promise<void> {
                 password: ORACLE_PASSWORD,
                 connectString: `${ORACLE_HOST}:${ORACLE_PORT}/${ORACLE_SERVICE}`,
                 poolMin: 0, // 공유 Oracle XE 세션 제한 고려 (최대 20개)
-                poolMax: 3, // 공유 DB 환경에서 ORA-12516 방지 — Spider Admin 등 타 서비스 세션 여유 확보
+                poolMax: ORACLE_POOL_MAX, // 기본 3 — 공유 DB 환경에서 ORA-12516 방지 (env 로 조정 가능)
                 poolIncrement: 1,
                 poolTimeout: 60, // 1분: 유휴 커넥션 빠른 반환 (Oracle XE 세션 제한 대응)
                 queueTimeout: 30000, // 30초: 커넥션 부족 시 대기 시간 확보
