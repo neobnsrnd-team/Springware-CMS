@@ -1,0 +1,113 @@
+// src/lib/scheduler.ts
+// 만료 페이지 배치 처리 — 내장 스케줄러와 HTTP 엔드포인트가 공유하는 비즈니스 로직
+
+import fs from 'fs/promises';
+import path from 'path';
+
+import { getExpiredPages, expirePage, getLatestHistory } from '@/db/repository/page.repository';
+import { getServerList, upsertFileSend } from '@/db/repository/file-send.repository';
+import { getErrorMessage } from '@/lib/api-response';
+import { sendToServer } from '@/lib/deploy-utils';
+
+const EXPIRED_HTML_PATH = path.join(process.cwd(), 'public', 'system', 'page-expired.html');
+
+// 중복 초기화 방지 플래그
+let schedulerInitialized = false;
+
+export interface ExpireJobResult {
+    processed: number;
+    failed: Array<{ pageId: string; error: string }>;
+}
+
+/** 만료 안내 페이지를 활성 운영 서버 전체에 배포 */
+async function deployExpiredPage(pageId: string): Promise<void> {
+    const servers = await getServerList('Y');
+    if (servers.length === 0) return;
+
+    const expiredHtml = await fs.readFile(EXPIRED_HTML_PATH, 'utf8');
+    const latestHistory = await getLatestHistory(pageId);
+    const version = latestHistory?.VERSION ?? 1;
+    // 만료 전용 fileId — 정상 배포 이력 덮어쓰기 방지
+    const fileId = `${pageId}_v${version}_expired.html`;
+    const fileSize = Buffer.byteLength(expiredHtml, 'utf8');
+
+    await Promise.all(
+        servers.map(async (server) => {
+            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
+            try {
+                await sendToServer(serverUrl, pageId, expiredHtml);
+                await upsertFileSend({
+                    instanceId: server.INSTANCE_ID,
+                    fileId,
+                    fileSize,
+                    lastModifierId: 'scheduler',
+                });
+            } catch (err: unknown) {
+                console.warn(`[만료 스케줄러] 운영 서버 전송 실패 [${server.INSTANCE_ID}]:`, err);
+            }
+        }),
+    );
+}
+
+/** 만료 페이지 일괄 처리 — route.ts와 내장 스케줄러가 공유 */
+export async function runExpireJob(): Promise<ExpireJobResult> {
+    console.log('[만료 스케줄러] 실행 시작');
+
+    const pages = await getExpiredPages();
+    if (pages.length === 0) {
+        console.log('[만료 스케줄러] 처리할 만료 페이지 없음');
+        return { processed: 0, failed: [] };
+    }
+
+    const failed: Array<{ pageId: string; error: string }> = [];
+    let processed = 0;
+
+    await Promise.all(
+        pages.map(async (page) => {
+            try {
+                // a. DB IS_PUBLIC = 'N' 업데이트
+                await expirePage(page.PAGE_ID, page.FILE_PATH ?? '', 'scheduler');
+                // b. 운영 서버에 만료 안내 페이지 배포
+                await deployExpiredPage(page.PAGE_ID);
+                processed++;
+            } catch (err: unknown) {
+                failed.push({ pageId: page.PAGE_ID, error: getErrorMessage(err) });
+            }
+        }),
+    );
+
+    console.log(`[만료 스케줄러] 완료 — 처리: ${processed}, 실패: ${failed.length}`);
+    return { processed, failed };
+}
+
+/** 내장 스케줄러 초기화 — 서버 시작 시 1회 실행 */
+export async function initScheduler(): Promise<void> {
+    if (schedulerInitialized) return;
+
+    const cronText = process.env.SCHEDULER_CRON ?? '0 0 * * *'; // 기본: 매일 자정
+    const enabled = process.env.ENABLE_INTERNAL_SCHEDULER !== 'false';
+
+    if (!enabled) {
+        console.log('[만료 스케줄러] ENABLE_INTERNAL_SCHEDULER=false — 내장 스케줄러 비활성화');
+        return;
+    }
+
+    // node-cron은 서버 런타임에서만 동작하므로 dynamic import 사용
+    const cron = await import('node-cron');
+
+    if (!cron.validate(cronText)) {
+        console.error(`[만료 스케줄러] 유효하지 않은 CRON 표현식: "${cronText}"`);
+        return;
+    }
+
+    cron.schedule(cronText, async () => {
+        try {
+            await runExpireJob();
+        } catch (err: unknown) {
+            console.error('[만료 스케줄러] 실행 중 오류:', getErrorMessage(err));
+        }
+    });
+
+    schedulerInitialized = true;
+    console.log(`[만료 스케줄러] 초기화 완료 — cron: "${cronText}"`);
+}
