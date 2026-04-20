@@ -11,6 +11,8 @@ export type BatchResRtCode =
     | '1' // 성공
     | '9'; // 비정상 종료
 
+const CMS_INSTANCE_ID = process.env.CMS_INSTANCE_ID ?? 'CMS-01';
+
 /** 배치 실행 이력 등록 — 배치 시작 시 호출 */
 export async function insertBatchHis(params: {
     batchAppId: string;
@@ -20,7 +22,17 @@ export async function insertBatchHis(params: {
 }): Promise<void> {
     const conn = await getConnection();
     try {
-        await conn.execute(BATCH_HIS_INSERT, params, { autoCommit: true });
+        await conn.execute(
+            BATCH_HIS_INSERT,
+            {
+                batchAppId: params.batchAppId,
+                instanceId: CMS_INSTANCE_ID,
+                batchDate: params.batchDate,
+                resRtCode: params.resRtCode,
+                userId: params.userId,
+            },
+            { autoCommit: true },
+        );
     } finally {
         await conn.close();
     }
@@ -30,11 +42,33 @@ export async function insertBatchHis(params: {
 export async function updateBatchHis(params: {
     batchAppId: string;
     batchDate: string;
+    userId: string;
     resRtCode: BatchResRtCode;
+    errorCode?: string | null;
+    errorReason?: string | null;
+    recordCount?: number;
+    executeCount?: number;
+    successCount?: number;
+    failCount?: number;
 }): Promise<void> {
     const conn = await getConnection();
     try {
-        await conn.execute(BATCH_HIS_UPDATE, params, { autoCommit: true });
+        await conn.execute(
+            BATCH_HIS_UPDATE,
+            {
+                batchAppId: params.batchAppId,
+                batchDate: params.batchDate,
+                userId: params.userId,
+                resRtCode: params.resRtCode,
+                errorCode: params.errorCode ?? null,
+                errorReason: params.errorReason ?? null,
+                recordCount: params.recordCount ?? 0,
+                executeCount: params.executeCount ?? 0,
+                successCount: params.successCount ?? 0,
+                failCount: params.failCount ?? 0,
+            },
+            { autoCommit: true },
+        );
     } finally {
         await conn.close();
     }

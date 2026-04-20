@@ -46,12 +46,29 @@ export async function POST(req: NextRequest) {
         const result = await runExpireJob();
 
         // 3. FWK_BATCH_HIS UPDATE (성공)
-        await updateBatchHis({ batchAppId, batchDate, resRtCode: '1' });
+        await updateBatchHis({
+            batchAppId,
+            batchDate,
+            userId,
+            resRtCode: '1',
+            recordCount: result.processed + result.failed.length,
+            executeCount: result.processed + result.failed.length,
+            successCount: result.processed,
+            failCount: result.failed.length,
+        });
 
         return successResponse({ message: '완료', ...result });
     } catch (err: unknown) {
+        const errorMsg = getErrorMessage(err);
+
         // 4. FWK_BATCH_HIS UPDATE (비정상 종료)
-        await updateBatchHis({ batchAppId, batchDate, resRtCode: '9' });
-        return errorResponse(getErrorMessage(err));
+        await updateBatchHis({
+            batchAppId,
+            batchDate,
+            userId,
+            resRtCode: '9',
+            errorReason: errorMsg,
+        });
+        return errorResponse(errorMsg);
     }
 }
