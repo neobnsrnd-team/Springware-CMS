@@ -62,19 +62,18 @@ export async function runExpireJob(): Promise<ExpireJobResult> {
     const failed: Array<{ pageId: string; error: string }> = [];
     let processed = 0;
 
-    await Promise.all(
-        pages.map(async (page) => {
-            try {
-                // a. DB IS_PUBLIC = 'N' 업데이트
-                await expirePage(page.PAGE_ID, page.FILE_PATH ?? '', 'scheduler');
-                // b. 운영 서버에 만료 안내 페이지 배포
-                await deployExpiredPage(page.PAGE_ID);
-                processed++;
-            } catch (err: unknown) {
-                failed.push({ pageId: page.PAGE_ID, error: getErrorMessage(err) });
-            }
-        }),
-    );
+    // 순차 처리 — DB 커넥션 풀 고갈 방지 (페이지 수가 많아도 안전)
+    for (const page of pages) {
+        try {
+            // a. 운영 서버 배포 먼저 — 배포 실패 시 DB 업데이트 건너뜀
+            await deployExpiredPage(page.PAGE_ID);
+            // b. 배포 성공 후 DB IS_PUBLIC = 'N' 업데이트
+            await expirePage(page.PAGE_ID, page.FILE_PATH ?? '', 'scheduler');
+            processed++;
+        } catch (err: unknown) {
+            failed.push({ pageId: page.PAGE_ID, error: getErrorMessage(err) });
+        }
+    }
 
     console.log(`[만료 스케줄러] 완료 — 처리: ${processed}, 실패: ${failed.length}`);
     return { processed, failed };
@@ -110,4 +109,7 @@ export async function initScheduler(): Promise<void> {
 
     schedulerInitialized = true;
     console.log(`[만료 스케줄러] 초기화 완료 — cron: "${cronText}"`);
+    console.warn(
+        '[만료 스케줄러] 다중 인스턴스 환경에서는 하나의 인스턴스만 활성화하세요. (ENABLE_INTERNAL_SCHEDULER=false로 나머지 비활성화)',
+    );
 }
