@@ -74,7 +74,8 @@ export const ASSET_DELETE = `
   UPDATE SPW_CMS_ASSET
   SET USE_YN = 'N',
       LAST_MODIFIER_ID = :lastModifierId,
-      LAST_MODIFIER_NAME = :lastModifierName
+      LAST_MODIFIER_NAME = :lastModifierName,
+      LAST_MODIFIED_DTIME = SYSTIMESTAMP
   WHERE ASSET_ID = :assetId
 `;
 
@@ -102,6 +103,12 @@ export const ASSET_MAP_SELECT_BY_PAGE = `
 export const ASSET_MAP_INSERT = `
   INSERT INTO SPW_CMS_ASSET_PAGE_MAP (PAGE_ID, VERSION, ASSET_ID)
   VALUES (:pageId, :version, :assetId)
+`;
+
+/** 에셋-페이지 매핑 삭제 (에셋 단위 — 에셋 물리 삭제 시 FK 정리용) */
+export const ASSET_MAP_DELETE_BY_ASSET = `
+  DELETE FROM SPW_CMS_ASSET_PAGE_MAP
+  WHERE ASSET_ID = :assetId
 `;
 
 /** 에셋-페이지 매핑 삭제 (페이지+버전 단위) */
