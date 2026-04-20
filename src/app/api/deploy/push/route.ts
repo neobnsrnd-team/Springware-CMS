@@ -11,6 +11,8 @@ import { PAGE_SELECT_BY_ID } from '@/db/queries/page.sql';
 import { upsertFileSend, getServerList } from '@/db/repository/file-send.repository';
 import { updatePageDeploy, getLatestHistory, getHistoryVersionByFilePath } from '@/db/repository/page.repository';
 import type { CmsPage } from '@/db/types';
+import { timingSafeEqual } from 'crypto';
+
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
 import { sendToServer } from '@/lib/deploy-utils';
@@ -18,6 +20,20 @@ import { sendToServer } from '@/lib/deploy-utils';
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
 const CMS_BASE_URL = process.env.CMS_BASE_URL || 'http://localhost:3000';
+const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
+
+/** 타이밍 공격 방지 토큰 비교 — spider-admin 서버 간 호출 인증용 */
+function isValidToken(token: string | null): boolean {
+    if (!DEPLOY_SECRET || !token) return false;
+    try {
+        const expected = Buffer.from(DEPLOY_SECRET, 'utf8');
+        const received = Buffer.from(token, 'utf8');
+        if (expected.length !== received.length) return false;
+        return timingSafeEqual(expected, received);
+    } catch {
+        return false;
+    }
+}
 
 /** CRC32 대신 SHA-256 앞 16자리로 무결성 값 생성 */
 function calcCrc(content: string): string {
@@ -126,12 +142,21 @@ ${html}
 
 export async function POST(req: NextRequest) {
     try {
-        const { pageId } = (await req.json()) as { pageId?: string };
-        const currentUser = await getCurrentUser();
-        if (!canWriteCms(currentUser)) {
-            return errorResponse('권한이 없습니다.', 403);
+        const body = (await req.json()) as { pageId?: string; userId?: string };
+        const { pageId } = body;
+
+        // spider-admin 서버 간 호출(x-deploy-token) 또는 일반 사용자 세션 인증
+        let userId: string;
+        if (isValidToken(req.headers.get('x-deploy-token'))) {
+            // 서버 간 호출 — userId는 요청 body에서 전달받음 (없으면 'system' 사용)
+            userId = body.userId || 'system';
+        } else {
+            const currentUser = await getCurrentUser();
+            if (!canWriteCms(currentUser)) {
+                return errorResponse('권한이 없습니다.', 403);
+            }
+            userId = currentUser.userId;
         }
-        const { userId } = currentUser;
 
         if (!pageId || typeof pageId !== 'string') {
             return errorResponse('pageId가 필요합니다.', 400);
