@@ -64,28 +64,21 @@ const LAYOUT_CSS = `
 
 /** HTML 프래그먼트 → 완전한 HTML 문서로 조립 (CSS 인라인 + 경로 치환 + 트래커 포함) */
 async function buildDeployHtml(fragment: string, pageId: string, pageName: string): Promise<string> {
-    // 1. ContentBuilder 런타임 CSS 읽기
+    // 1. ContentBuilder 런타임 CSS 읽기 — public/runtime 사용 (standalone 빌드 환경 호환)
     let runtimeCss = '';
     try {
-        const cssPath = path.join(
-            process.cwd(),
-            'node_modules',
-            '@innovastudio',
-            'contentbuilder-runtime',
-            'dist',
-            'contentbuilder-runtime.css',
-        );
+        const cssPath = path.join(process.cwd(), 'public', 'runtime', 'contentbuilder-runtime.css');
         runtimeCss = await readFile(cssPath, 'utf8');
     } catch {
-        throw new Error('ContentBuilder 런타임 CSS를 찾을 수 없습니다. npm install을 확인해주세요.');
+        throw new Error('ContentBuilder 런타임 CSS를 찾을 수 없습니다. public/runtime/ 디렉토리를 확인해주세요.');
     }
 
     // 2. 에셋 경로 치환 — CMS 서버 절대 URL로 변환
-    // 선행 슬래시 유무·역슬래시(Windows) 모두 처리
+    // 선행 슬래시 유무·역슬래시(Windows), 큰따옴표·작은따옴표 모두 처리
     const html = fragment
-        .replace(/src="\/?(assets|uploads)[\/\\]/g, `src="${CMS_BASE_URL}/$1/`)
+        .replace(/src=(['"])\/?(assets|uploads)[\/\\]/g, `src=$1${CMS_BASE_URL}/$2/`)
         .replace(/url\((['"]?)\/?(assets|uploads)[\/\\]/g, `url($1${CMS_BASE_URL}/$2/`)
-        .replace(/src="\/api\/assets\//g, `src="${CMS_BASE_URL}/api/assets/`);
+        .replace(/src=(['"])\/api\/assets\//g, `src=$1${CMS_BASE_URL}/api/assets/`);
 
     // 3. 완전한 HTML 문서 조립
     return `<!DOCTYPE html>
@@ -242,26 +235,26 @@ async function processDeploy(pageId: string | undefined, userId: string) {
     const version = historyVersion ?? latestHistory?.VERSION ?? 1;
     const fileId = `${pageId}_v${version}.html`;
 
-    // 5. 각 서버에 전송 + 이력 기록
-    const results: { instanceId: string; success: boolean; error?: string }[] = [];
-
-    for (const server of servers) {
-        const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
-        try {
-            await sendToServer(serverUrl, pageId, html, trackerJs);
-            await upsertFileSend({
-                instanceId: server.INSTANCE_ID,
-                fileId,
-                fileSize: Buffer.byteLength(html, 'utf8'),
-                fileCrcValue: crcValue,
-                lastModifierId: userId,
-            });
-            results.push({ instanceId: server.INSTANCE_ID, success: true });
-        } catch (err: unknown) {
-            console.error(`서버 전송 실패 [${server.INSTANCE_ID}]:`, err);
-            results.push({ instanceId: server.INSTANCE_ID, success: false, error: getErrorMessage(err) });
-        }
-    }
+    // 5. 각 서버에 병렬 전송 + 이력 기록
+    const results = await Promise.all(
+        servers.map(async (server) => {
+            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
+            try {
+                await sendToServer(serverUrl, pageId, html, trackerJs);
+                await upsertFileSend({
+                    instanceId: server.INSTANCE_ID,
+                    fileId,
+                    fileSize: Buffer.byteLength(html, 'utf8'),
+                    fileCrcValue: crcValue,
+                    lastModifierId: userId,
+                });
+                return { instanceId: server.INSTANCE_ID, success: true as const };
+            } catch (err: unknown) {
+                console.error(`서버 전송 실패 [${server.INSTANCE_ID}]:`, err);
+                return { instanceId: server.INSTANCE_ID, success: false as const, error: getErrorMessage(err) };
+            }
+        }),
+    );
 
     // 6. 하나 이상 성공 시 페이지 배포 기록 갱신
     const successCount = results.filter((r) => r.success).length;
