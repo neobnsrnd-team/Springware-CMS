@@ -196,6 +196,14 @@ const PAGE_TEMPLATE_OPTIONS = Object.entries(PAGE_TEMPLATE_CONFIG).map(([id, tem
     ...template,
 }));
 
+function roundMs(value: number) {
+    return Math.round(value * 10) / 10;
+}
+
+function logEditPerf(label: string, metrics: Record<string, unknown>) {
+    console.warn(`[cms/edit perf] ${label}`, metrics);
+}
+
 function normalizeViewMode(value: unknown): ViewMode {
     if (value === 'web' || value === 'PC') return 'web';
     if (value === 'responsive') return 'responsive';
@@ -276,9 +284,13 @@ export default function EditClient({
 
     // content-plugins.js 기본 블록 (우측 패널 "기본 블록" 탭에서 사용)
     const [basicBlocks, setBasicBlocks] = useState<BasicBlock[]>([]);
+    const [basicBlocksLoading, setBasicBlocksLoading] = useState(true);
+    const [basicBlocksError, setBasicBlocksError] = useState<string | null>(null);
 
     // 금융 컴포넌트 (DB 또는 파일에서 로드)
     const [financeComponents, setFinanceComponents] = useState<FinanceComponent[]>([]);
+    const [financeComponentsLoading, setFinanceComponentsLoading] = useState(true);
+    const [financeComponentsError, setFinanceComponentsError] = useState<string | null>(null);
     const financeComponentsMap = useMemo(
         () =>
             financeComponents.reduce(
@@ -364,6 +376,7 @@ export default function EditClient({
     const patchMaxChars = useCallback(() => {}, []);
 
     useEffect(() => {
+        const editorBootStart = performance.now();
         // 플러그인 재초기화 — 연속 호출 방지를 위해 300ms 디바운스
         // reinitialize(): Runtime이 data-cb-type 플러그인 DOM을 재마운트
         // applyBehavior(): ContentBuilder가 모든 row에 편집 이벤트 핸들러 재연결
@@ -398,6 +411,7 @@ export default function EditClient({
         };
 
         // Create ContentBuilder instance
+        const builderInitStart = performance.now();
         builderRef.current = new ContentBuilder({
             container: '.container',
             previewURL: 'preview-with-plugins.html',
@@ -496,6 +510,7 @@ export default function EditClient({
             onSnippetAdd: debouncedReinit,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder 생성자 옵션 타입이 불완전하여 불가피하게 사용
         } as any);
+        const builderInitMs = roundMs(performance.now() - builderInitStart);
 
         // ContentBuilder 기본 피커는 사용하지 않습니다.
         // 기본 블록은 아래 별도 useEffect에서 로드하여 우측 패널에 표시합니다.
@@ -504,6 +519,7 @@ export default function EditClient({
         const basePath = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '');
 
         // Initialize runtime BEFORE loading content
+        const runtimeInitStart = performance.now();
         try {
             runtimeRef.current = new ContentBuilderRuntime({
                 // Registers available plugins (not yet loaded).
@@ -640,6 +656,12 @@ export default function EditClient({
         } catch (err: unknown) {
             console.error('런타임 초기화 오류:', err);
         }
+        const runtimeInitMs = roundMs(performance.now() - runtimeInitStart);
+        logEditPerf('editor-init', {
+            builderInitMs,
+            runtimeInitMs,
+            initTotalMs: roundMs(performance.now() - editorBootStart),
+        });
 
         // ── RTE 툴바 위치 보정 ────────────────────────────────────────────
         // ContentBuilder JS가 positionToolbar()에서 style.top을 반복 갱신하므로
@@ -1790,14 +1812,23 @@ export default function EditClient({
 
         // Load content from the server (AbortController로 Strict Mode 중복 fetch 방지)
         const loadController = new AbortController();
+        const pageLoadStart = performance.now();
         fetch(nextApi('/api/builder/load'), {
             method: 'POST',
             body: JSON.stringify({ bank }),
             headers: { 'Content-Type': 'application/json' },
             signal: loadController.signal,
         })
-            .then((response) => response.json())
-            .then((response) => {
+            .then(async (response) => {
+                const jsonStart = performance.now();
+                const json = await response.json();
+                return {
+                    json,
+                    networkMs: roundMs(jsonStart - pageLoadStart),
+                    jsonMs: roundMs(performance.now() - jsonStart),
+                };
+            })
+            .then(({ json: response, networkMs, jsonMs }) => {
                 if (loadController.signal.aborted) return;
                 if (response.fileNotFound) {
                     alert(
@@ -1805,7 +1836,12 @@ export default function EditClient({
                     );
                 }
                 if (response.html && builderRef.current) {
+                    const loadHtmlStart = performance.now();
                     builderRef.current.loadHtml(response.html);
+                    logEditPerf('page-loadHtml', {
+                        loadHtmlMs: roundMs(performance.now() - loadHtmlStart),
+                        htmlBytes: response._timing?.htmlBytes,
+                    });
                 }
                 // 로드 응답에서 탭 정보 등록 — 최근 접근 순(왼쪽), 최대 10개
                 if (response.pageName) {
@@ -1824,6 +1860,7 @@ export default function EditClient({
                 }
                 // 플러그인 CSS·JS 로드 및 mount() 실행 + ContentBuilder 핸들러 재연결
                 setTimeout(async () => {
+                    const reinitStart = performance.now();
                     await runtimeRef.current?.reinitialize();
                     builderRef.current?.applyBehavior();
                     patchPmIconWrap();
@@ -1831,7 +1868,16 @@ export default function EditClient({
                     setContainerOpacity(1);
                     // 초기 블록 목록 파싱
                     const html = builderRef.current?.html() ?? '';
-                    setCanvasBlocks(parseBuilderBlocks(html, financeComponentsMapRef.current));
+                    const blocks = parseBuilderBlocks(html, financeComponentsMapRef.current);
+                    setCanvasBlocks(blocks);
+                    logEditPerf('page-ready', {
+                        totalMs: roundMs(performance.now() - pageLoadStart),
+                        networkMs,
+                        jsonMs,
+                        reinitializeMs: roundMs(performance.now() - reinitStart),
+                        server: response._timing,
+                        blockCount: blocks.length,
+                    });
                 }, 300);
             })
             .catch((error) => {
@@ -1928,10 +1974,22 @@ export default function EditClient({
     // ── 기본 블록 DB 로드 (viewMode 변경 시 재조회) ─────────────────────
     useEffect(() => {
         let cancelled = false;
+        const componentLoadStart = performance.now();
+        setBasicBlocksLoading(true);
+        setBasicBlocksError(null);
         fetch(nextApi(`/api/components?type=basic&viewMode=${viewMode}`))
-            .then((res) => res.json())
-            .then((data) => {
+            .then(async (res) => {
+                const jsonStart = performance.now();
+                const data = await res.json();
+                return {
+                    data,
+                    networkMs: roundMs(jsonStart - componentLoadStart),
+                    jsonMs: roundMs(performance.now() - jsonStart),
+                };
+            })
+            .then(({ data, networkMs, jsonMs }) => {
                 if (!cancelled && data.ok) {
+                    const mapStart = performance.now();
                     const assetPrefix = nextApi('/assets');
                     const blocks: BasicBlock[] = data.components.map(
                         (c: { id: string; label?: string; preview?: string; html: string; viewMode: string }) => ({
@@ -1947,9 +2005,27 @@ export default function EditClient({
                         }),
                     );
                     setBasicBlocks(blocks);
+                    logEditPerf('components-basic', {
+                        totalMs: roundMs(performance.now() - componentLoadStart),
+                        networkMs,
+                        jsonMs,
+                        mapMs: roundMs(performance.now() - mapStart),
+                        count: blocks.length,
+                        server: data._timing,
+                    });
+                    setBasicBlocksLoading(false);
+                } else if (!cancelled) {
+                    setBasicBlocksError(data.error ?? '기본 블록을 불러오지 못했습니다.');
+                    setBasicBlocksLoading(false);
                 }
             })
-            .catch((err) => console.error('기본 블록 로드 오류:', err));
+            .catch((err) => {
+                console.error('기본 블록 로드 오류:', err);
+                if (!cancelled) {
+                    setBasicBlocksError('기본 블록을 불러오지 못했습니다.');
+                    setBasicBlocksLoading(false);
+                }
+            });
         return () => {
             cancelled = true;
         };
@@ -1958,12 +2034,42 @@ export default function EditClient({
     // ── 금융 컴포넌트 API 로드 (viewMode 변경 시 재요청) ────────────────
     useEffect(() => {
         let cancelled = false;
+        const componentLoadStart = performance.now();
+        setFinanceComponentsLoading(true);
+        setFinanceComponentsError(null);
         fetch(nextApi(`/api/components?type=finance&viewMode=${viewMode}`))
-            .then((res) => res.json())
-            .then((data) => {
-                if (!cancelled && data.ok) setFinanceComponents(data.components);
+            .then(async (res) => {
+                const jsonStart = performance.now();
+                const data = await res.json();
+                return {
+                    data,
+                    networkMs: roundMs(jsonStart - componentLoadStart),
+                    jsonMs: roundMs(performance.now() - jsonStart),
+                };
             })
-            .catch((err) => console.error('금융 컴포넌트 로드 오류:', err));
+            .then(({ data, networkMs, jsonMs }) => {
+                if (!cancelled && data.ok) {
+                    setFinanceComponents(data.components);
+                    logEditPerf('components-finance', {
+                        totalMs: roundMs(performance.now() - componentLoadStart),
+                        networkMs,
+                        jsonMs,
+                        count: data.components.length,
+                        server: data._timing,
+                    });
+                    setFinanceComponentsLoading(false);
+                } else if (!cancelled) {
+                    setFinanceComponentsError(data.error ?? '금융 컴포넌트를 불러오지 못했습니다.');
+                    setFinanceComponentsLoading(false);
+                }
+            })
+            .catch((err) => {
+                console.error('금융 컴포넌트 로드 오류:', err);
+                if (!cancelled) {
+                    setFinanceComponentsError('금융 컴포넌트를 불러오지 못했습니다.');
+                    setFinanceComponentsLoading(false);
+                }
+            });
         return () => {
             cancelled = true;
         };
@@ -2631,6 +2737,10 @@ export default function EditClient({
                 viewMode={viewMode}
                 basicBlocks={basicBlocks}
                 financeComponents={financeComponents}
+                basicBlocksLoading={basicBlocksLoading}
+                financeComponentsLoading={financeComponentsLoading}
+                basicBlocksError={basicBlocksError}
+                financeComponentsError={financeComponentsError}
                 onDragStart={() => {
                     // ref는 즉시 갱신 (dragover 핸들러에서 동기 참조)
                     isDraggingRef.current = true;
@@ -2644,12 +2754,24 @@ export default function EditClient({
                     setDropLineY(null);
                 }}
                 onComponentUpdate={() => {
+                    setFinanceComponentsLoading(true);
+                    setFinanceComponentsError(null);
                     fetch(nextApi(`/api/components?type=finance&viewMode=${viewMode}`))
                         .then((res) => res.json())
                         .then((data) => {
-                            if (data.ok) setFinanceComponents(data.components);
+                            if (data.ok) {
+                                setFinanceComponents(data.components);
+                                setFinanceComponentsLoading(false);
+                            } else {
+                                setFinanceComponentsError(data.error ?? '금융 컴포넌트를 불러오지 못했습니다.');
+                                setFinanceComponentsLoading(false);
+                            }
                         })
-                        .catch((err) => console.error('금융 컴포넌트 재로드 오류:', err));
+                        .catch((err) => {
+                            console.error('금융 컴포넌트 재로드 오류:', err);
+                            setFinanceComponentsError('금융 컴포넌트를 불러오지 못했습니다.');
+                            setFinanceComponentsLoading(false);
+                        });
                 }}
             />
 

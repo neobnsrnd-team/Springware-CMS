@@ -23,6 +23,10 @@ interface Props {
     basicBlocks: BasicBlock[];
     /** DB 또는 파일에서 로드한 금융 컴포넌트 목록 */
     financeComponents: FinanceComponent[];
+    basicBlocksLoading?: boolean;
+    financeComponentsLoading?: boolean;
+    basicBlocksError?: string | null;
+    financeComponentsError?: string | null;
     /** 현재 페이지의 뷰 모드 — 해당 모드의 컴포넌트만 표시 */
     viewMode: 'mobile' | 'web' | 'responsive';
     /** 패널에서 외부 드래그 시작/종료 알림 */
@@ -127,6 +131,40 @@ const BLOCK_LABELS: Record<string, string> = {
     'preview/plugin-anim-stats.png': '애니메이션 통계',
 };
 
+function ComponentLoadState({ error, label }: { error?: string | null; label: string }) {
+    return (
+        <div
+            style={{
+                flex: 1,
+                minHeight: 180,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                color: error ? '#b91c1c' : '#6b7280',
+                fontSize: '12px',
+                textAlign: 'center',
+                padding: '20px',
+            }}
+        >
+            {!error && (
+                <span
+                    style={{
+                        width: '28px',
+                        height: '28px',
+                        border: '3px solid #dbeafe',
+                        borderTopColor: '#0046A4',
+                        borderRadius: '50%',
+                        animation: 'spw-component-spin 0.8s linear infinite',
+                    }}
+                />
+            )}
+            <span>{error ?? label}</span>
+        </div>
+    );
+}
+
 export default function ComponentPanel({
     onInsert,
     blocks,
@@ -136,6 +174,10 @@ export default function ComponentPanel({
     onActivate,
     basicBlocks,
     financeComponents,
+    basicBlocksLoading = false,
+    financeComponentsLoading = false,
+    basicBlocksError = null,
+    financeComponentsError = null,
     viewMode,
     onDragStart,
     onDragEnd,
@@ -189,6 +231,8 @@ export default function ComponentPanel({
     const rafRef = useRef<number | null>(null);
     const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
     const [insertBeforeIdx, setInsertBeforeIdx] = useState<number | null>(null);
+    const visibleFinanceComponents = financeComponents.filter((c) => c.viewMode === viewMode);
+    const visibleBasicBlocks = basicBlocks.filter((b) => b.viewMode === viewMode);
 
     function handleBlockDragStart(e: React.DragEvent, idx: number) {
         dragBlockIdx.current = idx;
@@ -256,6 +300,12 @@ export default function ComponentPanel({
 
     return (
         <>
+            <style>{`
+                @keyframes spw-component-spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
             <aside
                 style={{
                     position: 'fixed',
@@ -382,9 +432,15 @@ export default function ComponentPanel({
                                     드래그하거나 + 클릭하여 캔버스에 추가
                                 </p>
 
-                                {financeComponents
-                                    .filter((c) => c.viewMode === viewMode)
-                                    .map((comp) => (
+                                {financeComponentsLoading || financeComponentsError ? (
+                                    <ComponentLoadState
+                                        error={financeComponentsError}
+                                        label="금융 컴포넌트를 불러오는 중입니다."
+                                    />
+                                ) : visibleFinanceComponents.length === 0 ? (
+                                    <ComponentLoadState label="표시할 금융 컴포넌트가 없습니다." />
+                                ) : (
+                                    visibleFinanceComponents.map((comp) => (
                                         <div
                                             key={comp.id}
                                             draggable
@@ -535,7 +591,8 @@ export default function ComponentPanel({
                                                 </svg>
                                             </button>
                                         </div>
-                                    ))}
+                                    ))
+                                )}
                             </div>
                         )}
 
@@ -559,21 +616,13 @@ export default function ComponentPanel({
                                     드래그하거나 + 클릭하여 캔버스에 추가
                                 </p>
 
-                                {basicBlocks.length === 0 ? (
-                                    <div
-                                        style={{
-                                            flex: 1,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: '#9ca3af',
-                                            fontSize: '12px',
-                                            padding: '20px',
-                                            textAlign: 'center',
-                                        }}
-                                    >
-                                        로딩 중...
-                                    </div>
+                                {basicBlocksLoading || basicBlocksError ? (
+                                    <ComponentLoadState
+                                        error={basicBlocksError}
+                                        label="기본 블록을 불러오는 중입니다."
+                                    />
+                                ) : visibleBasicBlocks.length === 0 ? (
+                                    <ComponentLoadState label="표시할 기본 블록이 없습니다." />
                                 ) : (
                                     /* 2열 그리드로 썸네일 표시 */
                                     <div
@@ -583,17 +632,15 @@ export default function ComponentPanel({
                                             gap: '6px',
                                         }}
                                     >
-                                        {basicBlocks
-                                            .filter((b) => b.viewMode === viewMode)
-                                            .map((block, idx) => (
-                                                <BasicBlockCard
-                                                    key={idx}
-                                                    block={block}
-                                                    onDragStart={handleBasicDragStart}
-                                                    onDragEnd={() => onDragEnd?.()}
-                                                    onInsert={onInsert}
-                                                />
-                                            ))}
+                                        {visibleBasicBlocks.map((block, idx) => (
+                                            <BasicBlockCard
+                                                key={idx}
+                                                block={block}
+                                                onDragStart={handleBasicDragStart}
+                                                onDragEnd={() => onDragEnd?.()}
+                                                onInsert={onInsert}
+                                            />
+                                        ))}
                                     </div>
                                 )}
                             </div>
