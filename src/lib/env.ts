@@ -36,6 +36,10 @@ export const SERVER_MODE = optionalEnv('SERVER_MODE', 'cms');
 export const ASSET_UPLOAD_DIR = optionalEnv('ASSET_UPLOAD_DIR', 'public/uploads');
 export const ASSET_BASE_URL = optionalEnv('ASSET_BASE_URL', '/uploads');
 
+// ── 배포 저장소 (승인 완료 이미지) ──
+export const DEPLOYED_UPLOAD_DIR = optionalEnv('DEPLOYED_UPLOAD_DIR', 'public/deployed');
+export const DEPLOYED_BASE_URL = optionalEnv('DEPLOYED_BASE_URL', '/deployed/static');
+
 // ── 브랜드 테마 ──
 export const BANK_BRAND = optionalEnv('BANK_BRAND', '');
 
@@ -52,3 +56,5 @@ export const ORACLE_HOST = optionalEnv('ORACLE_HOST');
 export const ORACLE_PORT = optionalEnv('ORACLE_PORT', '1521');
 export const ORACLE_SERVICE = optionalEnv('ORACLE_SERVICE');
 export const ORACLE_SCHEMA = optionalEnv('ORACLE_SCHEMA');
+/** Oracle 커넥션 풀 최대 크기 (공유 XE 세션 제한 대응 — 기본 3) */
+export const ORACLE_POOL_MAX = Number(optionalEnv('ORACLE_POOL_MAX', '3'));
