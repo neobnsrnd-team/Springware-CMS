@@ -56,3 +56,5 @@ export const ORACLE_HOST = optionalEnv('ORACLE_HOST');
 export const ORACLE_PORT = optionalEnv('ORACLE_PORT', '1521');
 export const ORACLE_SERVICE = optionalEnv('ORACLE_SERVICE');
 export const ORACLE_SCHEMA = optionalEnv('ORACLE_SCHEMA');
+/** Oracle 커넥션 풀 최대 크기 (공유 XE 세션 제한 대응 — 기본 3) */
+export const ORACLE_POOL_MAX = Number(optionalEnv('ORACLE_POOL_MAX', '3'));
