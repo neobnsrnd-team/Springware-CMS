@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
     serverExternalPackages: ['oracledb', 'node-cron'],
     // Docker 배포용 standalone 빌드 — .next/standalone/server.js 생성
     output: 'standalone',
+    // basePath('/cms') 없이 접근하는 외부 시스템(spider-admin 배치 실행) 경로 우회
+    async rewrites() {
+        return [{ source: '/api/batch/execute', destination: '/cms/api/batch/execute' }];
+    },
 };
 
 export default nextConfig;
