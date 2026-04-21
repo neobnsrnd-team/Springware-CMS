@@ -5,7 +5,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 
 import { getPageList } from '@/db/repository/page.repository';
-import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { canAccessCmsDashboard, canManageCmsPage, getCurrentUser } from '@/lib/current-user';
 import { redirect } from 'next/navigation';
 import { isPageExpired } from '@/lib/validators';
 import { getApproveLabels } from '@/data/approve-config';
@@ -26,7 +26,7 @@ export default async function DashboardPage({
     const { page: pageParam, search: searchParam, sortBy: sortByParam, viewMode: viewModeParam } = await searchParams;
 
     const currentUser = await getCurrentUser();
-    if (!canReadCms(currentUser)) {
+    if (!canAccessCmsDashboard(currentUser)) {
         redirect('/not-authorized');
     }
 
@@ -73,7 +73,7 @@ export default async function DashboardPage({
             search={search}
             sortBy={sortBy}
             viewMode={viewMode ?? null}
-            canWrite={canWriteCms(currentUser)}
+            canWrite={canManageCmsPage(currentUser, currentUser.userId)}
             approveLabels={approveLabels}
         />
     );

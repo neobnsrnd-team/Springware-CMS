@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 
 import { getPageList, getPageById, deletePage } from '@/db/repository/page.repository';
-import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { canReadCms, canManageAllCmsPages, canManageCmsPage, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 
 /**
@@ -18,6 +18,11 @@ import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-respo
  */
 export async function GET(req: NextRequest) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!canReadCms(currentUser)) {
+            return errorResponse('권한이 없습니다.', 403);
+        }
+
         const { searchParams } = req.nextUrl;
 
         const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
@@ -26,7 +31,13 @@ export async function GET(req: NextRequest) {
         const sortByParam = searchParams.get('sortBy');
         const sortBy = sortByParam === 'name' ? 'name' : 'date';
 
-        const { list, totalCount } = await getPageList({ page, pageSize, search, sortBy });
+        const { list, totalCount } = await getPageList({
+            page,
+            pageSize,
+            search,
+            sortBy,
+            createUserId: canManageAllCmsPages(currentUser) ? undefined : currentUser.userId,
+        });
 
         const pages = list.map((p) => ({
             id: p.PAGE_ID,
@@ -37,11 +48,6 @@ export async function GET(req: NextRequest) {
             approveState: p.APPROVE_STATE,
             rejectedReason: p.REJECTED_REASON ?? null,
         }));
-
-        const currentUser = await getCurrentUser();
-        if (!canReadCms(currentUser)) {
-            return errorResponse('권한이 없습니다.', 403);
-        }
         const { userId } = currentUser;
         return successResponse({ pages, totalCount, currentUserId: userId });
     } catch (err: unknown) {
@@ -69,7 +75,7 @@ export async function DELETE(req: NextRequest) {
         }
 
         const currentUser = await getCurrentUser();
-        if (!canWriteCms(currentUser)) {
+        if (!canManageCmsPage(currentUser, page.CREATE_USER_ID)) {
             return errorResponse('권한이 없습니다.', 403);
         }
         const { userId } = currentUser;

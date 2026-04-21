@@ -3,7 +3,8 @@
 import { Suspense } from 'react';
 
 import EditClientLoader from '@/components/edit/EditClientLoader';
-import { canReadCms, canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { getPageById } from '@/db/repository/page.repository';
+import { canAccessCmsEdit, canManageCmsPage, getCurrentUser } from '@/lib/current-user';
 import { BANK_BRAND } from '@/lib/env';
 import { BRAND_THEMES, type BrandTheme } from '@/data/brand-themes';
 import { redirect } from 'next/navigation';
@@ -14,7 +15,12 @@ export default async function Edit({ searchParams }: { searchParams: Promise<{ b
     const params = await searchParams;
     const bank = params.bank || 'ibk';
     const currentUser = await getCurrentUser();
-    if (!canReadCms(currentUser)) {
+    if (!canAccessCmsEdit(currentUser)) {
+        redirect('/not-authorized');
+    }
+
+    const page = await getPageById(bank);
+    if (page && !canManageCmsPage(currentUser, page.CREATE_USER_ID)) {
         redirect('/not-authorized');
     }
 
@@ -28,7 +34,7 @@ export default async function Edit({ searchParams }: { searchParams: Promise<{ b
                 bank={bank}
                 userId={currentUser.userId}
                 brandTheme={brandTheme}
-                canWrite={canWriteCms(currentUser)}
+                canWrite={canManageCmsPage(currentUser, page?.CREATE_USER_ID)}
             />
         </Suspense>
     );

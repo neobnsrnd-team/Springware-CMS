@@ -3,7 +3,7 @@
 import { NextRequest } from 'next/server';
 
 import { updatePage, createPage, getPageById, resetApproveStateToWork } from '@/db/repository/page.repository';
-import { canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { canAccessCmsEdit, canManageCmsPage, getCurrentUser } from '@/lib/current-user';
 import { isValidBankId, isPageExpired } from '@/lib/validators';
 import { successResponse, contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
 
@@ -16,15 +16,19 @@ async function savePage(
     thumbnail?: string,
     templateId?: string,
 ): Promise<void> {
-    const { userId, userName, authorities } = await getCurrentUser();
-    if (!canWriteCms({ authorities })) {
+    const currentUser = await getCurrentUser();
+    if (!canAccessCmsEdit(currentUser)) {
         throw new Error('권한이 없습니다.');
     }
+    const { userId, userName } = currentUser;
 
     // 1. 기존 페이지 확인 + 만료 체크
     const existing = await getPageById(bank);
     if (existing && isPageExpired(existing.IS_PUBLIC, existing.EXPIRED_DATE)) {
         throw new Error('만료된 페이지는 수정할 수 없습니다.');
+    }
+    if (existing && !canManageCmsPage(currentUser, existing.CREATE_USER_ID)) {
+        throw new Error('권한이 없습니다.');
     }
 
     // 2. DB 저장 (PAGE_HTML CLOB에 직접 기록)

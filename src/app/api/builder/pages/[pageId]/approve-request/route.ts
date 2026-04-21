@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 
-import { requestApproval } from '@/db/repository/page.repository';
+import { getPageById, requestApproval } from '@/db/repository/page.repository';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
-import { canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { canAccessCmsEdit, canManageCmsPage, getCurrentUser } from '@/lib/current-user';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
     try {
@@ -40,7 +40,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
         }
 
         const currentUser = await getCurrentUser();
-        if (!canWriteCms(currentUser)) {
+        if (!canAccessCmsEdit(currentUser)) {
+            return errorResponse('Permission denied.', 403);
+        }
+
+        const page = await getPageById(pageId);
+        if (!page) {
+            return errorResponse('Page not found.', 404);
+        }
+        if (!canManageCmsPage(currentUser, page.CREATE_USER_ID)) {
             return errorResponse('Permission denied.', 403);
         }
 

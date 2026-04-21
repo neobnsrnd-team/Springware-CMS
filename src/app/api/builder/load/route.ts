@@ -6,7 +6,7 @@ import { getPageById } from '@/db/repository/page.repository';
 import { isValidBankId } from '@/lib/validators';
 import { readPageHtml } from '@/lib/page-file';
 import { contentBuilderErrorResponse, getErrorMessage } from '@/lib/api-response';
-import { canReadCms, getCurrentUser } from '@/lib/current-user';
+import { canAccessCmsEdit, canManageCmsPage, getCurrentUser } from '@/lib/current-user';
 
 function durationMs(start: number) {
     return Math.round((performance.now() - start) * 10) / 10;
@@ -19,6 +19,7 @@ async function loadPage(bank: string): Promise<{
     fileNotFound?: boolean;
     pageName?: string;
     viewMode?: string;
+    createUserId?: string | null;
     timing: {
         dbMs: number;
         fileMs: number;
@@ -28,7 +29,7 @@ async function loadPage(bank: string): Promise<{
     const page = await getPageById(bank);
     const dbMs = durationMs(dbStart);
     if (!page) {
-        return { html: '', updated: null, timing: { dbMs, fileMs: 0 } };
+        return { html: '', updated: null, createUserId: null, timing: { dbMs, fileMs: 0 } };
     }
 
     let html = '';
@@ -61,6 +62,7 @@ async function loadPage(bank: string): Promise<{
         fileNotFound,
         pageName: page.PAGE_NAME,
         viewMode: page.VIEW_MODE ?? 'mobile',
+        createUserId: page.CREATE_USER_ID ?? null,
         timing: { dbMs, fileMs },
     };
 }
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
         const authStart = performance.now();
         const currentUser = await getCurrentUser();
         const authMs = durationMs(authStart);
-        if (!canReadCms(currentUser)) {
+        if (!canAccessCmsEdit(currentUser)) {
             return contentBuilderErrorResponse('Permission denied.');
         }
 
@@ -81,9 +83,13 @@ export async function POST(req: NextRequest) {
         const parseMs = durationMs(parseStart);
 
         const loadStart = performance.now();
-        const { html, updated, fileNotFound, pageName, viewMode, timing } = await loadPage(bank);
+        const { html, updated, fileNotFound, pageName, viewMode, createUserId, timing } = await loadPage(bank);
         const loadMs = durationMs(loadStart);
         const totalMs = durationMs(totalStart);
+
+        if (createUserId && !canManageCmsPage(currentUser, createUserId)) {
+            return contentBuilderErrorResponse('Permission denied.');
+        }
 
         return NextResponse.json(
             {

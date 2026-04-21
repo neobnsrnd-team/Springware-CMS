@@ -236,7 +236,16 @@ export async function requestApproval(
     expiredDate: string,
 ): Promise<void> {
     await withTransaction(async (conn) => {
-        await conn.execute(PAGE_REQUEST_APPROVAL, { pageId, approverId, approverName, beginningDate, expiredDate });
+        const result = await conn.execute(PAGE_REQUEST_APPROVAL, {
+            pageId,
+            approverId,
+            approverName,
+            beginningDate,
+            expiredDate,
+        });
+        if ((result.rowsAffected ?? 0) === 0) {
+            throw new Error('승인 요청할 수 없는 상태입니다.');
+        }
     });
 }
 
