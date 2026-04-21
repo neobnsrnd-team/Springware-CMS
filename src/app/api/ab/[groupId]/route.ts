@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAbGroup } from '@/db/repository/page.repository';
 import { getServerList } from '@/db/repository/file-send.repository';
 import { getErrorMessage } from '@/lib/api-response';
+import { buildServerUrl } from '@/lib/deploy-utils';
 
 const COOKIE_PREFIX = 'ab_';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30일
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ grou
         }
         const server = servers[0];
         const redirectUrl = new URL(
-            `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/cms/deployed/${targetPageId}.html`,
+            buildServerUrl(server.INSTANCE_IP, server.INSTANCE_PORT, `/cms/deployed/${targetPageId}.html`),
         );
 
         const res = NextResponse.redirect(redirectUrl, 302);
