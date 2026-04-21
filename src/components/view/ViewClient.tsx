@@ -257,9 +257,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     (d as HTMLElement).style.background = j === i ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)';
                 });
             };
+            // Gemini 리뷰 반영: track.clientWidth 대신 실제 슬라이드 위치/너비 사용.
+            // 트랙에 padding 이 있으면 slide.width(=트랙 content 너비)와 clientWidth 이 달라
+            // i * track.clientWidth 로 스크롤하면 인덱스마다 오차가 누적됨.
             const goTo = (i: number) => {
+                const targetSlide = slides[i];
+                if (!targetSlide) return;
                 cur = i;
-                track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+                track.scrollTo({ left: targetSlide.offsetLeft - track.offsetLeft, behavior: 'smooth' });
                 updateDots(i);
                 if (counterCur) counterCur.textContent = String(i + 1);
             };
@@ -281,11 +286,14 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             }
 
             // scroll → cur 인덱스 갱신 (80ms 디바운스)
+            // slides[0].offsetWidth 로 실제 슬라이드 너비 계산, 0 또는 숨김 상태 방어
             let scrollTimer: ReturnType<typeof setTimeout> | undefined;
             const onScroll = () => {
                 if (scrollTimer) clearTimeout(scrollTimer);
                 scrollTimer = setTimeout(() => {
-                    const i = Math.round(track.scrollLeft / track.clientWidth);
+                    const slideWidth = slides[0]?.offsetWidth;
+                    if (!slideWidth) return;
+                    const i = Math.round(track.scrollLeft / slideWidth);
                     if (i !== cur) {
                         cur = i;
                         updateDots(i);
@@ -332,9 +340,12 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                     (d as HTMLElement).style.background = j === i ? '#0046A4' : 'rgba(0,70,164,0.25)';
                 });
             };
+            // promo-banner 와 동일하게 슬라이드 실제 위치/너비 기반 — clientWidth 누적 오차 방지
             const goTo = (i: number) => {
+                const targetSlide = slides[i];
+                if (!targetSlide) return;
                 cur = i;
-                track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+                track.scrollTo({ left: targetSlide.offsetLeft - track.offsetLeft, behavior: 'smooth' });
                 updateDots(i);
             };
 
@@ -357,7 +368,9 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             const onScroll = () => {
                 if (scrollTimer) clearTimeout(scrollTimer);
                 scrollTimer = setTimeout(() => {
-                    const i = Math.round(track.scrollLeft / track.clientWidth);
+                    const slideWidth = slides[0]?.offsetWidth;
+                    if (!slideWidth) return;
+                    const i = Math.round(track.scrollLeft / slideWidth);
                     if (i !== cur) {
                         cur = i;
                         updateDots(i);
@@ -459,9 +472,12 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             const pauseBtn = root.querySelector<HTMLElement>('[data-banner-pause]');
             const interval = parseInt(root.getAttribute('data-banner-interval') || '3000', 10);
 
+            // 다른 슬라이더들과 동일 패턴 — 아이템 실제 offsetLeft 기반 (패딩 변경 대비)
             const goTo = (idx: number) => {
                 current = ((idx % total) + total) % total;
-                track.scrollTo({ left: track.offsetWidth * current, behavior: 'smooth' });
+                const targetItem = items[current];
+                if (!targetItem) return;
+                track.scrollTo({ left: targetItem.offsetLeft - track.offsetLeft, behavior: 'smooth' });
                 if (indicator) indicator.textContent = `${current + 1} / ${total}`;
             };
             const startTimer = () => {
