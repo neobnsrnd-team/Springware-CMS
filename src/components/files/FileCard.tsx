@@ -115,7 +115,11 @@ export default function FileCard({ file, isSelected, selectionMode, onClick, pri
                             height={300}
                             className="w-full h-full object-cover"
                             onError={handleImageError}
-                            unoptimized={file.url.endsWith('.svg')}
+                            // 승인 이미지는 nginx 가 직접 서빙(운영) 또는 public 정적 서빙(로컬).
+                            // Next.js 최적화 endpoint(/_next/image)가 컨테이너 내부에서 파일을
+                            // 다시 fetch 할 때 운영 nginx 리라이트 경로를 통과하지 못해
+                            // 미리보기가 깨짐 → unoptimized 로 브라우저가 원본 URL 을 직접 로드하게 함
+                            unoptimized
                             priority={priority}
                         />
                     )
