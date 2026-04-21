@@ -6,7 +6,7 @@ import { NextRequest } from 'next/server';
 
 import { createAsset } from '@/db/repository/asset.repository';
 import { contentBuilderErrorResponse, successResponse, getErrorMessage } from '@/lib/api-response';
-import { canWriteCms, getCurrentUser } from '@/lib/current-user';
+import { canAccessCmsEdit, getCurrentUser } from '@/lib/current-user';
 import { ASSET_UPLOAD_DIR, ASSET_BASE_URL, SERVER_MODE } from '@/lib/env';
 
 export async function POST(req: NextRequest) {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     try {
         // 권한 체크는 파일 바이트 로드 전에 수행 — 권한 없는 대용량 업로드 조기 차단
         const currentUser = await getCurrentUser();
-        if (!canWriteCms(currentUser)) {
+        if (!canAccessCmsEdit(currentUser)) {
             return contentBuilderErrorResponse('Permission denied.');
         }
 
