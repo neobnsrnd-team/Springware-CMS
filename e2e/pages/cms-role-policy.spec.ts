@@ -11,7 +11,7 @@ test.describe('CMS role policy', () => {
         await expect(page.getByRole('button', { name: '+ 새 페이지' })).toBeVisible();
     });
 
-    test('CMS:W bypass user is blocked from /dashboard', async ({ page, context, baseURL }) => {
+    test('CMS:W bypass user with CMS:R can access /dashboard', async ({ page, context, baseURL }) => {
         await context.addCookies([
             {
                 name: 'cms_bypass_role',
@@ -22,8 +22,8 @@ test.describe('CMS role policy', () => {
 
         await page.goto('/dashboard');
 
-        await expect(page).toHaveURL(/\/not-authorized$/);
-        await expect(page.getByRole('heading', { name: 'CMS access is not allowed.' })).toBeVisible();
+        await expect(page).toHaveURL(/\/dashboard$/);
+        await expect(page.getByRole('heading', { name: '대시보드' })).toBeVisible();
     });
 
     test('CMS:W bypass user is redirected from /approve to /cms-admin/approvals', async ({ page, context, baseURL }) => {

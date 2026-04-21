@@ -91,7 +91,7 @@ export function canWriteCms(user: Pick<CurrentUser, 'authorities'>): boolean {
 }
 
 export function canAccessCmsDashboard(user: Pick<CurrentUser, 'authorities'>): boolean {
-    return hasAuthority(user, 'CMS:R') && !hasAuthority(user, 'CMS:W');
+    return hasAuthority(user, 'CMS:R');
 }
 
 export function canManageAllCmsPages(user: Pick<CurrentUser, 'authorities'>): boolean {
