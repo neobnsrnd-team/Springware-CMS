@@ -32,7 +32,7 @@ function pickByWeight(pages: { PAGE_ID: string; AB_WEIGHT: number | null; IS_PUB
  * GET /api/ab/[groupId]
  * - 쿠키에 이미 배정된 pageId가 있고 현재 그룹에 유효하면 그 페이지로 리다이렉트
  * - 없거나 유효하지 않으면 Weighted Random Selection 후 쿠키 저장 및 리다이렉트
- * - 활성 운영 서버(FWK_CMS_SERVER_INSTANCE)의 /deployed/{pageId}.html 절대 URL로 302 리다이렉트
+ * - 활성 운영 서버(FWK_CMS_SERVER_INSTANCE)의 /cms/deployed/{pageId}.html 절대 URL로 302 리다이렉트
  * - 그룹 내 활성 페이지가 없으면 404 반환
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ grou
         }
         const server = servers[0];
         const redirectUrl = new URL(
-            `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/deployed/${targetPageId}.html`,
+            `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/cms/deployed/${targetPageId}.html`,
         );
 
         const res = NextResponse.redirect(redirectUrl, 302);
