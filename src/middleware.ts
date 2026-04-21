@@ -10,9 +10,11 @@ const ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS ?? '')
 
 function setCorsHeaders(res: NextResponse, origin: string): void {
     res.headers.set('Access-Control-Allow-Origin', origin);
+    res.headers.append('Vary', 'Origin');
     res.headers.set('Access-Control-Allow-Credentials', 'true');
     res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-deploy-token');
+    res.headers.set('Access-Control-Max-Age', '86400');
 }
 
 export function middleware(req: NextRequest): NextResponse {
