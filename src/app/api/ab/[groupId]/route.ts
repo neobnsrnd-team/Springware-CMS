@@ -66,7 +66,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ grou
         }
         const server = servers[0];
         const redirectUrl = new URL(
-            `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/deployed/${targetPageId}.html`,
+            `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/cms/deployed/${targetPageId}.html`,
         );
 
         const res = NextResponse.redirect(redirectUrl, 302);
