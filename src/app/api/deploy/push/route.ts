@@ -13,7 +13,7 @@ import { updatePageDeploy, getLatestHistory, getHistoryVersionByFilePath } from 
 import type { CmsPage } from '@/db/types';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
-import { sendToServer } from '@/lib/deploy-utils';
+import { sendToServer, buildServerUrl } from '@/lib/deploy-utils';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
@@ -242,7 +242,7 @@ async function processDeploy(pageId: string | undefined, userId: string) {
     // 5. 각 서버에 병렬 전송 + 이력 기록
     const results = await Promise.all(
         servers.map(async (server) => {
-            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/cms/api/deploy/receive`;
+            const serverUrl = buildServerUrl(server.INSTANCE_IP, server.INSTANCE_PORT, '/cms/api/deploy/receive');
             try {
                 await sendToServer(serverUrl, pageId, html, trackerJs);
                 await upsertFileSend({

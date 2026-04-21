@@ -219,6 +219,432 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             el.removeAttribute('data-card-slide-inited');
         });
 
+        // ── 뷰어 전용 슬라이더 컴포넌트 직접 변환 (Issue #6) ─────────────────
+        // 원인: PR #348 (menu-tab-grid sticky 수정) 의 iframe 레이아웃 변경 이후
+        //       인라인 스크립트 내 document.currentScript 가 null 을 반환하는 경우가 발생해
+        //       슬라이더/자동재생 컴포넌트가 초기화되지 않고 세로로 펼쳐져 보임.
+        // 조치: benefit-card 처럼 ViewClient 에서 직접 data-* 속성 기반으로 변환.
+        //       각 루트 처리 후 내부 <script> 를 제거해 아래 스크립트 재실행 루프와
+        //       autoplay 중복 등록을 방지. setInterval 핸들은 cleanup 에서 해제.
+        const sliderCleanups: (() => void)[] = [];
+
+        // promo-banner: 배너 카드 가로 스와이프 + dots + 카운터 + autoplay(5s)
+        document.querySelectorAll<HTMLElement>('[data-component-id^="promo-banner"]').forEach((root) => {
+            const track = root.querySelector<HTMLElement>('[data-pb-track]');
+            if (!track) return;
+
+            const slides = Array.from(track.querySelectorAll<HTMLElement>('[data-pb-slide]'));
+            if (!slides.length) return;
+
+            // 트랙을 가로 스냅 슬라이더로 변환 — 마이그레이션 스크립트와 동일 스펙
+            track.style.cssText =
+                'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;' +
+                '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                'gap:0;padding:12px 12px 4px;';
+            slides.forEach((s) => {
+                s.style.cssText =
+                    'flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;';
+            });
+
+            const dotsEl = root.querySelector<HTMLElement>('[data-pb-dots]');
+            const counterCur = root.querySelector<HTMLElement>('[data-pb-cur]');
+            let cur = 0;
+            if (counterCur) counterCur.textContent = '1';
+
+            const updateDots = (i: number) => {
+                if (!dotsEl) return;
+                Array.from(dotsEl.children).forEach((d, j) => {
+                    (d as HTMLElement).style.background = j === i ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)';
+                });
+            };
+            // Gemini 리뷰 반영: track.clientWidth 대신 실제 슬라이드 위치/너비 사용.
+            // 트랙에 padding 이 있으면 slide.width(=트랙 content 너비)와 clientWidth 이 달라
+            // i * track.clientWidth 로 스크롤하면 인덱스마다 오차가 누적됨.
+            const goTo = (i: number) => {
+                const targetSlide = slides[i];
+                if (!targetSlide) return;
+                cur = i;
+                track.scrollTo({ left: targetSlide.offsetLeft - track.offsetLeft, behavior: 'smooth' });
+                updateDots(i);
+                if (counterCur) counterCur.textContent = String(i + 1);
+            };
+
+            // dots 구성 (이미 채워져 있으면 한 번 비우고 재구성해 중복 방지)
+            if (dotsEl) {
+                dotsEl.innerHTML = '';
+                slides.forEach((_, i) => {
+                    const d = document.createElement('button');
+                    d.setAttribute('aria-label', `슬라이드 ${i + 1}`);
+                    d.style.cssText =
+                        'width:6px;height:6px;border-radius:50%;border:none;padding:0;cursor:pointer;' +
+                        'flex-shrink:0;display:block;line-height:0;font-size:0;overflow:hidden;background:' +
+                        (i === 0 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)') +
+                        ';';
+                    d.addEventListener('click', () => goTo(i));
+                    dotsEl.appendChild(d);
+                });
+            }
+
+            // scroll → cur 인덱스 갱신 (80ms 디바운스)
+            // slides[0].offsetWidth 로 실제 슬라이드 너비 계산, 0 또는 숨김 상태 방어
+            let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+            const onScroll = () => {
+                if (scrollTimer) clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(() => {
+                    const slideWidth = slides[0]?.offsetWidth;
+                    if (!slideWidth) return;
+                    const i = Math.round(track.scrollLeft / slideWidth);
+                    if (i !== cur) {
+                        cur = i;
+                        updateDots(i);
+                        if (counterCur) counterCur.textContent = String(i + 1);
+                    }
+                }, 80);
+            };
+            track.addEventListener('scroll', onScroll, { passive: true });
+
+            // autoplay 5s, 터치 시 해제
+            const timer = setInterval(() => goTo((cur + 1) % slides.length), 5000);
+            const onTouchStart = () => clearInterval(timer);
+            track.addEventListener('touchstart', onTouchStart, { passive: true, once: true });
+
+            sliderCleanups.push(() => {
+                clearInterval(timer);
+                if (scrollTimer) clearTimeout(scrollTimer);
+                track.removeEventListener('scroll', onScroll);
+                track.removeEventListener('touchstart', onTouchStart);
+            });
+
+            // 내부 <script> 제거 — 아래 재실행 루프와 중복 초기화 방지
+            root.querySelectorAll('script').forEach((s) => s.remove());
+        });
+
+        // product-gallery: 상품 카드 가로 스와이프 + dots + autoplay(4s)
+        // responsive variant 은 768px 이상에서 그리드 레이아웃으로 전환
+        document.querySelectorAll<HTMLElement>('[data-component-id^="product-gallery"]').forEach((root) => {
+            const track = root.querySelector<HTMLElement>('[data-pg-track]');
+            if (!track) return;
+            const slides = Array.from(track.querySelectorAll<HTMLElement>('[data-pg-slide]'));
+            if (!slides.length) return;
+
+            const dotsEl = root.querySelector<HTMLElement>('[data-pg-dots]');
+            const componentId = root.getAttribute('data-component-id') ?? '';
+            const isResponsive = componentId.endsWith('-responsive');
+            let cur = 0;
+            let timer: ReturnType<typeof setInterval> | null = null;
+            let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+
+            const updateDots = (i: number) => {
+                if (!dotsEl) return;
+                Array.from(dotsEl.children).forEach((d, j) => {
+                    (d as HTMLElement).style.background = j === i ? '#0046A4' : 'rgba(0,70,164,0.25)';
+                });
+            };
+            // promo-banner 와 동일하게 슬라이드 실제 위치/너비 기반 — clientWidth 누적 오차 방지
+            const goTo = (i: number) => {
+                const targetSlide = slides[i];
+                if (!targetSlide) return;
+                cur = i;
+                track.scrollTo({ left: targetSlide.offsetLeft - track.offsetLeft, behavior: 'smooth' });
+                updateDots(i);
+            };
+
+            // dots 재구성
+            if (dotsEl) {
+                dotsEl.innerHTML = '';
+                slides.forEach((_, i) => {
+                    const d = document.createElement('button');
+                    d.setAttribute('aria-label', `슬라이드 ${i + 1}`);
+                    d.style.cssText =
+                        'width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;' +
+                        'margin:0 4px;display:block;line-height:0;font-size:0;overflow:hidden;flex-shrink:0;background:' +
+                        (i === 0 ? '#0046A4' : 'rgba(0,70,164,0.25)') +
+                        ';';
+                    d.addEventListener('click', () => goTo(i));
+                    dotsEl.appendChild(d);
+                });
+            }
+
+            const onScroll = () => {
+                if (scrollTimer) clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(() => {
+                    const slideWidth = slides[0]?.offsetWidth;
+                    if (!slideWidth) return;
+                    const i = Math.round(track.scrollLeft / slideWidth);
+                    if (i !== cur) {
+                        cur = i;
+                        updateDots(i);
+                    }
+                }, 80);
+            };
+            track.addEventListener('scroll', onScroll, { passive: true });
+
+            const onTouchStart = () => {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+            };
+
+            const applyGrid = () => {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+                track.style.cssText =
+                    'display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;padding:4px 20px 20px;box-sizing:border-box;';
+                slides.forEach((s) => {
+                    s.style.cssText = 'flex:0 0 calc(33.333% - 8px);min-width:0;box-sizing:border-box;';
+                });
+                if (dotsEl) dotsEl.style.display = 'none';
+            };
+            const applySlider = () => {
+                track.style.cssText =
+                    'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;' +
+                    '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding:4px 0 8px;gap:0;';
+                slides.forEach((s) => {
+                    s.style.cssText =
+                        'flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 20px;box-sizing:border-box;';
+                });
+                if (dotsEl) dotsEl.style.display = 'flex';
+                if (!timer) {
+                    timer = setInterval(() => goTo((cur + 1) % slides.length), 4000);
+                    track.addEventListener('touchstart', onTouchStart, { passive: true, once: true });
+                }
+            };
+
+            const applyLayout = () => {
+                if (isResponsive && window.innerWidth >= 768) applyGrid();
+                else applySlider();
+            };
+            applyLayout();
+
+            let onResize: (() => void) | null = null;
+            if (isResponsive) {
+                onResize = applyLayout;
+                window.addEventListener('resize', onResize);
+            }
+
+            sliderCleanups.push(() => {
+                if (timer) clearInterval(timer);
+                if (scrollTimer) clearTimeout(scrollTimer);
+                track.removeEventListener('scroll', onScroll);
+                track.removeEventListener('touchstart', onTouchStart);
+                if (onResize) window.removeEventListener('resize', onResize);
+            });
+
+            root.querySelectorAll('script').forEach((s) => s.remove());
+        });
+
+        // event-banner: 가로 스와이프 + prev/next/pause 버튼 + 자동재생(interval 속성) + 호버 시 일시정지
+        document.querySelectorAll<HTMLElement>('[data-component-id^="event-banner"]').forEach((root) => {
+            const track = root.querySelector<HTMLElement>('[data-banner-track]');
+            if (!track) return;
+            const items = Array.from(track.querySelectorAll<HTMLElement>('[data-banner-item]'));
+            if (!items.length) return;
+
+            // 세로 나열 → 가로 스크롤 변환
+            track.style.cssText =
+                'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;' +
+                '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;';
+
+            // 스크롤바 숨김용 style 태그 (한 번만)
+            if (!track.getAttribute('data-eb-id')) {
+                const styleId = 'eb-hide-' + Math.random().toString(36).slice(2, 8);
+                track.setAttribute('data-eb-id', styleId);
+                const styleEl = document.createElement('style');
+                styleEl.textContent = `[data-eb-id="${styleId}"]::-webkit-scrollbar{display:none}`;
+                root.appendChild(styleEl);
+            }
+
+            items.forEach((item) => {
+                item.style.flex = '0 0 100%';
+                item.style.scrollSnapAlign = 'start';
+            });
+
+            const total = items.length;
+            let current = 0;
+            let timer: ReturnType<typeof setInterval> | null = null;
+            let paused = false;
+            const indicator = root.querySelector<HTMLElement>('[data-banner-indicator]');
+            const prevBtn = root.querySelector<HTMLElement>('[data-banner-prev]');
+            const nextBtn = root.querySelector<HTMLElement>('[data-banner-next]');
+            const pauseBtn = root.querySelector<HTMLElement>('[data-banner-pause]');
+            const interval = parseInt(root.getAttribute('data-banner-interval') || '3000', 10);
+
+            // 다른 슬라이더들과 동일 패턴 — 아이템 실제 offsetLeft 기반 (패딩 변경 대비)
+            const goTo = (idx: number) => {
+                current = ((idx % total) + total) % total;
+                const targetItem = items[current];
+                if (!targetItem) return;
+                track.scrollTo({ left: targetItem.offsetLeft - track.offsetLeft, behavior: 'smooth' });
+                if (indicator) indicator.textContent = `${current + 1} / ${total}`;
+            };
+            const startTimer = () => {
+                if (paused) return;
+                timer = setInterval(() => goTo(current + 1), interval);
+            };
+            const stopTimer = () => {
+                if (timer) clearInterval(timer);
+                timer = null;
+            };
+            startTimer();
+
+            const cleanups: (() => void)[] = [];
+            if (prevBtn) {
+                const onClick = () => {
+                    stopTimer();
+                    goTo(current - 1);
+                    startTimer();
+                };
+                prevBtn.addEventListener('click', onClick);
+                cleanups.push(() => prevBtn.removeEventListener('click', onClick));
+            }
+            if (nextBtn) {
+                const onClick = () => {
+                    stopTimer();
+                    goTo(current + 1);
+                    startTimer();
+                };
+                nextBtn.addEventListener('click', onClick);
+                cleanups.push(() => nextBtn.removeEventListener('click', onClick));
+            }
+            if (pauseBtn) {
+                const onClick = () => {
+                    paused = !paused;
+                    if (paused) {
+                        stopTimer();
+                        pauseBtn.innerHTML = '&#9654;';
+                    } else {
+                        pauseBtn.innerHTML = '&#10073;&#10073;';
+                        startTimer();
+                    }
+                };
+                pauseBtn.addEventListener('click', onClick);
+                cleanups.push(() => pauseBtn.removeEventListener('click', onClick));
+            }
+            const onMouseOver = () => stopTimer();
+            const onMouseLeave = () => {
+                if (!paused) startTimer();
+            };
+            root.addEventListener('mouseover', onMouseOver);
+            root.addEventListener('mouseleave', onMouseLeave);
+            cleanups.push(() => root.removeEventListener('mouseover', onMouseOver));
+            cleanups.push(() => root.removeEventListener('mouseleave', onMouseLeave));
+
+            sliderCleanups.push(() => {
+                stopTimer();
+                cleanups.forEach((fn) => fn());
+            });
+
+            root.querySelectorAll('script').forEach((s) => s.remove());
+        });
+
+        // info-card-slide: view-mode(mobile/web/responsive) 별 레이아웃 + 카드 높이 균등화 + 복사 버튼
+        // 자동재생 없음 — 슬라이더 변환과 복사 기능만 재현
+        document.querySelectorAll<HTMLElement>('[data-component-id^="info-card-slide"]').forEach((root) => {
+            const track = root.querySelector<HTMLElement>('[data-card-track]');
+            if (!track) return;
+
+            // view-mode 결정: 속성 우선, 없으면 component-id 꼬리 기반 추론
+            const componentId = root.getAttribute('data-component-id') ?? '';
+            const modeFromAttr = root.getAttribute('data-card-view-mode');
+            const mode =
+                modeFromAttr ??
+                (componentId.endsWith('-web') ? 'web' : componentId.endsWith('-responsive') ? 'responsive' : 'mobile');
+
+            // 레이아웃 적용
+            if (mode === 'web') {
+                track.style.cssText =
+                    'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;overflow:visible;';
+            } else if (mode === 'responsive') {
+                track.style.cssText =
+                    'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;' +
+                    '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                    'gap:14px;padding:10px 0 16px;scroll-padding:0 2%;';
+            } else {
+                track.style.cssText =
+                    'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;' +
+                    '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                    'gap:0;padding:8px 0 12px;scroll-padding:0 4%;';
+            }
+
+            // 카드 높이 균등화
+            let maxH = 0;
+            track.querySelectorAll<HTMLElement>('[data-card-item] > div').forEach((inner) => {
+                inner.style.minHeight = '0';
+                if (inner.scrollHeight > maxH) maxH = inner.scrollHeight;
+            });
+            track.querySelectorAll<HTMLElement>('[data-card-item] > div').forEach((inner) => {
+                inner.style.minHeight = `${maxH}px`;
+            });
+
+            // 카드 너비·스냅 정렬 (모드별 다름)
+            track.querySelectorAll<HTMLElement>('[data-card-item]').forEach((card) => {
+                if (mode === 'web') {
+                    card.style.flex = '';
+                    card.style.width = '100%';
+                    card.style.maxWidth = '100%';
+                    card.style.minWidth = '0';
+                    card.style.scrollSnapAlign = 'unset';
+                } else if (mode === 'responsive') {
+                    card.style.flex = '0 0 min(440px,78vw)';
+                    card.style.width = 'min(440px,78vw)';
+                    card.style.scrollSnapAlign = 'start';
+                } else {
+                    card.style.flex = '0 0 92%';
+                    card.style.width = '92%';
+                    card.style.scrollSnapAlign = 'center';
+                }
+            });
+
+            // 하단 버튼 텍스트 넘침 처리
+            track.querySelectorAll<HTMLElement>('[data-card-item] a').forEach((btn) => {
+                if (!btn.style.borderRadius) return;
+                btn.style.minWidth = '0';
+                btn.style.maxWidth = '100%';
+                btn.style.whiteSpace = 'normal';
+                btn.style.overflowWrap = 'anywhere';
+                btn.style.wordBreak = 'break-all';
+                btn.style.boxSizing = 'border-box';
+            });
+
+            // 스크롤바 숨김용 style 태그 (mobile/responsive 에서만 의미 있음)
+            if (!track.getAttribute('data-ics-id')) {
+                const styleId = 'ics-hide-' + Math.random().toString(36).slice(2, 8);
+                track.setAttribute('data-ics-id', styleId);
+                const styleEl = document.createElement('style');
+                styleEl.textContent = `[data-ics-id="${styleId}"]::-webkit-scrollbar{display:none}`;
+                root.appendChild(styleEl);
+            }
+
+            // 복사 버튼 — 제목 클립보드 복사 + SVG 일시 색상 변경
+            const copyCleanups: (() => void)[] = [];
+            root.querySelectorAll<HTMLElement>('[data-card-copy]').forEach((btn) => {
+                const onClick = (e: Event) => {
+                    e.preventDefault();
+                    const card = btn.closest('[data-card-item]');
+                    const titleEl = card?.querySelector('[data-card-title]');
+                    if (titleEl && navigator.clipboard) {
+                        navigator.clipboard.writeText(titleEl.textContent || '');
+                        const svg = btn.querySelector('svg');
+                        if (svg) {
+                            svg.setAttribute('stroke', '#059669');
+                            setTimeout(() => svg.setAttribute('stroke', '#9CA3AF'), 1500);
+                        }
+                    }
+                };
+                btn.addEventListener('click', onClick);
+                copyCleanups.push(() => btn.removeEventListener('click', onClick));
+            });
+
+            sliderCleanups.push(() => {
+                copyCleanups.forEach((fn) => fn());
+            });
+
+            root.querySelectorAll('script').forEach((s) => s.remove());
+        });
+
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
             // 외부 스크립트(src), 비 JS 타입(type="text/html" 등), HTML 템플릿 스크립트를 제외합니다.
             if (
@@ -421,6 +847,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         document.addEventListener('click', handleDummyLink);
 
         return () => {
+            sliderCleanups.forEach((fn) => fn());
             blCleanups.forEach((fn) => fn());
             document.removeEventListener('click', handleDummyLink);
             runtime.destroy();
