@@ -122,9 +122,8 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
     const handleFileClick = (file: FileItem, e: React.MouseEvent) => {
         e.preventDefault();
         if (file.isDirectory) {
-            // 승인 이미지 루트(DEPLOYED_BASE_URL) 기준 상대 경로 추출
-            // 예: /deployed/static/sub → sub
-            setCurrentPath(file.url.replace(/^.*?\/([^/]+(?:\/[^/]+)*)$/, (_, rel) => rel));
+            // 서버 응답의 상대 경로 사용 — URL 파싱 불필요
+            setCurrentPath(file.path);
             return;
         }
         toggleFileSelection(file.url);
