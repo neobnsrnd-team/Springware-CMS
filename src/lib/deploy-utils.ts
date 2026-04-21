@@ -3,6 +3,12 @@
 
 const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
 
+/** 운영 서버 base URL 생성 — 포트 null 안전 처리 */
+export function buildServerUrl(ip: string | null, port: number | null, path: string): string {
+    const host = port ? `${ip}:${port}` : (ip ?? '');
+    return `http://${host}${path}`;
+}
+
 /** 배포 대상 서버로 HTML + 트래커 JS 전송 */
 export async function sendToServer(
     serverUrl: string,

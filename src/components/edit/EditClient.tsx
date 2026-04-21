@@ -500,7 +500,12 @@ export default function EditClient({
             generateMediaUrl_Fal: nextApi('/api/fal/request'),
             checkRequestStatusUrl_Fal: nextApi('/api/fal/status'),
             getResultUrl_Fal: nextApi('/api/fal/result'),
-            // filePicker 제거 — DB 전환 후 로컬 파일 브라우저 불필요, upload 함수로 이미지 삽입
+            // 이미지 삽입 시 승인된 이미지만 선택하도록 전용 브라우저(/files) 오픈
+            // - filePicker: 스니펫 내부 커스텀 이미지 필드 (예: 퀵뱅킹 링크 선택)
+            // - imageSelect: 에디터 기본 "이미지 변경" 툴바 버튼 (이미지 블록·헤더 이미지 등)
+            filePicker: nextApi('/files'),
+            imageSelect: nextApi('/files'),
+            filePickerSize: 'medium',
 
             // 컬러 피커 색상 팔레트
             colors: CMS_COLORS,
@@ -1913,7 +1918,40 @@ export default function EditClient({
         };
     }, []);
 
-    // Listen for file selection from the file picker (/files)
+    // ── ContentBuilder 기본 "이미지 변경" 버튼 인터셉트 ─────────────
+    // ContentBuilder의 `#fileEmbedImage` (이미지 블록·헤더 이미지 변경) 는
+    // filePicker/imageSelect 옵션을 경유하지 않고 OS 파일 선택창을 직접 띄움.
+    // → 클릭을 캡처 단계에서 가로채서 승인 이미지 브라우저(/files) 팝업으로 우회
+    const imageReplaceTargetRef = useRef<HTMLImageElement | null>(null);
+
+    useEffect(() => {
+        const handleFileInputClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (!(target instanceof HTMLInputElement)) return;
+            if (target.type !== 'file') return;
+            if (target.id !== 'fileEmbedImage') return;
+
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            // 현재 편집 중인 이미지 참조 저장 — postMessage 응답에서 src 교체에 사용
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder 내부 속성
+            const activeImg = (builderRef.current as any)?.activeImage as HTMLImageElement | null;
+            imageReplaceTargetRef.current = activeImg ?? null;
+
+            // 팝업으로 /files 오픈 (postMessage 타겟은 window.opener 경로 사용)
+            window.open(nextApi('/files'), 'spw-image-browser', 'width=1280,height=900,scrollbars=yes,resizable=yes');
+        };
+
+        document.addEventListener('click', handleFileInputClick, true);
+        return () => document.removeEventListener('click', handleFileInputClick, true);
+    }, []);
+
+    // 파일 피커(/files)에서 이미지 선택 시 에디터에 삽입 또는 교체
+    // - ASSET_SELECTED: 단건 삽입 (하위 호환)
+    // - ASSETS_SELECTED: 다건 — 완료 버튼 경유
+    //   · 교체 모드 (imageReplaceTargetRef 가 있을 때): 첫 URL 로 activeImage src 교체
+    //   · 삽입 모드: selectAsset 루프 호출
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             switch (event.data.type) {
@@ -1921,6 +1959,24 @@ export default function EditClient({
                     builderRef.current?.selectAsset(event.data.url);
                     window.focus();
                     break;
+                case 'ASSETS_SELECTED': {
+                    const urls: string[] = Array.isArray(event.data.urls) ? event.data.urls : [];
+                    const replaceTarget = imageReplaceTargetRef.current;
+
+                    if (replaceTarget && urls[0]) {
+                        // 이미지 교체 모드
+                        replaceTarget.setAttribute('src', urls[0]);
+                        imageReplaceTargetRef.current = null;
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContentBuilder 내부 onChange
+                        const onChange = (builderRef.current as any)?.opts?.onChange;
+                        if (typeof onChange === 'function') onChange();
+                    } else {
+                        // 일반 삽입 모드
+                        urls.forEach((url) => builderRef.current?.selectAsset(url));
+                    }
+                    window.focus();
+                    break;
+                }
                 default:
                     break;
             }

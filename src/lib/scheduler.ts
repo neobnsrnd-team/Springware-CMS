@@ -6,7 +6,7 @@
 //    반드시 함수 내부에서 dynamic import하여 webpack 번들 포함을 방지합니다.
 
 import { getErrorMessage } from '@/lib/api-response';
-import { sendToServer } from '@/lib/deploy-utils';
+import { sendToServer, buildServerUrl } from '@/lib/deploy-utils';
 
 // 중복 초기화 방지 플래그
 let schedulerInitialized = false;
@@ -38,7 +38,7 @@ async function deployExpiredPage(pageId: string): Promise<void> {
 
     await Promise.all(
         servers.map(async (server) => {
-            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/cms/api/deploy/receive`;
+            const serverUrl = buildServerUrl(server.INSTANCE_IP, server.INSTANCE_PORT, '/cms/api/deploy/receive');
             try {
                 await sendToServer(serverUrl, pageId, expiredHtml);
                 await upsertFileSend({
