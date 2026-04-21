@@ -35,7 +35,7 @@ const BYPASS_ADMIN: CurrentUser = {
     userId: 'admin',
     userName: '관리자',
     roleId: 'cms_admin',
-    authorities: ['CMS:R', 'CMS:W'],
+    authorities: ['CMS:W'],
 };
 
 /** 인증 우회 모드 — 일반 사용자 (AUTH_BYPASS=true 기본값) */
@@ -43,7 +43,7 @@ const BYPASS_USER: CurrentUser = {
     userId: 'cmsUser01',
     userName: 'cms일반유저',
     roleId: 'cms_user',
-    authorities: ['CMS:R', 'CMS:W'],
+    authorities: ['CMS:R'],
 };
 
 /** AUTH_BYPASS 모드에서 쿠키 기반 역할 분기 */
@@ -88,6 +88,31 @@ export function canReadCms(user: Pick<CurrentUser, 'authorities'>): boolean {
 
 export function canWriteCms(user: Pick<CurrentUser, 'authorities'>): boolean {
     return hasAuthority(user, 'CMS:W');
+}
+
+export function canAccessCmsDashboard(user: Pick<CurrentUser, 'authorities'>): boolean {
+    return hasAuthority(user, 'CMS:R') && !hasAuthority(user, 'CMS:W');
+}
+
+export function canManageAllCmsPages(user: Pick<CurrentUser, 'authorities'>): boolean {
+    return hasAuthority(user, 'CMS:W');
+}
+
+export function canAccessCmsEdit(user: Pick<CurrentUser, 'authorities'>): boolean {
+    return hasAuthority(user, 'CMS:R') || hasAuthority(user, 'CMS:W');
+}
+
+export function canManageCmsPage(
+    user: Pick<CurrentUser, 'authorities' | 'userId'>,
+    ownerUserId?: string | null,
+): boolean {
+    if (canManageAllCmsPages(user)) {
+        return true;
+    }
+    if (!hasAuthority(user, 'CMS:R')) {
+        return false;
+    }
+    return !ownerUserId || ownerUserId === user.userId;
 }
 
 export const CMS_ROLE = {

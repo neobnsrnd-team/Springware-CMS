@@ -62,6 +62,7 @@ export default defineConfig({
     webServer: {
         command: 'npm run dev -- -p 3100',
         env: {
+            AUTH_BYPASS: 'true',
             NEXT_PUBLIC_CMS_BASE_PATH: '',
         },
         url: 'http://localhost:3100',
