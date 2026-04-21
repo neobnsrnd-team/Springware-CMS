@@ -242,7 +242,7 @@ async function processDeploy(pageId: string | undefined, userId: string) {
     // 5. 각 서버에 병렬 전송 + 이력 기록
     const results = await Promise.all(
         servers.map(async (server) => {
-            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
+            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/cms/api/deploy/receive`;
             try {
                 await sendToServer(serverUrl, pageId, html, trackerJs);
                 await upsertFileSend({
