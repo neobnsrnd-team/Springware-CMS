@@ -219,6 +219,98 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             el.removeAttribute('data-card-slide-inited');
         });
 
+        // ── 뷰어 전용 슬라이더 컴포넌트 직접 변환 (Issue #6) ─────────────────
+        // 원인: PR #348 (menu-tab-grid sticky 수정) 의 iframe 레이아웃 변경 이후
+        //       인라인 스크립트 내 document.currentScript 가 null 을 반환하는 경우가 발생해
+        //       슬라이더/자동재생 컴포넌트가 초기화되지 않고 세로로 펼쳐져 보임.
+        // 조치: benefit-card 처럼 ViewClient 에서 직접 data-* 속성 기반으로 변환.
+        //       각 루트 처리 후 내부 <script> 를 제거해 아래 스크립트 재실행 루프와
+        //       autoplay 중복 등록을 방지. setInterval 핸들은 cleanup 에서 해제.
+        const sliderCleanups: (() => void)[] = [];
+
+        // promo-banner: 배너 카드 가로 스와이프 + dots + 카운터 + autoplay(5s)
+        document.querySelectorAll<HTMLElement>('[data-component-id^="promo-banner"]').forEach((root) => {
+            const track = root.querySelector<HTMLElement>('[data-pb-track]');
+            if (!track) return;
+
+            const slides = Array.from(track.querySelectorAll<HTMLElement>('[data-pb-slide]'));
+            if (!slides.length) return;
+
+            // 트랙을 가로 스냅 슬라이더로 변환 — 마이그레이션 스크립트와 동일 스펙
+            track.style.cssText =
+                'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;' +
+                '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                'gap:0;padding:12px 12px 4px;';
+            slides.forEach((s) => {
+                s.style.cssText =
+                    'flex-shrink:0;width:100%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;';
+            });
+
+            const dotsEl = root.querySelector<HTMLElement>('[data-pb-dots]');
+            const counterCur = root.querySelector<HTMLElement>('[data-pb-cur]');
+            let cur = 0;
+            if (counterCur) counterCur.textContent = '1';
+
+            const updateDots = (i: number) => {
+                if (!dotsEl) return;
+                Array.from(dotsEl.children).forEach((d, j) => {
+                    (d as HTMLElement).style.background = j === i ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)';
+                });
+            };
+            const goTo = (i: number) => {
+                cur = i;
+                track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+                updateDots(i);
+                if (counterCur) counterCur.textContent = String(i + 1);
+            };
+
+            // dots 구성 (이미 채워져 있으면 한 번 비우고 재구성해 중복 방지)
+            if (dotsEl) {
+                dotsEl.innerHTML = '';
+                slides.forEach((_, i) => {
+                    const d = document.createElement('button');
+                    d.setAttribute('aria-label', `슬라이드 ${i + 1}`);
+                    d.style.cssText =
+                        'width:6px;height:6px;border-radius:50%;border:none;padding:0;cursor:pointer;' +
+                        'flex-shrink:0;display:block;line-height:0;font-size:0;overflow:hidden;background:' +
+                        (i === 0 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)') +
+                        ';';
+                    d.addEventListener('click', () => goTo(i));
+                    dotsEl.appendChild(d);
+                });
+            }
+
+            // scroll → cur 인덱스 갱신 (80ms 디바운스)
+            let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+            const onScroll = () => {
+                if (scrollTimer) clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(() => {
+                    const i = Math.round(track.scrollLeft / track.clientWidth);
+                    if (i !== cur) {
+                        cur = i;
+                        updateDots(i);
+                        if (counterCur) counterCur.textContent = String(i + 1);
+                    }
+                }, 80);
+            };
+            track.addEventListener('scroll', onScroll, { passive: true });
+
+            // autoplay 5s, 터치 시 해제
+            const timer = setInterval(() => goTo((cur + 1) % slides.length), 5000);
+            const onTouchStart = () => clearInterval(timer);
+            track.addEventListener('touchstart', onTouchStart, { passive: true, once: true });
+
+            sliderCleanups.push(() => {
+                clearInterval(timer);
+                if (scrollTimer) clearTimeout(scrollTimer);
+                track.removeEventListener('scroll', onScroll);
+                track.removeEventListener('touchstart', onTouchStart);
+            });
+
+            // 내부 <script> 제거 — 아래 재실행 루프와 중복 초기화 방지
+            root.querySelectorAll('script').forEach((s) => s.remove());
+        });
+
         document.querySelectorAll<HTMLScriptElement>('[data-spw-block] script').forEach((oldScript) => {
             // 외부 스크립트(src), 비 JS 타입(type="text/html" 등), HTML 템플릿 스크립트를 제외합니다.
             if (
@@ -421,6 +513,7 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         document.addEventListener('click', handleDummyLink);
 
         return () => {
+            sliderCleanups.forEach((fn) => fn());
             blCleanups.forEach((fn) => fn());
             document.removeEventListener('click', handleDummyLink);
             runtime.destroy();
