@@ -38,7 +38,7 @@ async function deployExpiredPage(pageId: string): Promise<void> {
 
     await Promise.all(
         servers.map(async (server) => {
-            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/api/deploy/receive`;
+            const serverUrl = `http://${server.INSTANCE_IP}:${server.INSTANCE_PORT}/cms/api/deploy/receive`;
             try {
                 await sendToServer(serverUrl, pageId, expiredHtml);
                 await upsertFileSend({
