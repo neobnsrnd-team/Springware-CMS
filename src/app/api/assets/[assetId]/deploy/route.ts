@@ -1,11 +1,11 @@
 // src/app/api/assets/[assetId]/deploy/route.ts
-// 승인된 에셋의 파일을 uploads → deployed/img 로 이동 + DB 경로 업데이트
+// 승인된 에셋의 파일을 uploads → deployed/<DEPLOYED_IMG_SUBDIR> 로 이동 + DB 경로 업데이트
 //
 // 흐름:
 //   1. 에셋 조회 (없으면 404)
 //   2. ASSET_STATE === 'APPROVED' 검증 (아니면 400)
 //   3. 원본 파일 존재 확인 (없으면 404)
-//   4. DEPLOYED_UPLOAD_DIR/img/ 로 복사 (mkdir recursive)
+//   4. DEPLOYED_UPLOAD_DIR/<DEPLOYED_IMG_SUBDIR>/ 로 복사 (mkdir recursive)
 //   5. 원본 삭제 (실패해도 복사는 성공)
 //   6. DB ASSET_PATH, ASSET_URL 업데이트
 
@@ -17,7 +17,7 @@ import { NextRequest } from 'next/server';
 import { getAssetById, updateAssetPathUrl } from '@/db/repository/asset.repository';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
-import { DEPLOYED_UPLOAD_DIR, DEPLOYED_BASE_URL } from '@/lib/env';
+import { DEPLOYED_UPLOAD_DIR, DEPLOYED_BASE_URL, DEPLOYED_IMG_SUBDIR } from '@/lib/env';
 
 /** POST /api/assets/:assetId/deploy — 승인된 이미지 파일 이동 */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ assetId: string }> }) {
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ass
 
         // 대상 경로 계산
         const filename = basename(asset.ASSET_PATH);
-        const deployedImgDir = join(DEPLOYED_UPLOAD_DIR, 'img');
+        const deployedImgDir = join(DEPLOYED_UPLOAD_DIR, DEPLOYED_IMG_SUBDIR);
         const deployedPath = join(deployedImgDir, filename);
         const deployedUrl = `${DEPLOYED_BASE_URL}/${filename}`;
 

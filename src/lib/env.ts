@@ -39,6 +39,13 @@ export const ASSET_BASE_URL = optionalEnv('ASSET_BASE_URL', '/uploads');
 // ── 배포 저장소 (승인 완료 이미지) ──
 export const DEPLOYED_UPLOAD_DIR = optionalEnv('DEPLOYED_UPLOAD_DIR', 'public/deployed');
 export const DEPLOYED_BASE_URL = optionalEnv('DEPLOYED_BASE_URL', '/deployed/static');
+/**
+ * 승인 완료 이미지가 저장되는 서브 디렉토리명 (DEPLOYED_UPLOAD_DIR 아래)
+ * - 승인 시 파일 복사 대상 경로 + 에디터 이미지 브라우저 루트로 사용됨
+ * - 기본값 'img' (운영 /data/deployed/img, 로컬 public/deployed/img)
+ * - 변경 시 Spider Admin·nginx 설정도 함께 맞춰야 함
+ */
+export const DEPLOYED_IMG_SUBDIR = optionalEnv('DEPLOYED_IMG_SUBDIR', 'img');
 
 // ── 브랜드 테마 ──
 export const BANK_BRAND = optionalEnv('BANK_BRAND', '');
