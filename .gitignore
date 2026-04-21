@@ -32,6 +32,10 @@
 /public/uploads/*
 !/public/uploads/pages/
 
+# ── 배포 저장소 (승인 완료 이미지) ──
+# Spider Admin 승인 시 복사되는 파일 — 런타임 데이터
+/public/deployed/
+
 # ── 저장된 콘텐츠 데이터 ──
 # 에디터에서 저장된 페이지 데이터 (운영 환경마다 다름)
 /data/index.json
