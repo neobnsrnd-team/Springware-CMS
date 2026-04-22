@@ -323,7 +323,21 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
         // responsive variant 은 768px 이상에서 그리드 레이아웃으로 전환
         document.querySelectorAll<HTMLElement>('[data-component-id^="product-gallery"]').forEach((root) => {
             const track = root.querySelector<HTMLElement>('[data-pg-track]');
-            if (!track) return;
+            if (!track) {
+                // product-gallery-web: data-pg-grid 기반 — 슬라이더 없음, flex-row 그리드 강제 적용
+                // ContentBuilder가 inline style을 덮어쓰는 경우를 대비해 명시적으로 재적용
+                const grid = root.querySelector<HTMLElement>('[data-pg-grid]');
+                if (grid) {
+                    grid.style.cssText =
+                        'display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;padding:4px 20px 20px;box-sizing:border-box;';
+                    grid.querySelectorAll<HTMLElement>(':scope > div').forEach((card) => {
+                        card.style.flex = '1';
+                        card.style.minWidth = '260px';
+                        card.style.boxSizing = 'border-box';
+                    });
+                }
+                return;
+            }
             const slides = Array.from(track.querySelectorAll<HTMLElement>('[data-pg-slide]'));
             if (!slides.length) return;
 
@@ -553,10 +567,20 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 modeFromAttr ??
                 (componentId.endsWith('-web') ? 'web' : componentId.endsWith('-responsive') ? 'responsive' : 'mobile');
 
+            // web 변형: 외부 래퍼 max-width 제거 — 컨테이너 너비에 맞게 100% 채움
+            if (mode === 'web') {
+                root.style.maxWidth = '';
+                root.style.margin = '0';
+                root.style.width = '100%';
+                root.style.boxSizing = 'border-box';
+            }
+
             // 레이아웃 적용
             if (mode === 'web') {
                 track.style.cssText =
-                    'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;overflow:visible;';
+                    'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;' +
+                    '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                    'gap:20px;padding:12px 0 20px;scroll-padding:0 2%;';
             } else if (mode === 'responsive') {
                 track.style.cssText =
                     'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;' +
@@ -582,11 +606,11 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             // 카드 너비·스냅 정렬 (모드별 다름)
             track.querySelectorAll<HTMLElement>('[data-card-item]').forEach((card) => {
                 if (mode === 'web') {
-                    card.style.flex = '';
-                    card.style.width = '100%';
-                    card.style.maxWidth = '100%';
+                    card.style.flex = '0 0 min(480px,46vw)';
+                    card.style.width = 'min(480px,46vw)';
+                    card.style.maxWidth = '';
                     card.style.minWidth = '0';
-                    card.style.scrollSnapAlign = 'unset';
+                    card.style.scrollSnapAlign = 'start';
                 } else if (mode === 'responsive') {
                     card.style.flex = '0 0 min(440px,78vw)';
                     card.style.width = 'min(440px,78vw)';
@@ -672,6 +696,31 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 slide.style.cssText =
                     'flex-shrink:0;width:80%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;';
             });
+        });
+
+        // benefit-card-web / responsive: data-bc-container flex-row 그리드 강제 적용
+        // data-bc-track이 없는 web/responsive 변형은 위 루프에서 처리되지 않음
+        // ContentBuilder가 inline style을 덮어쓰는 경우를 대비해 명시적으로 재적용
+        document.querySelectorAll<HTMLElement>('[data-component-id^="benefit-card"]').forEach((root) => {
+            const compId = root.getAttribute('data-component-id') ?? '';
+            if (!compId.endsWith('-web') && !compId.endsWith('-responsive')) return;
+            const container = root.querySelector<HTMLElement>('[data-bc-container]');
+            if (!container) return;
+            if (compId.endsWith('-web')) {
+                // 외부 래퍼 max-width 제거 — 컨테이너 너비에 맞게 100% 채움
+                root.style.maxWidth = '';
+                root.style.margin = '0';
+                root.style.width = '100%';
+                root.style.boxSizing = 'border-box';
+                container.style.cssText = 'display:flex;flex-direction:row;gap:12px;';
+                container.querySelectorAll<HTMLElement>(':scope > a').forEach((card) => {
+                    card.style.flex = '1';
+                    card.style.minWidth = '0';
+                });
+            } else {
+                // responsive: flex-wrap 2열
+                container.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;';
+            }
         });
 
         // ── branch-locator 필터 버튼 ──
