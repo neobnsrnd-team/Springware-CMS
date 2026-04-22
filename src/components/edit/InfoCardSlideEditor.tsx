@@ -60,7 +60,7 @@ function getCardStyles(viewMode: CardViewMode) {
             itemOuter: 'width:100%;max-width:100%;min-width:0;padding:0;box-sizing:border-box;',
             itemInner:
                 'width:100%;max-width:100%;overflow:hidden;background:linear-gradient(180deg,#FFFFFF 0%,#FBFDFF 100%);border:1px solid #DCE4F2;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:14px;min-height:260px;box-sizing:border-box;box-shadow:0 20px 44px rgba(15,23,42,0.08);',
-            track: 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;',
+            track: 'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:20px;padding:12px 0 20px;scroll-padding:0 2%;',
         };
     }
 
@@ -242,7 +242,7 @@ const SLIDE_SCRIPT =
     `var track=root.querySelector('[data-card-track]');` +
     `if(track){` +
     `if(mode==='web'){` +
-    `track.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;overflow:visible;';` +
+    `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:20px;padding:12px 0 20px;scroll-padding:0 2%;';` +
     `}else if(mode==='responsive'){` +
     `track.style.cssText='display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;gap:14px;padding:10px 0 16px;scroll-padding:0 2%;';` +
     `}else{` +
@@ -257,7 +257,7 @@ const SLIDE_SCRIPT =
     `inner.style.minHeight=maxH+'px';` +
     `});` +
     `track.querySelectorAll('[data-card-item]').forEach(function(card){` +
-    `if(mode==='web'){card.style.flex='';card.style.width='100%';card.style.maxWidth='100%';card.style.minWidth='0';card.style.scrollSnapAlign='unset';}` +
+    `if(mode==='web'){card.style.flex='0 0 min(480px,46vw)';card.style.width='min(480px,46vw)';card.style.maxWidth='';card.style.minWidth='0';card.style.scrollSnapAlign='start';}` +
     `else if(mode==='responsive'){card.style.flex='0 0 min(440px,78vw)';card.style.width='min(440px,78vw)';card.style.scrollSnapAlign='start';}` +
     `else{card.style.flex='0 0 92%';card.style.width='92%';card.style.scrollSnapAlign='center';}` +
     `});` +

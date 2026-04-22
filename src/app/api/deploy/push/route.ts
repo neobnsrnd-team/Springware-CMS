@@ -122,10 +122,87 @@ ${html}
         runtime.init();
 
         // 인라인 스크립트 재실행 (dangerouslySetInnerHTML과 동일 이슈)
+        // data-card-slide-inited 등 inited 가드 초기화 — 에디터에서 설정된 채 저장된 경우 대비
+        document.querySelectorAll('[data-spw-block][data-card-slide-inited]').forEach(function(el) {
+            el.removeAttribute('data-card-slide-inited');
+        });
         document.querySelectorAll('[data-spw-block] script').forEach(function(oldScript) {
             var newScript = document.createElement('script');
             newScript.textContent = oldScript.textContent;
             oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+
+        // ── 금융 web 변형 컴포넌트 그리드 보장 ──────────────────────────────
+        // inline script가 없는 web 변형은 스크립트 재실행으로 처리되지 않으므로 직접 적용
+        // ContentBuilder가 inline style을 덮어쓴 경우도 여기서 복원됨
+
+        // product-gallery-web: data-pg-grid flex-row 3열 그리드
+        document.querySelectorAll('[data-pg-grid]').forEach(function(grid) {
+            grid.style.cssText =
+                'display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;padding:4px 20px 20px;box-sizing:border-box;';
+            Array.from(grid.children).forEach(function(card) {
+                card.style.flex = '1';
+                card.style.minWidth = '260px';
+                card.style.boxSizing = 'border-box';
+            });
+        });
+
+        // benefit-card-web / responsive: data-bc-container flex-row 그리드
+        document.querySelectorAll('[data-component-id^="benefit-card"]').forEach(function(root) {
+            var compId = root.getAttribute('data-component-id') || '';
+            if (!compId.endsWith('-web') && !compId.endsWith('-responsive')) return;
+            var container = root.querySelector('[data-bc-container]');
+            if (!container) return;
+            if (compId.endsWith('-web')) {
+                // 외부 래퍼 max-width 제거 — 컨테이너 너비에 맞게 100% 채움
+                root.style.maxWidth = '';
+                root.style.margin = '0';
+                root.style.width = '100%';
+                root.style.boxSizing = 'border-box';
+                container.style.cssText = 'display:flex;flex-direction:row;gap:12px;';
+                Array.from(container.querySelectorAll(':scope > a')).forEach(function(card) {
+                    card.style.flex = '1';
+                    card.style.minWidth = '0';
+                });
+            } else {
+                container.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;';
+            }
+        });
+
+        // benefit-card-mobile: data-bc-track scroll-snap 슬라이더
+        document.querySelectorAll('[data-bc-track]').forEach(function(track) {
+            track.className = (track.className || '').replace(/\bflex(?:-col)?\b/g, '').trim();
+            track.style.cssText =
+                'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;' +
+                '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                'gap:0;padding:4px 0 8px;';
+            track.querySelectorAll('[data-bc-slide]').forEach(function(slide) {
+                slide.style.cssText =
+                    'flex-shrink:0;width:80%;scroll-snap-align:start;padding:0 8px;box-sizing:border-box;';
+            });
+        });
+
+        // info-card-slide-web: SLIDE_SCRIPT가 grid를 적용한 경우 scroll-snap 슬라이더로 교정
+        // (구버전 DB 레코드 대비 — 인라인 스크립트 재실행 이후 override)
+        document.querySelectorAll('[data-component-id="info-card-slide-web"]').forEach(function(root) {
+            // 외부 래퍼 max-width 제거 — 컨테이너 너비에 맞게 100% 채움
+            root.style.maxWidth = '';
+            root.style.margin = '0';
+            root.style.width = '100%';
+            root.style.boxSizing = 'border-box';
+            var track = root.querySelector('[data-card-track]');
+            if (!track) return;
+            track.style.cssText =
+                'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;' +
+                '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                'gap:20px;padding:12px 0 20px;scroll-padding:0 2%;';
+            track.querySelectorAll('[data-card-item]').forEach(function(card) {
+                card.style.flex = '0 0 min(480px,46vw)';
+                card.style.width = 'min(480px,46vw)';
+                card.style.maxWidth = '';
+                card.style.minWidth = '0';
+                card.style.scrollSnapAlign = 'start';
+            });
         });
     });
     </script>

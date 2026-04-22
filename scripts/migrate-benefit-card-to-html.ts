@@ -83,7 +83,7 @@ const MOBILE_HTML =
 // ── web variant ───────────────────────────────────────────────────────────────
 // 3열 flex 고정 그리드
 const WEB_HTML =
-    `<div data-component-id="benefit-card-web" data-spw-block data-bc-cards='${JSON.stringify(CARDS).replace(/'/g, "&#39;")}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:24px;max-width:960px;margin:0 auto;box-sizing:border-box;">` +
+    `<div data-component-id="benefit-card-web" data-spw-block data-bc-cards='${JSON.stringify(CARDS).replace(/'/g, "&#39;")}' style="font-family:${FONT_FAMILY};background:#F5F7FA;border-radius:20px;padding:24px;width:100%;box-sizing:border-box;">` +
         `<h3 style="font-size:18px;font-weight:700;color:#1A1A2E;margin:0 0 16px;">주요 혜택</h3>` +
         `<div data-bc-container style="display:flex;flex-direction:row;gap:12px;">` +
             CARDS.map((card) => buildCard(card)).join('') +
