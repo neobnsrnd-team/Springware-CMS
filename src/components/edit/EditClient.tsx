@@ -2145,9 +2145,9 @@ export default function EditClient({
 
             // 브랜드 테마 색상 치환 (금융 컴포넌트 삽입 시)
             const theme = brandThemeRef.current;
-            // 뷰어 전용 <script> 블록 제거 — 에디터 DOM 삽입 시 파싱 에러 방지
-            const scriptStripped = html.replace(/<script[\s\S]*?<\/script>/gi, '');
-            const themedHtml = theme ? applyBrandTheme(scriptStripped, theme) : scriptStripped;
+            // 금융 컴포넌트 inline script는 window.builderRuntime / .is-builder 가드를 포함하므로
+            // 에디터에서 실행되어도 즉시 return — 스크립트를 보존해야 배포 HTML에서도 동작함
+            const themedHtml = theme ? applyBrandTheme(html, theme) : html;
 
             // canvasBlocksRef.current 대신 builder.html()로 현재 DOM 상태를 직접 읽음
             // — ContentBuilder 자체 삭제/이동 후 React state가 동기화되지 않은 경우에도
