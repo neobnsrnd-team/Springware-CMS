@@ -7,17 +7,16 @@ import path from 'path';
 import { NextRequest } from 'next/server';
 
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
-
-const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
+import { DEPLOY_SECRET } from '@/lib/env';
 
 /** 타이밍 공격 방지 토큰 비교 */
 function isValidToken(token: string | null): boolean {
     if (!DEPLOY_SECRET || !token) return false;
     try {
-        const 기대값 = Buffer.from(DEPLOY_SECRET, 'utf8');
-        const 수신값 = Buffer.from(token, 'utf8');
-        if (기대값.length !== 수신값.length) return false;
-        return timingSafeEqual(기대값, 수신값);
+        const expected = Buffer.from(DEPLOY_SECRET, 'utf8');
+        const received = Buffer.from(token, 'utf8');
+        if (expected.length !== received.length) return false;
+        return timingSafeEqual(expected, received);
     } catch {
         return false;
     }
