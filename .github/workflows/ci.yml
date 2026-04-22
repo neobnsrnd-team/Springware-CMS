@@ -70,10 +70,11 @@ jobs:
         run: npx playwright install-deps chromium
 
       - name: E2E 테스트 실행 (web 프로파일)
-        # CI에서는 web 단일 프로파일로 실행 — DB 없이 mock으로 동작
+        # CI에서는 web 단일 프로파일로 실행 — Oracle Client 미설치 환경이므로 DB 비활성화
         run: npx playwright test --project=web
         env:
           CI: true
+          ORACLE_DISABLED: 'true'
 
       - name: 테스트 리포트 아티팩트 저장
         uses: actions/upload-artifact@v4
