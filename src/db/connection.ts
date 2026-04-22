@@ -19,6 +19,13 @@ let poolInitPromise: Promise<void> | null = null;
 async function initPool(): Promise<void> {
     if (poolInitPromise) return poolInitPromise;
 
+    // ORACLE_DISABLED=true: Oracle Client 없는 환경(테스트, CI 등)에서 서버 기동 허용
+    // 풀 초기화는 건너뛰고, DB 접근은 getConnection()에서 에러 반환
+    if (process.env.ORACLE_DISABLED === 'true') {
+        poolInitPromise = Promise.resolve();
+        return poolInitPromise;
+    }
+
     poolInitPromise = (async () => {
         try {
             // Thick 모드 사용: Oracle Instant Client 필요 (구버전 Oracle XE 지원)
@@ -54,6 +61,9 @@ const MAX_CONN_RETRIES = 3;
 const CONN_RETRY_DELAY = 500;
 
 export async function getConnection(): Promise<oracledb.Connection> {
+    if (process.env.ORACLE_DISABLED === 'true') {
+        throw new Error('Oracle DB가 비활성화되어 있습니다. (ORACLE_DISABLED=true)');
+    }
     await initPool();
 
     // 커넥션 획득만 재시도 — 스키마 설정 실패는 즉시 throw (커넥션 누수 방지)
