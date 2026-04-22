@@ -56,6 +56,10 @@ export const GIT_USER_NAME = optionalEnv('GIT_USER_NAME', 'Springware CMS');
 export const GIT_USER_EMAIL = optionalEnv('GIT_USER_EMAIL', 'cms@springware.local');
 export const GIT_BRANCH = optionalEnv('GIT_BRANCH', 'main');
 
+// ── 배포 보안 ──
+/** 서버간 배포 API 인증 토큰 (Spider Admin → CMS, CMS → 운영 서버) */
+export const DEPLOY_SECRET = optionalEnv('DEPLOY_SECRET');
+
 // ── 트래커 CORS ──
 /** 배포 페이지에서 트래커 API 호출 시 허용할 오리진 (기본: * — 공개 수집 엔드포인트) */
 export const TRACKER_CORS_ORIGIN = optionalEnv('TRACKER_CORS_ORIGIN', '*');

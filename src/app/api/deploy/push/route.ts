@@ -13,6 +13,7 @@ import { updatePageDeploy, getLatestHistory, getHistoryVersionByFilePath } from 
 import type { CmsPage } from '@/db/types';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { errorResponse, getErrorMessage, successResponse } from '@/lib/api-response';
+import { DEPLOY_SECRET } from '@/lib/env';
 import { sendToServer, buildServerUrl } from '@/lib/deploy-utils';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
@@ -22,16 +23,14 @@ const CMS_BASE_URL = process.env.CMS_BASE_URL || 'http://localhost:3000';
 const CMS_PATH_PREFIX = process.env.NEXT_PUBLIC_CMS_BASE_PATH ?? '/cms';
 const BASE = `${CMS_BASE_URL}${CMS_PATH_PREFIX}`;
 
-const DEPLOY_SECRET = process.env.DEPLOY_SECRET ?? '';
-
 /** 타이밍 공격 방지 토큰 비교 */
 function isValidToken(token: string | null): boolean {
     if (!DEPLOY_SECRET || !token) return false;
     try {
-        const 기대값 = Buffer.from(DEPLOY_SECRET, 'utf8');
-        const 수신값 = Buffer.from(token, 'utf8');
-        if (기대값.length !== 수신값.length) return false;
-        return timingSafeEqual(기대값, 수신값);
+        const expected = Buffer.from(DEPLOY_SECRET, 'utf8');
+        const received = Buffer.from(token, 'utf8');
+        if (expected.length !== received.length) return false;
+        return timingSafeEqual(expected, received);
     } catch {
         return false;
     }

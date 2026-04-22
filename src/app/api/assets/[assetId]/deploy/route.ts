@@ -9,6 +9,7 @@
 //   5. 원본 삭제 (실패해도 복사는 성공)
 //   6. DB ASSET_PATH, ASSET_URL 업데이트
 
+import { timingSafeEqual } from 'crypto';
 import { access, copyFile, mkdir, unlink } from 'fs/promises';
 import { basename, join } from 'path';
 
@@ -16,17 +17,29 @@ import { NextRequest } from 'next/server';
 
 import { getAssetById, updateAssetPathUrl } from '@/db/repository/asset.repository';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
-import { canWriteCms, getCurrentUser } from '@/lib/current-user';
-import { DEPLOYED_UPLOAD_DIR, DEPLOYED_BASE_URL, DEPLOYED_IMG_SUBDIR } from '@/lib/env';
+import { DEPLOY_SECRET, DEPLOYED_UPLOAD_DIR, DEPLOYED_BASE_URL, DEPLOYED_IMG_SUBDIR } from '@/lib/env';
+
+/** 타이밍 공격 방지 토큰 비교 */
+function isValidToken(token: string | null): boolean {
+    if (!DEPLOY_SECRET || !token) return false;
+    try {
+        const expected = Buffer.from(DEPLOY_SECRET, 'utf8');
+        const received = Buffer.from(token, 'utf8');
+        if (expected.length !== received.length) return false;
+        return timingSafeEqual(expected, received);
+    } catch {
+        return false;
+    }
+}
 
 /** POST /api/assets/:assetId/deploy — 승인된 이미지 파일 이동 */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ assetId: string }> }) {
     try {
         const { assetId } = await params;
 
-        const currentUser = await getCurrentUser();
-        if (!canWriteCms(currentUser)) {
-            return errorResponse('Permission denied.', 403);
+        // 서버간 호출 — x-deploy-token 헤더로 인증 (Spider Admin → CMS)
+        if (!isValidToken(req.headers.get('x-deploy-token'))) {
+            return errorResponse('인증 토큰이 유효하지 않습니다.', 401);
         }
 
         const asset = await getAssetById(assetId);
@@ -64,8 +77,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ass
         await mkdir(deployedImgDir, { recursive: true });
         await copyFile(asset.ASSET_PATH, deployedPath);
 
-        // DB 경로·URL 업데이트 (복사 성공 후)
-        await updateAssetPathUrl(assetId, deployedPath, deployedUrl, currentUser.userId, currentUser.userName);
+        // DB 경로·URL 업데이트 (복사 성공 후) — 서버간 호출이므로 수정자는 시스템으로 기록
+        await updateAssetPathUrl(assetId, deployedPath, deployedUrl, 'system', 'Spider Admin');
 
         // 원본 파일 삭제 (실패해도 복사는 성공이므로 경고만)
         await unlink(asset.ASSET_PATH).catch((err) => {
