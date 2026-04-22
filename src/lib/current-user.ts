@@ -35,7 +35,7 @@ const BYPASS_ADMIN: CurrentUser = {
     userId: 'admin',
     userName: '관리자',
     roleId: 'cms_admin',
-    authorities: ['CMS:W'],
+    authorities: ['CMS:W', 'CMS:R'], // 관리자는 쓰기(W)와 읽기(R) 모두 보유
 };
 
 /** 인증 우회 모드 — 일반 사용자 (AUTH_BYPASS=true 기본값) */
