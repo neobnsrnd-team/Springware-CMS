@@ -69,7 +69,8 @@ export default defineConfig({
             // Client 없는 환경에서만 예외적으로 ORACLE_DISABLED=true 사용
             ...(process.env.ORACLE_DISABLED === 'true' && { ORACLE_DISABLED: 'true' }),
         },
-        url: 'http://localhost:3100',
+        // 헬스 엔드포인트로 확인 — DB 없는 환경(ORACLE_DISABLED)에서도 항상 200 반환
+        url: 'http://localhost:3100/api/health',
         // 로컬 개발 시 기존 서버 재사용, CI에서는 항상 새로 실행
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

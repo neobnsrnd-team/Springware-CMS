@@ -35,7 +35,8 @@ export default async function DashboardPage({
     const sortBy = sortByParam === 'name' ? 'name' : 'date';
     const viewMode = VIEW_MODE_VALUES.includes(viewModeParam as ViewMode) ? (viewModeParam as ViewMode) : undefined;
 
-    const [{ list, totalCount }, approveLabels] = await Promise.all([
+    // Oracle 비활성화(ORACLE_DISABLED=true) 또는 DB 연결 실패 시 빈 목록으로 폴백
+    const [pageListResult, approveLabels] = await Promise.all([
         getPageList({
             createUserId: currentUser.userId,
             page: currentPage,
@@ -43,9 +44,10 @@ export default async function DashboardPage({
             search: search || undefined,
             sortBy,
             viewMode,
-        }),
+        }).catch(() => ({ list: [], totalCount: 0 })),
         getApproveLabels(),
     ]);
+    const { list, totalCount } = pageListResult;
 
     const pages = list.map((p) => ({
         id: p.PAGE_ID,
