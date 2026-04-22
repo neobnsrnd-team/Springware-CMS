@@ -56,6 +56,10 @@ export const GIT_USER_NAME = optionalEnv('GIT_USER_NAME', 'Springware CMS');
 export const GIT_USER_EMAIL = optionalEnv('GIT_USER_EMAIL', 'cms@springware.local');
 export const GIT_BRANCH = optionalEnv('GIT_BRANCH', 'main');
 
+// ── 트래커 CORS ──
+/** 배포 페이지에서 트래커 API 호출 시 허용할 오리진 (기본: * — 공개 수집 엔드포인트) */
+export const TRACKER_CORS_ORIGIN = optionalEnv('TRACKER_CORS_ORIGIN', '*');
+
 // ── Oracle DB ──
 export const ORACLE_USER = optionalEnv('ORACLE_USER');
 export const ORACLE_PASSWORD = optionalEnv('ORACLE_PASSWORD');
