@@ -64,9 +64,10 @@ export default defineConfig({
         env: {
             AUTH_BYPASS: 'true',
             NEXT_PUBLIC_CMS_BASE_PATH: '',
-            // Oracle Client가 없는 환경(CI, WSL 등)에서 DB 연결 없이 서버 기동
-            // connection.ts에서 이 변수를 확인해 DB 초기화를 건너뜀
-            ORACLE_DISABLED: process.env.ORACLE_DISABLED ?? 'true',
+            // Oracle DB 연결 정보 — 실행 환경의 .env 또는 환경변수에서 전달
+            // Oracle Instant Client가 설치되어 있어야 함
+            // Client 없는 환경에서만 예외적으로 ORACLE_DISABLED=true 사용
+            ...(process.env.ORACLE_DISABLED === 'true' && { ORACLE_DISABLED: 'true' }),
         },
         url: 'http://localhost:3100',
         // 로컬 개발 시 기존 서버 재사용, CI에서는 항상 새로 실행
