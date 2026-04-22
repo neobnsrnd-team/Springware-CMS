@@ -567,10 +567,20 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
                 modeFromAttr ??
                 (componentId.endsWith('-web') ? 'web' : componentId.endsWith('-responsive') ? 'responsive' : 'mobile');
 
+            // web 변형: 외부 래퍼 max-width 제거 — 컨테이너 너비에 맞게 100% 채움
+            if (mode === 'web') {
+                root.style.maxWidth = '';
+                root.style.margin = '0';
+                root.style.width = '100%';
+                root.style.boxSizing = 'border-box';
+            }
+
             // 레이아웃 적용
             if (mode === 'web') {
                 track.style.cssText =
-                    'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:12px 0 20px;align-items:stretch;overflow:visible;';
+                    'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;' +
+                    '-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;' +
+                    'gap:20px;padding:12px 0 20px;scroll-padding:0 2%;';
             } else if (mode === 'responsive') {
                 track.style.cssText =
                     'display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;' +
@@ -596,11 +606,11 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             // 카드 너비·스냅 정렬 (모드별 다름)
             track.querySelectorAll<HTMLElement>('[data-card-item]').forEach((card) => {
                 if (mode === 'web') {
-                    card.style.flex = '';
-                    card.style.width = '100%';
-                    card.style.maxWidth = '100%';
+                    card.style.flex = '0 0 min(480px,46vw)';
+                    card.style.width = 'min(480px,46vw)';
+                    card.style.maxWidth = '';
                     card.style.minWidth = '0';
-                    card.style.scrollSnapAlign = 'unset';
+                    card.style.scrollSnapAlign = 'start';
                 } else if (mode === 'responsive') {
                     card.style.flex = '0 0 min(440px,78vw)';
                     card.style.width = 'min(440px,78vw)';
@@ -697,6 +707,11 @@ export default function ViewClient({ html, viewMode, bank, embed }: Props) {
             const container = root.querySelector<HTMLElement>('[data-bc-container]');
             if (!container) return;
             if (compId.endsWith('-web')) {
+                // 외부 래퍼 max-width 제거 — 컨테이너 너비에 맞게 100% 채움
+                root.style.maxWidth = '';
+                root.style.margin = '0';
+                root.style.width = '100%';
+                root.style.boxSizing = 'border-box';
                 container.style.cssText = 'display:flex;flex-direction:row;gap:12px;';
                 container.querySelectorAll<HTMLElement>(':scope > a').forEach((card) => {
                     card.style.flex = '1';
