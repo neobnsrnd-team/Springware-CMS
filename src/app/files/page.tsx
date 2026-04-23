@@ -1,9 +1,6 @@
-// src/app/files/page.tsx
-// 승인 이미지 브라우저 페이지 — 에디터에서 팝업으로 오픈되어 이미지 선택에 사용됨
 import { redirect } from 'next/navigation';
 
-import FileBrowser from '@/components/files/FileBrowser';
-import { nextApi } from '@/lib/api-url';
+import AssetBrowser from '@/components/files/AssetBrowser';
 import { canReadCms, getCurrentUser } from '@/lib/current-user';
 
 export const dynamic = 'force-dynamic';
@@ -14,12 +11,5 @@ export default async function FilesPage() {
         redirect('/not-authorized');
     }
 
-    return (
-        <FileBrowser
-            apiEndpoints={{
-                folders: nextApi('/api/manage/folders'),
-                files: nextApi('/api/manage/files'),
-            }}
-        />
-    );
+    return <AssetBrowser />;
 }

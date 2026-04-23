@@ -27,6 +27,11 @@ export const ASSET_SELECT_LIST = `
       WHERE USE_YN = 'Y'
         AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
         AND (:assetState IS NULL OR ASSET_STATE = :assetState)
+        AND (
+          :search IS NULL
+          OR LOWER(ASSET_NAME) LIKE '%' || LOWER(:search) || '%'
+          OR LOWER(NVL(ASSET_DESC, '')) LIKE '%' || LOWER(:search) || '%'
+        )
       ORDER BY CREATE_DATE DESC
     ) A
     WHERE ROWNUM <= :endRow
@@ -41,6 +46,11 @@ export const ASSET_COUNT = `
   WHERE USE_YN = 'Y'
     AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
     AND (:assetState IS NULL OR ASSET_STATE = :assetState)
+    AND (
+      :search IS NULL
+      OR LOWER(ASSET_NAME) LIKE '%' || LOWER(:search) || '%'
+      OR LOWER(NVL(ASSET_DESC, '')) LIKE '%' || LOWER(:search) || '%'
+    )
 `;
 
 /** 에셋 등록 */
