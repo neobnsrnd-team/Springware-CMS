@@ -5,7 +5,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { nextApi } from '@/lib/api-url';
+import { openCmsFilesPicker } from '@/lib/cms-file-picker';
 
 // 아이콘 SVG 내부 path (svg 래퍼는 buildIconHtml에서 생성)
 // stroke="currentColor" → 부모 .ac-icon-wrap의 color CSS로 제어
@@ -150,32 +150,18 @@ export default function AuthCenterIconEditor({ blockEl, onClose }: Props) {
 
     // 이미지 업로드
     const uploadImage = useCallback((itemEl: HTMLElement) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        document.body.appendChild(input);
-        input.onchange = async () => {
-            document.body.removeChild(input);
-            const file = input.files?.[0];
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('file', file);
-            try {
-                const res = await fetch(nextApi('/api/builder/upload'), { method: 'POST', body: formData });
-                const data = (await res.json()) as { url?: string };
-                const url = data.url?.replace(/\\/g, '/');
-                if (url) {
-                    const wrap = itemEl.querySelector<HTMLElement>('.ac-icon-wrap');
-                    if (wrap)
-                        wrap.innerHTML = `<img src="${url}" alt="" style="width:22px;height:22px;object-fit:contain;" />`;
-                    setPickerIdx(null);
-                    setTick((n) => n + 1);
+        try {
+            openCmsFilesPicker((url) => {
+                const wrap = itemEl.querySelector<HTMLElement>('.ac-icon-wrap');
+                if (wrap) {
+                    wrap.innerHTML = `<img src="${url}" alt="" style="width:22px;height:22px;object-fit:contain;" />`;
                 }
-            } catch (err: unknown) {
-                console.error('이미지 업로드 실패:', err);
-            }
-        };
-        input.click();
+                setPickerIdx(null);
+                setTick((n) => n + 1);
+            });
+        } catch (err: unknown) {
+            console.error('cms/files 이미지 선택 실패:', err);
+        }
     }, []);
 
     const items = Array.from(blockEl.querySelectorAll<HTMLElement>('.ac-item'));
