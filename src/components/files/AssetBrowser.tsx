@@ -251,8 +251,14 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
     function handleConfirm() {
         if (!selectedUrl) return;
 
+        // 에디터가 <img src>로 바로 사용하므로 assetOrigin이 붙은 완전 해석 URL을 전달.
+        // DB 원본 URL은 `/deployed/static/<file>` 같은 루트 상대 경로인데, 로컬 dev에선
+        // localhost 에 그 경로가 없어 404가 나 편집 화면에서 이미지가 깨지거나 사라져 보인다.
+        // resolveAssetSrc()가 절대 URL로 변환해주므로 dev/prod 모두 동일하게 동작한다.
+        const outboundUrl = resolveAssetSrc(selectedUrl, assetOrigin) ?? selectedUrl;
+
         // cms-file-picker는 ASSETS_SELECTED.urls[0] 만 읽으므로 배열 1건으로 전달해 기존 consumer 호환 유지
-        const msg = { type: 'ASSETS_SELECTED', urls: [selectedUrl] };
+        const msg = { type: 'ASSETS_SELECTED', urls: [outboundUrl] };
         if (window.opener) {
             window.opener.postMessage(msg, '*');
             window.close();
