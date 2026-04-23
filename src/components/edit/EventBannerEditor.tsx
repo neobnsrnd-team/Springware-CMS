@@ -5,6 +5,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
+import { openCmsFilesPicker } from '@/lib/cms-file-picker';
+
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
 interface BannerSlide {
@@ -392,6 +394,20 @@ export default function EventBannerEditor({ blockEl, onClose }: Props) {
         onClose();
     }, [blockEl, slides, autoInterval, onClose]);
 
+    // /cms/files 팝업에서 승인된 이미지 선택 → 해당 슬라이드 imageUrl 교체
+    const handlePickImage = useCallback(
+        (idx: number) => {
+            try {
+                openCmsFilesPicker((url) => {
+                    updateSlide(idx, { imageUrl: url });
+                });
+            } catch (err: unknown) {
+                console.error('cms/files 이미지 선택 실패:', err);
+            }
+        },
+        [updateSlide],
+    );
+
     return (
         <>
             {/* 배경 오버레이 */}
@@ -462,15 +478,52 @@ export default function EventBannerEditor({ blockEl, onClose }: Props) {
                                 </div>
                             </div>
 
-                            {/* 이미지 */}
+                            {/* 이미지 — cms/files에서 선택 */}
                             <div>
                                 <label style={S.label}>이미지</label>
-                                <input
-                                    value={slide.imageUrl}
-                                    onChange={(e) => updateSlide(idx, { imageUrl: e.target.value })}
-                                    placeholder="이미지 URL"
-                                    style={S.input}
-                                />
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                    <input
+                                        value={slide.imageUrl}
+                                        onChange={(e) => updateSlide(idx, { imageUrl: e.target.value })}
+                                        placeholder="cms/files에서 이미지를 선택하세요"
+                                        style={{ ...S.input, flex: 1 }}
+                                        readOnly
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePickImage(idx)}
+                                        style={{
+                                            padding: '5px 10px',
+                                            border: '1px solid #C7D8F4',
+                                            borderRadius: 6,
+                                            background: '#F0F4FF',
+                                            color: '#0046A4',
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        이미지 선택
+                                    </button>
+                                </div>
+                                {slide.imageUrl ? (
+                                    <div style={{ marginTop: 6 }}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={slide.imageUrl}
+                                            alt=""
+                                            style={{
+                                                width: '100%',
+                                                aspectRatio: '16/9',
+                                                objectFit: 'cover',
+                                                borderRadius: 6,
+                                                border: '1px solid #e5e7eb',
+                                                background: '#f9fafb',
+                                            }}
+                                        />
+                                    </div>
+                                ) : null}
                             </div>
 
                             {/* 링크 */}

@@ -1,7 +1,15 @@
 // src/lib/codes.ts
-// FWK_CODE 공통 조회 함수 — 서버 컴포넌트, route.ts에서 직접 사용
+// FWK_CODE common lookup helpers for server components and route handlers.
+
+import 'server-only';
 
 import { getConnection } from '@/db/connection';
+
+import {
+    CMS_ASSET_CATEGORY_GROUP_ID,
+    CMS_ASSET_DEFAULT_CATEGORY,
+    CMS_ASSET_CATEGORY_LABELS,
+} from '@/lib/cms-asset-category';
 
 export interface CodeItem {
     code: string;
@@ -9,20 +17,8 @@ export interface CodeItem {
     sortOrder: number;
 }
 
-export const CMS_ASSET_CATEGORY_GROUP_ID = 'CMS00001';
-export const CMS_ASSET_DEFAULT_CATEGORY = 'COMMON';
-export const CMS_ASSET_CATEGORY_LABELS: Record<string, string> = {
-    COMMON: '공통',
-    CARD: '카드',
-    LOAN: '여신',
-    DEPOSIT: '수신',
-};
+export { CMS_ASSET_CATEGORY_GROUP_ID, CMS_ASSET_DEFAULT_CATEGORY, CMS_ASSET_CATEGORY_LABELS };
 
-/**
- * 지정된 코드 그룹의 코드 목록을 FWK_CODE에서 조회한다.
- * USE_YN = 'Y' 조건, SORT_ORDER 오름차순.
- * 조회 실패 시 빈 배열 반환 (비즈니스 흐름 방해 금지).
- */
 export async function getCodesByGroup(codeGroupId: string): Promise<CodeItem[]> {
     let connection;
     try {
@@ -34,7 +30,7 @@ export async function getCodesByGroup(codeGroupId: string): Promise<CodeItem[]> 
                 AND USE_YN = 'Y'
               ORDER BY SORT_ORDER ASC`,
             { codeGroupId },
-            { outFormat: 4002 }, // oracledb.OUT_FORMAT_ARRAY
+            { outFormat: 4002 },
         );
         return (result.rows ?? []).map(([code, codeName, sortOrder]) => ({
             code,
@@ -48,7 +44,7 @@ export async function getCodesByGroup(codeGroupId: string): Promise<CodeItem[]> 
             try {
                 await connection.close();
             } catch {
-                // 커넥션 반환 실패는 무시
+                // Ignore connection close failures.
             }
         }
     }

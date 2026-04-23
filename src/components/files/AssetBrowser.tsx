@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { nextApi } from '@/lib/api-url';
-import { CMS_ASSET_CATEGORY_GROUP_ID, CMS_ASSET_CATEGORY_LABELS, CMS_ASSET_DEFAULT_CATEGORY } from '@/lib/codes';
+import { CMS_ASSET_CATEGORY_LABELS } from '@/lib/cms-asset-category';
 
 interface AssetItem {
     assetId: string;
@@ -22,6 +22,18 @@ interface CodeItem {
 }
 
 const PAGE_SIZE_OPTIONS = [20, 30, 50, 100, 200];
+
+/**
+ * 자산 이미지 src 해결 — DB의 ASSET_URL은 보통 `/uploads/...` 같은 root-relative 경로인데
+ * Next.js `basePath: '/cms'` 환경에서는 브라우저가 `/cms/uploads/...`로 요청해야 하므로
+ * 절대 URL이나 이미 basePath를 포함한 경우가 아니면 nextApi()로 접두어를 붙인다.
+ */
+function resolveAssetSrc(url: string | null): string | undefined {
+    if (!url) return undefined;
+    if (/^https?:\/\//i.test(url)) return url;
+    if (url.startsWith('/cms/')) return url;
+    return nextApi(url.startsWith('/') ? url : `/${url}`);
+}
 
 export default function AssetBrowser() {
     const [assets, setAssets] = useState<AssetItem[]>([]);
@@ -64,10 +76,22 @@ export default function AssetBrowser() {
 
         async function loadCategories() {
             try {
-                const res = await fetch(nextApi(`/api/codes?groupId=${CMS_ASSET_CATEGORY_GROUP_ID}`));
+                // /cms-admin/asset-approvals 화면과 동일한 출처(spider-admin) 사용
+                const res = await fetch(nextApi('/api/cms-admin/asset-categories'));
                 const json = await res.json();
-                if (!cancelled) {
-                    setCategories(Array.isArray(json.data) ? json.data : []);
+                const list: CodeItem[] = Array.isArray(json.categories) ? json.categories : [];
+                if (cancelled) return;
+
+                if (list.length > 0) {
+                    setCategories(list);
+                } else {
+                    setCategories(
+                        Object.entries(CMS_ASSET_CATEGORY_LABELS).map(([code, codeName], index) => ({
+                            code,
+                            codeName,
+                            sortOrder: index + 1,
+                        })),
+                    );
                 }
             } catch {
                 if (!cancelled) {
@@ -113,8 +137,8 @@ export default function AssetBrowser() {
 
             const res = await fetch(nextApi(`/api/assets?${params.toString()}`));
             const json = await res.json();
-            const list = Array.isArray(json.data?.assets) ? json.data.assets : [];
-            const nextTotalCount = Number(json.data?.totalCount ?? 0);
+            const list = Array.isArray(json.assets) ? json.assets : [];
+            const nextTotalCount = Number(json.totalCount ?? 0);
 
             setAssets(list);
             setTotalCount(nextTotalCount);
@@ -180,90 +204,84 @@ export default function AssetBrowser() {
     return (
         <div className="min-h-screen bg-slate-50">
             <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-                <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
-                        <div className="min-w-48 flex-1">
-                            <label className="mb-1 block text-sm font-medium text-slate-700">카테고리</label>
-                            <select
-                                value={category}
-                                onChange={(e) => handleCategoryChange(e.target.value)}
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                            >
-                                <option value="">전체</option>
-                                {categories.map((item) => (
-                                    <option key={item.code} value={item.code}>
-                                        {item.codeName}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex-[2]">
-                            <label className="mb-1 block text-sm font-medium text-slate-700">ASSET_NAME 검색</label>
-                            <div className="flex gap-2">
-                                <input
-                                    value={draftSearch}
-                                    onChange={(e) => setDraftSearch(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleSearchSubmit();
-                                        }
-                                    }}
-                                    placeholder="이미지명으로 검색"
-                                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleSearchSubmit}
-                                    className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                                >
-                                    검색
-                                </button>
-                            </div>
-                        </div>
-                        <div className="min-w-32">
-                            <label className="mb-1 block text-sm font-medium text-slate-700">Items</label>
-                            <select
-                                value={pageSize}
-                                onChange={(e) => {
-                                    setPageSize(Number(e.target.value));
-                                    moveToFirstPage();
-                                }}
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                            >
-                                {PAGE_SIZE_OPTIONS.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={handleReset}
-                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
-                            >
-                                초기화
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirm}
-                                disabled={selectedUrls.size === 0}
-                                className="rounded-xl bg-[#0046A4] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                선택 완료
-                            </button>
-                        </div>
+                {/* 검색 조건 카드 — cms-admin/asset-approvals 스타일 */}
+                <div className="mb-3 rounded-md border border-slate-200 bg-white p-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <label className="m-0 text-xs font-medium text-slate-700">카테고리</label>
+                        <select
+                            value={category}
+                            onChange={(e) => handleCategoryChange(e.target.value)}
+                            className="h-8 w-[130px] rounded border border-slate-300 bg-white px-2 text-xs"
+                        >
+                            <option value="">전체</option>
+                            {categories.map((item) => (
+                                <option key={item.code} value={item.code}>
+                                    {item.codeName}
+                                </option>
+                            ))}
+                        </select>
+
+                        <input
+                            type="text"
+                            value={draftSearch}
+                            onChange={(e) => setDraftSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleSearchSubmit();
+                                }
+                            }}
+                            placeholder="이미지명 또는 업로더 검색"
+                            className="ml-2 h-8 w-[200px] rounded border border-slate-300 px-2 text-xs"
+                        />
+
+                        <div className="flex-1" />
+
+                        <select
+                            value={pageSize}
+                            onChange={(e) => {
+                                setPageSize(Number(e.target.value));
+                                moveToFirstPage();
+                            }}
+                            className="h-8 w-[72px] rounded border border-slate-300 bg-white px-2 text-xs"
+                        >
+                            {PAGE_SIZE_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                    {option}
+                                </option>
+                            ))}
+                        </select>
+                        <label className="m-0 mr-1 text-xs font-medium text-slate-700">건씩</label>
+
+                        <button
+                            type="button"
+                            onClick={handleSearchSubmit}
+                            className="h-8 rounded bg-[#0046A4] px-3 text-xs font-medium text-white hover:bg-[#003399]"
+                        >
+                            조회
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            className="h-8 rounded border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            초기화
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleConfirm}
+                            disabled={selectedUrls.size === 0}
+                            className="h-8 rounded bg-[#0046A4] px-3 text-xs font-medium text-white hover:bg-[#003399] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            선택 완료{selectedUrls.size > 0 ? ` (${selectedUrls.size})` : ''}
+                        </button>
                     </div>
-                    <div className="mt-3 flex flex-col gap-1 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
-                        <p>
-                            승인된 이미지 자산만 표시됩니다. 기본 카테고리는 {categoryMap[CMS_ASSET_DEFAULT_CATEGORY]}
-                            입니다.
-                        </p>
-                        <p>
-                            총 {totalCount}건, {page} / {totalPages} 페이지
-                        </p>
-                    </div>
+                </div>
+
+                {/* 건수 */}
+                <div className="mb-3 flex justify-end text-xs text-slate-500">
+                    <p>
+                        총 {totalCount}건, {page} / {totalPages} 페이지
+                    </p>
                 </div>
 
                 {loading ? (
@@ -298,8 +316,9 @@ export default function AssetBrowser() {
                                     >
                                         <div className="aspect-square bg-slate-100">
                                             {asset.url ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
                                                 <img
-                                                    src={asset.url}
+                                                    src={resolveAssetSrc(asset.url)}
                                                     alt={asset.assetName}
                                                     className="h-full w-full object-cover"
                                                 />
@@ -309,7 +328,7 @@ export default function AssetBrowser() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="space-y-2 p-3">
+                                        <div className="space-y-1.5 p-3">
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
                                                     {label}
@@ -319,9 +338,6 @@ export default function AssetBrowser() {
                                                         선택됨
                                                     </span>
                                                 ) : null}
-                                            </div>
-                                            <div className="line-clamp-2 min-h-8 text-xs text-slate-500">
-                                                {asset.assetDesc || asset.mimeType}
                                             </div>
                                             <div className="truncate text-sm font-semibold text-slate-900">
                                                 {asset.assetName}
