@@ -400,14 +400,8 @@ export default function EditClient({
         // 툴바의 이동/복제/삭제 후 ContentBuilder 재연결을 위해 전역 노출
         window.builderReinit = debouncedReinit;
 
-        const upload = async (file: File) => {
-            const formData = new FormData();
-            formData.append('file', file);
-            const response = await fetch(nextApi('/api/builder/upload'), { method: 'POST', body: formData });
-            const result = await response.json();
-            // 서버 응답 URL에 basePath 적용 (ContentBuilder가 <img src>에 직접 사용)
-            if (result.url) result.url = nextApi(result.url);
-            return result;
+        const upload = async (_file: File) => {
+            throw new Error('이미지 업로드는 cms/files에서 승인된 이미지를 선택해 주세요.');
         };
 
         // Create ContentBuilder instance

@@ -4,7 +4,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { nextApi } from '@/lib/api-url';
+import { openCmsFilesPicker } from '@/lib/cms-file-picker';
 
 // 아이콘 SVG — 피커 표시용 (크기는 컨테이너로 제어, stroke는 color 파라미터로 치환)
 const ICONS: Record<string, string> = {
@@ -149,32 +149,18 @@ export default function ProductMenuIconEditor({ blockEl, onClose }: Props) {
 
     // 이미지 업로드 후 교체
     const uploadImage = useCallback((itemEl: HTMLElement) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        document.body.appendChild(input);
-        input.onchange = async () => {
-            document.body.removeChild(input);
-            const file = input.files?.[0];
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('file', file);
-            try {
-                const res = await fetch(nextApi('/api/builder/upload'), { method: 'POST', body: formData });
-                const data = (await res.json()) as { url?: string };
-                const url = data.url?.replace(/\\/g, '/');
-                if (url) {
-                    const wrap = itemEl.querySelector('.pm-icon-wrap');
-                    if (wrap)
-                        wrap.innerHTML = `<img src="${url}" alt="" style="width:30px;height:30px;object-fit:contain;" />`;
-                    setPickerIdx(null);
-                    setTick((n) => n + 1);
+        try {
+            openCmsFilesPicker((url) => {
+                const wrap = itemEl.querySelector('.pm-icon-wrap');
+                if (wrap) {
+                    wrap.innerHTML = `<img src="${url}" alt="" style="width:30px;height:30px;object-fit:contain;" />`;
                 }
-            } catch (err: unknown) {
-                console.error('이미지 업로드 실패:', err);
-            }
-        };
-        input.click();
+                setPickerIdx(null);
+                setTick((n) => n + 1);
+            });
+        } catch (err: unknown) {
+            console.error('cms/files 이미지 선택 실패:', err);
+        }
     }, []);
 
     // tick 변경 시마다 최신 DOM에서 항목 재조회

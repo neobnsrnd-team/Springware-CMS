@@ -14,7 +14,10 @@ export const ASSET_SELECT_BY_ID = `
     AND USE_YN = 'Y'
 `;
 
-/** 에셋 목록 조회 (카테고리 필터, BLOB 제외, 페이지네이션 — Oracle 11g 호환) */
+/**
+ * 에셋 목록 조회 (카테고리 필터, BLOB 제외, 페이지네이션 — Oracle 11g 호환)
+ * USE_YN='Y' 고정: cms-admin 에서 "숨김" 처리된 자산(USE_YN='N')은 /cms/files 에 노출되지 않는다.
+ */
 export const ASSET_SELECT_LIST = `
   SELECT * FROM (
     SELECT A.*, ROWNUM AS RN FROM (
@@ -27,6 +30,7 @@ export const ASSET_SELECT_LIST = `
       WHERE USE_YN = 'Y'
         AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
         AND (:assetState IS NULL OR ASSET_STATE = :assetState)
+        AND (:search IS NULL OR LOWER(ASSET_NAME) LIKE '%' || LOWER(:search) || '%')
       ORDER BY CREATE_DATE DESC
     ) A
     WHERE ROWNUM <= :endRow
@@ -34,13 +38,14 @@ export const ASSET_SELECT_LIST = `
   WHERE RN > :startRow
 `;
 
-/** 에셋 전체 건수 (페이지네이션용) */
+/** 에셋 전체 건수 (페이지네이션용) — SELECT_LIST 와 동일한 USE_YN='Y' 필터 유지 */
 export const ASSET_COUNT = `
   SELECT COUNT(*) AS TOTAL_COUNT
   FROM SPW_CMS_ASSET
   WHERE USE_YN = 'Y'
     AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
     AND (:assetState IS NULL OR ASSET_STATE = :assetState)
+    AND (:search IS NULL OR LOWER(ASSET_NAME) LIKE '%' || LOWER(:search) || '%')
 `;
 
 /** 에셋 등록 */

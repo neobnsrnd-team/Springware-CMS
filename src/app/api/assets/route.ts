@@ -1,5 +1,5 @@
 // src/app/api/assets/route.ts
-// 에셋 목록 조회 · 등록 API
+// 에셋 목록 조회 및 등록 API
 
 import crypto from 'crypto';
 import { mkdir, unlink, writeFile } from 'fs/promises';
@@ -9,9 +9,14 @@ import { NextRequest } from 'next/server';
 
 import { getAssetList, createAsset } from '@/db/repository/asset.repository';
 import type { AssetState } from '@/db/types';
+import { normalizeCmsAssetCategory } from '@/lib/codes';
 import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 import { ASSET_UPLOAD_DIR, ASSET_BASE_URL } from '@/lib/env';
+
+// cms-admin 의 숨김 처리(USE_YN='N')가 즉시 /cms/files 에 반영되도록 프레임워크 캐시를 끈다.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const ASSET_STATES: AssetState[] = ['WORK', 'PENDING', 'APPROVED', 'REJECTED'];
 
@@ -21,33 +26,26 @@ function parseAssetState(value: string | null): AssetState | undefined {
     }
 
     if (!ASSET_STATES.includes(value as AssetState)) {
-        throw new Error('지원하지 않는 에셋 상태입니다.');
+        throw new Error('유효하지 않은 에셋 상태입니다.');
     }
 
     return value as AssetState;
 }
 
-/**
- * GET /api/assets — 에셋 목록 조회 (페이지네이션 + 카테고리 필터)
- *
- * 쿼리 파라미터:
- * - page: 페이지 번호 (기본: 1)
- * - pageSize: 페이지당 항목 수 (기본: 10, 최대: 100)
- * - category: BUSINESS_CATEGORY 필터 (선택)
- * - assetState: ASSET_STATE 필터 (WORK / PENDING / APPROVED / REJECTED, 선택)
- */
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = req.nextUrl;
 
         const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
-        const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') ?? '10', 10) || 10));
+        const pageSize = Math.min(200, Math.max(1, parseInt(searchParams.get('pageSize') ?? '10', 10) || 10));
         const category = searchParams.get('category') || undefined;
+        const search = searchParams.get('search') || undefined;
         const assetState = parseAssetState(searchParams.get('assetState'));
 
         const { list, totalCount } = await getAssetList({
             businessCategory: category,
             assetState,
+            search,
             page,
             pageSize,
         });
@@ -64,11 +62,18 @@ export async function GET(req: NextRequest) {
             createUserName: a.CREATE_USER_NAME,
             createDate: a.CREATE_DATE ? new Date(a.CREATE_DATE).toISOString() : null,
             url: a.ASSET_URL,
+            // 물리 파일 경로 — 사이드바 "폴더" 라벨(예: 'img')을 파생하는 데 사용.
+            path: a.ASSET_PATH,
+            // cms-admin 의 숨김(Y/N) 상태 — 클라이언트에서 이중 필터로 방어하기 위해 노출
+            useYn: a.USE_YN,
         }));
 
         return successResponse({ assets, totalCount });
     } catch (err) {
-        if (err instanceof Error && err.message === '지원하지 않는 에셋 상태입니다.') {
+        if (
+            err instanceof Error &&
+            (err.message === '유효하지 않은 에셋 상태입니다.' || err.message === '유효하지 않은 이미지 카테고리입니다.')
+        ) {
             return errorResponse(err.message, 400);
         }
 
@@ -77,15 +82,6 @@ export async function GET(req: NextRequest) {
     }
 }
 
-/**
- * POST /api/assets — 에셋 신규 등록 (FormData)
- *
- * FormData 필드:
- * - file: 이미지 파일 (필수)
- * - assetName: 에셋 이름 (선택, 기본: 파일명)
- * - businessCategory: 카테고리 (선택)
- * - assetDesc: 설명 (선택)
- */
 export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
@@ -104,10 +100,9 @@ export async function POST(req: NextRequest) {
 
         const assetId = crypto.randomUUID();
         const assetName = ((formData.get('assetName') as string) || file.name).replace(/[^a-zA-Z0-9._-]/g, '_');
-        const businessCategory = (formData.get('businessCategory') as string) || undefined;
+        const businessCategory = await normalizeCmsAssetCategory((formData.get('businessCategory') as string) || null);
         const assetDesc = (formData.get('assetDesc') as string) || undefined;
 
-        // 파일 시스템에 저장
         const filename = `${assetId}_${assetName}`;
         const filepath = join(ASSET_UPLOAD_DIR, filename);
         await mkdir(dirname(filepath), { recursive: true });
@@ -128,13 +123,15 @@ export async function POST(req: NextRequest) {
                 createUserName: userName,
             });
         } catch (dbErr: unknown) {
-            // DB 실패 시 고아 파일 정리
             await unlink(filepath).catch(() => {});
             throw dbErr;
         }
 
         return successResponse({ assetId, url: assetUrl });
     } catch (err: unknown) {
+        if (err instanceof Error && err.message === '유효하지 않은 이미지 카테고리입니다.') {
+            return errorResponse(err.message, 400);
+        }
         console.error('에셋 등록 실패:', err);
         return errorResponse(getErrorMessage(err));
     }

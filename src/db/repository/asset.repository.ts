@@ -42,6 +42,7 @@ export async function getAssetById(assetId: string): Promise<CmsAsset | null> {
 export async function getAssetList(options?: {
     businessCategory?: string;
     assetState?: AssetState;
+    search?: string;
     page?: number;
     pageSize?: number;
 }): Promise<{ list: CmsAsset[]; totalCount: number }> {
@@ -58,6 +59,7 @@ export async function getAssetList(options?: {
                 {
                     businessCategory: options?.businessCategory ?? null,
                     assetState: options?.assetState ?? null,
+                    search: options?.search?.trim() || null,
                     startRow,
                     endRow,
                 },
@@ -68,6 +70,7 @@ export async function getAssetList(options?: {
                 {
                     businessCategory: options?.businessCategory ?? null,
                     assetState: options?.assetState ?? null,
+                    search: options?.search?.trim() || null,
                 },
                 OBJ,
             ),

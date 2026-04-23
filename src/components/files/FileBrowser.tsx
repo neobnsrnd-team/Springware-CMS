@@ -229,32 +229,31 @@ export default function FileBrowser({ apiEndpoints = {}, className = '' }: FileB
     return (
         <div className={`h-screen bg-gray-50 flex ${className}`}>
             {/* 사이드바 — 폴더 트리 */}
-            <div
-                className={`h-full w-64 bg-white shadow transform transition-transform duration-300 ease-in-out ${
-                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
-            >
-                <Sidebar
-                    folderTree={folderTree}
-                    currentPath={currentPath}
-                    onFolderClick={setCurrentPath}
-                    expandedFolders={expandedFolders}
-                    onToggleFolder={(path) => {
-                        setExpandedFolders((prev) => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(path)) newSet.delete(path);
-                            else newSet.add(path);
-                            return newSet;
-                        });
-                    }}
-                />
+            <div className="h-full w-64 shrink-0 overflow-hidden">
+                <div
+                    className={`h-full bg-white shadow transition-transform duration-300 ease-in-out ${
+                        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
+                >
+                    <Sidebar
+                        folderTree={folderTree}
+                        currentPath={currentPath}
+                        onFolderClick={setCurrentPath}
+                        expandedFolders={expandedFolders}
+                        onToggleFolder={(path) => {
+                            setExpandedFolders((prev) => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(path)) newSet.delete(path);
+                                else newSet.add(path);
+                                return newSet;
+                            });
+                        }}
+                    />
+                </div>
             </div>
 
             {/* 메인 영역 */}
-            <div
-                className="flex flex-col flex-1 transition-all duration-300"
-                style={{ marginLeft: sidebarOpen ? 0 : -256 }}
-            >
+            <div className="flex flex-col flex-1">
                 {/* 상단 헤더 — 브레드크럼 + 액션 버튼 */}
                 <div className="shrink-0 pt-4 pb-2 px-4 md:pt-8 md:pb-4 md:px-8">
                     <div className="flex items-center justify-between mb-6">
