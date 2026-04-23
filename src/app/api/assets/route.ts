@@ -58,6 +58,8 @@ export async function GET(req: NextRequest) {
             createUserName: a.CREATE_USER_NAME,
             createDate: a.CREATE_DATE ? new Date(a.CREATE_DATE).toISOString() : null,
             url: a.ASSET_URL,
+            // 물리 파일 경로 — 사이드바 "폴더" 라벨(예: 'img')을 파생하는 데 사용.
+            path: a.ASSET_PATH,
         }));
 
         return successResponse({ assets, totalCount });

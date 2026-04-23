@@ -13,6 +13,32 @@ interface AssetItem {
     fileSize: number | null;
     assetDesc: string | null;
     url: string | null;
+    path: string | null;
+}
+
+/**
+ * 물리 경로에서 "이미지가 있는 폴더명" 추출
+ * 예) "public/deployed/img/foo.jpg" → "img", "/data/deployed/img/foo.jpg" → "img"
+ *     "public/uploads/bar.png" → "uploads". 경로 미상이면 빈 문자열.
+ * 향후 하위 디렉터리가 늘어나면 구분 가능한 단위로 자동 확장된다.
+ */
+function extractFolderName(path: string | null): string {
+    if (!path) return '';
+    const normalized = path.replace(/\\/g, '/');
+    const parts = normalized.split('/').filter(Boolean);
+    // 마지막 요소는 파일명 — 그 직전 세그먼트를 폴더명으로 사용
+    if (parts.length < 2) return '';
+    return parts[parts.length - 2];
+}
+
+/**
+ * 승인 완료 + 배포까지 끝난 자산인지 판별.
+ * deploy 흐름이 파일을 `deployed/` 하위로 이동시키므로 경로에 `/deployed/`가 포함되어야 한다.
+ * 승인만 되고 아직 배포 전(= 파일이 `uploads/`에 남아 있는) 자산은 /cms/files 선택 모달에 노출하지 않는다.
+ */
+function isDeployedAsset(asset: { path: string | null }): boolean {
+    if (!asset.path) return false;
+    return asset.path.replace(/\\/g, '/').includes('/deployed/');
 }
 
 interface CodeItem {
@@ -55,8 +81,30 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    // 좌측 카테고리 사이드바(폴더 역할) 토글 — 상단 우측 햄버거 버튼으로 열고 닫는다.
+    // 좌측 폴더 사이드바 토글 — 상단 우측 햄버거 버튼으로 열고 닫는다.
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    // 선택된 폴더 — 빈 값이면 전체. 현재는 자산 전부가 한 폴더(예: img)라 실질적 필터는 없고,
+    // 향후 여러 폴더로 나뉠 때 API 단에서 경로 필터를 추가하면 이 상태를 활용한다.
+    const [folder, setFolder] = useState('');
+
+    // 승인+배포까지 완료된 자산만 대상 (경로에 /deployed/ 포함) — uploads/ 는 제외
+    const deployedAssets = useMemo(() => assets.filter(isDeployedAsset), [assets]);
+
+    // 현재 페이지 배포 자산에서 추출한 distinct 폴더명 — 사이드바 리스트 소스
+    const folders = useMemo(() => {
+        const set = new Set<string>();
+        deployedAssets.forEach((asset) => {
+            const name = extractFolderName(asset.path);
+            if (name) set.add(name);
+        });
+        return Array.from(set).sort();
+    }, [deployedAssets]);
+
+    // 선택된 폴더가 있으면 현재 페이지 내에서 클라이언트 필터 — 다중 폴더 대비 placeholder 동작
+    const visibleAssets = useMemo(() => {
+        if (!folder) return deployedAssets;
+        return deployedAssets.filter((asset) => extractFolderName(asset.path) === folder);
+    }, [deployedAssets, folder]);
 
     const categoryMap = useMemo(
         () =>
@@ -179,6 +227,7 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
         setSearch('');
         setPageSize(20);
         setPage(1);
+        setFolder('');
     }
 
     // 단일 선택 토글 — 같은 이미지를 다시 누르면 선택 해제, 다른 이미지를 누르면 그것으로 교체
@@ -217,21 +266,21 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
 
     return (
         <div className="flex min-h-screen bg-slate-50">
-            {/* ── 좌측 사이드바 — 카테고리(폴더 역할) ───────────── */}
+            {/* ── 좌측 사이드바 — 이미지가 있는 폴더 리스트 ───────────── */}
             <aside
                 className={`shrink-0 overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-in-out ${
                     sidebarOpen ? 'w-56' : 'w-0'
                 }`}
             >
                 <div className="w-56 p-4">
-                    <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">카테고리</div>
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">폴더</div>
                     <ul className="space-y-1">
                         <li>
                             <button
                                 type="button"
-                                onClick={() => handleCategoryChange('')}
+                                onClick={() => setFolder('')}
                                 className={`w-full rounded px-3 py-2 text-left text-sm ${
-                                    category === ''
+                                    folder === ''
                                         ? 'bg-[#EBF4FF] font-semibold text-[#0046A4]'
                                         : 'text-slate-700 hover:bg-slate-50'
                                 }`}
@@ -239,18 +288,31 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
                                 전체
                             </button>
                         </li>
-                        {categories.map((item) => (
-                            <li key={item.code}>
+                        {folders.map((name) => (
+                            <li key={name}>
                                 <button
                                     type="button"
-                                    onClick={() => handleCategoryChange(item.code)}
-                                    className={`w-full rounded px-3 py-2 text-left text-sm ${
-                                        category === item.code
+                                    onClick={() => setFolder(name)}
+                                    className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm ${
+                                        folder === name
                                             ? 'bg-[#EBF4FF] font-semibold text-[#0046A4]'
                                             : 'text-slate-700 hover:bg-slate-50'
                                     }`}
                                 >
-                                    {item.codeName}
+                                    <svg
+                                        className="h-4 w-4 shrink-0"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+                                        />
+                                    </svg>
+                                    <span className="truncate">{name}</span>
                                 </button>
                             </li>
                         ))}
@@ -295,9 +357,23 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
                     </button>
                 </div>
 
-                {/* 검색 조건 카드 — cms-admin/asset-approvals 스타일 (카테고리는 사이드바로 이동) */}
+                {/* 검색 조건 카드 — cms-admin/asset-approvals 스타일 */}
                 <div className="mb-3 rounded-md border border-slate-200 bg-white p-2">
                     <div className="flex flex-wrap items-center gap-2">
+                        <label className="m-0 text-xs font-medium text-slate-700">카테고리</label>
+                        <select
+                            value={category}
+                            onChange={(e) => handleCategoryChange(e.target.value)}
+                            className="h-8 w-[130px] rounded border border-slate-300 bg-white px-2 text-xs"
+                        >
+                            <option value="">전체</option>
+                            {categories.map((item) => (
+                                <option key={item.code} value={item.code}>
+                                    {item.codeName}
+                                </option>
+                            ))}
+                        </select>
+
                         <input
                             type="text"
                             value={draftSearch}
@@ -308,7 +384,7 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
                                 }
                             }}
                             placeholder="이미지명으로 검색"
-                            className="h-8 w-[240px] rounded border border-slate-300 px-2 text-xs"
+                            className="ml-2 h-8 w-[200px] rounded border border-slate-300 px-2 text-xs"
                         />
 
                         <div className="flex-1" />
@@ -369,14 +445,15 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
                     <div className="rounded-2xl border border-red-200 bg-red-50 p-12 text-center text-red-600">
                         {error}
                     </div>
-                ) : assets.length === 0 ? (
+                ) : visibleAssets.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">
                         조건에 맞는 이미지가 없습니다.
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
-                            {assets.map((asset) => {
+                        {/* 고정폭 카드 — auto-fill로 가용 폭에 맞춰 열 개수만 바뀌고 개별 카드 크기는 일정 */}
+                        <div className="grid grid-cols-[repeat(auto-fill,180px)] justify-start gap-4">
+                            {visibleAssets.map((asset) => {
                                 const isSelected = asset.url ? selectedUrl === asset.url : false;
                                 // 허용 코드 매칭이 없으면 원본 코드값으로 폴백, 그래도 없으면 '-' 표시
                                 const label =
