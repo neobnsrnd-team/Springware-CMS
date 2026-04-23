@@ -736,6 +736,18 @@ function ColumnEditor({
 }) {
     const [showIconPicker, setShowIconPicker] = useState(false);
 
+    // 항상 최신 col을 참조 — 팝업이 열려있는 동안 다른 필드가 바뀌어도 덮어쓰지 않도록
+    const colRef = useRef(col);
+    colRef.current = col;
+
+    // 이미지 선택 팝업 메시지 리스너 클린업 (누적 방지)
+    const pickerCleanupRef = useRef<(() => void) | null>(null);
+    useEffect(() => {
+        return () => {
+            pickerCleanupRef.current?.();
+        };
+    }, []);
+
     return (
         <div
             style={{
@@ -989,7 +1001,6 @@ function ColumnEditor({
                     <input
                         type="text"
                         value={col.imageSrc ?? ''}
-                        onChange={(e) => onUpdate(colIdx, { ...col, imageSrc: e.target.value || undefined })}
                         placeholder="이미지 URL"
                         readOnly
                         style={{
@@ -1007,10 +1018,12 @@ function ColumnEditor({
                     <button
                         type="button"
                         onClick={() => {
+                            pickerCleanupRef.current?.(); // 이전 리스너 정리
                             try {
-                                openCmsFilesPicker((url) => {
-                                    onUpdate(colIdx, { ...col, imageSrc: url });
+                                const cleanup = openCmsFilesPicker((url) => {
+                                    onUpdate(colIdx, { ...colRef.current, imageSrc: url });
                                 });
+                                pickerCleanupRef.current = cleanup ?? null;
                             } catch {
                                 alert('이미지 선택 창을 열 수 없습니다. 팝업 차단을 확인해 주세요.');
                             }
