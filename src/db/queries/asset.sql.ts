@@ -14,10 +14,7 @@ export const ASSET_SELECT_BY_ID = `
     AND USE_YN = 'Y'
 `;
 
-/**
- * 에셋 목록 조회 (카테고리 필터, BLOB 제외, 페이지네이션 — Oracle 11g 호환)
- * :search — ASSET_NAME / CREATE_USER_NAME / CREATE_USER_ID 통합 LIKE 검색 (대소문자 무시)
- */
+/** 에셋 목록 조회 (카테고리 필터, BLOB 제외, 페이지네이션 — Oracle 11g 호환) */
 export const ASSET_SELECT_LIST = `
   SELECT * FROM (
     SELECT A.*, ROWNUM AS RN FROM (
@@ -30,12 +27,7 @@ export const ASSET_SELECT_LIST = `
       WHERE USE_YN = 'Y'
         AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
         AND (:assetState IS NULL OR ASSET_STATE = :assetState)
-        AND (
-          :search IS NULL
-          OR LOWER(ASSET_NAME)        LIKE '%' || LOWER(:search) || '%'
-          OR LOWER(CREATE_USER_NAME)  LIKE '%' || LOWER(:search) || '%'
-          OR LOWER(CREATE_USER_ID)    LIKE '%' || LOWER(:search) || '%'
-        )
+        AND (:search IS NULL OR LOWER(ASSET_NAME) LIKE '%' || LOWER(:search) || '%')
       ORDER BY CREATE_DATE DESC
     ) A
     WHERE ROWNUM <= :endRow
@@ -43,19 +35,14 @@ export const ASSET_SELECT_LIST = `
   WHERE RN > :startRow
 `;
 
-/** 에셋 전체 건수 (페이지네이션용) — SELECT_LIST와 동일한 WHERE 조건 유지 */
+/** 에셋 전체 건수 (페이지네이션용) */
 export const ASSET_COUNT = `
   SELECT COUNT(*) AS TOTAL_COUNT
   FROM SPW_CMS_ASSET
   WHERE USE_YN = 'Y'
     AND (:businessCategory IS NULL OR BUSINESS_CATEGORY = :businessCategory)
     AND (:assetState IS NULL OR ASSET_STATE = :assetState)
-    AND (
-      :search IS NULL
-      OR LOWER(ASSET_NAME)        LIKE '%' || LOWER(:search) || '%'
-      OR LOWER(CREATE_USER_NAME)  LIKE '%' || LOWER(:search) || '%'
-      OR LOWER(CREATE_USER_ID)    LIKE '%' || LOWER(:search) || '%'
-    )
+    AND (:search IS NULL OR LOWER(ASSET_NAME) LIKE '%' || LOWER(:search) || '%')
 `;
 
 /** 에셋 등록 */

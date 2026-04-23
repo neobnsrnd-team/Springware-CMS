@@ -24,21 +24,29 @@ interface CodeItem {
 const PAGE_SIZE_OPTIONS = [20, 30, 50, 100, 200];
 
 /**
- * 자산 이미지 src 해결 — DB의 ASSET_URL은 보통 `/uploads/...` 같은 root-relative 경로인데
- * Next.js `basePath: '/cms'` 환경에서는 브라우저가 `/cms/uploads/...`로 요청해야 하므로
- * 절대 URL이나 이미 basePath를 포함한 경우가 아니면 nextApi()로 접두어를 붙인다.
+ * 자산 이미지 src 해결
+ * - DB의 ASSET_URL은 보통 `/deployed/static/<filename>` · `/static/<filename>` · `/uploads/<filename>` 등
+ *   루트 상대 경로. 운영 nginx가 실제 파일을 서빙한다.
+ * - 로컬 dev는 공유 DB가 가리키는 실제 파일이 로컬에 없으므로, 서버에서 받은 assetOrigin(CMS_BASE_URL)
+ *   을 상대 경로 앞에 붙여 원격 nginx에서 직접 로드한다. assetOrigin이 비어 있으면 상대 경로 그대로 사용.
  */
-function resolveAssetSrc(url: string | null): string | undefined {
+function resolveAssetSrc(url: string | null, assetOrigin: string): string | undefined {
     if (!url) return undefined;
     if (/^https?:\/\//i.test(url)) return url;
-    if (url.startsWith('/cms/')) return url;
-    return nextApi(url.startsWith('/') ? url : `/${url}`);
+
+    const normalized = url.startsWith('/') ? url : `/${url}`;
+    return assetOrigin ? `${assetOrigin}${normalized}` : normalized;
 }
 
-export default function AssetBrowser() {
+interface AssetBrowserProps {
+    assetOrigin?: string;
+}
+
+export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
     const [assets, setAssets] = useState<AssetItem[]>([]);
     const [categories, setCategories] = useState<CodeItem[]>([]);
-    const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+    // 단일 선택 — 한 번에 이미지 하나만 고를 수 있다.
+    const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
     const [category, setCategory] = useState('');
     const [search, setSearch] = useState('');
     const [draftSearch, setDraftSearch] = useState('');
@@ -171,25 +179,17 @@ export default function AssetBrowser() {
         setPage(1);
     }
 
-    function toggleSelection(url: string | null) {
+    // 단일 선택 토글 — 같은 이미지를 다시 누르면 선택 해제, 다른 이미지를 누르면 그것으로 교체
+    function handleSelect(url: string | null) {
         if (!url) return;
-
-        setSelectedUrls((prev) => {
-            const next = new Set(prev);
-            if (next.has(url)) {
-                next.delete(url);
-            } else {
-                next.add(url);
-            }
-            return next;
-        });
+        setSelectedUrl((prev) => (prev === url ? null : url));
     }
 
     function handleConfirm() {
-        const urls = Array.from(selectedUrls);
-        if (urls.length === 0) return;
+        if (!selectedUrl) return;
 
-        const msg = { type: 'ASSETS_SELECTED', urls };
+        // cms-file-picker는 ASSETS_SELECTED.urls[0] 만 읽으므로 배열 1건으로 전달해 기존 consumer 호환 유지
+        const msg = { type: 'ASSETS_SELECTED', urls: [selectedUrl] };
         if (window.opener) {
             window.opener.postMessage(msg, '*');
             window.close();
@@ -230,7 +230,7 @@ export default function AssetBrowser() {
                                     handleSearchSubmit();
                                 }
                             }}
-                            placeholder="이미지명 또는 업로더 검색"
+                            placeholder="이미지명으로 검색"
                             className="ml-2 h-8 w-[200px] rounded border border-slate-300 px-2 text-xs"
                         />
 
@@ -269,10 +269,10 @@ export default function AssetBrowser() {
                         <button
                             type="button"
                             onClick={handleConfirm}
-                            disabled={selectedUrls.size === 0}
+                            disabled={!selectedUrl}
                             className="h-8 rounded bg-[#0046A4] px-3 text-xs font-medium text-white hover:bg-[#003399] disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            선택 완료{selectedUrls.size > 0 ? ` (${selectedUrls.size})` : ''}
+                            선택 완료
                         </button>
                     </div>
                 </div>
@@ -300,14 +300,14 @@ export default function AssetBrowser() {
                     <>
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
                             {assets.map((asset) => {
-                                const isSelected = asset.url ? selectedUrls.has(asset.url) : false;
+                                const isSelected = asset.url ? selectedUrl === asset.url : false;
                                 const label = asset.businessCategory ? categoryMap[asset.businessCategory] : '-';
 
                                 return (
                                     <button
                                         key={asset.assetId}
                                         type="button"
-                                        onClick={() => toggleSelection(asset.url)}
+                                        onClick={() => handleSelect(asset.url)}
                                         className={`overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                                             isSelected
                                                 ? 'border-[#0046A4] ring-2 ring-[#0046A4]/20'
@@ -318,7 +318,7 @@ export default function AssetBrowser() {
                                             {asset.url ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img
-                                                    src={resolveAssetSrc(asset.url)}
+                                                    src={resolveAssetSrc(asset.url, assetOrigin)}
                                                     alt={asset.assetName}
                                                     className="h-full w-full object-cover"
                                                 />
