@@ -6,8 +6,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { openCmsFilesPicker } from '@/lib/cms-file-picker';
 import { rgbToHex } from '@/lib/html-utils';
-import { nextApi } from '@/lib/api-url';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -610,7 +610,8 @@ function PromoSlidesEditor({
                                     </button>
                                 </>
                             ) : (
-                                <label
+                                <button
+                                    type="button"
                                     style={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -623,37 +624,19 @@ function PromoSlidesEditor({
                                         color: '#374151',
                                         background: '#f9fafb',
                                     }}
+                                    onClick={() => {
+                                        try {
+                                            openCmsFilesPicker((url) => {
+                                                const absUrl = url.replace(/\\/g, '/').replace(/^(?!\/)/, '/');
+                                                update(idx, { bgImage: absUrl });
+                                            });
+                                        } catch {
+                                            alert('cms/files ??? ???? ?? ?????.');
+                                        }
+                                    }}
                                 >
-                                    + 이미지 업로드
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        style={{ display: 'none' }}
-                                        onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            const formData = new FormData();
-                                            formData.append('file', file);
-                                            try {
-                                                const res = await fetch(nextApi('/api/builder/upload'), {
-                                                    method: 'POST',
-                                                    body: formData,
-                                                });
-                                                const data = await res.json();
-                                                if (data.url) {
-                                                    const absUrl = (data.url as string)
-                                                        .replace(/\\/g, '/')
-                                                        .replace(/^(?!\/)/, '/');
-                                                    update(idx, { bgImage: absUrl });
-                                                } else {
-                                                    alert('이미지 업로드에 실패했습니다.');
-                                                }
-                                            } catch {
-                                                alert('이미지 업로드에 실패했습니다.');
-                                            }
-                                        }}
-                                    />
-                                </label>
+                                    + cms/files?? ??? ??
+                                </button>
                             )}
                         </div>
                     </div>
@@ -909,7 +892,8 @@ function ProductCardsEditor({
                                     </button>
                                 </>
                             ) : (
-                                <label
+                                <button
+                                    type="button"
                                     style={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -922,37 +906,20 @@ function ProductCardsEditor({
                                         color: '#374151',
                                         background: '#f9fafb',
                                     }}
+                                    onClick={() => {
+                                        try {
+                                            openCmsFilesPicker((url) => {
+                                                const rawUrl = url.replace(/\\/g, '/');
+                                                const absUrl = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
+                                                update(idx, { bgImage: absUrl });
+                                            });
+                                        } catch {
+                                            alert('cms/files ??? ???? ?? ?????.');
+                                        }
+                                    }}
                                 >
-                                    + 이미지 업로드
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        style={{ display: 'none' }}
-                                        onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            const formData = new FormData();
-                                            formData.append('file', file);
-                                            try {
-                                                const res = await fetch(nextApi('/api/builder/upload'), {
-                                                    method: 'POST',
-                                                    body: formData,
-                                                });
-                                                const data = await res.json();
-                                                if (data.url) {
-                                                    // Windows 백슬래시 → 슬래시, 절대 경로 보정
-                                                    const rawUrl = (data.url as string).replace(/\\/g, '/');
-                                                    const absUrl = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
-                                                    update(idx, { bgImage: absUrl });
-                                                } else {
-                                                    alert('이미지 업로드에 실패했습니다.');
-                                                }
-                                            } catch {
-                                                alert('이미지 업로드에 실패했습니다.');
-                                            }
-                                        }}
-                                    />
-                                </label>
+                                    + cms/files?? ??? ??
+                                </button>
                             )}
                         </div>
                     </div>
