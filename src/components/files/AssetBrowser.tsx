@@ -55,6 +55,8 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    // 좌측 카테고리 사이드바(폴더 역할) 토글 — 상단 우측 햄버거 버튼으로 열고 닫는다.
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const categoryMap = useMemo(
         () =>
@@ -185,6 +187,18 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
         setSelectedUrl((prev) => (prev === url ? null : url));
     }
 
+    // 우측 상단 X — 팝업으로 열린 경우 창 닫기, 직접 접근한 경우 이전 페이지로
+    function handleClose() {
+        if (typeof window === 'undefined') return;
+        if (window.opener) {
+            window.close();
+            return;
+        }
+        if (window.history.length > 1) {
+            window.history.back();
+        }
+    }
+
     function handleConfirm() {
         if (!selectedUrl) return;
 
@@ -202,25 +216,88 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-                {/* 검색 조건 카드 — cms-admin/asset-approvals 스타일 */}
+        <div className="flex min-h-screen bg-slate-50">
+            {/* ── 좌측 사이드바 — 카테고리(폴더 역할) ───────────── */}
+            <aside
+                className={`shrink-0 overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-in-out ${
+                    sidebarOpen ? 'w-56' : 'w-0'
+                }`}
+            >
+                <div className="w-56 p-4">
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">카테고리</div>
+                    <ul className="space-y-1">
+                        <li>
+                            <button
+                                type="button"
+                                onClick={() => handleCategoryChange('')}
+                                className={`w-full rounded px-3 py-2 text-left text-sm ${
+                                    category === ''
+                                        ? 'bg-[#EBF4FF] font-semibold text-[#0046A4]'
+                                        : 'text-slate-700 hover:bg-slate-50'
+                                }`}
+                            >
+                                전체
+                            </button>
+                        </li>
+                        {categories.map((item) => (
+                            <li key={item.code}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleCategoryChange(item.code)}
+                                    className={`w-full rounded px-3 py-2 text-left text-sm ${
+                                        category === item.code
+                                            ? 'bg-[#EBF4FF] font-semibold text-[#0046A4]'
+                                            : 'text-slate-700 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {item.codeName}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </aside>
+
+            <div className="min-w-0 flex-1 px-4 py-6 md:px-8">
+                {/* 상단 우측 — 사이드바 토글 햄버거 + 닫기 X */}
+                <div className="mb-3 flex items-center justify-end gap-1">
+                    <button
+                        type="button"
+                        onClick={() => setSidebarOpen((prev) => !prev)}
+                        className="rounded p-2 text-slate-600 hover:bg-slate-100"
+                        title="카테고리 패널 토글"
+                        aria-label="카테고리 패널 토글"
+                    >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 6h16M4 12h16M4 18h16"
+                            />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="rounded p-2 text-slate-600 hover:bg-slate-100"
+                        title="닫기"
+                        aria-label="닫기"
+                    >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* 검색 조건 카드 — cms-admin/asset-approvals 스타일 (카테고리는 사이드바로 이동) */}
                 <div className="mb-3 rounded-md border border-slate-200 bg-white p-2">
                     <div className="flex flex-wrap items-center gap-2">
-                        <label className="m-0 text-xs font-medium text-slate-700">카테고리</label>
-                        <select
-                            value={category}
-                            onChange={(e) => handleCategoryChange(e.target.value)}
-                            className="h-8 w-[130px] rounded border border-slate-300 bg-white px-2 text-xs"
-                        >
-                            <option value="">전체</option>
-                            {categories.map((item) => (
-                                <option key={item.code} value={item.code}>
-                                    {item.codeName}
-                                </option>
-                            ))}
-                        </select>
-
                         <input
                             type="text"
                             value={draftSearch}
@@ -231,7 +308,7 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
                                 }
                             }}
                             placeholder="이미지명으로 검색"
-                            className="ml-2 h-8 w-[200px] rounded border border-slate-300 px-2 text-xs"
+                            className="h-8 w-[240px] rounded border border-slate-300 px-2 text-xs"
                         />
 
                         <div className="flex-1" />
@@ -301,7 +378,11 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
                             {assets.map((asset) => {
                                 const isSelected = asset.url ? selectedUrl === asset.url : false;
-                                const label = asset.businessCategory ? categoryMap[asset.businessCategory] : '-';
+                                // 허용 코드 매칭이 없으면 원본 코드값으로 폴백, 그래도 없으면 '-' 표시
+                                const label =
+                                    (asset.businessCategory && categoryMap[asset.businessCategory]) ||
+                                    asset.businessCategory ||
+                                    '-';
 
                                 return (
                                     <button

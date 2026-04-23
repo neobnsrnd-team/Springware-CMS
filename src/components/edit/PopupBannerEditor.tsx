@@ -6,6 +6,8 @@
 
 import { useState } from 'react';
 
+import { openCmsFilesPicker } from '@/lib/cms-file-picker';
+
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
 interface BannerImage {
@@ -78,6 +80,15 @@ export default function PopupBannerEditor({ blockEl, onClose }: Props) {
             [arr[index], arr[next]] = [arr[next], arr[index]];
             return arr;
         });
+    }
+
+    // /cms/files 팝업에서 승인 이미지 선택 → 해당 슬롯의 url 교체
+    function pickImage(index: number) {
+        try {
+            openCmsFilesPicker((url) => updateImage(index, 'url', url));
+        } catch (err: unknown) {
+            console.error('cms/files 이미지 선택 실패:', err);
+        }
     }
 
     // ── 적용 ─────────────────────────────────────────────────────────────
@@ -317,16 +328,55 @@ export default function PopupBannerEditor({ blockEl, onClose }: Props) {
                                     </div>
                                 </div>
 
-                                {/* 이미지 URL */}
+                                {/* 이미지 — cms/files에서 선택 */}
                                 <div style={{ marginBottom: '6px' }}>
-                                    <label style={labelStyle}>이미지 URL</label>
-                                    <input
-                                        type="text"
-                                        value={img.url}
-                                        onChange={(e) => updateImage(idx, 'url', e.target.value)}
-                                        placeholder="https://... 또는 /uploads/..."
-                                        style={inputStyle}
-                                    />
+                                    <label style={labelStyle}>이미지</label>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                        <input
+                                            type="text"
+                                            value={img.url}
+                                            onChange={(e) => updateImage(idx, 'url', e.target.value)}
+                                            placeholder="cms/files에서 이미지를 선택하세요"
+                                            readOnly
+                                            style={{ ...inputStyle, flex: 1 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => pickImage(idx)}
+                                            style={{
+                                                padding: '0 10px',
+                                                height: '34px',
+                                                border: '1px solid #C7D8F4',
+                                                borderRadius: 6,
+                                                background: '#F0F4FF',
+                                                color: '#0046A4',
+                                                fontSize: 12,
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                whiteSpace: 'nowrap',
+                                                fontFamily: FONT,
+                                            }}
+                                        >
+                                            이미지 선택
+                                        </button>
+                                    </div>
+                                    {img.url ? (
+                                        <div style={{ marginTop: 6 }}>
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={img.url}
+                                                alt=""
+                                                style={{
+                                                    width: '100%',
+                                                    maxHeight: 120,
+                                                    objectFit: 'contain',
+                                                    border: '1px solid #E5E7EB',
+                                                    borderRadius: 6,
+                                                    background: '#fff',
+                                                }}
+                                            />
+                                        </div>
+                                    ) : null}
                                 </div>
 
                                 {/* 링크 URL */}
