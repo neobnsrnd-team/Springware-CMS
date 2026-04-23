@@ -6,6 +6,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 
+import { openCmsFilesPicker } from '@/lib/cms-file-picker';
+
 // ── 데이터 모델 ──────────────────────────────────────────────────────────
 
 interface FlexListLine {
@@ -983,23 +985,76 @@ function ColumnEditor({
                         </span>
                     )}
 
-                    {/* URL 직접 입력 */}
+                    {/* URL 입력 + 이미지 브라우저 선택 */}
                     <input
                         type="text"
                         value={col.imageSrc ?? ''}
                         onChange={(e) => onUpdate(colIdx, { ...col, imageSrc: e.target.value || undefined })}
-                        placeholder="이미지 URL (직접 입력)"
+                        placeholder="이미지 URL"
+                        readOnly
                         style={{
                             flex: 1,
-                            minWidth: 100,
+                            minWidth: 80,
                             padding: '4px 8px',
                             border: '1px solid #e5e7eb',
                             borderRadius: 4,
                             fontSize: 11,
                             fontFamily: FONT_FAMILY,
                             outline: 'none',
+                            background: '#f9fafb',
                         }}
                     />
+                    <button
+                        type="button"
+                        onClick={() => {
+                            try {
+                                openCmsFilesPicker((url) => {
+                                    onUpdate(colIdx, { ...col, imageSrc: url });
+                                });
+                            } catch {
+                                alert('이미지 선택 창을 열 수 없습니다. 팝업 차단을 확인해 주세요.');
+                            }
+                        }}
+                        style={{
+                            padding: '4px 8px',
+                            border: '1px solid #C7D8F4',
+                            borderRadius: 4,
+                            background: '#F0F4FF',
+                            color: '#0046A4',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                        }}
+                    >
+                        이미지 선택
+                    </button>
+                    {col.imageSrc && (
+                        <button
+                            type="button"
+                            title="이미지 제거"
+                            onClick={() => onUpdate(colIdx, { ...col, imageSrc: undefined })}
+                            style={{
+                                ...S.deleteBtn,
+                                width: 22,
+                                height: 22,
+                                flexShrink: 0,
+                            }}
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="9"
+                                height="9"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                            >
+                                <path d="M18 6 6 18M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
 
                     {/* 형태 선택 */}
                     <select

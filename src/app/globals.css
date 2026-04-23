@@ -200,17 +200,23 @@ body.spw-slide-modal-open .is-rte-tool {
     pointer-events: none;
 }
 
-/* ── ContentBuilder 배경 이미지 로컬 업로드 제거 ──
- * 설정 → 배경 이미지 패널의 로컬 파일 업로드 영역(`.image-larger1~4` wrapper + 내부 `.form-upload-larger`)은
- * OS 파일 선택창을 직접 띄워 /cms/files 승인 이미지 선택 흐름을 우회한다.
- * 숨겨서 같은 패널의 "Open Asset"(imageSelect=/cms/files) 버튼만 남긴다.
- * ContentBuilder 내부 자동 숨김(largerImageHandler 미설정 시)이 모든 컨텍스트를 커버하지 못하므로
- * 보수적으로 CSS로 강제 차단한다.
+/* ── ContentBuilder 로컬 파일 업로드 버튼 전면 차단 ──────────────────────────
+ * /cms/files 승인 이미지 브라우저만 사용하도록 OS 파일 선택 경로를 모두 숨긴다.
+ *
+ * [1] 배경 이미지 패널 — .image-larger1~4 래퍼 + 내부 .form-upload-larger
+ *     ContentBuilder 내부 자동 숨김이 모든 컨텍스트를 커버하지 못하므로 CSS로 강제 차단.
+ *
+ * [2] 링크 편집 모달 등 범용 업로드 버튼 — .div-anyfile-upload (.is-btn 래퍼)
+ *     .form-upload-larger 만 숨기면 부모 div(50×43 px)가 빈 공간으로 남으므로
+ *     래퍼 자체를 숨긴다. :has() 선택자로 form을 포함하는 .is-btn도 함께 차단.
  */
 .form-upload-larger,
 .image-larger1,
 .image-larger2,
 .image-larger3,
-.image-larger4 {
+.image-larger4,
+.div-anyfile-upload,
+.is-btn:has(> .form-upload-larger),
+.input-upload:has(> .form-upload-larger) {
     display: none !important;
 }
