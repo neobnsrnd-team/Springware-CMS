@@ -239,16 +239,14 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
         setSelectedUrl((prev) => (prev === url ? null : url));
     }
 
-    // 우측 상단 X — 팝업으로 열린 경우 창 닫기, 직접 접근한 경우 이전 페이지로
+    // 우측 상단 X — 팝업 창 닫기
+    // window.history.back()은 사용하지 않음:
+    //   Next.js SSR 인증 redirect 등으로 opener가 null이 되는 경우,
+    //   history.back()이 에디터 메인 창이 아닌 팝업 창의 히스토리를 이동시켜
+    //   에디터 화면으로 돌아오지 못하는 버그가 생긴다.
     function handleClose() {
         if (typeof window === 'undefined') return;
-        if (window.opener) {
-            window.close();
-            return;
-        }
-        if (window.history.length > 1) {
-            window.history.back();
-        }
+        window.close();
     }
 
     function handleConfirm() {
