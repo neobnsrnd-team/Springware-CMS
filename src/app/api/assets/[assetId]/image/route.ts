@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ asse
             return errorResponse('이미지 파일을 찾을 수 없습니다.', 404);
         }
 
-        return new Response(buffer, {
+        return new Response(new Uint8Array(buffer), {
             status: 200,
             headers: {
                 'Content-Type': asset.MIME_TYPE || 'application/octet-stream',
