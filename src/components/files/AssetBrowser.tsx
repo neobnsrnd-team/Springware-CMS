@@ -21,6 +21,8 @@ interface CodeItem {
     sortOrder: number;
 }
 
+const PAGE_SIZE_OPTIONS = [20, 30, 50, 100, 200];
+
 export default function AssetBrowser() {
     const [assets, setAssets] = useState<AssetItem[]>([]);
     const [categories, setCategories] = useState<CodeItem[]>([]);
@@ -29,9 +31,9 @@ export default function AssetBrowser() {
     const [search, setSearch] = useState('');
     const [draftSearch, setDraftSearch] = useState('');
     const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(false);
+    const [pageSize, setPageSize] = useState(20);
+    const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const categoryMap = useMemo(
@@ -45,6 +47,17 @@ export default function AssetBrowser() {
             ),
         [categories],
     );
+
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+    const visiblePages = useMemo(() => {
+        const length = Math.min(7, totalPages);
+        const half = 3;
+        let start = Math.max(1, page - half);
+        const end = Math.min(totalPages, start + 6);
+        start = Math.max(1, end - 6);
+        return Array.from({ length }, (_, index) => start + index);
+    }, [page, totalPages]);
 
     useEffect(() => {
         let cancelled = false;
@@ -76,22 +89,18 @@ export default function AssetBrowser() {
     }, []);
 
     useEffect(() => {
-        void fetchAssets(1, true);
+        void fetchAssets(page);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [category, search]);
+    }, [page, pageSize, category, search]);
 
-    async function fetchAssets(nextPage: number, replace: boolean) {
+    async function fetchAssets(nextPage: number) {
         try {
             setError(null);
-            if (replace) {
-                setLoading(true);
-            } else {
-                setLoadingMore(true);
-            }
+            setLoading(true);
 
             const params = new URLSearchParams({
                 page: String(nextPage),
-                pageSize: '24',
+                pageSize: String(pageSize),
                 assetState: 'APPROVED',
             });
 
@@ -105,21 +114,42 @@ export default function AssetBrowser() {
             const res = await fetch(nextApi(`/api/assets?${params.toString()}`));
             const json = await res.json();
             const list = Array.isArray(json.data?.assets) ? json.data.assets : [];
-            const totalCount = Number(json.data?.totalCount ?? 0);
+            const nextTotalCount = Number(json.data?.totalCount ?? 0);
 
-            setAssets((prev) => (replace ? list : [...prev, ...list]));
-            setPage(nextPage);
-            setHasMore(nextPage * 24 < totalCount);
+            setAssets(list);
+            setTotalCount(nextTotalCount);
         } catch {
             setError('이미지 목록을 불러오지 못했습니다.');
         } finally {
             setLoading(false);
-            setLoadingMore(false);
         }
+    }
+
+    function moveToFirstPage() {
+        setPage(1);
+    }
+
+    function handleCategoryChange(nextCategory: string) {
+        setCategory(nextCategory);
+        moveToFirstPage();
+    }
+
+    function handleSearchSubmit() {
+        setSearch(draftSearch.trim());
+        moveToFirstPage();
+    }
+
+    function handleReset() {
+        setCategory('');
+        setDraftSearch('');
+        setSearch('');
+        setPageSize(20);
+        setPage(1);
     }
 
     function toggleSelection(url: string | null) {
         if (!url) return;
+
         setSelectedUrls((prev) => {
             const next = new Set(prev);
             if (next.has(url)) {
@@ -141,6 +171,7 @@ export default function AssetBrowser() {
             window.close();
             return;
         }
+
         if (window.parent && window.parent !== window) {
             window.parent.postMessage(msg, '*');
         }
@@ -150,12 +181,12 @@ export default function AssetBrowser() {
         <div className="min-h-screen bg-slate-50">
             <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
                 <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                    <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
                         <div className="min-w-48 flex-1">
                             <label className="mb-1 block text-sm font-medium text-slate-700">카테고리</label>
                             <select
                                 value={category}
-                                onChange={(e) => setCategory(e.target.value)}
+                                onChange={(e) => handleCategoryChange(e.target.value)}
                                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                             >
                                 <option value="">전체</option>
@@ -167,36 +198,49 @@ export default function AssetBrowser() {
                             </select>
                         </div>
                         <div className="flex-[2]">
-                            <label className="mb-1 block text-sm font-medium text-slate-700">검색</label>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">ASSET_NAME 검색</label>
                             <div className="flex gap-2">
                                 <input
                                     value={draftSearch}
                                     onChange={(e) => setDraftSearch(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                            setSearch(draftSearch.trim());
+                                            handleSearchSubmit();
                                         }
                                     }}
-                                    placeholder="이미지명 또는 설명 검색"
+                                    placeholder="이미지명으로 검색"
                                     className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setSearch(draftSearch.trim())}
+                                    onClick={handleSearchSubmit}
                                     className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white"
                                 >
                                     검색
                                 </button>
                             </div>
                         </div>
+                        <div className="min-w-32">
+                            <label className="mb-1 block text-sm font-medium text-slate-700">Items</label>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => {
+                                    setPageSize(Number(e.target.value));
+                                    moveToFirstPage();
+                                }}
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                            >
+                                {PAGE_SIZE_OPTIONS.map((option) => (
+                                    <option key={option} value={option}>
+                                        {option}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="flex gap-2">
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setCategory('');
-                                    setDraftSearch('');
-                                    setSearch('');
-                                }}
+                                onClick={handleReset}
                                 className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
                             >
                                 초기화
@@ -211,10 +255,15 @@ export default function AssetBrowser() {
                             </button>
                         </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500">
-                        승인된 이미지 자산만 표시됩니다. 기본 카테고리는 {categoryMap[CMS_ASSET_DEFAULT_CATEGORY]}
-                        입니다.
-                    </p>
+                    <div className="mt-3 flex flex-col gap-1 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
+                        <p>
+                            승인된 이미지 자산만 표시됩니다. 기본 카테고리는 {categoryMap[CMS_ASSET_DEFAULT_CATEGORY]}
+                            입니다.
+                        </p>
+                        <p>
+                            총 {totalCount}건, {page} / {totalPages} 페이지
+                        </p>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -271,26 +320,59 @@ export default function AssetBrowser() {
                                                     </span>
                                                 ) : null}
                                             </div>
-                                            <div className="truncate text-sm font-medium text-slate-900">
-                                                {asset.assetName}
-                                            </div>
                                             <div className="line-clamp-2 min-h-8 text-xs text-slate-500">
                                                 {asset.assetDesc || asset.mimeType}
+                                            </div>
+                                            <div className="truncate text-sm font-semibold text-slate-900">
+                                                {asset.assetName}
                                             </div>
                                         </div>
                                     </button>
                                 );
                             })}
                         </div>
-                        {hasMore ? (
-                            <div className="mt-6 flex justify-center">
+
+                        {totalPages > 1 ? (
+                            <div className="mt-6 flex justify-center gap-1">
                                 <button
                                     type="button"
-                                    onClick={() => void fetchAssets(page + 1, false)}
-                                    disabled={loadingMore}
-                                    className="rounded-xl border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+                                    onClick={() => setPage(Math.max(1, page - 1))}
+                                    disabled={page === 1}
+                                    className={`px-3.5 py-1.5 rounded-md border border-[#e5e7eb] text-[13px] ${
+                                        page === 1
+                                            ? 'bg-[#f9fafb] text-[#d1d5db] cursor-not-allowed'
+                                            : 'bg-white text-[#374151] cursor-pointer'
+                                    }`}
                                 >
-                                    {loadingMore ? '불러오는 중...' : '더 보기'}
+                                    이전
+                                </button>
+
+                                {visiblePages.map((visiblePage) => (
+                                    <button
+                                        key={visiblePage}
+                                        type="button"
+                                        onClick={() => setPage(visiblePage)}
+                                        className={`px-3 py-1.5 rounded-md border text-[13px] cursor-pointer ${
+                                            page === visiblePage
+                                                ? 'border-[#0046A4] bg-[#0046A4] text-white font-semibold'
+                                                : 'border-[#e5e7eb] bg-white text-[#374151] font-normal'
+                                        }`}
+                                    >
+                                        {visiblePage}
+                                    </button>
+                                ))}
+
+                                <button
+                                    type="button"
+                                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                                    disabled={page === totalPages}
+                                    className={`px-3.5 py-1.5 rounded-md border border-[#e5e7eb] text-[13px] ${
+                                        page === totalPages
+                                            ? 'bg-[#f9fafb] text-[#d1d5db] cursor-not-allowed'
+                                            : 'bg-white text-[#374151] cursor-pointer'
+                                    }`}
+                                >
+                                    다음
                                 </button>
                             </div>
                         ) : null}
