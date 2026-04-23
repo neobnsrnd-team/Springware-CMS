@@ -12,11 +12,12 @@
     const viewUrl = cmsUrl + '/api/track/view';
     const clickUrl = cmsUrl + '/api/track/click';
 
-    // 페이지 조회 전송 (Blob으로 application/json Content-Type 보장)
+    // 페이지 조회 전송
+    // text/plain — CORS simple request이므로 preflight 없이 크로스오리진 전송 가능
     try {
         navigator.sendBeacon(
             viewUrl,
-            new Blob([JSON.stringify({ pageId: pageId })], { type: 'application/json' }),
+            new Blob([JSON.stringify({ pageId: pageId })], { type: 'text/plain' }),
         );
     } catch (e) {
         console.error('CMS Tracker (view) failed:', e);
@@ -33,7 +34,7 @@
             navigator.sendBeacon(
                 clickUrl,
                 new Blob([JSON.stringify({ pageId: pageId, componentId: componentId })], {
-                    type: 'application/json',
+                    type: 'text/plain',
                 }),
             );
         } catch (ex) {
