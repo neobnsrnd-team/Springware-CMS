@@ -14,6 +14,10 @@ import { canWriteCms, getCurrentUser } from '@/lib/current-user';
 import { successResponse, errorResponse, getErrorMessage } from '@/lib/api-response';
 import { ASSET_UPLOAD_DIR, ASSET_BASE_URL } from '@/lib/env';
 
+// cms-admin 의 숨김 처리(USE_YN='N')가 즉시 /cms/files 에 반영되도록 프레임워크 캐시를 끈다.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const ASSET_STATES: AssetState[] = ['WORK', 'PENDING', 'APPROVED', 'REJECTED'];
 
 function parseAssetState(value: string | null): AssetState | undefined {
@@ -60,6 +64,8 @@ export async function GET(req: NextRequest) {
             url: a.ASSET_URL,
             // 물리 파일 경로 — 사이드바 "폴더" 라벨(예: 'img')을 파생하는 데 사용.
             path: a.ASSET_PATH,
+            // cms-admin 의 숨김(Y/N) 상태 — 클라이언트에서 이중 필터로 방어하기 위해 노출
+            useYn: a.USE_YN,
         }));
 
         return successResponse({ assets, totalCount });

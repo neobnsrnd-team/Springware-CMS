@@ -14,6 +14,7 @@ interface AssetItem {
     assetDesc: string | null;
     url: string | null;
     path: string | null;
+    useYn: string | null;
 }
 
 /**
@@ -193,9 +194,11 @@ export default function AssetBrowser({ assetOrigin = '' }: AssetBrowserProps) {
                 params.set('search', search);
             }
 
-            const res = await fetch(nextApi(`/api/assets?${params.toString()}`));
+            const res = await fetch(nextApi(`/api/assets?${params.toString()}`), { cache: 'no-store' });
             const json = await res.json();
-            const list = Array.isArray(json.assets) ? json.assets : [];
+            const raw: AssetItem[] = Array.isArray(json.assets) ? json.assets : [];
+            // 숨김 처리된 자산(USE_YN='N')은 서버 SQL 에서도 걸러지지만 캐시·지연 반영 대비 이중 필터링
+            const list = raw.filter((item) => !item.useYn || item.useYn === 'Y');
             const nextTotalCount = Number(json.totalCount ?? 0);
 
             setAssets(list);
