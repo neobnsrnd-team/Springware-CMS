@@ -627,15 +627,16 @@ function PromoSlidesEditor({
                                     onClick={() => {
                                         try {
                                             openCmsFilesPicker((url) => {
-                                                const absUrl = url.replace(/\\/g, '/').replace(/^(?!\/)/, '/');
-                                                update(idx, { bgImage: absUrl });
+                                                // AssetBrowser.handleConfirm 이 resolveAssetSrc 로 정규화된 URL 을
+                                                // 전달하므로 추가 경로 조작 없이 그대로 사용한다.
+                                                update(idx, { bgImage: url });
                                             });
                                         } catch {
-                                            alert('cms/files ??? ???? ?? ?????.');
+                                            alert('cms/files 이미지 선택 창을 열 수 없습니다.');
                                         }
                                     }}
                                 >
-                                    + cms/files?? ??? ??
+                                    + cms/files에서 이미지 선택
                                 </button>
                             )}
                         </div>
@@ -909,16 +910,16 @@ function ProductCardsEditor({
                                     onClick={() => {
                                         try {
                                             openCmsFilesPicker((url) => {
-                                                const rawUrl = url.replace(/\\/g, '/');
-                                                const absUrl = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
-                                                update(idx, { bgImage: absUrl });
+                                                // AssetBrowser.handleConfirm 이 resolveAssetSrc 로 정규화된 URL 을
+                                                // 전달하므로 추가 경로 조작 없이 그대로 사용한다.
+                                                update(idx, { bgImage: url });
                                             });
                                         } catch {
-                                            alert('cms/files ??? ???? ?? ?????.');
+                                            alert('cms/files 이미지 선택 창을 열 수 없습니다.');
                                         }
                                     }}
                                 >
-                                    + cms/files?? ??? ??
+                                    + cms/files에서 이미지 선택
                                 </button>
                             )}
                         </div>
