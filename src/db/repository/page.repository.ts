@@ -28,6 +28,7 @@ import {
     PAGE_ROLLBACK,
     PAGE_SELECT_AB_GROUP,
     PAGE_SELECT_HTML_BY_ID,
+    PAGE_SELECT_TEMPLATE_LIST,
     PAGE_UPDATE_HTML,
     PAGE_UPDATE_AB_GROUP,
     PAGE_CLEAR_AB_GROUP,
@@ -49,6 +50,11 @@ import { ASSET_MAP_INSERT, ASSET_MAP_DELETE_BY_PAGE_VERSION } from '@/db/queries
 import { readPageHtml } from '@/lib/page-file';
 
 const OBJ = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+
+export interface CmsPageTemplateSummary {
+    pageId: string;
+    pageName: string;
+}
 
 // ═══════════════════════════════════════════════
 // 페이지 조회
@@ -133,6 +139,20 @@ export async function getPageHtml(pageId: string): Promise<string | null> {
     try {
         const result = await conn.execute<{ PAGE_HTML: string | null }>(PAGE_SELECT_HTML_BY_ID, { pageId }, OBJ);
         return result.rows?.[0]?.PAGE_HTML ?? null;
+    } finally {
+        await conn.close();
+    }
+}
+
+/** 페이지 생성 모달용 템플릿 목록 조회 */
+export async function getPageTemplateList(): Promise<CmsPageTemplateSummary[]> {
+    const conn = await getConnection();
+    try {
+        const result = await conn.execute<{ PAGE_ID: string; PAGE_NAME: string }>(PAGE_SELECT_TEMPLATE_LIST, {}, OBJ);
+        return (result.rows ?? []).map((row) => ({
+            pageId: row.PAGE_ID,
+            pageName: row.PAGE_NAME,
+        }));
     } finally {
         await conn.close();
     }

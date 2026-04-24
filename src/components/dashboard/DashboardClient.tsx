@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
-import Modal from '@/components/ui/Modal';
+import CreatePageModal from '@/components/ui/CreatePageModal';
 import PageCard, { APPROVE_DEFAULT_LABELS, formatDate } from '@/components/ui/PageCard';
 import type { ViewMode, ApproveStateValue } from '@/components/ui/PageCard';
 import { nextApi } from '@/lib/api-url';
@@ -101,9 +101,6 @@ export default function DashboardClient({
 
     // 새 페이지 생성 모달
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [newPageName, setNewPageName] = useState('');
-    const [newPageViewMode, setNewPageViewMode] = useState<ViewMode>('mobile');
-    const [creating, setCreating] = useState(false);
 
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement>(null);
@@ -167,32 +164,6 @@ export default function DashboardClient({
     // 페이지 이동 → URL 반영
     function handlePageChange(page: number) {
         navigate({ page, search, sortBy });
-    }
-
-    // 새 페이지 생성
-    async function handleCreatePage() {
-        const label = newPageName.trim();
-        if (!label || creating || !canWrite) return;
-
-        setCreating(true);
-
-        try {
-            const res = await fetch(nextApi('/api/builder/save'), {
-                method: 'POST',
-                body: JSON.stringify({ html: '', pageName: label, viewMode: newPageViewMode }),
-                headers: { 'Content-Type': 'application/json' },
-            });
-            const data = await res.json();
-            if (res.ok && data.ok) {
-                window.location.href = nextApi(`/edit?bank=${data.pageId}`);
-            } else {
-                alert(data.error || '페이지 생성에 실패했습니다.');
-                setCreating(false);
-            }
-        } catch (err: unknown) {
-            console.error('페이지 생성 실패:', err);
-            setCreating(false);
-        }
     }
 
     // 승인 요청 — 낙관적 업데이트 후 API 호출
@@ -261,8 +232,6 @@ export default function DashboardClient({
 
     function handleModalClose() {
         setShowCreateModal(false);
-        setNewPageName('');
-        setNewPageViewMode('mobile');
     }
 
     const totalPages = Math.ceil(localTotalCount / PAGE_SIZE);
@@ -563,70 +532,7 @@ export default function DashboardClient({
             {rejectedTarget && <RejectedReasonModal page={rejectedTarget} onClose={() => setRejectedTarget(null)} />}
 
             {/* ── 새 페이지 생성 모달 ── */}
-            {showCreateModal && (
-                <Modal
-                    title="새 페이지 만들기"
-                    onClose={handleModalClose}
-                    showCloseButton={false}
-                    width="480px"
-                    className="p-8"
-                >
-                    <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">페이지 이름</label>
-                    <input
-                        autoFocus
-                        value={newPageName}
-                        onChange={(e) => setNewPageName(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && newPageName.trim()) handleCreatePage();
-                        }}
-                        placeholder="예: 메인 페이지"
-                        className="w-full box-border px-[14px] py-2.5 rounded-lg border border-[#d1d5db] text-sm mb-5 outline-none"
-                    />
-
-                    <label className="block text-[13px] font-semibold text-[#374151] mb-2">화면 유형</label>
-                    <div className="flex gap-2.5 mb-7">
-                        {(['mobile', 'web', 'responsive'] as ViewMode[]).map((vm) => {
-                            const icon = vm === 'mobile' ? '📱' : vm === 'web' ? '🖥️' : '🔄';
-                            const vmLabel = vm === 'mobile' ? '모바일' : vm === 'web' ? '웹' : '반응형';
-                            const selected = newPageViewMode === vm;
-                            return (
-                                <button
-                                    key={vm}
-                                    onClick={() => setNewPageViewMode(vm)}
-                                    className={`flex-1 py-2.5 px-1.5 rounded-lg border-2 text-[13px] font-semibold cursor-pointer flex flex-col items-center gap-1 ${
-                                        selected
-                                            ? 'border-[#0046A4] bg-[#f0f4ff] text-[#0046A4]'
-                                            : 'border-[#e5e7eb] bg-white text-[#6b7280]'
-                                    }`}
-                                >
-                                    <span className="text-[20px]">{icon}</span>
-                                    {vmLabel}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="flex justify-end gap-2">
-                        <button
-                            onClick={handleModalClose}
-                            className="px-5 py-2.5 rounded-lg border border-[#e5e7eb] bg-white text-[#374151] text-sm cursor-pointer"
-                        >
-                            취소
-                        </button>
-                        <button
-                            onClick={handleCreatePage}
-                            disabled={!newPageName.trim() || creating || !canWrite}
-                            className={`px-5 py-2.5 rounded-lg border-0 text-white text-sm font-semibold ${
-                                !newPageName.trim() || creating || !canWrite
-                                    ? 'bg-[#d1d5db] cursor-not-allowed'
-                                    : 'bg-[#0046A4] cursor-pointer'
-                            }`}
-                        >
-                            {creating ? '생성 중...' : '만들기'}
-                        </button>
-                    </div>
-                </Modal>
-            )}
+            {showCreateModal && <CreatePageModal onClose={handleModalClose} canWrite={canWrite} />}
         </div>
     );
 }
