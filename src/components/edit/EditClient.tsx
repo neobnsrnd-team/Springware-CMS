@@ -29,6 +29,7 @@ import StatusCardEditor from '@/components/edit/StatusCardEditor';
 import MyDataAssetEditor from '@/components/edit/MyDataAssetEditor';
 import FinanceCalendarEditor from '@/components/edit/FinanceCalendarEditor';
 import EventBannerEditor from '@/components/edit/EventBannerEditor';
+import CreatePageModal from '@/components/ui/CreatePageModal';
 import Toast from '@/components/ui/Toast';
 import type { FinanceComponent } from '@/data/finance-component-data';
 import { type BrandTheme } from '@/data/brand-themes';
@@ -176,25 +177,12 @@ const PANEL_WIDTH_OPEN = 264;
 
 // ── 뷰 모드 ──────────────────────────────────────────────────────────────
 type ViewMode = 'mobile' | 'web' | 'responsive';
-type PageTemplateId = 'blank';
 
 const VIEW_MODE_CONFIG: Record<ViewMode, { label: string; maxWidth: string; icon: string }> = {
     mobile: { label: '모바일', maxWidth: '390px', icon: '📱' },
     web: { label: '웹', maxWidth: '1280px', icon: '🖥️' },
     responsive: { label: '반응형', maxWidth: '100%', icon: '🔄' },
 };
-
-const PAGE_TEMPLATE_CONFIG: Record<PageTemplateId, { label: string; description: string }> = {
-    blank: {
-        label: '빈 페이지',
-        description: '아무 컴포넌트도 없는 빈 화면에서 시작합니다.',
-    },
-};
-
-const PAGE_TEMPLATE_OPTIONS = Object.entries(PAGE_TEMPLATE_CONFIG).map(([id, template]) => ({
-    id: id as PageTemplateId,
-    ...template,
-}));
 
 function roundMs(value: number) {
     return Math.round(value * 10) / 10;
@@ -315,12 +303,6 @@ export default function EditClient({
     const [tabsLoading, setTabsLoading] = useState(true);
     // 탭 추가 인라인 입력 표시 여부
     const [showAddTab, setShowAddTab] = useState(false);
-    // 탭 이름 입력값
-    const [newTabName, setNewTabName] = useState('');
-    // 새 탭 생성 시 선택할 뷰 모드
-    const [newTabViewMode, setNewTabViewMode] = useState<ViewMode>('mobile');
-    const [newTabTemplateId, setNewTabTemplateId] = useState<PageTemplateId>('blank');
-    const [newTabTemplateOpen, setNewTabTemplateOpen] = useState(true);
 
     // product-menu 아이콘 편집 모달
     const [productMenuBlock, setProductMenuBlock] = useState<HTMLElement | null>(null);
@@ -2361,47 +2343,6 @@ export default function EditClient({
     }
 
     // ── 탭 추가 ──────────────────────────────────────────────────────────
-    async function handleAddTab() {
-        const label = newTabName.trim();
-        if (!label) return;
-        if (!canWrite) return;
-        const id = crypto.randomUUID();
-        const selectedViewMode = newTabViewMode;
-        const selectedTemplateId = newTabTemplateId;
-
-        setShowAddTab(false);
-        setNewTabName('');
-        setNewTabViewMode('mobile');
-        setNewTabTemplateId('blank');
-        setNewTabTemplateOpen(true);
-
-        const defaultHtml = selectedTemplateId === 'blank' ? '' : '';
-
-        // DB에 페이지 생성 (pageName + viewMode 포함) → 이동
-        try {
-            const res = await fetch(nextApi('/api/builder/save'), {
-                method: 'POST',
-                body: JSON.stringify({
-                    html: defaultHtml,
-                    bank: id,
-                    pageName: label,
-                    viewMode: selectedViewMode,
-                    templateId: selectedTemplateId,
-                }),
-                headers: { 'Content-Type': 'application/json' },
-            });
-            const data = await res.json();
-            if (!res.ok || !data.ok || !data.pageId) {
-                alert(data.error || '페이지 생성에 실패했습니다.');
-                return;
-            }
-            window.location.href = nextApi(`/edit?bank=${data.pageId}`);
-        } catch (err: unknown) {
-            console.error('페이지 생성 실패:', err);
-            alert('페이지 생성 중 오류가 발생했습니다.');
-        }
-    }
-
     // ── 탭 닫기 ──────────────────────────────────────────────────────────
     // DB 삭제 없이 세션 탭 목록에서만 제거. 실제 삭제는 대시보드에서 수행.
     function handleCloseTab() {
@@ -2563,7 +2504,7 @@ export default function EditClient({
                         tabs.map((b) => (
                             <a
                                 key={b.id}
-                                href={`/edit?bank=${b.id}`}
+                                href={nextApi(`/edit?bank=${b.id}`)}
                                 style={{
                                     padding: '5px 14px',
                                     borderRadius: '6px',
@@ -2902,291 +2843,7 @@ export default function EditClient({
             )}
 
             {/* ── 새 페이지 추가 모달 ── */}
-            {showAddTab && (
-                <div
-                    onClick={() => {
-                        setShowAddTab(false);
-                        setNewTabName('');
-                        setNewTabViewMode('mobile');
-                        setNewTabTemplateId('blank');
-                        setNewTabTemplateOpen(true);
-                    }}
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        zIndex: 200,
-                        background: 'rgba(0,0,0,0.4)',
-                        backdropFilter: 'blur(2px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: '#ffffff',
-                            borderRadius: '20px',
-                            padding: '32px',
-                            width: '480px',
-                            maxWidth: '90vw',
-                            boxShadow: '0 24px 64px rgba(0,70,164,0.15)',
-                        }}
-                    >
-                        <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>
-                            새 페이지 만들기
-                        </h3>
-
-                        {/* 페이지 이름 */}
-                        <label
-                            style={{
-                                display: 'block',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: '#374151',
-                                marginBottom: '6px',
-                            }}
-                        >
-                            페이지 이름
-                        </label>
-                        <input
-                            autoFocus
-                            value={newTabName}
-                            onChange={(e) => setNewTabName(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && newTabName.trim()) handleAddTab();
-                                if (e.key === 'Escape') {
-                                    setShowAddTab(false);
-                                    setNewTabName('');
-                                    setNewTabViewMode('mobile');
-                                    setNewTabTemplateId('blank');
-                                    setNewTabTemplateOpen(true);
-                                }
-                            }}
-                            placeholder="예: 메인 페이지"
-                            style={{
-                                width: '100%',
-                                height: '40px',
-                                padding: '0 12px',
-                                borderRadius: '8px',
-                                border: '1px solid #d1d5db',
-                                fontSize: '14px',
-                                outline: 'none',
-                                boxSizing: 'border-box',
-                            }}
-                        />
-
-                        {/* 레이아웃 선택 */}
-                        <label
-                            style={{
-                                display: 'block',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: '#374151',
-                                margin: '20px 0 10px',
-                            }}
-                        >
-                            레이아웃 선택
-                        </label>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            {(Object.keys(VIEW_MODE_CONFIG) as ViewMode[]).map((mode) => {
-                                const cfg = VIEW_MODE_CONFIG[mode];
-                                const selected = newTabViewMode === mode;
-                                const descriptions: Record<ViewMode, string> = {
-                                    mobile: '390px 고정 너비\n모바일 앱 화면에 최적화',
-                                    web: '1280px 고정 너비\n데스크톱 웹 페이지용',
-                                    responsive: '전체 너비 사용\n모든 기기에 대응',
-                                };
-                                return (
-                                    <button
-                                        key={mode}
-                                        type="button"
-                                        onClick={() => setNewTabViewMode(mode)}
-                                        style={{
-                                            flex: 1,
-                                            padding: '16px 12px',
-                                            borderRadius: '12px',
-                                            border: selected ? '2px solid #0046A4' : '2px solid #e5e7eb',
-                                            background: selected ? '#f0f4ff' : '#ffffff',
-                                            cursor: 'pointer',
-                                            textAlign: 'center',
-                                            transition: 'all 0.15s',
-                                        }}
-                                    >
-                                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>{cfg.icon}</div>
-                                        <div
-                                            style={{
-                                                fontSize: '14px',
-                                                fontWeight: 700,
-                                                color: selected ? '#0046A4' : '#374151',
-                                                marginBottom: '6px',
-                                            }}
-                                        >
-                                            {cfg.label}
-                                        </div>
-                                        <div
-                                            style={{
-                                                fontSize: '11px',
-                                                color: '#6b7280',
-                                                lineHeight: 1.4,
-                                                whiteSpace: 'pre-line',
-                                            }}
-                                        >
-                                            {descriptions[mode]}
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <p style={{ fontSize: '11px', color: '#9ca3af', margin: '12px 0 0', lineHeight: 1.4 }}>
-                            레이아웃은 페이지 생성 후 변경할 수 없습니다.
-                        </p>
-
-                        <div style={{ marginTop: '22px' }}>
-                            <button
-                                type="button"
-                                onClick={() => setNewTabTemplateOpen((open) => !open)}
-                                style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '12px 14px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #e5e7eb',
-                                    background: '#ffffff',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>템플릿 선택</span>
-                                <span
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        fontSize: '12px',
-                                        color: '#6b7280',
-                                    }}
-                                >
-                                    <span>{PAGE_TEMPLATE_CONFIG[newTabTemplateId].label}</span>
-                                    <span
-                                        style={{
-                                            transform: newTabTemplateOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                            transition: 'transform 0.15s',
-                                        }}
-                                    >
-                                        ▼
-                                    </span>
-                                </span>
-                            </button>
-
-                            {newTabTemplateOpen && (
-                                <div
-                                    style={{
-                                        marginTop: '8px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '8px',
-                                        maxHeight: '220px',
-                                        overflowY: 'auto',
-                                        paddingRight: '4px',
-                                    }}
-                                >
-                                    {PAGE_TEMPLATE_OPTIONS.map((template) => {
-                                        const selected = newTabTemplateId === template.id;
-                                        return (
-                                            <button
-                                                key={template.id}
-                                                type="button"
-                                                onClick={() => setNewTabTemplateId(template.id)}
-                                                style={{
-                                                    display: 'flex',
-                                                    gap: '10px',
-                                                    alignItems: 'flex-start',
-                                                    width: '100%',
-                                                    padding: '12px 14px',
-                                                    borderRadius: '8px',
-                                                    border: selected ? '2px solid #0046A4' : '1px solid #e5e7eb',
-                                                    background: selected ? '#f0f4ff' : '#ffffff',
-                                                    color: '#374151',
-                                                    cursor: 'pointer',
-                                                    textAlign: 'left',
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        width: '16px',
-                                                        height: '16px',
-                                                        marginTop: '1px',
-                                                        borderRadius: '50%',
-                                                        border: selected ? '5px solid #0046A4' : '1px solid #d1d5db',
-                                                        background: '#ffffff',
-                                                        flexShrink: 0,
-                                                    }}
-                                                />
-                                                <span>
-                                                    <span
-                                                        style={{
-                                                            display: 'block',
-                                                            fontSize: '13px',
-                                                            fontWeight: 700,
-                                                            color: selected ? '#0046A4' : '#111827',
-                                                        }}
-                                                    >
-                                                        {template.label}
-                                                    </span>
-                                                    <span
-                                                        style={{
-                                                            display: 'block',
-                                                            marginTop: '3px',
-                                                            fontSize: '11px',
-                                                            lineHeight: 1.4,
-                                                            color: '#6b7280',
-                                                        }}
-                                                    >
-                                                        {template.description}
-                                                    </span>
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 하단 버튼 */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
-                            <button
-                                onClick={() => {
-                                    setShowAddTab(false);
-                                    setNewTabName('');
-                                    setNewTabViewMode('mobile');
-                                    setNewTabTemplateId('blank');
-                                    setNewTabTemplateOpen(true);
-                                }}
-                                style={{ ...btnStyle, padding: '8px 20px' }}
-                            >
-                                취소
-                            </button>
-                            <button
-                                onClick={handleAddTab}
-                                disabled={!newTabName.trim()}
-                                style={{
-                                    ...btnStyle,
-                                    padding: '8px 20px',
-                                    background: newTabName.trim() ? '#0046A4' : '#93c5fd',
-                                    color: '#fff',
-                                    borderColor: newTabName.trim() ? '#0046A4' : '#93c5fd',
-                                    cursor: newTabName.trim() ? 'pointer' : 'not-allowed',
-                                }}
-                            >
-                                만들기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {showAddTab && <CreatePageModal onClose={() => setShowAddTab(false)} canWrite={canWrite} />}
 
             {infoToast && <Toast message={infoToast} />}
         </>

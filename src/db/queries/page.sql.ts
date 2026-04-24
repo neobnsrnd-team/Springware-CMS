@@ -259,6 +259,15 @@ export const PAGE_SELECT_HTML_BY_ID = `
     AND USE_YN = 'Y'
 `;
 
+/** 페이지 생성 모달용 템플릿 목록 조회 */
+export const PAGE_SELECT_TEMPLATE_LIST = `
+  SELECT PAGE_ID, PAGE_NAME
+  FROM SPW_CMS_PAGE
+  WHERE PAGE_TYPE = 'TEMPLATE'
+    AND USE_YN = 'Y'
+  ORDER BY PAGE_NAME
+`;
+
 /** PAGE_HTML 업데이트 (에디터 HTML → DB CLOB 직접 저장) */
 export const PAGE_UPDATE_HTML = `
   UPDATE SPW_CMS_PAGE
